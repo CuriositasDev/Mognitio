@@ -1,0 +1,18 @@
+[
+  {
+    "head": "4e491dde82d8e38e2f7af596cbbb07af37fcf03a",
+    "reverse": false,
+    "binary_sha256": "e9463c0aee79d6afd923868fc35b3143afbae5aa15707dafe04bc9cfafc8db72",
+    "exit": 0,
+    "stdout": "FOREST_ORACLE_OK goldens=4 mutation_controls=2 equivalence_pairs=3 positive=18 negative=3 all_reachable_families=True\n",
+    "stderr": ""
+  },
+  {
+    "head": "4e491dde82d8e38e2f7af596cbbb07af37fcf03a",
+    "reverse": true,
+    "binary_sha256": "78e33d326e37abab0b333eb8dc64be4c9c39dee83a47891ed4e01038032d9c98",
+    "exit": 0,
+    "stdout": "FOREST_ORACLE_OK goldens=4 mutation_controls=2 equivalence_pairs=3 positive=18 negative=3 all_reachable_families=True\n",
+    "stderr": ""
+  }
+]

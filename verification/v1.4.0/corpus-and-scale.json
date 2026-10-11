@@ -1,0 +1,1041 @@
+{
+  "identities": {
+    "C0": {
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "files": 25,
+      "manifest_sha256": "aa004c27dd46461893d674154416d45aabbb4c73502b4b91d1a12fa46e303ba2"
+    },
+    "C1": {
+      "commit": "f09353f8e25a79617408b75210949da57c7e008c",
+      "files": 56,
+      "manifest_sha256": "aa004c27dd46461893d674154416d45aabbb4c73502b4b91d1a12fa46e303ba2"
+    }
+  },
+  "cases": [
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Check/check.mgn",
+      "path": "C0/compiler/mgnc/src/Check/check.mgn",
+      "bytes": 4275,
+      "sha256": "9798678a335a279a505f8f0bae2218e3fe0ef467587da7eb962b7a3a55c236cd",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/CheckBody/check.mgn",
+      "path": "C0/compiler/mgnc/src/CheckBody/check.mgn",
+      "bytes": 3723,
+      "sha256": "d6e4ef478e44eb2026dcb73208c65d99d2413a88dcae8ad6b8165bde730f237a",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/CheckSupport/support.mgn",
+      "path": "C0/compiler/mgnc/src/CheckSupport/support.mgn",
+      "bytes": 5165,
+      "sha256": "ffce046bc460b972367f3b08b35c9e53d48aa881286e283839efe0466bfff2ac",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Checked/types.mgn",
+      "path": "C0/compiler/mgnc/src/Checked/types.mgn",
+      "bytes": 820,
+      "sha256": "662529c9f4e6194575e5d414cdd738092fafe251d430f8d5ac2324d9c8440873",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Data/data.mgn",
+      "path": "C0/compiler/mgnc/src/Data/data.mgn",
+      "bytes": 3163,
+      "sha256": "7c8bc81e369e11a176690581b6c3dc6f9d23f3d0667dfda2f073b6f3f0f7f1b7",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Driver/driver.mgn",
+      "path": "C0/compiler/mgnc/src/Driver/driver.mgn",
+      "bytes": 4955,
+      "sha256": "154d40ea8dd418e346f42e36da263ae55c462599ab2f56bc71391f636a0f8433",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Encode/encode.mgn",
+      "path": "C0/compiler/mgnc/src/Encode/encode.mgn",
+      "bytes": 5671,
+      "sha256": "b02f0f86c55e4b9c04dbb4abdf5e45d386203b0fe76bddedad4f09c0ed0aca98",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Evaluate/evaluate.mgn",
+      "path": "C0/compiler/mgnc/src/Evaluate/evaluate.mgn",
+      "bytes": 8820,
+      "sha256": "51c2257571f0540cbfd0d5f346bfb1a0d1f7cc1c88a2f70983aab6270c63745c",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Facts/facts.mgn",
+      "path": "C0/compiler/mgnc/src/Facts/facts.mgn",
+      "bytes": 4661,
+      "sha256": "7205f912250582a44d46f08c9841e3a1c9e36523fb1edcbe47b8b78deb39fd16",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Fields/fields.mgn",
+      "path": "C0/compiler/mgnc/src/Fields/fields.mgn",
+      "bytes": 5104,
+      "sha256": "8e3bffd507c1870e2e484ecbb03d6c7bd3af4ae92fd1422dda49e5a17440cebc",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Frontend/lexer.mgn",
+      "path": "C0/compiler/mgnc/src/Frontend/lexer.mgn",
+      "bytes": 10837,
+      "sha256": "5f8da4907ef9dc1e6fb00518d1a98b65798c09c1ba8d4b931f005d1d91540e8f",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/IR/types.mgn",
+      "path": "C0/compiler/mgnc/src/IR/types.mgn",
+      "bytes": 654,
+      "sha256": "5f69e6f2075417b3c4f02a29eaed37cc2b09256c0ab21d21db1092da409531d5",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/IRShape/shape.mgn",
+      "path": "C0/compiler/mgnc/src/IRShape/shape.mgn",
+      "bytes": 5883,
+      "sha256": "a2f936b788f869a3e91066ef44ef4216e664b7c0c9500d77f9b0290843f7d9e5",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Lower/lower.mgn",
+      "path": "C0/compiler/mgnc/src/Lower/lower.mgn",
+      "bytes": 17057,
+      "sha256": "f9b51e6fe6aea42dd6386ccfc2af62c01880393b22bb031d4cf19362974c58d0",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Machine/machine.mgn",
+      "path": "C0/compiler/mgnc/src/Machine/machine.mgn",
+      "bytes": 1997,
+      "sha256": "2106226b46e9d4fca710352290344dd390c283e84a924ec97cb5cd0307c8d9ca",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Module/parser.mgn",
+      "path": "C0/compiler/mgnc/src/Module/parser.mgn",
+      "bytes": 3789,
+      "sha256": "bebc22367bc5cb08f53c445a6d0d15e827fd82b1503020d4fbb5227ba30bdc73",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Native/native.mgn",
+      "path": "C0/compiler/mgnc/src/Native/native.mgn",
+      "bytes": 8534,
+      "sha256": "a9c3fbcda99b3e78dc595ef54768531194283a97f529c64874d48576c2fc599e",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/ParseSupport/support.mgn",
+      "path": "C0/compiler/mgnc/src/ParseSupport/support.mgn",
+      "bytes": 4816,
+      "sha256": "4e7116c2d15ff2dd475b795adb96e49d39e45d792e275e78d831bb280514cb0f",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Parser/expression.mgn",
+      "path": "C0/compiler/mgnc/src/Parser/expression.mgn",
+      "bytes": 16100,
+      "sha256": "77952a3621e8942a392e4a0026036a38430776f6e4cc612c42b80dd5de6a2dda",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Pipeline/compile.mgn",
+      "path": "C0/compiler/mgnc/src/Pipeline/compile.mgn",
+      "bytes": 1012,
+      "sha256": "e789dc5e3f8e3ea4cd0f29cbd1d52f41e9d7445951d7fe0757d953618785d7e0",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Runtime/runtime.mgn",
+      "path": "C0/compiler/mgnc/src/Runtime/runtime.mgn",
+      "bytes": 7428,
+      "sha256": "57fef960f37498bd652c1dfdb69410d29c8bd83f77073af8cb05c1fe3addee56",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Syntax/types.mgn",
+      "path": "C0/compiler/mgnc/src/Syntax/types.mgn",
+      "bytes": 1034,
+      "sha256": "3075d3ce21b68c5db52012fb46f6eb74d01e8aca1b8972a53f2c078b14f5c9ff",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Verify/verify.mgn",
+      "path": "C0/compiler/mgnc/src/Verify/verify.mgn",
+      "bytes": 8115,
+      "sha256": "193c15611478a9bc30c15e35cd6deb7ec0cda1913d1c2b9c15e9d5db1f3a9833",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/Width/width.mgn",
+      "path": "C0/compiler/mgnc/src/Width/width.mgn",
+      "bytes": 512115,
+      "sha256": "8091746b104b9088204f72ee89d51df21f7031971f36b7789a7fc17bacb7c340",
+      "expected": 0
+    },
+    {
+      "group": "C0",
+      "name": "compiler/mgnc/src/mgnc.mgn",
+      "path": "C0/compiler/mgnc/src/mgnc.mgn",
+      "bytes": 119,
+      "sha256": "b633ff54ac13a77c20a65390bf131427d3ca127c50f12fb0ef0583b8af16b1f9",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/BridgeBody/body.mgn",
+      "path": "C1/compiler/mgnc/src/BridgeBody/body.mgn",
+      "bytes": 2504,
+      "sha256": "9a65151ed77f24d44ca84883b3a86a122a3cecbc0b0a3484465a18b305d5b551",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/BridgeLists/lists.mgn",
+      "path": "C1/compiler/mgnc/src/BridgeLists/lists.mgn",
+      "bytes": 1879,
+      "sha256": "e0f7fd081a3e704405497a176809a0726fe469e8cf1425b330a39ea78f288b85",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/BridgeShape/shape.mgn",
+      "path": "C1/compiler/mgnc/src/BridgeShape/shape.mgn",
+      "bytes": 5205,
+      "sha256": "c9b4c25a5c46b9ad48f43219d86c71b3274bce175222c24b19685bafc8b8c9ea",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Buckets/data.mgn",
+      "path": "C1/compiler/mgnc/src/Buckets/data.mgn",
+      "bytes": 2005,
+      "sha256": "a9089ffb1b2cfd40b0b73050e0515d5b803a1d3bb3f5cec8ae82ab097d313337",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Chart/column.mgn",
+      "path": "C1/compiler/mgnc/src/Chart/column.mgn",
+      "bytes": 5883,
+      "sha256": "c82452361dec594216c557747f2f68563fb2744a36512d7a215481eee30db18d",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/ChartLifetime/collect.mgn",
+      "path": "C1/compiler/mgnc/src/ChartLifetime/collect.mgn",
+      "bytes": 2872,
+      "sha256": "26c0a24d47b7fd0502b9324d0acd6571e33af23a417897eae249bede57172e27",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Check/check.mgn",
+      "path": "C1/compiler/mgnc/src/Check/check.mgn",
+      "bytes": 4275,
+      "sha256": "9798678a335a279a505f8f0bae2218e3fe0ef467587da7eb962b7a3a55c236cd",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/CheckBody/check.mgn",
+      "path": "C1/compiler/mgnc/src/CheckBody/check.mgn",
+      "bytes": 3723,
+      "sha256": "d6e4ef478e44eb2026dcb73208c65d99d2413a88dcae8ad6b8165bde730f237a",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/CheckSupport/support.mgn",
+      "path": "C1/compiler/mgnc/src/CheckSupport/support.mgn",
+      "bytes": 5165,
+      "sha256": "ffce046bc460b972367f3b08b35c9e53d48aa881286e283839efe0466bfff2ac",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Checked/types.mgn",
+      "path": "C1/compiler/mgnc/src/Checked/types.mgn",
+      "bytes": 820,
+      "sha256": "662529c9f4e6194575e5d414cdd738092fafe251d430f8d5ac2324d9c8440873",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Cursor/scan.mgn",
+      "path": "C1/compiler/mgnc/src/Cursor/scan.mgn",
+      "bytes": 2790,
+      "sha256": "173319e5e922791de5c8cca3dcc4388beb40e0698e3a35a16ced30473c69b653",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Data/data.mgn",
+      "path": "C1/compiler/mgnc/src/Data/data.mgn",
+      "bytes": 3163,
+      "sha256": "7c8bc81e369e11a176690581b6c3dc6f9d23f3d0667dfda2f073b6f3f0f7f1b7",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Driver/driver.mgn",
+      "path": "C1/compiler/mgnc/src/Driver/driver.mgn",
+      "bytes": 5325,
+      "sha256": "09536570dc7e2611b2659872ba8128b7c0cd3d1ecb86ab08603493826cf3aee2",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Encode/encode.mgn",
+      "path": "C1/compiler/mgnc/src/Encode/encode.mgn",
+      "bytes": 5671,
+      "sha256": "b02f0f86c55e4b9c04dbb4abdf5e45d386203b0fe76bddedad4f09c0ed0aca98",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Evaluate/evaluate.mgn",
+      "path": "C1/compiler/mgnc/src/Evaluate/evaluate.mgn",
+      "bytes": 8820,
+      "sha256": "51c2257571f0540cbfd0d5f346bfb1a0d1f7cc1c88a2f70983aab6270c63745c",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Facts/facts.mgn",
+      "path": "C1/compiler/mgnc/src/Facts/facts.mgn",
+      "bytes": 4661,
+      "sha256": "7205f912250582a44d46f08c9841e3a1c9e36523fb1edcbe47b8b78deb39fd16",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Fields/fields.mgn",
+      "path": "C1/compiler/mgnc/src/Fields/fields.mgn",
+      "bytes": 5104,
+      "sha256": "8e3bffd507c1870e2e484ecbb03d6c7bd3af4ae92fd1422dda49e5a17440cebc",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Forest/types.mgn",
+      "path": "C1/compiler/mgnc/src/Forest/types.mgn",
+      "bytes": 791,
+      "sha256": "21242436fe1bb96fe1bc3cbd71dfa81bbd90df3515e5d6d2a21b4bb3905d4d56",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/ForestData/types.mgn",
+      "path": "C1/compiler/mgnc/src/ForestData/types.mgn",
+      "bytes": 284,
+      "sha256": "8f8a9c3aa9104d48968de8a4a6acc1d52602dec7808da85eafd7c07acd51492d",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Frontend/lexer.mgn",
+      "path": "C1/compiler/mgnc/src/Frontend/lexer.mgn",
+      "bytes": 10837,
+      "sha256": "5f8da4907ef9dc1e6fb00518d1a98b65798c09c1ba8d4b931f005d1d91540e8f",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Grammar/table.mgn",
+      "path": "C1/compiler/mgnc/src/Grammar/table.mgn",
+      "bytes": 25155,
+      "sha256": "b54ef03c0f98699af8a7fcf36fe7b28699adfddb2ad0c2180841abc133030dc1",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarData/types.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarData/types.mgn",
+      "bytes": 157,
+      "sha256": "60e93b8edf03ba6c006ea10216068a9f2890285bcc895ea4857c1d2117c02b73",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart0/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart0/slots.mgn",
+      "bytes": 2640,
+      "sha256": "01c1b7896b99499bf4771c5189382cebd7b003a01b3d7f1e7fe9610f1965dcc2",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart1/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart1/slots.mgn",
+      "bytes": 2741,
+      "sha256": "86ae8f374d43522c763e9ab76dec96d2149f4a6dc3733099eba574ba85e81939",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart2/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart2/slots.mgn",
+      "bytes": 2742,
+      "sha256": "4fe32502f721280d42746c7dd02ecda20893e77ba1b534e1c6b97257a2e703ee",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart3/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart3/slots.mgn",
+      "bytes": 2746,
+      "sha256": "0155054e4306eed75f2910bb1b4ba40bfab676661e99588982a76f6a988468a7",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart4/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart4/slots.mgn",
+      "bytes": 2740,
+      "sha256": "24adbacd26717039fecf0d31dde7e9ae4a0b9dfa5bbc4818f77a9efa1f4fe93b",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart5/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart5/slots.mgn",
+      "bytes": 2799,
+      "sha256": "fbc9b710dc8d3529996c6b62758e5f2aa545aa64c03f0924cd5afc85d0f6abeb",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart6/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart6/slots.mgn",
+      "bytes": 2815,
+      "sha256": "5c92c80e723004bed41457acadb697dba159bc1442993850a4498017856337de",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart7/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart7/slots.mgn",
+      "bytes": 2801,
+      "sha256": "4687914c5bd46492dc2d98679aa13aafc2c278ca3d55e6d7860850bf0b01ecf7",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/GrammarPart8/slots.mgn",
+      "path": "C1/compiler/mgnc/src/GrammarPart8/slots.mgn",
+      "bytes": 1402,
+      "sha256": "2383b2b232bd7d075ba0358de6c674f46a8a8dddb2fb259a451f7b05896dc491",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/IR/types.mgn",
+      "path": "C1/compiler/mgnc/src/IR/types.mgn",
+      "bytes": 654,
+      "sha256": "5f69e6f2075417b3c4f02a29eaed37cc2b09256c0ab21d21db1092da409531d5",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/IRShape/shape.mgn",
+      "path": "C1/compiler/mgnc/src/IRShape/shape.mgn",
+      "bytes": 5883,
+      "sha256": "a2f936b788f869a3e91066ef44ef4216e664b7c0c9500d77f9b0290843f7d9e5",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/ItemStorage/data.mgn",
+      "path": "C1/compiler/mgnc/src/ItemStorage/data.mgn",
+      "bytes": 11459,
+      "sha256": "c32604af2efac4a5028fc1120067dc56612261787bc6354e402d5b66c520d240",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Lexical/scan.mgn",
+      "path": "C1/compiler/mgnc/src/Lexical/scan.mgn",
+      "bytes": 12665,
+      "sha256": "cd5089a13c0a626631503fb691f76d49e1debe1f907a36bfe215f74793d05fe1",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Lower/lower.mgn",
+      "path": "C1/compiler/mgnc/src/Lower/lower.mgn",
+      "bytes": 17057,
+      "sha256": "f9b51e6fe6aea42dd6386ccfc2af62c01880393b22bb031d4cf19362974c58d0",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Machine/machine.mgn",
+      "path": "C1/compiler/mgnc/src/Machine/machine.mgn",
+      "bytes": 1997,
+      "sha256": "2106226b46e9d4fca710352290344dd390c283e84a924ec97cb5cd0307c8d9ca",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Module/parser.mgn",
+      "path": "C1/compiler/mgnc/src/Module/parser.mgn",
+      "bytes": 3789,
+      "sha256": "bebc22367bc5cb08f53c445a6d0d15e827fd82b1503020d4fbb5227ba30bdc73",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Native/native.mgn",
+      "path": "C1/compiler/mgnc/src/Native/native.mgn",
+      "bytes": 8534,
+      "sha256": "a9c3fbcda99b3e78dc595ef54768531194283a97f529c64874d48576c2fc599e",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/NativeBridge/bridge.mgn",
+      "path": "C1/compiler/mgnc/src/NativeBridge/bridge.mgn",
+      "bytes": 5306,
+      "sha256": "50858acc85b0a80d0ef7c6792d616954a9f978384ce36f0619fb6e6442ee79ef",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/NativeTypes/types.mgn",
+      "path": "C1/compiler/mgnc/src/NativeTypes/types.mgn",
+      "bytes": 2995,
+      "sha256": "519a99de4131f2b80903f235685432d3a16df1f75add97678ab13774ab9a6c94",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/NodeStorage/data.mgn",
+      "path": "C1/compiler/mgnc/src/NodeStorage/data.mgn",
+      "bytes": 23657,
+      "sha256": "0dd334e6fef7a3c051c45d3dcc6839b8d474297c67d2e10826165c48c431f099",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/ParseSupport/support.mgn",
+      "path": "C1/compiler/mgnc/src/ParseSupport/support.mgn",
+      "bytes": 4816,
+      "sha256": "4e7116c2d15ff2dd475b795adb96e49d39e45d792e275e78d831bb280514cb0f",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Parser/expression.mgn",
+      "path": "C1/compiler/mgnc/src/Parser/expression.mgn",
+      "bytes": 16100,
+      "sha256": "77952a3621e8942a392e4a0026036a38430776f6e4cc612c42b80dd5de6a2dda",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Pipeline/compile.mgn",
+      "path": "C1/compiler/mgnc/src/Pipeline/compile.mgn",
+      "bytes": 1040,
+      "sha256": "7a73a6e7056904036146d0ee36fccd89f0af76370018bd9ad729e8c8eb42d09c",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Projection/read.mgn",
+      "path": "C1/compiler/mgnc/src/Projection/read.mgn",
+      "bytes": 4194,
+      "sha256": "0da08c01a84eb58c5b75ce673bd0c079a8e8b15ca3ae1cf1fd0ea00df9c46957",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Runtime/runtime.mgn",
+      "path": "C1/compiler/mgnc/src/Runtime/runtime.mgn",
+      "bytes": 7428,
+      "sha256": "57fef960f37498bd652c1dfdb69410d29c8bd83f77073af8cb05c1fe3addee56",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Source/types.mgn",
+      "path": "C1/compiler/mgnc/src/Source/types.mgn",
+      "bytes": 979,
+      "sha256": "e40bf467d73a58b5f6c3927cb9a8314841204da7d98af17be9966372a8209fde",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/SourceData/types.mgn",
+      "path": "C1/compiler/mgnc/src/SourceData/types.mgn",
+      "bytes": 288,
+      "sha256": "63bc0a53fb610809a895a799988e118825ec8eca908ad1f59b1a35585eff2164",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Structural/parse.mgn",
+      "path": "C1/compiler/mgnc/src/Structural/parse.mgn",
+      "bytes": 7434,
+      "sha256": "1e720c8318e0f2c3abfdb40e43b9ff4722b3180907a4ad3e2c8cc66044934d1a",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Syntax/types.mgn",
+      "path": "C1/compiler/mgnc/src/Syntax/types.mgn",
+      "bytes": 1034,
+      "sha256": "3075d3ce21b68c5db52012fb46f6eb74d01e8aca1b8972a53f2c078b14f5c9ff",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Tables/update.mgn",
+      "path": "C1/compiler/mgnc/src/Tables/update.mgn",
+      "bytes": 1527,
+      "sha256": "77866f4713f4a8092a3efce236bb924862db23ef70271bff4475fa594c4553e8",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/TokenStorage/data.mgn",
+      "path": "C1/compiler/mgnc/src/TokenStorage/data.mgn",
+      "bytes": 26578,
+      "sha256": "1dd2ee23b2cd872f044801bfdcf2adc6ffea6e0ba6cd5ee603f494921618804f",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Verify/verify.mgn",
+      "path": "C1/compiler/mgnc/src/Verify/verify.mgn",
+      "bytes": 8115,
+      "sha256": "193c15611478a9bc30c15e35cd6deb7ec0cda1913d1c2b9c15e9d5db1f3a9833",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/Width/width.mgn",
+      "path": "C1/compiler/mgnc/src/Width/width.mgn",
+      "bytes": 512115,
+      "sha256": "8091746b104b9088204f72ee89d51df21f7031971f36b7789a7fc17bacb7c340",
+      "expected": 0
+    },
+    {
+      "group": "C1",
+      "name": "compiler/mgnc/src/mgnc.mgn",
+      "path": "C1/compiler/mgnc/src/mgnc.mgn",
+      "bytes": 119,
+      "sha256": "b633ff54ac13a77c20a65390bf131427d3ca127c50f12fb0ef0583b8af16b1f9",
+      "expected": 0
+    },
+    {
+      "group": "scale",
+      "name": "flat-types-10",
+      "path": "scale/flat-types-10.mgn",
+      "bytes": 292,
+      "sha256": "fc155551dfc48cec8eeb50962713a4f1f6c270e60d16af47c096aae57fd557e4",
+      "expected": 0,
+      "declarations": 10
+    },
+    {
+      "group": "scale",
+      "name": "flat-functions-10",
+      "path": "scale/flat-functions-10.mgn",
+      "bytes": 412,
+      "sha256": "b684d60ce53313c5e3144e244816d33aaef42e330b6a4a88ea5b3d49dee00b22",
+      "expected": 0,
+      "declarations": 10
+    },
+    {
+      "group": "scale",
+      "name": "flat-types-100",
+      "path": "scale/flat-types-100.mgn",
+      "bytes": 2902,
+      "sha256": "56ae616f70d15862d8b88062abdc2e17e42429e94910027c4e249e70196dfe9b",
+      "expected": 0,
+      "declarations": 100
+    },
+    {
+      "group": "scale",
+      "name": "flat-functions-100",
+      "path": "scale/flat-functions-100.mgn",
+      "bytes": 4102,
+      "sha256": "00af5a9f5304396c188692dd1bcfb3a324aed15c7f8942b2a2451615bebfe4c6",
+      "expected": 0,
+      "declarations": 100
+    },
+    {
+      "group": "scale",
+      "name": "flat-types-1000",
+      "path": "scale/flat-types-1000.mgn",
+      "bytes": 29902,
+      "sha256": "77d05efca6a4cc204288b66958faa7d33b820964bca392037838762cfa8db5a4",
+      "expected": 0,
+      "declarations": 1000
+    },
+    {
+      "group": "scale",
+      "name": "flat-functions-1000",
+      "path": "scale/flat-functions-1000.mgn",
+      "bytes": 41902,
+      "sha256": "1af699c7a43fceaeed552051f0890f6f164f99500fd4c412af2e47007fe495a7",
+      "expected": 0,
+      "declarations": 1000
+    },
+    {
+      "group": "scale",
+      "name": "blocks-1",
+      "path": "scale/blocks-1.mgn",
+      "bytes": 26,
+      "sha256": "c38f1b1c28fca2245ab9a1b6baa0408d893e14e03d4838fb911988b88095bcc5",
+      "expected": 0,
+      "syntax_depth": 1
+    },
+    {
+      "group": "scale",
+      "name": "branches-1",
+      "path": "scale/branches-1.mgn",
+      "bytes": 51,
+      "sha256": "b878f29a174b26a9a6016deff409b466fda63cdfe08db09c91c32bbb460d3e65",
+      "expected": 0,
+      "syntax_depth": 1
+    },
+    {
+      "group": "scale",
+      "name": "types-1",
+      "path": "scale/types-1.mgn",
+      "bytes": 34,
+      "sha256": "5a1515487fc9dab27cc3adb61be1f806247790c8a86389a8c73777416936362d",
+      "expected": 0,
+      "type_depth": 1
+    },
+    {
+      "group": "scale",
+      "name": "blocks-8",
+      "path": "scale/blocks-8.mgn",
+      "bytes": 40,
+      "sha256": "c7446f2372881112108b1e8f6846c66794ec82d9019fd9491937230f85bba293",
+      "expected": 0,
+      "syntax_depth": 8
+    },
+    {
+      "group": "scale",
+      "name": "branches-8",
+      "path": "scale/branches-8.mgn",
+      "bytes": 240,
+      "sha256": "7e132ece6519d5bf3a93bc59f620e7910a54108c758132afbe642fcd9e7f8322",
+      "expected": 0,
+      "syntax_depth": 8
+    },
+    {
+      "group": "scale",
+      "name": "types-8",
+      "path": "scale/types-8.mgn",
+      "bytes": 76,
+      "sha256": "fe1a55968f2ea12c556efa582f1b2bdac6b3c9c23a2b8bf2730c752ed98b5675",
+      "expected": 0,
+      "type_depth": 8
+    },
+    {
+      "group": "scale",
+      "name": "blocks-32",
+      "path": "scale/blocks-32.mgn",
+      "bytes": 88,
+      "sha256": "e2971349398d979a90fbe2cbf108aeef334a78c57f791f8bf19041a005e2ac2e",
+      "expected": 0,
+      "syntax_depth": 32
+    },
+    {
+      "group": "scale",
+      "name": "branches-32",
+      "path": "scale/branches-32.mgn",
+      "bytes": 888,
+      "sha256": "6a1f8a8782ae3065595ea9b35259c511e78bba380ead9e7226bc9d5190c50ce8",
+      "expected": 0,
+      "syntax_depth": 32
+    },
+    {
+      "group": "scale",
+      "name": "types-32",
+      "path": "scale/types-32.mgn",
+      "bytes": 220,
+      "sha256": "7927ba68e085faabeebf16a01d885c13d2f2d3714912c0943e762ae15bc71d71",
+      "expected": 0,
+      "type_depth": 32
+    },
+    {
+      "group": "scale",
+      "name": "blocks-128",
+      "path": "scale/blocks-128.mgn",
+      "bytes": 280,
+      "sha256": "7406175795dde73df1e2e4d57c4703ac500f46866a6b00e3fdfe141dc429af03",
+      "expected": 0,
+      "syntax_depth": 128
+    },
+    {
+      "group": "scale",
+      "name": "branches-128",
+      "path": "scale/branches-128.mgn",
+      "bytes": 3480,
+      "sha256": "3a3a4538cc799acd5e0b4c48b7c0e7d6f710a5a34ed03a807eac571757520309",
+      "expected": 0,
+      "syntax_depth": 128
+    },
+    {
+      "group": "scale",
+      "name": "types-128",
+      "path": "scale/types-128.mgn",
+      "bytes": 796,
+      "sha256": "9d205a5d9d4a5868e1ea44aff24b1d9ba9386899385ce98d55adf6fd9d08520c",
+      "expected": 0,
+      "type_depth": 128
+    },
+    {
+      "group": "scale",
+      "name": "combined",
+      "path": "scale/combined.mgn",
+      "bytes": 30949,
+      "sha256": "04faa08d659f9b3b0e1c2406b93c1e7c759129e406d18fdf327bafb64141d137",
+      "expected": 0,
+      "declarations": 1000,
+      "syntax_depth": 128,
+      "type_depth": 128
+    },
+    {
+      "group": "scale",
+      "name": "string-ascii-1024",
+      "path": "scale/string-ascii-1024.mgn",
+      "bytes": 1024,
+      "sha256": "71a13d00d8e090a332ce3734dc402908b897d487bbfe2c7afb5a0bccf8b533ab",
+      "expected": 0,
+      "target_bytes": 1024,
+      "scalars": 1024,
+      "content": "string",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "string-ascii-65536",
+      "path": "scale/string-ascii-65536.mgn",
+      "bytes": 65536,
+      "sha256": "8134411c1db8b4e5ddc457c8cb3e1d4a21c4d8fda1632683e890669445545d6d",
+      "expected": 0,
+      "target_bytes": 65536,
+      "scalars": 65536,
+      "content": "string",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "string-ascii-1048576",
+      "path": "scale/string-ascii-1048576.mgn",
+      "bytes": 1048576,
+      "sha256": "68730365c2e4b9d48710bd158b1a92755ef1276bd56e6d59fe4b78ef77736438",
+      "expected": 0,
+      "target_bytes": 1048576,
+      "scalars": 1048576,
+      "content": "string",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "string-unicode-1024",
+      "path": "scale/string-unicode-1024.mgn",
+      "bytes": 1024,
+      "sha256": "50fdfb8e8b9ab351e2e13714838ff71ac50b301c94eacaf9acc8d589e68c18d5",
+      "expected": 0,
+      "target_bytes": 1024,
+      "scalars": 742,
+      "content": "string",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "string-unicode-65536",
+      "path": "scale/string-unicode-65536.mgn",
+      "bytes": 65536,
+      "sha256": "c270abf06af56a7ccc6b7f67026a7344bf817eecaca2ef8f6a1951f0b1a99fd0",
+      "expected": 0,
+      "target_bytes": 65536,
+      "scalars": 46822,
+      "content": "string",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "string-unicode-1048576",
+      "path": "scale/string-unicode-1048576.mgn",
+      "bytes": 1048576,
+      "sha256": "99ff5076297564da3aef47e7f14ebdf4454c720668cbe5f9e07b3659610c08c3",
+      "expected": 0,
+      "target_bytes": 1048576,
+      "scalars": 748990,
+      "content": "string",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "string-bad-start",
+      "path": "scale/string-bad-start.mgn",
+      "bytes": 1048577,
+      "sha256": "c0ab3451957a3fb39e78429eb5c5d9093c4bab54bc1782062362b25d1a230ff1",
+      "expected": 1,
+      "phase": "parse",
+      "span": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "group": "scale",
+      "name": "string-bad-end",
+      "path": "scale/string-bad-end.mgn",
+      "bytes": 1048577,
+      "sha256": "3ac251c30229b2f536db241a4709010639fa2bc8b23f4c3f305a7b43cb69533b",
+      "expected": 1,
+      "phase": "parse",
+      "span": [
+        1048576,
+        1048577,
+        2,
+        748984
+      ]
+    },
+    {
+      "group": "scale",
+      "name": "comment-ascii-1024",
+      "path": "scale/comment-ascii-1024.mgn",
+      "bytes": 1024,
+      "sha256": "6e48cdf0d8686022fdceef21b011d730f7fbd5e384817b46cf180adf841cfe62",
+      "expected": 0,
+      "target_bytes": 1024,
+      "scalars": 1024,
+      "content": "comment",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "comment-ascii-65536",
+      "path": "scale/comment-ascii-65536.mgn",
+      "bytes": 65536,
+      "sha256": "09d9883a281f6fc8466a8e6afe34490462f96207ad45791ea3b248c1a75b563c",
+      "expected": 0,
+      "target_bytes": 65536,
+      "scalars": 65536,
+      "content": "comment",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "comment-ascii-1048576",
+      "path": "scale/comment-ascii-1048576.mgn",
+      "bytes": 1048576,
+      "sha256": "c6494af73103aaece31b4b51db97c8bde6257d33b79937c7aca430064ff5603e",
+      "expected": 0,
+      "target_bytes": 1048576,
+      "scalars": 1048576,
+      "content": "comment",
+      "encoding": "ascii"
+    },
+    {
+      "group": "scale",
+      "name": "comment-unicode-1024",
+      "path": "scale/comment-unicode-1024.mgn",
+      "bytes": 1024,
+      "sha256": "8f8e10e0df0bacf68443a6cdc890d63b20a9a9d83fec422fbf6958624d539960",
+      "expected": 0,
+      "target_bytes": 1024,
+      "scalars": 736,
+      "content": "comment",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "comment-unicode-65536",
+      "path": "scale/comment-unicode-65536.mgn",
+      "bytes": 65536,
+      "sha256": "8db5b74770a1662c6c61273e7d89bc97d827aab9d6d9fcfbbf5e7c4d4d3e37b7",
+      "expected": 0,
+      "target_bytes": 65536,
+      "scalars": 46816,
+      "content": "comment",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "comment-unicode-1048576",
+      "path": "scale/comment-unicode-1048576.mgn",
+      "bytes": 1048576,
+      "sha256": "7cbf508e2a95be3775b9a2665b8c2fc87227269b617df0033f69e77df62bb214",
+      "expected": 0,
+      "target_bytes": 1048576,
+      "scalars": 748990,
+      "content": "comment",
+      "encoding": "unicode"
+    },
+    {
+      "group": "scale",
+      "name": "comment-bad-start",
+      "path": "scale/comment-bad-start.mgn",
+      "bytes": 1048577,
+      "sha256": "77fa149e0638a8bb40a0a849d935565f4af1cbf2d606e32c7e1f15960cd5f63a",
+      "expected": 1,
+      "phase": "parse",
+      "span": [
+        0,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "group": "scale",
+      "name": "comment-bad-end",
+      "path": "scale/comment-bad-end.mgn",
+      "bytes": 1048577,
+      "sha256": "88801e7ba2d9ef7739560d14a6139f5167f31c7d676dd5025d5b04026f97a3c5",
+      "expected": 1,
+      "phase": "parse",
+      "span": [
+        1048576,
+        1048577,
+        2,
+        1
+      ]
+    }
+  ]
+}

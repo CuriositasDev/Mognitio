@@ -1,0 +1,64 @@
+{
+  "identity": {
+    "build": "764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f",
+    "components": {
+      "compiler": "764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f",
+      "frontend": "764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f",
+      "lsp": "764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f",
+      "stdlib": "764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f"
+    },
+    "inputs": {
+      "baseVersion": "1.4.0",
+      "commit": "11c4f4486da767c9c56a23a3053b401001c94143",
+      "dirty": true,
+      "flags": [
+        "--no-userinit",
+        "--no-sysinit"
+      ],
+      "generator": 1,
+      "imageDigest": "development-host-ubuntu-26.04",
+      "inputCoreDigest": "31a279842df5c579ce34c074e41c7be4f52a02b84724abc462b54cf5a1351662",
+      "mode": "development",
+      "prerelease": "dev.0",
+      "runtimeDigest": "53b3413f9895b7cd80e14fc785b6030723b37734b7492d3c00bdc4f6f24ea669",
+      "runtimeNoticeDigest": "3107a0b340a0d718c5e5525ce4d4060b20b0fe125a2ea10548133eddda6c26f1",
+      "runtimeVersion": "SBCL 2.6.0.debian",
+      "schema": 1,
+      "source": "f4cb6f177346726f3ffea13c9bde940a7353b01b090db82eac443db90dc8c58a",
+      "target": "linux-amd64"
+    },
+    "schema": 1,
+    "version": "1.4.0-dev.0+g11c4f4486da767c9c56a23a3053b401001c94143.dirty.sf4cb6f177346726f3ffea13c9bde940a7353b01b090db82eac443db90dc8c58a.b764c348a357e0df2edb61188054ddc036d1481c8319b5c5d0c84a9a6a17dae8f"
+  },
+  "files": [
+    "THIRD_PARTY_NOTICES.txt",
+    "bin/mgn",
+    "bin/mognitio-lsp",
+    "identity.json",
+    "lsp/budget.py",
+    "lsp/check_payload.py",
+    "lsp/framing.py",
+    "lsp/payload.py",
+    "lsp/projection.py",
+    "lsp/server.py",
+    "lsp/snapshot.py",
+    "lsp/worker_exec.py",
+    "payload.json",
+    "runtime/mognitio.core",
+    "runtime/sbcl"
+  ],
+  "records": [
+    {
+      "test": "v015-analysis.py",
+      "exit": 0,
+      "stdout": "PASS analysis-only entry/test/panic, recovery, Function parameter precedence, intrinsic method; examples=19\n",
+      "stderr": ""
+    },
+    {
+      "test": "v015-toolchain.py",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "......................\n----------------------------------------------------------------------\nRan 22 tests in 7.337s\n\nOK\n"
+    }
+  ]
+}

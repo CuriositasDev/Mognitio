@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "empty summary",
+    "missing identity",
+    "duplicate identity",
+    "failed individual test",
+    "missing M execution",
+    "missing external case",
+    "missing measurement execution",
+    "missing measurement artifact",
+    "failed measurement assertion",
+    "empty compiler suite",
+    "missing-one compiler suite"
+  ],
+  "passed": 11,
+  "product_commit": "0b11655172c636bb44c856dc3469a99b33f1071c",
+  "compiler_commit": "11c4f4486da767c9c56a23a3053b401001c94143"
+}

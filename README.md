@@ -8,8 +8,8 @@ share the same frontend; native generation retains the scalar 1.3 subset.
 The compiler is built explicitly from source with a fixed 1.2.0 seed. It is not
 included in Debian packages, APT installations or offline bundles, and does not
 replace the normal backend. Parsing the compiler source is separate from
-self-compilation. The [1.3 acceptance record](verification/v1.3.0-review.md)
-describes the inherited native contract.
+self-compilation. The [1.4 acceptance record](verification/v1.4.0.md) covers
+complete-source parsing and the inherited native contract.
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -39,7 +39,7 @@ a compatible extension update is a separate project.
 - [Language tests](examples/testing/README.md): `@test`, `assert`, and `mgn test`.
 - [File converter](examples/file-converter/README.md): arguments and text I/O.
 - [Directory converter](examples/directory-converter/README.md): explicit tree traversal.
-- [Implementation verification](verification/v0.14.0.md): evidence and limits.
+- [Implementation verification](verification/v1.4.0.md): current evidence and limits.
 - [Verification commands](verification/README.md): reproduce the checks.
 - [Toolchain distribution](packaging/README.md): pinned builds, APT staging, and offline installation.
 - [Compatibility policy](COMPATIBILITY.md): backward compatibility within a major version.

@@ -30,6 +30,8 @@ def main():
   assert row['exit']==(1 if row['phase'] else 0)
   if 'build_result' in row:assert row['build_result']['passed']
  structural=load('structural.json');assert len(structural)==2 and {x['reverse'] for x in structural}=={True,False} and all(x['exit']==0 for x in structural)
+ assert all('goldens=4' in x['stdout'] and 'equivalence_pairs=3' in x['stdout'] and 'positive=18 negative=3' in x['stdout'] for x in structural)
+ design=load('design-review.json');assert len(design['cases'])==11 and {c['id'] for c in design['cases']}=={f'DR140-T{i:02}' for i in range(1,12)} and all(c['result']=='pass' for c in design['cases'])
  mutations=load('review-mutants.json');assert len(mutations)==5 and all(r['baseline']['passes'] and not r['mutant']['passes'] for r in mutations)
  assert len(load('parse-mutations.json')['records'])==6 and all(r['passed'] for r in load('parse-mutations.json')['records'])
  assert len(load('parse-compatibility.json')['records'])==4 and all(r['normal_exit']==0 and r['parse_exit']==1 for r in load('parse-compatibility.json')['records'])

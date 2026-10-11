@@ -113,14 +113,38 @@ def expression_core(data,text,families):
    elif name.startswith('binary_'):
     for left,right in itertools.product(visit(children[0]),visit(children[2])):answers.add((name[7:],left,right))
    elif name=='group':answers.update(('group',x) for x in visit(children[1]))
+   elif name=='field':answers.update(('field',x,tokens.tokens[children[2][1]//2][0]) for x in visit(children[0]))
+   elif name=='call':
+    for receiver,args in itertools.product(visit(children[0]),arguments(children[2])):answers.add(('call',receiver,args))
+   elif name=='method':
+    for receiver,args in itertools.product(visit(children[0]),arguments(children[4])):answers.add(('method',receiver,tokens.tokens[children[2][1]//2][0],args))
    else:
     assert len(children)==1 and children[0][0]>0,(name,children)
     answers.update(visit(children[0]))
   return answers
+ def arguments(key):
+  answers=set()
+  for rid,children in families[key]:
+   name=data['rules'][rid]['name']
+   if name=='expressions_empty':answers.add(())
+   elif name=='expressions':answers.update(arguments(children[0]))
+   elif name=='expressions_one':answers.update((x,) for x in visit(children[0]))
+   elif name=='expressions_append':
+    for prefix,value in itertools.product(arguments(children[0]),visit(children[2])):answers.add(prefix+(value,))
+   else:raise AssertionError(name)
+  return answers
  expressions=[children[5] for fs in families.values() for rid,children in fs if data['rules'][rid]['name']=='let_binding']
  assert len(expressions)==1
  return visit(expressions[0])
+def structural_shape(root,families):
+ cache={}
+ def visit(key):
+  if key[0]<0:return ('terminal',key[0])
+  if key not in cache:cache[key]=('symbol',key[0],tuple(sorted((rid,tuple(visit(c) for c in children)) for rid,children in families[key])))
+  return cache[key]
+ return visit(root)
 GOLDENS={
+ 'namespace A;let x:Int=f(x)->field->method(y);':('method',('field',('call',('name','f'),(('name','x'),)),'field'),'method',(('name','y'),)),
  'namespace A;let x:Int=1+2*3;':('add',('int','1'),('mul',('int','2'),('int','3'))),
  'namespace A;let x:Int=(1+2)*3;':('mul',('group',('add',('int','1'),('int','2'))),('int','3')),
  'namespace A;let x:Bool=(a<b)==true;':('eq',('group',('lt',('name','a'),('name','b'))),('bool','true')),
@@ -131,7 +155,8 @@ def main():
  positive=['namespace App;', 'namespace A;let x:Int=1+2*3;', 'namespace A;let x:Int=(1+2)*3;', 'namespace A;let x:Int=f<T>(a);', 'namespace A;let x:Int=f<T>==g;', 'namespace A;let x:Int=branch when{f<T>=>1,else=>2};', 'namespace A;let x:List<Int>=List<Int>[];', 'namespace A;let x:Int={let y:Int=1;y};']
  positive += ['namespace A;let x:Int=a->m();','namespace A;let x:Int=(a->f)(b);','namespace A;let x:Int=a->m<T>();','namespace A;let x:Int=loop while(false){}==unit;']
  positive.append('namespace A;let x:Bool=(a<b)==true;')
- golden_count=0;mutation_controls=set()
+ positive += ['namespace A;let x:Int=f<T> == g;','namespace A;let x:Int=branch when{f<T> =>1,else=>2};','namespace A;let x:Int=f(x)->field->method(y);','namespace A;let x:Int=f<T0,T1>(x);','namespace A;let x:Int=f<X,Y>(x);']
+ golden_count=0;mutation_controls=set();shapes={}
  negative=['namespace A;let x:Int=a<b<c;','namespace A;type T=product{x:Int};','namespace A;let x:Int=branch when{true=>1};']
  with tempfile.TemporaryDirectory(prefix='mgnc-oracle-') as work:
   for i,text in enumerate(positive+negative):
@@ -142,6 +167,7 @@ def main():
    actual_root,actual=decode(p.stdout);assert actual_root==expected_root
    observed=reachable(actual_root,actual);wanted=reachable(expected_root,expected)
    assert observed==wanted,(i,'forest differs')
+   shapes[text]=structural_shape(actual_root,observed)
    if text in GOLDENS:
     assert expression_core(data,text,observed)=={GOLDENS[text]},(i,'handwritten precedence/grouping golden')
     golden_count+=1
@@ -154,6 +180,8 @@ def main():
    if ambiguous:
     dropped={key:set(fs) for key,fs in observed.items()};dropped[ambiguous].pop()
     assert reachable(actual_root,dropped)!=wanted;mutation_controls.add('family-deletion')
- assert golden_count==3 and len(mutation_controls)==2,(golden_count,mutation_controls)
- print(f'FOREST_ORACLE_OK goldens={golden_count} mutation_controls={len(mutation_controls)} positive={len(positive)} negative={len(negative)} all_reachable_families=True')
+ pairs=[('namespace A;let x:Int=f<T>==g;','namespace A;let x:Int=f<T> == g;'),('namespace A;let x:Int=branch when{f<T>=>1,else=>2};','namespace A;let x:Int=branch when{f<T> =>1,else=>2};'),('namespace A;let x:Int=f<T0,T1>(x);','namespace A;let x:Int=f<X,Y>(x);')]
+ for left,right in pairs:assert shapes[left]==shapes[right],('structural equivalence',left,right)
+ assert golden_count==4 and len(mutation_controls)==2,(golden_count,mutation_controls)
+ print(f'FOREST_ORACLE_OK goldens={golden_count} mutation_controls={len(mutation_controls)} equivalence_pairs={len(pairs)} positive={len(positive)} negative={len(negative)} all_reachable_families=True')
 if __name__=='__main__':main()

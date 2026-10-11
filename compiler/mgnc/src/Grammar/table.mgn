@@ -1,0 +1,454 @@
+namespace Mgnc\Grammar;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
+use Mgnc\Source\{Lexeme};
+use Mgnc\GrammarData\{Slot as StoredSlot,Prediction as StoredPrediction};
+use Mgnc\GrammarPart0\{extend as extend0};
+use Mgnc\GrammarPart1\{extend as extend1};
+use Mgnc\GrammarPart2\{extend as extend2};
+use Mgnc\GrammarPart3\{extend as extend3};
+use Mgnc\GrammarPart4\{extend as extend4};
+use Mgnc\GrammarPart5\{extend as extend5};
+use Mgnc\GrammarPart6\{extend as extend6};
+use Mgnc\GrammarPart7\{extend as extend7};
+use Mgnc\GrammarPart8\{extend as extend8};
+// Generated structural table. Production IDs are independent of source partitioning.
+public alias Slot=StoredSlot;
+public alias Prediction=StoredPrediction;
+let makeSlots:Function():Paged<Slot>=function():Paged<Slot>{
+ var result:Paged<Slot>=empty<Slot>();
+ result=extend0(result);
+ result=extend1(result);
+ result=extend2(result);
+ result=extend3(result);
+ result=extend4(result);
+ result=extend5(result);
+ result=extend6(result);
+ result=extend7(result);
+ result=extend8(result);
+ result
+};
+public let slots:Paged<Slot>=makeSlots();
+let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Prediction>>{
+ var result:Paged<List<Prediction>>=empty<List<Prediction>>();
+ result=push<List<Prediction>>(result,List<Prediction>[]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:0,first:1,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:4,first:1,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:8,first:4,nullable:false},Prediction{slot:10,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:14,first:0,nullable:true},Prediction{slot:15,first:16,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:18,first:16,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:26,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:29,first:0,nullable:true},Prediction{slot:30,first:128,nullable:false},Prediction{slot:32,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:36,first:4,nullable:false},Prediction{slot:38,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:42,first:0,nullable:true},Prediction{slot:43,first:100713984,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:46,first:50176,nullable:false},Prediction{slot:48,first:33554432,nullable:false},Prediction{slot:50,first:67108864,nullable:false},Prediction{slot:52,first:512,nullable:false},Prediction{slot:55,first:512,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:58,first:1024,nullable:false},Prediction{slot:68,first:1024,nullable:false},Prediction{slot:78,first:16384,nullable:false},Prediction{slot:85,first:32768,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:92,first:0,nullable:true},Prediction{slot:93,first:65536,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:95,first:65536,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:99,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:102,first:0,nullable:true},Prediction{slot:103,first:128,nullable:false},Prediction{slot:105,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:109,first:4,nullable:false},Prediction{slot:111,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:115,first:0,nullable:true},Prediction{slot:116,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:122,first:0,nullable:true},Prediction{slot:123,first:4,nullable:false},Prediction{slot:127,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:134,first:2097152,nullable:false},Prediction{slot:136,first:2097152,nullable:false},Prediction{slot:139,first:4194304,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:146,first:0,nullable:true},Prediction{slot:147,first:6291456,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:150,first:0,nullable:true},Prediction{slot:151,first:128,nullable:false},Prediction{slot:153,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:157,first:65536,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:161,first:31981572,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:164,first:0,nullable:true},Prediction{slot:165,first:128,nullable:false},Prediction{slot:167,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:171,first:6291456,nullable:false},Prediction{slot:173,first:25690116,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:175,first:8388608,nullable:false},Prediction{slot:177,first:16777216,nullable:false},Prediction{slot:180,first:524288,nullable:false},Prediction{slot:184,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:186,first:8388608,nullable:false},Prediction{slot:188,first:524288,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:192,first:8388608,nullable:false},Prediction{slot:194,first:16777216,nullable:false},Prediction{slot:197,first:524288,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:201,first:33554432,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:209,first:67108864,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:217,first:134217728,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:225,first:0,nullable:true},Prediction{slot:226,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:229,first:0,nullable:true},Prediction{slot:230,first:128,nullable:false},Prediction{slot:232,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:236,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:240,first:32,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:245,first:0,nullable:true},Prediction{slot:246,first:299445399042129956,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:249,first:33554432,nullable:false},Prediction{slot:251,first:67108864,nullable:false},Prediction{slot:253,first:268435456,nullable:false},Prediction{slot:257,first:536870912,nullable:false},Prediction{slot:261,first:1073741824,nullable:false},Prediction{slot:264,first:1073741824,nullable:false},Prediction{slot:268,first:2147483648,nullable:false},Prediction{slot:271,first:299445394914934820,nullable:false},Prediction{slot:276,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:279,first:0,nullable:true},Prediction{slot:280,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:282,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:284,first:299445394914934820,nullable:false},Prediction{slot:286,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:290,first:299445394914934820,nullable:false},Prediction{slot:292,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:296,first:299445394914934820,nullable:false},Prediction{slot:298,first:299445394914934820,nullable:false},Prediction{slot:302,first:299445394914934820,nullable:false},Prediction{slot:306,first:299445394914934820,nullable:false},Prediction{slot:310,first:299445394914934820,nullable:false},Prediction{slot:314,first:299445394914934820,nullable:false},Prediction{slot:318,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:322,first:299445394914934820,nullable:false},Prediction{slot:324,first:299445394914934820,nullable:false},Prediction{slot:328,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:332,first:299445394914934820,nullable:false},Prediction{slot:334,first:299445394914934820,nullable:false},Prediction{slot:338,first:299445394914934820,nullable:false},Prediction{slot:342,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:346,first:299419006619090980,nullable:false},Prediction{slot:348,first:16777216,nullable:false},Prediction{slot:351,first:8796093022208,nullable:false},Prediction{slot:354,first:17592186044416,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:357,first:299419006619090980,nullable:false},Prediction{slot:366,first:299419006619090980,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:359,first:299419006619090980,nullable:false},Prediction{slot:361,first:299419006619090980,nullable:false},Prediction{slot:370,first:299419006619090980,nullable:false},Prediction{slot:377,first:299419006619090980,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:385,first:0,nullable:true},Prediction{slot:386,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:389,first:299445394914934820,nullable:false},Prediction{slot:391,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:395,first:8388608,nullable:false},Prediction{slot:397,first:70368744177664,nullable:false},Prediction{slot:399,first:140737488355328,nullable:false},Prediction{slot:401,first:281474976710656,nullable:false},Prediction{slot:403,first:562949953421312,nullable:false},Prediction{slot:405,first:4,nullable:false},Prediction{slot:407,first:524288,nullable:false},Prediction{slot:411,first:32,nullable:false},Prediction{slot:413,first:134217728,nullable:false},Prediction{slot:415,first:1125899906842624,nullable:false},Prediction{slot:418,first:1125899906842624,nullable:false},Prediction{slot:425,first:1125899906842624,nullable:false},Prediction{slot:434,first:9007199254740992,nullable:false},Prediction{slot:444,first:9007199254740992,nullable:false},Prediction{slot:451,first:288230376151711744,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:454,first:4,nullable:false},Prediction{slot:456,first:4,nullable:false},Prediction{slot:459,first:4,nullable:false},Prediction{slot:464,first:4,nullable:false},Prediction{slot:469,first:4,nullable:false},Prediction{slot:474,first:4,nullable:false},Prediction{slot:478,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:485,first:4,nullable:false},Prediction{slot:487,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:490,first:0,nullable:true},Prediction{slot:491,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:494,first:4,nullable:false},Prediction{slot:496,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:500,first:4,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:504,first:0,nullable:true},Prediction{slot:505,first:299445394914934820,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:511,first:0,nullable:true},Prediction{slot:512,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:514,first:6291456,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:517,first:0,nullable:true},Prediction{slot:518,first:128,nullable:false},Prediction{slot:520,first:128,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:524,first:6291456,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:528,first:6291456,nullable:false},Prediction{slot:532,first:6291456,nullable:false}]);
+ result
+};
+public let predictions:Paged<List<Prediction>>=makePredictions();
+public let ntModule:Int=1;
+public let ntNamespace:Int=2;
+public let ntPath:Int=3;
+public let ntUses:Int=4;
+public let ntUse:Int=5;
+public let ntImports:Int=6;
+public let ntImportRest:Int=7;
+public let ntImport:Int=8;
+public let ntDeclarations:Int=9;
+public let ntTop:Int=10;
+public let ntCompile:Int=11;
+public let ntParametersOpt:Int=12;
+public let ntParameters:Int=13;
+public let ntGenericParameters:Int=14;
+public let ntGenericParameterRest:Int=15;
+public let ntGenericParameter:Int=16;
+public let ntFields:Int=17;
+public let ntVariants:Int=18;
+public let ntType:Int=19;
+public let ntTypesOpt:Int=20;
+public let ntTypeRest:Int=21;
+public let ntArguments:Int=22;
+public let ntGenericArguments:Int=23;
+public let ntArgumentRest:Int=24;
+public let ntArgument:Int=25;
+public let ntValueArgument:Int=26;
+public let ntPositiveScalar:Int=27;
+public let ntScalar:Int=28;
+public let ntLet:Int=29;
+public let ntVar:Int=30;
+public let ntFunction:Int=31;
+public let ntParamsOpt:Int=32;
+public let ntParamRest:Int=33;
+public let ntParam:Int=34;
+public let ntBlock:Int=35;
+public let ntStatements:Int=36;
+public let ntStatement:Int=37;
+public let ntTail:Int=38;
+public let ntExpr:Int=39;
+public let ntOr:Int=40;
+public let ntAnd:Int=41;
+public let ntComparison:Int=42;
+public let ntAdd:Int=43;
+public let ntMultiply:Int=44;
+public let ntUnary:Int=45;
+public let ntPostfix:Int=46;
+public let ntInvocable:Int=47;
+public let ntExpressionsOpt:Int=48;
+public let ntExpressions:Int=49;
+public let ntPrimary:Int=50;
+public let ntNamed:Int=51;
+public let ntTypeName:Int=52;
+public let ntValuesOpt:Int=53;
+public let ntValues:Int=54;
+public let ntValue:Int=55;
+public let ntConditions:Int=56;
+public let ntCommaOpt:Int=57;
+public let ntOnArms:Int=58;
+public let ntOnArmRest:Int=59;
+public let ntOnArm:Int=60;
+public let ntPattern:Int=61;
+public let ruleModule:Int=0;
+public let ruleNamespace:Int=1;
+public let rulePathName:Int=2;
+public let rulePathExtend:Int=3;
+public let ruleUsesEmpty:Int=4;
+public let ruleUsesAppend:Int=5;
+public let ruleImport:Int=6;
+public let ruleImports:Int=7;
+public let ruleImportsEnd:Int=8;
+public let ruleImportsTrailing:Int=9;
+public let ruleImportsMore:Int=10;
+public let ruleImportName:Int=11;
+public let ruleImportAlias:Int=12;
+public let ruleDeclarationsEmpty:Int=13;
+public let ruleDeclarationsAppend:Int=14;
+public let ruleTopCompile:Int=15;
+public let ruleTopLet:Int=16;
+public let ruleTopVar:Int=17;
+public let rulePublicCompile:Int=18;
+public let rulePublicLet:Int=19;
+public let ruleTypeProduct:Int=20;
+public let ruleTypeSum:Int=21;
+public let ruleAlias:Int=22;
+public let ruleTemplate:Int=23;
+public let ruleParametersNone:Int=24;
+public let ruleParametersSome:Int=25;
+public let ruleParameters:Int=26;
+public let ruleGenericParameters:Int=27;
+public let ruleGenericParametersEnd:Int=28;
+public let ruleGenericParametersTrailing:Int=29;
+public let ruleGenericParametersMore:Int=30;
+public let ruleTypeParameter:Int=31;
+public let ruleValueParameter:Int=32;
+public let ruleFieldsEmpty:Int=33;
+public let ruleFieldsAppend:Int=34;
+public let ruleVariantsEmpty:Int=35;
+public let ruleVariantsEmptyPayload:Int=36;
+public let ruleVariantsPayload:Int=37;
+public let ruleTypeName:Int=38;
+public let ruleTypeApply:Int=39;
+public let ruleTypeFunction:Int=40;
+public let ruleTypesEmpty:Int=41;
+public let ruleTypes:Int=42;
+public let ruleTypesEnd:Int=43;
+public let ruleTypesTrailing:Int=44;
+public let ruleTypesMore:Int=45;
+public let ruleArguments:Int=46;
+public let ruleGenericArguments:Int=47;
+public let ruleArgumentsEnd:Int=48;
+public let ruleArgumentsTrailing:Int=49;
+public let ruleArgumentsMore:Int=50;
+public let ruleArgumentType:Int=51;
+public let ruleArgumentValue:Int=52;
+public let ruleValueDigits:Int=53;
+public let ruleValueNegative:Int=54;
+public let ruleValueGroup:Int=55;
+public let ruleValueReference:Int=56;
+public let rulePositiveDigits:Int=57;
+public let rulePositiveGroup:Int=58;
+public let ruleScalarDigits:Int=59;
+public let ruleScalarNegative:Int=60;
+public let ruleScalarGroup:Int=61;
+public let ruleLetBinding:Int=62;
+public let ruleVarBinding:Int=63;
+public let ruleFunction:Int=64;
+public let ruleParamsEmpty:Int=65;
+public let ruleParams:Int=66;
+public let ruleParamsEnd:Int=67;
+public let ruleParamsTrailing:Int=68;
+public let ruleParamsMore:Int=69;
+public let ruleParameter:Int=70;
+public let ruleBlock:Int=71;
+public let ruleStatementsEmpty:Int=72;
+public let ruleStatementsAppend:Int=73;
+public let ruleStatementLet:Int=74;
+public let ruleStatementVar:Int=75;
+public let ruleStatementReturn:Int=76;
+public let ruleStatementDiscard:Int=77;
+public let ruleStatementBreak:Int=78;
+public let ruleStatementBreakValue:Int=79;
+public let ruleStatementContinue:Int=80;
+public let ruleStatementAssign:Int=81;
+public let ruleStatementExpression:Int=82;
+public let ruleNoTail:Int=83;
+public let ruleTail:Int=84;
+public let ruleExpression:Int=85;
+public let ruleOrBase:Int=86;
+public let ruleBinaryOr:Int=87;
+public let ruleAndBase:Int=88;
+public let ruleBinaryAnd:Int=89;
+public let ruleComparisonBase:Int=90;
+public let ruleBinaryLt:Int=91;
+public let ruleBinaryLe:Int=92;
+public let ruleBinaryGt:Int=93;
+public let ruleBinaryGe:Int=94;
+public let ruleBinaryEq:Int=95;
+public let ruleBinaryNe:Int=96;
+public let ruleAddBase:Int=97;
+public let ruleBinaryAdd:Int=98;
+public let ruleBinarySub:Int=99;
+public let ruleMultiplyBase:Int=100;
+public let ruleBinaryMul:Int=101;
+public let ruleBinaryDiv:Int=102;
+public let ruleBinaryRem:Int=103;
+public let ruleUnaryBase:Int=104;
+public let ruleUnaryNeg:Int=105;
+public let ruleUnaryNot:Int=106;
+public let ruleUnaryTry:Int=107;
+public let rulePostfixBase:Int=108;
+public let ruleInvocableBase:Int=109;
+public let ruleCall:Int=110;
+public let ruleField:Int=111;
+public let ruleMethod:Int=112;
+public let ruleGenericMethod:Int=113;
+public let ruleExpressionsEmpty:Int=114;
+public let ruleExpressions:Int=115;
+public let ruleExpressionsOne:Int=116;
+public let ruleExpressionsAppend:Int=117;
+public let ruleInteger:Int=118;
+public let ruleString:Int=119;
+public let ruleTrue:Int=120;
+public let ruleFalse:Int=121;
+public let ruleUnit:Int=122;
+public let rulePrimaryName:Int=123;
+public let ruleGroup:Int=124;
+public let rulePrimaryBlock:Int=125;
+public let rulePrimaryFunction:Int=126;
+public let ruleLoopForever:Int=127;
+public let ruleLoopWhile:Int=128;
+public let ruleLoopOver:Int=129;
+public let ruleBranchWhen:Int=130;
+public let ruleBranchOn:Int=131;
+public let rulePanic:Int=132;
+public let ruleName:Int=133;
+public let ruleGenericApply:Int=134;
+public let ruleProduct:Int=135;
+public let ruleScalarLiteral:Int=136;
+public let ruleList:Int=137;
+public let ruleVariant:Int=138;
+public let ruleVariantPayload:Int=139;
+public let ruleConstructName:Int=140;
+public let ruleConstructGeneric:Int=141;
+public let ruleValuesEmpty:Int=142;
+public let ruleValues:Int=143;
+public let ruleValuesOne:Int=144;
+public let ruleValuesAppend:Int=145;
+public let ruleFieldValue:Int=146;
+public let ruleConditionsEmpty:Int=147;
+public let ruleConditionsAppend:Int=148;
+public let ruleCommaNone:Int=149;
+public let ruleCommaSome:Int=150;
+public let ruleOnArms:Int=151;
+public let ruleOnArmsEnd:Int=152;
+public let ruleOnArmsTrailing:Int=153;
+public let ruleOnArmsMore:Int=154;
+public let ruleOnArm:Int=155;
+public let rulePatternEmpty:Int=156;
+public let rulePatternPayload:Int=157;
+public let closeTerminal:Int=-18;
+public type Lookahead=product{ordinary:Int;extra:Int;};
+public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{
+ let ordinary:Int=branch when{
+ token->kind==1=>4,
+ token->kind==2=>8388608,
+ token->kind==5=>70368744177664,
+ token->text=="namespace"=>1,
+ token->text==";"=>2,
+ token->text=="\\"=>8,
+ token->text=="use"=>16,
+ token->text=="{"=>32,
+ token->text=="}"=>64,
+ token->text==","=>128,
+ token->text=="as"=>256,
+ token->text=="public"=>512,
+ token->text=="type"=>1024,
+ token->text=="="=>2048,
+ token->text=="product"=>4096,
+ token->text=="sum"=>8192,
+ token->text=="alias"=>16384,
+ token->text=="template"=>32768,
+ token->text=="<"=>65536,
+ token->text==":"=>262144,
+ token->text=="("=>524288,
+ token->text==")"=>1048576,
+ token->text=="-"=>16777216,
+ token->text=="let"=>33554432,
+ token->text=="var"=>67108864,
+ token->text=="function"=>134217728,
+ token->text=="return"=>268435456,
+ token->text=="discard"=>536870912,
+ token->text=="break"=>1073741824,
+ token->text=="continue"=>2147483648,
+ token->text=="||"=>4294967296,
+ token->text=="&&"=>8589934592,
+ token->text=="<="=>17179869184,
+ token->text==">"=>34359738368,
+ token->text==">="=>68719476736,
+ token->text=="=="=>137438953472,
+ token->text=="!="=>274877906944,
+ token->text=="+"=>549755813888,
+ token->text=="*"=>1099511627776,
+ token->text=="/"=>2199023255552,
+ token->text=="%"=>4398046511104,
+ token->text=="!"=>8796093022208,
+ token->text=="try"=>17592186044416,
+ token->text=="->"=>35184372088832,
+ token->text=="true"=>140737488355328,
+ token->text=="false"=>281474976710656,
+ token->text=="unit"=>562949953421312,
+ token->text=="loop"=>1125899906842624,
+ token->text=="while"=>2251799813685248,
+ token->text=="over"=>4503599627370496,
+ token->text=="branch"=>9007199254740992,
+ token->text=="when"=>18014398509481984,
+ token->text=="else"=>36028797018963968,
+ token->text=="=>"=>72057594037927936,
+ token->text=="on"=>144115188075855872,
+ token->text=="panic"=>288230376151711744,
+ token->text=="["=>576460752303423488,
+ token->text=="]"=>1152921504606846976,
+ token->text=="::"=>2305843009213693952,
+ else=>0,
+ };
+ let extra:Int=branch when{token->kind==1=>branch when{token->text=="Function"=>4194304,else=>2097152},close->text==">"=>131072,else=>0};
+ Lookahead{ordinary:ordinary,extra:extra}
+};
+public let possible:Function(Prediction,Lookahead):Bool=function(prediction:Prediction,ahead:Lookahead):Bool{
+ prediction->nullable||(ahead->ordinary>0&&(prediction->first/ahead->ordinary)%2==1)||(ahead->extra>0&&(prediction->first/ahead->extra)%2==1)
+};
+public let matches:Function(Int,Lexeme):Bool=function(symbol:Int,token:Lexeme):Bool{
+ branch when{
+  symbol==-1=>token->text=="namespace",
+  symbol==-2=>token->text==";",
+  symbol==-3=>token->kind==1,
+  symbol==-4=>token->text=="\\",
+  symbol==-5=>token->text=="use",
+  symbol==-6=>token->text=="{",
+  symbol==-7=>token->text=="}",
+  symbol==-8=>token->text==",",
+  symbol==-9=>token->text=="as",
+  symbol==-10=>token->text=="public",
+  symbol==-11=>token->text=="type",
+  symbol==-12=>token->text=="=",
+  symbol==-13=>token->text=="product",
+  symbol==-14=>token->text=="sum",
+  symbol==-15=>token->text=="alias",
+  symbol==-16=>token->text=="template",
+  symbol==-17=>token->text=="<",
+  symbol==-18=>token->text==">",
+  symbol==-19=>token->text==":",
+  symbol==-20=>token->text=="(",
+  symbol==-21=>token->text==")",
+  symbol==-22=>token->kind==1&&token->text!="Function",
+  symbol==-23=>token->kind==1&&token->text=="Function",
+  symbol==-24=>token->kind==2,
+  symbol==-25=>token->text=="-",
+  symbol==-26=>token->text=="let",
+  symbol==-27=>token->text=="var",
+  symbol==-28=>token->text=="function",
+  symbol==-29=>token->text=="return",
+  symbol==-30=>token->text=="discard",
+  symbol==-31=>token->text=="break",
+  symbol==-32=>token->text=="continue",
+  symbol==-33=>token->text=="||",
+  symbol==-34=>token->text=="&&",
+  symbol==-35=>token->text=="<=",
+  symbol==-36=>token->text==">",
+  symbol==-37=>token->text==">=",
+  symbol==-38=>token->text=="==",
+  symbol==-39=>token->text=="!=",
+  symbol==-40=>token->text=="+",
+  symbol==-41=>token->text=="*",
+  symbol==-42=>token->text=="/",
+  symbol==-43=>token->text=="%",
+  symbol==-44=>token->text=="!",
+  symbol==-45=>token->text=="try",
+  symbol==-46=>token->text=="->",
+  symbol==-47=>token->kind==5,
+  symbol==-48=>token->text=="true",
+  symbol==-49=>token->text=="false",
+  symbol==-50=>token->text=="unit",
+  symbol==-51=>token->text=="loop",
+  symbol==-52=>token->text=="while",
+  symbol==-53=>token->text=="over",
+  symbol==-54=>token->text=="branch",
+  symbol==-55=>token->text=="when",
+  symbol==-56=>token->text=="else",
+  symbol==-57=>token->text=="=>",
+  symbol==-58=>token->text=="on",
+  symbol==-59=>token->text=="panic",
+  symbol==-60=>token->text=="[",
+  symbol==-61=>token->text=="]",
+  symbol==-62=>token->text=="::",
+  else=>false,
+ }
+};

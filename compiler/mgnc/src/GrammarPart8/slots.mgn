@@ -1,0 +1,37 @@
+namespace Mgnc\GrammarPart8;
+use Mgnc\Data\{Paged,push};
+use Mgnc\GrammarData\{Slot};
+// Generated fixed grammar slots; every part is included in the C1 inventory.
+public let extend:Function(Paged<Slot>):Paged<Slot>=function(initial:Paged<Slot>):Paged<Slot>{
+ var result:Paged<Slot>=initial;
+ loop over(List<Slot>[
+ Slot{lhs:57,rule:150,dot:0,next:-8},
+ Slot{lhs:57,rule:150,dot:1,next:0},
+ Slot{lhs:58,rule:151,dot:0,next:60},
+ Slot{lhs:58,rule:151,dot:1,next:59},
+ Slot{lhs:58,rule:151,dot:2,next:0},
+ Slot{lhs:59,rule:152,dot:0,next:0},
+ Slot{lhs:59,rule:153,dot:0,next:-8},
+ Slot{lhs:59,rule:153,dot:1,next:0},
+ Slot{lhs:59,rule:154,dot:0,next:-8},
+ Slot{lhs:59,rule:154,dot:1,next:60},
+ Slot{lhs:59,rule:154,dot:2,next:59},
+ Slot{lhs:59,rule:154,dot:3,next:0},
+ Slot{lhs:60,rule:155,dot:0,next:61},
+ Slot{lhs:60,rule:155,dot:1,next:-57},
+ Slot{lhs:60,rule:155,dot:2,next:39},
+ Slot{lhs:60,rule:155,dot:3,next:0},
+ Slot{lhs:61,rule:156,dot:0,next:19},
+ Slot{lhs:61,rule:156,dot:1,next:-62},
+ Slot{lhs:61,rule:156,dot:2,next:-3},
+ Slot{lhs:61,rule:156,dot:3,next:0},
+ Slot{lhs:61,rule:157,dot:0,next:19},
+ Slot{lhs:61,rule:157,dot:1,next:-62},
+ Slot{lhs:61,rule:157,dot:2,next:-3},
+ Slot{lhs:61,rule:157,dot:3,next:-20},
+ Slot{lhs:61,rule:157,dot:4,next:34},
+ Slot{lhs:61,rule:157,dot:5,next:-21},
+ Slot{lhs:61,rule:157,dot:6,next:0},
+ ] as value:Slot){result=push<Slot>(result,value);};
+ result
+};

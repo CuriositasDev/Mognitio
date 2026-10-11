@@ -1,0 +1,4 @@
+namespace Mgnc\ForestData;
+public type Family=product{rule:Int;left:Int;right:Int;split:Int;};
+public type ForestNode=product{symbol:Int;slot:Int;start:Int;end:Int;rule:Int;left:Int;right:Int;split:Int;alternatives:Int;};
+public type ChartItem=product{slot:Int;origin:Int;node:Int;};

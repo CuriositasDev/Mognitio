@@ -25,12 +25,13 @@ def main():
  for s,steps in cases:
   checks.append('{let snap:Snapshot=try scanSource('+literal(s)+');var cursor:Int=0;')
   for close,token,start,end in steps:
-   checks.append('{let terminal:Terminal=try scanAt(snap,cursor,'+str(close).lower()+');assert terminal->token->text=='+literal(token)+f';assert terminal->token->site->span->start=={start}&&terminal->token->site->span->end=={end};cursor=terminal->next;}};')
+   checks.append('{let terminal:Terminal=try scanAt(snap,cursor,'+str(close).lower()+');assert terminal->token->text=='+literal(token)+f';assert terminal->token->start=={start}&&terminal->token->end=={end};cursor=terminal->next;}};')
   checks.append('let done:Terminal=try scanAt(snap,cursor,false);assert done->token->kind==0;};')
  s='//é😀\r\n\t"x\\u{41}日" 999';b=len(s.encode());n=s.replace('\r\n','\n');line=n.count('\n')+1;col=len(n.rsplit('\n',1)[-1])+1
- checks.append('{let snap:Snapshot=try scanSource('+literal(s)+f');assert snap->end->span->start=={b};assert snap->end->span->line=={line}&&snap->end->span->column=={col};let token:Lexeme=try lookup<Lexeme>(snap->tokens,0);assert token->text=="";assert (try spelling(snap,token))=='+literal('"x\\u{41}日"')+';};')
+ checks.append('{let snap:Snapshot=try scanSource('+literal(s)+f');assert snap->end->span->start=={b};assert snap->end->span->line=={line}&&snap->end->span->column=={col};let token:Lexeme=try getToken(snap->tokens,0);assert token->text=="";assert (try spelling(snap,token))=='+literal('"x\\u{41}日"')+';};')
  source=r'''namespace Mgnc;
 use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\TokenStorage\{getToken};
 use Mgnc\Source\{Snapshot,Lexeme,spelling};
 use Mgnc\Lexical\{scanSource};
 use Mgnc\Cursor\{Terminal,scanAt};

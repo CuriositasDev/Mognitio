@@ -1,0 +1,4 @@
+namespace Mgnc\SourceData;
+use Mgnc\Data\{Span};
+public type Site=product{span:Span;scalarStart:Int;scalarEnd:Int;endLine:Int;endColumn:Int;};
+public type Lexeme=product{kind:Int;text:String;start:Int;end:Int;line:Int;column:Int;scalarStart:Int;scalarEnd:Int;endLine:Int;endColumn:Int;};

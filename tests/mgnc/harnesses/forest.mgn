@@ -1,0 +1,18 @@
+namespace Mgnc;
+use Mgnc\Data\{Diagnostic,describe,number};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Structural\{analyzeSyntax};
+use Std\Io\{readTextFile,writeStderr,writeStdout,IoError};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let path:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>""};
+ let text:String=branch on readTextFile(path){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>{return 2;}};
+ branch on analyzeSyntax(text){Result<SyntaxForest,Diagnostic>::Ok(forest:SyntaxForest)=>{var index:Int=0;
+ loop while(index<forest->nodes->count){
+  let node:ForestNode=branch on getNode(forest->nodes,index){Result<ForestNode,Diagnostic>::Ok(value:ForestNode)=>value,Result<ForestNode,Diagnostic>::Err(error:Diagnostic)=>{return 3;}};
+  discard writeStdout("N "+number(index)+" "+number(node->symbol+1001)+" "+number(node->slot+1)+" "+number(node->start)+" "+number(node->end)+" "+number(node->rule+1)+" "+number(node->left+1)+" "+number(node->right+1)+" "+number(node->split)+" "+number(node->alternatives+1)+"\n");
+  index=index+1;
+ };
+ discard writeStdout("R "+number(forest->root)+"\n");0},Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{discard writeStderr(describe(path,error));1}}
+};

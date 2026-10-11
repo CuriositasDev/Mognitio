@@ -20,6 +20,14 @@ The v1.4 internal source snapshot, string lexer and residual terminal scanner
 are checked by shared_lexer.py --seed SEED. They are isolated from the public
 Driver until the shared structural parser and native bridge are ready.
 
+The shared chart uses grammar.txt and generated Grammar / GrammarPart modules.
+Run generate_grammar.py --check and generate_storage.py --check to verify every
+generated source. Chart_internals.py --seed SEED verifies persistent arena updates,
+old snapshots, bounds and invalid grammar rejection. Forest_oracle.py compares
+all reachable families with an independent bounded CFG oracle using a dump harness;
+repeat with reversed prediction order. Structural.py --seed SEED --evidence RESULT.json
+builds both probes from the exact Git HEAD. Generated modules remain part of C1.
+
 Run source_profile.py, native.py, workloads.py, driver.py and faults.py with
 --compiler COMPILER. Native execution can also compare against the independent
 fixed seed using --seed SEED. Tests cover immutable operands, non-completion,

@@ -1,0 +1,158 @@
+Module | module | Namespace Uses Declarations
+Namespace | namespace | namespace Path ;
+Path | path_name | #id
+Path | path_extend | Path \ #id
+Uses | uses_empty |
+Uses | uses_append | Uses Use
+Use | import | use Path \ { Imports } ;
+Imports | imports | Import ImportRest
+ImportRest | imports_end |
+ImportRest | imports_trailing | ,
+ImportRest | imports_more | , Import ImportRest
+Import | import_name | #id
+Import | import_alias | #id as #id
+Declarations | declarations_empty |
+Declarations | declarations_append | Declarations Top
+Top | top_compile | Compile
+Top | top_let | Let
+Top | top_var | Var
+Top | public_compile | public Compile
+Top | public_let | public Let
+Compile | type_product | type #id ParametersOpt = product { Fields } ;
+Compile | type_sum | type #id ParametersOpt = sum { Variants } ;
+Compile | alias | alias #id ParametersOpt = Type ;
+Compile | template | template #id Parameters = Function ;
+ParametersOpt | parameters_none |
+ParametersOpt | parameters_some | Parameters
+Parameters | parameters | < GenericParameters #close
+GenericParameters | generic_parameters | GenericParameter GenericParameterRest
+GenericParameterRest | generic_parameters_end |
+GenericParameterRest | generic_parameters_trailing | ,
+GenericParameterRest | generic_parameters_more | , GenericParameter GenericParameterRest
+GenericParameter | type_parameter | #id
+GenericParameter | value_parameter | #id : Type
+Fields | fields_empty |
+Fields | fields_append | Fields #id : Type ;
+Variants | variants_empty |
+Variants | variants_empty_payload | Variants #id ;
+Variants | variants_payload | Variants #id ( Type ) ;
+Type | type_name | #typeid
+Type | type_apply | #typeid Arguments
+Type | type_function | #function ( TypesOpt ) : Type
+TypesOpt | types_empty |
+TypesOpt | types | Type TypeRest
+TypeRest | types_end |
+TypeRest | types_trailing | ,
+TypeRest | types_more | , Type TypeRest
+Arguments | arguments | < GenericArguments #close
+GenericArguments | generic_arguments | Argument ArgumentRest
+ArgumentRest | arguments_end |
+ArgumentRest | arguments_trailing | ,
+ArgumentRest | arguments_more | , Argument ArgumentRest
+Argument | argument_type | Type
+Argument | argument_value | ValueArgument
+ValueArgument | value_digits | #number
+ValueArgument | value_negative | - PositiveScalar
+ValueArgument | value_group | ( ValueArgument )
+ValueArgument | value_reference | #id
+PositiveScalar | positive_digits | #number
+PositiveScalar | positive_group | ( PositiveScalar )
+Scalar | scalar_digits | #number
+Scalar | scalar_negative | - PositiveScalar
+Scalar | scalar_group | ( Scalar )
+Let | let_binding | let #id : Type = Expr ;
+Var | var_binding | var #id : Type = Expr ;
+Function | function | function ( ParamsOpt ) : Type Block
+ParamsOpt | params_empty |
+ParamsOpt | params | Param ParamRest
+ParamRest | params_end |
+ParamRest | params_trailing | ,
+ParamRest | params_more | , Param ParamRest
+Param | parameter | #id : Type
+Block | block | { Statements Tail }
+Statements | statements_empty |
+Statements | statements_append | Statements Statement
+Statement | statement_let | Let
+Statement | statement_var | Var
+Statement | statement_return | return Expr ;
+Statement | statement_discard | discard Expr ;
+Statement | statement_break | break ;
+Statement | statement_break_value | break Expr ;
+Statement | statement_continue | continue ;
+Statement | statement_assign | Expr = Expr ;
+Statement | statement_expression | Expr ;
+Tail | no_tail |
+Tail | tail | Expr
+Expr | expression | Or
+Or | or_base | And
+Or | binary_or | Or || And
+And | and_base | Comparison
+And | binary_and | And && Comparison
+Comparison | comparison_base | Add
+Comparison | binary_lt | Add < Add
+Comparison | binary_le | Add <= Add
+Comparison | binary_gt | Add > Add
+Comparison | binary_ge | Add >= Add
+Comparison | binary_eq | Add == Add
+Comparison | binary_ne | Add != Add
+Add | add_base | Multiply
+Add | binary_add | Add + Multiply
+Add | binary_sub | Add - Multiply
+Multiply | multiply_base | Unary
+Multiply | binary_mul | Multiply * Unary
+Multiply | binary_div | Multiply / Unary
+Multiply | binary_rem | Multiply % Unary
+Unary | unary_base | Postfix
+Unary | unary_neg | - Unary
+Unary | unary_not | ! Unary
+Unary | unary_try | try Unary
+Postfix | postfix_base | Invocable
+Invocable | invocable_base | Primary
+Invocable | call | Invocable ( ExpressionsOpt )
+Postfix | field | Postfix -> #id
+Invocable | method | Postfix -> #id ( ExpressionsOpt )
+Invocable | generic_method | Postfix -> #id Arguments ( ExpressionsOpt )
+ExpressionsOpt | expressions_empty |
+ExpressionsOpt | expressions | Expressions CommaOpt
+Expressions | expressions_one | Expr
+Expressions | expressions_append | Expressions , Expr
+Primary | integer | #number
+Primary | string | #string
+Primary | true | true
+Primary | false | false
+Primary | unit | unit
+Primary | primary_name | Named
+Primary | group | ( Expr )
+Primary | primary_block | Block
+Primary | primary_function | Function
+Primary | loop_forever | loop Block
+Primary | loop_while | loop while ( Expr ) Block
+Primary | loop_over | loop over ( Expr as Param ) Block
+Primary | branch_when | branch when { Conditions else => Expr CommaOpt }
+Primary | branch_on | branch on Expr { OnArms }
+Primary | panic | panic Block
+Named | name | #id
+Named | generic_apply | #id Arguments
+Named | product | TypeName { ValuesOpt }
+Named | scalar_literal | TypeName { Scalar }
+Named | list | TypeName [ ExpressionsOpt ]
+Named | variant | TypeName :: #id
+Named | variant_payload | TypeName :: #id ( Expr )
+TypeName | construct_name | #id
+TypeName | construct_generic | #id Arguments
+ValuesOpt | values_empty |
+ValuesOpt | values | Values CommaOpt
+Values | values_one | Value
+Values | values_append | Values , Value
+Value | field_value | #id : Expr
+Conditions | conditions_empty |
+Conditions | conditions_append | Conditions Expr => Expr ,
+CommaOpt | comma_none |
+CommaOpt | comma_some | ,
+OnArms | on_arms | OnArm OnArmRest
+OnArmRest | on_arms_end |
+OnArmRest | on_arms_trailing | ,
+OnArmRest | on_arms_more | , OnArm OnArmRest
+OnArm | on_arm | Pattern => Expr
+Pattern | pattern_empty | Type :: #id
+Pattern | pattern_payload | Type :: #id ( Param )

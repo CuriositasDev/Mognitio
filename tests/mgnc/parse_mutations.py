@@ -23,5 +23,18 @@ def main():
    expected=f':{line}:{column} [{start},{end})'.encode();good=p.returncode==1 and not p.stdout and b'mgnc: '+phase.encode()+b':' in p.stderr and expected in p.stderr and source.read_bytes()==after
    row=dict(id='C140-S03',source=path,commit=C0,original_sha256=digest,mutated_sha256=sha(after),edit=dict(start=at,removed_hex=before[at:at+1].hex(),inserted_hex=replacement.hex()),expected_phase=phase,expected_span=[start,end,line,column],exit=p.returncode,stderr=p.stderr.decode(),passed=good);rows.append(row)
    a.evidence.write_text(json.dumps(dict(compiler_sha256=sha(a.compiler.read_bytes()),records=rows),indent=2)+'\n');assert good,row
+  # Preserve every C0 byte and add a legal multibyte trailing comment as a
+  # positive control, then introduce one final unmatched delimiter after it.
+  original=subprocess.check_output(['git','show',C0+':compiler/mgnc/src/Width/width.mgn'],cwd=ROOT)
+  augmented=original+'//é日😀\r\n'.encode()
+  source=Path(work)/'width-multibyte.mgn'
+  for label,data,want in [('valid-comment',augmented,0),('broken-tail',augmented+b')',1)]:
+   source.write_bytes(data);p=subprocess.run([a.compiler.resolve(),'parse',source],capture_output=True,timeout=120)
+   line=augmented.count(b'\n')+1;span=[len(augmented),len(augmented)+1,line,1]
+   good=p.returncode==want and not p.stdout and source.read_bytes()==data
+   if want:good=good and b'mgnc: parse:' in p.stderr and f':{line}:1 [{span[0]},{span[1]})'.encode() in p.stderr
+   else:good=good and not p.stderr
+   row=dict(id='C140-S03',variant=label,source='compiler/mgnc/src/Width/width.mgn',commit=C0,original_sha256=sha(original),valid_source_sha256=sha(augmented),source_sha256=sha(data),expected_span=span if want else None,exit=p.returncode,stderr=p.stderr.decode(),passed=good);rows.append(row)
+   a.evidence.write_text(json.dumps(dict(compiler_sha256=sha(a.compiler.read_bytes()),records=rows),indent=2)+'\n');assert good,row
  print('PARSE_MUTATIONS_OK',len(rows))
 if __name__=='__main__':main()

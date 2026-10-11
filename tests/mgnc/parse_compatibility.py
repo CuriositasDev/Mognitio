@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--compiler',required=True,type=Path);ap.add_argument('--evidence',required=True,type=Path);args=ap.parse_args();records=[]
- examples=[('witness',r'use App\Evidence\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}','0'),('contract','contract C{get(self:Self):Int;}witness Evidence=Int implements C{get(self:Self):Int{self}}', 'C(0)->get()'),('assert','', 'assert true;0'),('attribute','@test let check:Function():Unit=function():Unit{assert true;};','0')]
+ examples=[('witness',r'use App\Evidence\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}','C(0)->get()'),('contract','contract C{get(self:Self):Int;}witness Evidence=Int implements C{get(self:Self):Int{self}}', 'C(0)->get()'),('assert','', 'assert true;0'),('attribute','@test let check:Function():Unit=function():Unit{assert true;};','0')]
  with tempfile.TemporaryDirectory(prefix='mgnc-compatibility-') as work:
   root=Path(work)
   for name,declarations,body in examples:

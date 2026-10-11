@@ -1,5 +1,6 @@
 namespace Mgnc\Lexical;
 use Mgnc\Data\{Paged,empty,push,Span,Diagnostic,problem};
+use Mgnc\TokenStorage\{TokenStore,emptyTokens,addToken};
 use Mgnc\Source\{Site,Lexeme,Snapshot};
 use Mgnc\Width\{scalarWidth,ascii10,ascii100,ascii101,ascii102,ascii103,ascii104,ascii105,ascii106,ascii107,ascii108,ascii109,ascii110,ascii111,ascii112,ascii113,ascii114,ascii115,ascii116,ascii117,ascii118,ascii119,ascii120,ascii121,ascii122,ascii123,ascii124,ascii125,ascii13,ascii32,ascii33,ascii34,ascii37,ascii38,ascii40,ascii41,ascii42,ascii43,ascii44,ascii45,ascii47,ascii48,ascii49,ascii50,ascii51,ascii52,ascii53,ascii54,ascii55,ascii56,ascii57,ascii58,ascii59,ascii60,ascii61,ascii62,ascii64,ascii65,ascii66,ascii67,ascii68,ascii69,ascii70,ascii71,ascii72,ascii73,ascii74,ascii75,ascii76,ascii77,ascii78,ascii79,ascii80,ascii81,ascii82,ascii83,ascii84,ascii85,ascii86,ascii87,ascii88,ascii89,ascii9,ascii90,ascii91,ascii92,ascii93,ascii95,ascii97,ascii98,ascii99};
 type WidthEntry=product{scalar:String;width:Int;};
@@ -14,6 +15,7 @@ let wordKind: Function(String): Int = function(text: String): Int {
     1
 };
 
+let canonical:Function(String):String=function(value:String):String{branch when{value=="assert"=>"assert",value=="alias"=>"alias",value=="as"=>"as",value=="branch"=>"branch",value=="break"=>"break",value=="continue"=>"continue",value=="contract"=>"contract",value=="discard"=>"discard",value=="else"=>"else",value=="function"=>"function",value=="implements"=>"implements",value=="let"=>"let",value=="loop"=>"loop",value=="on"=>"on",value=="over"=>"over",value=="panic"=>"panic",value=="product"=>"product",value=="return"=>"return",value=="sum"=>"sum",value=="template"=>"template",value=="try"=>"try",value=="type"=>"type",value=="var"=>"var",value=="when"=>"when",value=="while"=>"while",value=="witness"=>"witness",value=="true"=>"true",value=="false"=>"false",value=="unit"=>"unit",value=="namespace"=>"namespace",value=="use"=>"use",value=="public"=>"public",value=="Function"=>"Function",value=="Self"=>"Self",value=="Int"=>"Int",value=="Bool"=>"Bool",value=="Unit"=>"Unit",value=="String"=>"String",value=="List"=>"List",value=="Result"=>"Result",value=="IndexError"=>"IndexError",value=="SliceError"=>"SliceError",else=>value}};
 let hexAlphabet:List<String>="0123456789abcdefABCDEF"->scalars();
 let hexDigit:Function(String):Int=function(scalar:String):Int{
  var index:Int=0;
@@ -27,7 +29,7 @@ let pairKind:Function(String):Bool=function(pair:String):Bool{
  pair=="->"||pair=="=>"||pair=="=="||pair=="!="||pair=="<="||pair==">="||pair=="&&"||pair=="||"||pair=="::"
 };
 public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(source:String):Result<Snapshot,Diagnostic>{
- var tokens:Paged<Lexeme>=empty<Lexeme>();
+ var tokens:TokenStore=emptyTokens();
  var cache:List<WidthEntry>=List<WidthEntry>[];
  // 0 normal, 1 identifier, 2 decimal, 3 comment, 4 pending operator,
  // 5 string, 6 escape, 7 unicode opening brace, 8 unicode digits.
@@ -60,7 +62,7 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
     branch when{
      state==5=>{
       branch when{scalar==ascii34=>{
-       tokens=push<Lexeme>(tokens,Lexeme{kind:5,text:"",site:Site{span:Span{start:start,end:offset,line:startLine,column:startColumn},scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column}});state=0;
+       tokens=addToken(tokens,Lexeme{kind:5,text:"",start:start,end:offset,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});state=0;
       },scalar==ascii92=>{state=6;},else=>unit};
      },
      state==6=>{
@@ -84,17 +86,17 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
    },else=>unit};
    branch when{state==1||state==2=>{
     branch when{state==2&&isLetter(scalar)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid decimal suffix"));},else=>unit};
-    let name:String=branch when{state==1=>fragments->join(""),else=>""};
-    tokens=push<Lexeme>(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),else=>2},text:name,site:Site{span:Span{start:start,end:hereStart,line:startLine,column:startColumn},scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn}});state=0;
+    let name:String=branch when{state==1=>canonical(fragments->join("")),else=>""};
+    tokens=addToken(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),else=>2},text:name,start:start,end:hereStart,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn});state=0;
    },else=>unit};
    branch when{state==4=>{
     let pair:String=text+scalar;
     branch when{
      pair=="//"=>{state=3;continue;},
-     pairKind(pair)=>{tokens=push<Lexeme>(tokens,Lexeme{kind:3,text:pair,site:Site{span:Span{start:start,end:offset,line:startLine,column:startColumn},scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column}});state=0;continue;},
+     pairKind(pair)=>{tokens=addToken(tokens,Lexeme{kind:3,text:pair,start:start,end:offset,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});state=0;continue;},
      else=>{
       branch when{(text==ascii38||text==ascii124)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:start,end:hereStart,line:startLine,column:startColumn},"incomplete operator"));},else=>unit};
-      tokens=push<Lexeme>(tokens,Lexeme{kind:3,text:text,site:Site{span:Span{start:start,end:hereStart,line:startLine,column:startColumn},scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn}});state=0;
+      tokens=addToken(tokens,Lexeme{kind:3,text:text,start:start,end:hereStart,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn});state=0;
      },
     };
    },else=>unit};
@@ -105,7 +107,7 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
     scalar==ascii34=>{state=5;},
     scalar==ascii47||scalar==ascii45||scalar==ascii43||scalar==ascii61||scalar==ascii33||scalar==ascii60||scalar==ascii62||scalar==ascii38||scalar==ascii124||scalar==ascii58=>{state=4;text=scalar;},
     scalar==ascii123||scalar==ascii125||scalar==ascii40||scalar==ascii41||scalar==ascii59||scalar==ascii44||scalar==ascii92||scalar==ascii42||scalar==ascii37||scalar==ascii91||scalar==ascii93||scalar==ascii64=>{
-     tokens=push<Lexeme>(tokens,Lexeme{kind:3,text:scalar,site:Site{span:here,scalarStart:hereScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column}});
+     tokens=addToken(tokens,Lexeme{kind:3,text:scalar,start:here->start,end:here->end,line:here->line,column:here->column,scalarStart:hereScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
     },
     else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid source character"));},
    };
@@ -115,10 +117,10 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
  let endSite:Site=Site{span:Span{start:offset,end:offset,line:line,column:column},scalarStart:scalarIndex,scalarEnd:scalarIndex,endLine:line,endColumn:column};
  branch when{state>=5=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",endSite->span,"unterminated string"));},else=>unit};
  branch when{state==1||state==2||state==4=>{
-  branch when{state==4&&(text==ascii38||text==ascii124)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",endSite->span,"incomplete operator"));},else=>unit};
-  let name:String=branch when{state==1=>fragments->join(""),state==4=>text,else=>""};
-  tokens=push<Lexeme>(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),state==2=>2,else=>3},text:name,site:Site{span:Span{start:start,end:offset,line:startLine,column:startColumn},scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column}});
+  branch when{state==4&&(text==ascii38||text==ascii124)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:start,end:offset,line:startLine,column:startColumn},"incomplete operator"));},else=>unit};
+  let name:String=branch when{state==1=>canonical(fragments->join("")),state==4=>text,else=>""};
+  tokens=addToken(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),state==2=>2,else=>3},text:name,start:start,end:offset,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
  },else=>unit};
- tokens=push<Lexeme>(tokens,Lexeme{kind:0,text:"",site:endSite});
+ tokens=addToken(tokens,Lexeme{kind:0,text:"",start:endSite->span->start,end:endSite->span->end,line:endSite->span->line,column:endSite->span->column,scalarStart:endSite->scalarStart,scalarEnd:endSite->scalarEnd,endLine:endSite->endLine,endColumn:endSite->endColumn});
  Result<Snapshot,Diagnostic>::Ok(Snapshot{text:source,tokens:tokens,end:endSite})
 };

@@ -1,0 +1,46 @@
+namespace Mgnc\ChartLifetime;
+use Mgnc\Data\{Paged,empty,push,lookup,Span,Diagnostic,problem};
+use Mgnc\Buckets\{bucket};
+use Mgnc\Tables\{atList};
+use Mgnc\ForestData\{ChartItem};
+use Mgnc\ItemStorage\{getItem};
+use Mgnc\Forest\{Stable,LiveColumn,Need,Pending};
+use Mgnc\Grammar\{Slot,slots};
+public let historical:Function(List<LiveColumn>,Int):Result<Stable,Diagnostic>=function(history:List<LiveColumn>,cursor:Int):Result<Stable,Diagnostic>{
+ loop over(history as column:LiveColumn){branch when{column->cursor==cursor=>{return Result<Stable,Diagnostic>::Ok(column->body);},else=>unit};};
+ Result<Stable,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"missing live chart origin"))
+};
+let hasNeed:Function(List<Need>,Int,Int):Bool=function(page:List<Need>,cursor:Int,symbol:Int):Bool{
+ loop over(page as previous:Need){branch when{previous->cursor==cursor&&previous->symbol==symbol=>{return true;},else=>unit};};false
+};
+let enqueue:Function(Paged<Need>,Int,Int):Result<Paged<Need>,Diagnostic>=function(queue:Paged<Need>,cursor:Int,symbol:Int):Result<Paged<Need>,Diagnostic>{
+ loop over(queue->pages as page:List<Need>){branch when{hasNeed(page,cursor,symbol)=>{return Result<Paged<Need>,Diagnostic>::Ok(queue);},else=>unit};};
+ branch when{hasNeed(queue->tail,cursor,symbol)=>Result<Paged<Need>,Diagnostic>::Ok(queue),else=>Result<Paged<Need>,Diagnostic>::Ok(push<Need>(queue,Need{cursor:cursor,symbol:symbol}))}
+};
+let needed:Function(List<Need>,Int):Bool=function(page:List<Need>,cursor:Int):Bool{
+ loop over(page as need:Need){branch when{need->cursor==cursor=>{return true;},else=>unit};};false
+};
+// Future items can only resume waiting parents at their original chart column.
+// Retain the transitive closure of those calls, including nullable/left-recursive calls.
+public let retain:Function(List<LiveColumn>,List<List<Pending>>):Result<List<LiveColumn>,Diagnostic>=function(history:List<LiveColumn>,future:List<List<Pending>>):Result<List<LiveColumn>,Diagnostic>{
+ var queue:Paged<Need>=empty<Need>();
+ loop over(future as entries:List<Pending>){loop over(entries as entry:Pending){let shape:Slot=try lookup<Slot>(slots,entry->slot);queue=try enqueue(queue,entry->origin,shape->lhs);};};
+ var current:Int=0;
+ loop while(current<queue->count){
+  let need:Need=try lookup<Need>(queue,current);current=current+1;
+  let column:Stable=try historical(history,need->cursor);
+  let waiting:List<Int>=bucket(column->waits,need->symbol%16);
+  loop over(waiting as index:Int){
+   let parent:ChartItem=try getItem(column->items,index);
+   let shape:Slot=try lookup<Slot>(slots,parent->slot);
+   branch when{shape->next==need->symbol=>{queue=try enqueue(queue,parent->origin,shape->lhs);},else=>unit};
+  };
+ };
+ var result:List<LiveColumn>=List<LiveColumn>[];
+ loop over(history as column:LiveColumn){
+  var live:Bool=needed(queue->tail,column->cursor);
+  loop over(queue->pages as page:List<Need>){branch when{live||needed(page,column->cursor)=>{live=true;break;},else=>unit};};
+  branch when{live=>{result=result->append(column);},else=>unit};
+ };
+ Result<List<LiveColumn>,Diagnostic>::Ok(result)
+};

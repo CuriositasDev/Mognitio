@@ -1,0 +1,18 @@
+namespace Mgnc\Tables;
+use Mgnc\Data\{Paged,Diagnostic,lookup,problem,Span};
+public template replaceList<T> = function(values:List<T>,index:Int,value:T):List<T>{
+ var result:List<T>=List<T>[];var cursor:Int=0;
+ loop over(values as previous:T){result=result->append(branch when{cursor==index=>value,else=>previous});cursor=cursor+1;};
+ result
+};
+public template replaceItem<T> = function(table:Paged<T>,index:Int,value:T):Result<Paged<T>,Diagnostic>{
+ let checked:T=try lookup<T>(table,index);
+ let page:Int=index/64;
+ branch when{page==table->pages->length()=>Result<Paged<T>,Diagnostic>::Ok(Paged<T>{pages:table->pages,tail:replaceList<T>(table->tail,index%64,value),count:table->count}),else=>{
+  let previous:List<T>=branch on table->pages->at(page){Result<List<T>,IndexError>::Ok(found:List<T>)=>found,Result<List<T>,IndexError>::Err(error:IndexError)=>{return Result<Paged<T>,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"missing page"});}};
+  Result<Paged<T>,Diagnostic>::Ok(Paged<T>{pages:replaceList<List<T>>(table->pages,page,replaceList<T>(previous,index%64,value)),tail:table->tail,count:table->count})
+ }}
+};
+public template atList<T> = function(values:List<T>,index:Int):Result<T,Diagnostic>{
+ branch on values->at(index){Result<T,IndexError>::Ok(value:T)=>Result<T,Diagnostic>::Ok(value),Result<T,IndexError>::Err(error:IndexError)=>Result<T,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"invalid table index"})}
+};

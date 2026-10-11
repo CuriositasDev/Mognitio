@@ -1,0 +1,62 @@
+namespace Mgnc\Chart;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
+use Mgnc\Tables\{replaceItem,replaceList,atList};
+use Mgnc\Grammar\{Slot,slots};
+use Mgnc\Buckets\{Buckets,blank,bucket,putBucket};
+use Mgnc\ForestData\{Family,ForestNode,ChartItem};
+use Mgnc\Forest\{Column};
+use Mgnc\NodeStorage\{NodeStore,emptyNodes,addNode,getNode,setNode};
+use Mgnc\ItemStorage\{ItemStore,emptyItems,addItem as appendItem,getItem};
+public let column:Function(Int,Int):Column=function(cursor:Int,base:Int):Column{
+ Column{cursor:cursor,base:base,items:emptyItems(),nodes:emptyNodes(),itemBins:blank(),symbolBins:blank(),waits:blank(),last:-1,fresh:false}
+};
+public let addItem:Function(Column,Int,Int,Int,Int,Int):Result<Column,Diagnostic>=function(state:Column,slot:Int,origin:Int,left:Int,right:Int,split:Int):Result<Column,Diagnostic>{
+ let shape:Slot=try lookup<Slot>(slots,slot);
+ let bin:Int=(slot+origin)%16;
+ let row:List<Int>=bucket(state->itemBins,bin);
+ loop over(row as index:Int){
+  let previous:ChartItem=try getItem(state->items,index);
+  branch when{previous->slot==slot&&previous->origin==origin=>{
+   branch when{shape->dot<2=>{return Result<Column,Diagnostic>::Ok(state);},else=>unit};
+   let existing:ForestNode=try getNode(state->nodes,previous->node-state->base);
+   branch when{existing->rule==shape->rule&&existing->left==left&&existing->right==right&&existing->split==split=>{return Result<Column,Diagnostic>::Ok(state);},else=>unit};
+   var alternative:Int=existing->alternatives;
+   loop while(alternative>=0){let old:ForestNode=try getNode(state->nodes,alternative-state->base);branch when{old->rule==shape->rule&&old->left==left&&old->right==right&&old->split==split=>{return Result<Column,Diagnostic>::Ok(state);},else=>unit};alternative=old->alternatives;};
+   let extended:NodeStore=addNode(state->nodes,ForestNode{symbol:-1000,slot:-1,start:0,end:0,rule:shape->rule,left:left,right:right,split:split,alternatives:existing->alternatives});
+   let nodes:NodeStore=try setNode(extended,previous->node-state->base,ForestNode{symbol:existing->symbol,slot:existing->slot,start:existing->start,end:existing->end,rule:existing->rule,left:existing->left,right:existing->right,split:existing->split,alternatives:state->base+state->nodes->count});
+   return Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:state->items,nodes:nodes,itemBins:state->itemBins,symbolBins:state->symbolBins,waits:state->waits,last:previous->node,fresh:false});
+  },else=>unit};
+ };
+ let node:Int=branch when{shape->dot==0=>-1,shape->dot==1=>right,else=>state->base+state->nodes->count};
+ let itemIndex:Int=state->items->count;
+ let items:ItemStore=appendItem(state->items,ChartItem{slot:slot,origin:origin,node:node});
+ let nodes:NodeStore=branch when{shape->dot<2=>state->nodes,else=>addNode(state->nodes,ForestNode{symbol:0,slot:slot,start:origin,end:state->cursor,rule:shape->rule,left:left,right:right,split:split,alternatives:-1})};
+ let itemBins:Buckets=putBucket(state->itemBins,bin,row->append(itemIndex));
+ var waits:Buckets=state->waits;
+ branch when{shape->next>0=>{
+  let waiting:List<Int>=bucket(waits,shape->next%16);
+  waits=putBucket(waits,shape->next%16,waiting->append(itemIndex));
+ },else=>unit};
+ Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:items,nodes:nodes,itemBins:itemBins,symbolBins:state->symbolBins,waits:waits,last:node,fresh:true})
+};
+public let addSymbol:Function(Column,Int,Int,Int,Int):Result<Column,Diagnostic>=function(state:Column,symbol:Int,origin:Int,rule:Int,left:Int):Result<Column,Diagnostic>{
+ let bin:Int=branch when{symbol<0=>(-symbol)%16,else=>symbol%16};
+ let row:List<Int>=bucket(state->symbolBins,bin);
+ loop over(row as index:Int){
+  let previous:ForestNode=try getNode(state->nodes,index);
+  branch when{previous->symbol==symbol&&previous->start==origin=>{
+   branch when{symbol<0||(previous->rule==rule&&previous->left==left)=>{
+    return Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:state->items,nodes:state->nodes,itemBins:state->itemBins,symbolBins:state->symbolBins,waits:state->waits,last:state->base+index,fresh:false});
+   },else=>unit};
+   var alternative:Int=previous->alternatives;
+   loop while(alternative>=0){let old:ForestNode=try getNode(state->nodes,alternative-state->base);branch when{old->rule==rule&&old->left==left=>{return Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:state->items,nodes:state->nodes,itemBins:state->itemBins,symbolBins:state->symbolBins,waits:state->waits,last:state->base+index,fresh:false});},else=>unit};alternative=old->alternatives;};
+   let extended:NodeStore=addNode(state->nodes,ForestNode{symbol:-1000,slot:-1,start:0,end:0,rule:rule,left:left,right:-1,split:state->cursor,alternatives:previous->alternatives});
+   let nodes:NodeStore=try setNode(extended,index,ForestNode{symbol:previous->symbol,slot:previous->slot,start:previous->start,end:previous->end,rule:previous->rule,left:previous->left,right:previous->right,split:previous->split,alternatives:state->base+state->nodes->count});
+   return Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:state->items,nodes:nodes,itemBins:state->itemBins,symbolBins:state->symbolBins,waits:state->waits,last:state->base+index,fresh:false});
+  },else=>unit};
+ };
+ let node:Int=state->base+state->nodes->count;
+ let nodes:NodeStore=addNode(state->nodes,ForestNode{symbol:symbol,slot:-1,start:origin,end:state->cursor,rule:rule,left:left,right:-1,split:state->cursor,alternatives:-1});
+ let symbolBins:Buckets=putBucket(state->symbolBins,bin,row->append(state->nodes->count));
+ Result<Column,Diagnostic>::Ok(Column{cursor:state->cursor,base:state->base,items:state->items,nodes:nodes,itemBins:state->itemBins,symbolBins:symbolBins,waits:state->waits,last:node,fresh:true})
+};

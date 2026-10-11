@@ -1,0 +1,48 @@
+namespace Mgnc\ItemStorage;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem,Span};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\ForestData\{ChartItem};
+// Generated scalar pages: no mutable collection, raw pointer, or seed/runtime extension.
+public type ItemPage=product{slot0:Int;origin0:Int;node0:Int;slot1:Int;origin1:Int;node1:Int;slot2:Int;origin2:Int;node2:Int;slot3:Int;origin3:Int;node3:Int;slot4:Int;origin4:Int;node4:Int;slot5:Int;origin5:Int;node5:Int;slot6:Int;origin6:Int;node6:Int;slot7:Int;origin7:Int;node7:Int;slot8:Int;origin8:Int;node8:Int;slot9:Int;origin9:Int;node9:Int;slot10:Int;origin10:Int;node10:Int;slot11:Int;origin11:Int;node11:Int;slot12:Int;origin12:Int;node12:Int;slot13:Int;origin13:Int;node13:Int;slot14:Int;origin14:Int;node14:Int;slot15:Int;origin15:Int;node15:Int;};
+public type ItemStore=product{pages:Paged<ItemPage>;tail:ItemPage;count:Int;};
+let zero:ItemPage=ItemPage{slot0:0,origin0:0,node0:0,slot1:0,origin1:0,node1:0,slot2:0,origin2:0,node2:0,slot3:0,origin3:0,node3:0,slot4:0,origin4:0,node4:0,slot5:0,origin5:0,node5:0,slot6:0,origin6:0,node6:0,slot7:0,origin7:0,node7:0,slot8:0,origin8:0,node8:0,slot9:0,origin9:0,node9:0,slot10:0,origin10:0,node10:0,slot11:0,origin11:0,node11:0,slot12:0,origin12:0,node12:0,slot13:0,origin13:0,node13:0,slot14:0,origin14:0,node14:0,slot15:0,origin15:0,node15:0};
+public let emptyItems:Function():ItemStore=function():ItemStore{ItemStore{pages:empty<ItemPage>(),tail:zero,count:0}};
+let writePage:Function(ItemPage,Int,ChartItem):ItemPage=function(page:ItemPage,lane:Int,value:ChartItem):ItemPage{
+ItemPage{slot0:branch when{lane==0=>value->slot,else=>page->slot0},origin0:branch when{lane==0=>value->origin,else=>page->origin0},node0:branch when{lane==0=>value->node,else=>page->node0},slot1:branch when{lane==1=>value->slot,else=>page->slot1},origin1:branch when{lane==1=>value->origin,else=>page->origin1},node1:branch when{lane==1=>value->node,else=>page->node1},slot2:branch when{lane==2=>value->slot,else=>page->slot2},origin2:branch when{lane==2=>value->origin,else=>page->origin2},node2:branch when{lane==2=>value->node,else=>page->node2},slot3:branch when{lane==3=>value->slot,else=>page->slot3},origin3:branch when{lane==3=>value->origin,else=>page->origin3},node3:branch when{lane==3=>value->node,else=>page->node3},slot4:branch when{lane==4=>value->slot,else=>page->slot4},origin4:branch when{lane==4=>value->origin,else=>page->origin4},node4:branch when{lane==4=>value->node,else=>page->node4},slot5:branch when{lane==5=>value->slot,else=>page->slot5},origin5:branch when{lane==5=>value->origin,else=>page->origin5},node5:branch when{lane==5=>value->node,else=>page->node5},slot6:branch when{lane==6=>value->slot,else=>page->slot6},origin6:branch when{lane==6=>value->origin,else=>page->origin6},node6:branch when{lane==6=>value->node,else=>page->node6},slot7:branch when{lane==7=>value->slot,else=>page->slot7},origin7:branch when{lane==7=>value->origin,else=>page->origin7},node7:branch when{lane==7=>value->node,else=>page->node7},slot8:branch when{lane==8=>value->slot,else=>page->slot8},origin8:branch when{lane==8=>value->origin,else=>page->origin8},node8:branch when{lane==8=>value->node,else=>page->node8},slot9:branch when{lane==9=>value->slot,else=>page->slot9},origin9:branch when{lane==9=>value->origin,else=>page->origin9},node9:branch when{lane==9=>value->node,else=>page->node9},slot10:branch when{lane==10=>value->slot,else=>page->slot10},origin10:branch when{lane==10=>value->origin,else=>page->origin10},node10:branch when{lane==10=>value->node,else=>page->node10},slot11:branch when{lane==11=>value->slot,else=>page->slot11},origin11:branch when{lane==11=>value->origin,else=>page->origin11},node11:branch when{lane==11=>value->node,else=>page->node11},slot12:branch when{lane==12=>value->slot,else=>page->slot12},origin12:branch when{lane==12=>value->origin,else=>page->origin12},node12:branch when{lane==12=>value->node,else=>page->node12},slot13:branch when{lane==13=>value->slot,else=>page->slot13},origin13:branch when{lane==13=>value->origin,else=>page->origin13},node13:branch when{lane==13=>value->node,else=>page->node13},slot14:branch when{lane==14=>value->slot,else=>page->slot14},origin14:branch when{lane==14=>value->origin,else=>page->origin14},node14:branch when{lane==14=>value->node,else=>page->node14},slot15:branch when{lane==15=>value->slot,else=>page->slot15},origin15:branch when{lane==15=>value->origin,else=>page->origin15},node15:branch when{lane==15=>value->node,else=>page->node15}}
+};
+let readPage:Function(ItemPage,Int):ChartItem=function(page:ItemPage,lane:Int):ChartItem{branch when{
+lane==0=>ChartItem{slot:page->slot0,origin:page->origin0,node:page->node0},
+lane==1=>ChartItem{slot:page->slot1,origin:page->origin1,node:page->node1},
+lane==2=>ChartItem{slot:page->slot2,origin:page->origin2,node:page->node2},
+lane==3=>ChartItem{slot:page->slot3,origin:page->origin3,node:page->node3},
+lane==4=>ChartItem{slot:page->slot4,origin:page->origin4,node:page->node4},
+lane==5=>ChartItem{slot:page->slot5,origin:page->origin5,node:page->node5},
+lane==6=>ChartItem{slot:page->slot6,origin:page->origin6,node:page->node6},
+lane==7=>ChartItem{slot:page->slot7,origin:page->origin7,node:page->node7},
+lane==8=>ChartItem{slot:page->slot8,origin:page->origin8,node:page->node8},
+lane==9=>ChartItem{slot:page->slot9,origin:page->origin9,node:page->node9},
+lane==10=>ChartItem{slot:page->slot10,origin:page->origin10,node:page->node10},
+lane==11=>ChartItem{slot:page->slot11,origin:page->origin11,node:page->node11},
+lane==12=>ChartItem{slot:page->slot12,origin:page->origin12,node:page->node12},
+lane==13=>ChartItem{slot:page->slot13,origin:page->origin13,node:page->node13},
+lane==14=>ChartItem{slot:page->slot14,origin:page->origin14,node:page->node14},
+else=>ChartItem{slot:page->slot15,origin:page->origin15,node:page->node15},
+}};
+public let addItem:Function(ItemStore,ChartItem):ItemStore=function(table:ItemStore,value:ChartItem):ItemStore{
+ var pages:Paged<ItemPage>=table->pages;var tail:ItemPage=table->tail;
+ branch when{table->count>0&&table->count%16==0=>{pages=push<ItemPage>(pages,tail);tail=zero;},else=>unit};
+ ItemStore{pages:pages,tail:writePage(tail,table->count%16,value),count:table->count+1}
+};
+public let getItem:Function(ItemStore,Int):Result<ChartItem,Diagnostic>=function(table:ItemStore,index:Int):Result<ChartItem,Diagnostic>{
+ branch when{index<0||index>=table->count=>{return Result<ChartItem,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid item arena index"));},else=>unit};
+ let page:ItemPage=branch when{index/16==table->pages->count=>table->tail,else=>try lookup<ItemPage>(table->pages,index/16)};
+ Result<ChartItem,Diagnostic>::Ok(readPage(page,index%16))
+};
+public let setItem:Function(ItemStore,Int,ChartItem):Result<ItemStore,Diagnostic>=function(table:ItemStore,index:Int,value:ChartItem):Result<ItemStore,Diagnostic>{
+ let checked:ChartItem=try getItem(table,index);
+ branch when{index/16==table->pages->count=>Result<ItemStore,Diagnostic>::Ok(ItemStore{pages:table->pages,tail:writePage(table->tail,index%16,value),count:table->count}),else=>{
+ let previous:ItemPage=try lookup<ItemPage>(table->pages,index/16);
+ let pages:Paged<ItemPage>=try replaceItem<ItemPage>(table->pages,index/16,writePage(previous,index%16,value));
+ Result<ItemStore,Diagnostic>::Ok(ItemStore{pages:pages,tail:table->tail,count:table->count})
+ }}
+};

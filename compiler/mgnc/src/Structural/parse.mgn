@@ -1,0 +1,103 @@
+namespace Mgnc\Structural;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\Buckets\{bucket};
+use Mgnc\Tables\{atList};
+use Mgnc\Source\{location,Snapshot,Lexeme};
+use Mgnc\Lexical\{scanSource};
+use Mgnc\Cursor\{Terminal,scanAt};
+use Mgnc\Grammar\{Slot,Prediction,Lookahead,lookahead,possible,slots,predictions,matches,closeTerminal,ntModule,ntComparison,ntDeclarations,ntTop,ntCompile,ntStatements,ntStatement,ruleBinaryLt,ruleBinaryLe,ruleBinaryGt,ruleBinaryGe,ruleBinaryEq,ruleBinaryNe};
+use Mgnc\ForestData\{Family,ForestNode,ChartItem};
+use Mgnc\Forest\{Column,Stable,LiveColumn,Pending,ComparisonFailure,SyntaxForest};
+use Mgnc\NodeStorage\{NodeStore,emptyNodes,addNode,getNode};
+use Mgnc\ItemStorage\{getItem};
+use Mgnc\ChartLifetime\{historical,retain};
+use Mgnc\Chart\{column,addItem,addSymbol};
+let isComparison:Function(String):Bool=function(text:String):Bool{text=="<"||text=="<="||text==">"||text==">="||text=="=="||text=="!="};
+public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=function(source:Snapshot):Result<SyntaxForest,Diagnostic>{
+ var nodes:NodeStore=emptyNodes();
+ var history:List<LiveColumn>=List<LiveColumn>[];
+ var comparisons:List<ComparisonFailure>=List<ComparisonFailure>[];
+ var upcoming:List<Pending>=List<Pending>[];
+ var nextOne:List<Pending>=List<Pending>[];var nextTwo:List<Pending>=List<Pending>[];var nextThree:List<Pending>=List<Pending>[];var nextFour:List<Pending>=List<Pending>[];
+ var outside:Int=-1;
+ var cursor:Int=0;var root:Int=-1;var farthest:Int=0;var itemCount:Int=0;
+ let end:Int=(source->tokens->count-1)*2;
+ loop while(cursor<=end){
+  var active:Column=column(cursor,nodes->count);
+  branch when{cursor==0=>{active=try addItem(active,0,0,-1,-1,0);},else=>unit};
+  loop over(upcoming as pending:Pending){
+   active=try addSymbol(active,pending->symbol,pending->start,-1,-1);
+   let tokenNode:Int=active->last;
+   active=try addItem(active,pending->slot,pending->origin,pending->left,tokenNode,pending->start);
+  };
+  branch when{active->items->count>0=>{
+   let ordinary:Terminal=try scanAt(source,cursor,false);
+   let close:Terminal=try scanAt(source,cursor,true);
+   let ahead:Lookahead=lookahead(ordinary->token,close->token);
+   var predicted:List<Int>=List<Int>[];
+   var work:Int=0;
+   loop while(work<active->items->count){
+    let item:ChartItem=try getItem(active->items,work);work=work+1;
+    let shape:Slot=try lookup<Slot>(slots,item->slot);
+    let word:String=ordinary->token->text;
+    // Only recognized 1.x families at a reached declaration/statement boundary.
+    let topContext:Bool=shape->next==ntDeclarations||shape->next==ntTop||shape->next==ntCompile;
+    let statementContext:Bool=shape->next==ntStatements||shape->next==ntStatement;
+    branch when{(topContext&&(word=="contract"||word=="witness"||word=="@"))||(statementContext&&(word=="assert"||word=="@"))||(shape->lhs==ntCompile&&shape->dot>=2&&word=="implements")=>{outside=cursor;},else=>unit};
+    branch when{
+     shape->next<0=>{
+      let terminal:Terminal=branch when{shape->next==closeTerminal=>close,else=>ordinary};
+      branch when{matches(shape->next,terminal->token)=>{
+       let pending:Pending=Pending{slot:item->slot+1,origin:item->origin,left:item->node,symbol:shape->next,start:cursor};
+       let delta:Int=terminal->next-cursor;
+       branch when{delta==1=>{nextOne=nextOne->append(pending);},delta==2=>{nextTwo=nextTwo->append(pending);},delta==3=>{nextThree=nextThree->append(pending);},delta==4=>{nextFour=nextFour->append(pending);},else=>{return Result<SyntaxForest,Diagnostic>::Err(problem("internal",location(terminal->token),"non-progressing terminal"));}};
+      },else=>{branch when{cursor>farthest=>{farthest=cursor;},else=>unit};}};
+     },
+     shape->next>0=>{
+      var seen:Bool=false;loop over(predicted as previous:Int){branch when{previous==shape->next=>{seen=true;break;},else=>unit};};
+      branch when{!seen=>{
+       predicted=predicted->append(shape->next);
+       let choices:List<Prediction>=try lookup<List<Prediction>>(predictions,shape->next);
+       loop over(choices as choice:Prediction){
+        branch when{possible(choice,ahead)=>{active=try addItem(active,choice->slot,cursor,-1,-1,cursor);},else=>{branch when{cursor>farthest=>{farthest=cursor;},else=>unit};}};
+       };
+      },else=>unit};
+      // A nullable completion can precede arrival of this waiting item.
+      let completed:List<Int>=bucket(active->symbolBins,shape->next%16);
+      loop over(completed as index:Int){
+       let symbol:ForestNode=try getNode(active->nodes,index);
+       branch when{symbol->symbol==shape->next&&symbol->start==cursor=>{active=try addItem(active,item->slot+1,item->origin,item->node,active->base+index,cursor);},else=>unit};
+      };
+     },
+     else=>{
+      active=try addSymbol(active,shape->lhs,item->origin,shape->rule,item->node);
+      let completedNode:Int=active->last;
+      branch when{shape->lhs==ntModule&&item->origin==0&&cursor==end=>{root=completedNode;},else=>unit};
+      branch when{shape->lhs==ntComparison&&shape->rule>=ruleBinaryLt&&shape->rule<=ruleBinaryNe&&isComparison(ordinary->token->text)=>{comparisons=comparisons->append(ComparisonFailure{start:item->origin,cursor:cursor});},else=>unit};
+      branch when{active->fresh=>{
+       let origin:Stable=branch when{item->origin==cursor=>Stable{items:active->items,waits:active->waits},else=>try historical(history,item->origin)};
+       let waiting:List<Int>=bucket(origin->waits,shape->lhs%16);
+       loop over(waiting as index:Int){
+        let parent:ChartItem=try getItem(origin->items,index);
+        let parentShape:Slot=try lookup<Slot>(slots,parent->slot);
+        branch when{parentShape->next==shape->lhs=>{active=try addItem(active,parent->slot+1,parent->origin,parent->node,completedNode,item->origin);},else=>unit};
+       };
+      },else=>unit};
+     },
+    };
+   };
+  },else=>unit};
+  var index:Int=0;loop while(index<active->nodes->count){nodes=addNode(nodes,try getNode(active->nodes,index));index=index+1;};
+  itemCount=itemCount+active->items->count;
+  branch when{active->items->count>0=>{history=history->append(LiveColumn{cursor:cursor,body:Stable{items:active->items,waits:active->waits}});},else=>unit};
+  branch when{cursor%64==63=>{history=try retain(history,List<List<Pending>>[nextOne,nextTwo,nextThree,nextFour]);},else=>unit};
+  upcoming=nextOne;nextOne=nextTwo;nextTwo=nextThree;nextThree=nextFour;nextFour=List<Pending>[];
+  cursor=cursor+1;
+ };
+ branch when{root<0=>{
+  let terminal:Terminal=try scanAt(source,farthest,false);
+  return Result<SyntaxForest,Diagnostic>::Err(problem(branch when{outside==farthest=>"unsupported",else=>"parse"},location(terminal->token),branch when{outside==farthest=>"construct is outside the parse profile",else=>"no complete structural derivation"}));
+ },else=>unit};
+ Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:source,nodes:nodes,root:root,itemCount:itemCount,comparisons:comparisons})
+};
+public let analyzeSyntax:Function(String):Result<SyntaxForest,Diagnostic>=function(source:String):Result<SyntaxForest,Diagnostic>{parseSnapshot(try scanSource(source))};

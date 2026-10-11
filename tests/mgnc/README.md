@@ -107,3 +107,19 @@ Parse_isolated.py takes the same compiler and frozen fixtures, repeated --userla
 rootfs paths and --evidence RESULT.json. It checks every C0/C1 file in each minimal
 userland. The existing isolated.py separately checks native generation and output
 execution. Shared host kernels are recorded separately from userland versions.
+
+## Internal growth and completion evidence
+
+Ambiguity.py --seed SEED --compiler COMPILER --evidence NEW_DIRECTORY builds an
+instrumented Git HEAD archive and checks 26 positive/negative growth cells.
+It retains all type/value alternatives, compares small cells against the independent
+CFG oracle, and records items, families, maximum columns, key comparisons and
+family deduplication. The same inputs receive one warm-up and five measured runs
+with the unchanged public compiler. These supplementary cells do not replace the
+formal corpus, parse scale or inherited native matrices.
+
+Review_mutants.py --seed SEED --compiler COMPILER --evidence NEW_DIRECTORY
+checks five intentional compiler faults against the unmodified baseline.
+Acceptance.py checks the published v1.4 evidence ledger, source identity, case
+coverage, complete sample matrices, isolation and compatibility input hashes.
+Run python3 tests/mgnc/acceptance.py after generating all completion records.

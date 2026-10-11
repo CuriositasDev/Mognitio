@@ -17,8 +17,8 @@ ir-definitions.py, encoding.py and driver-internal.py with --seed SEED.
 Check generated width data with generate-width.py --check.
 
 The v1.4 internal source snapshot, string lexer and residual terminal scanner
-are checked by shared_lexer.py --seed SEED. They are isolated from the public
-Driver until the shared structural parser and native bridge are ready.
+are checked by shared_lexer.py --seed SEED. The public
+parse and build commands use this same snapshot and structural frontend.
 
 The shared chart uses grammar.txt and generated Grammar / GrammarPart modules.
 Run generate_grammar.py --check and generate_storage.py --check to verify every
@@ -84,3 +84,26 @@ contain no old compiler, development toolchain or Python interpreter. It runs
 compilation and generated programs separately without source or compiler
 access during the latter, and traces the compiler for unexpected process execs.
 The rootfs file inventory and OS identity are included in the evidence.
+
+## Version 1.4 parse acceptance
+
+Parse_cases.py covers lexical and structural cases, parse/build boundaries and
+review diagnostics. Parse_driver.py checks CLI and read-only behavior;
+parse_mutations.py corrupts four complete C0 files; parse_faults.py distinguishes
+allocation failure, OS termination and harness timeout. Each accepts --compiler
+COMPILER --evidence RESULT.json. Residual_locations.py --seed SEED checks raw
+cursor spans. Parse_compatibility.py compares valid normal-toolchain features
+outside the experimental profile; put the source-development SBCL on PATH.
+
+Freeze C0 and the exact final C1 with parse_workloads.py --revision COMMIT
+--output DIRECTORY. Parse_measure.py --compiler COMPILER --fixtures DIRECTORY
+--evidence RESULT.json measures every file and all 35 scale cells. Defaults are
+one warm-up and five measured runs; --preflight is explicitly preliminary.
+Per-file/cell median is at most 30 seconds, each corpus round median sum at most
+120 seconds, and peak RSS at most 512 MiB. The inherited native budget remains
+30 seconds / 256 MiB and is measured separately with measure.py.
+
+Parse_isolated.py takes the same compiler and frozen fixtures, repeated --userland
+rootfs paths and --evidence RESULT.json. It checks every C0/C1 file in each minimal
+userland. The existing isolated.py separately checks native generation and output
+execution. Shared host kernels are recorded separately from userland versions.

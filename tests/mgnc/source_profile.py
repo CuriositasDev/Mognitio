@@ -15,8 +15,10 @@ def main():
              ("namespace App; unit;",1,"parse"),(ENTRY+"7",1,"parse"),
              (ENTRY+"discard false && (1+true==0);0};",1,"type"),
              (ENTRY+"let inner:Function():Int=function():Int{7};0};",1,"unsupported"),
-             ("namespace App; use Std\\\\Io\\\\{writeStdout};"+ENTRY.split("namespace App;")[1]+"0};",1,"unsupported"),
+             ("namespace App; use Std\\\\Io\\\\{writeStdout};"+ENTRY.split("namespace App;")[1]+"0};",1,"parse"),
              ("namespace App; template identity<T>=function(value:T):T{value};"+ENTRY.split("namespace App;")[1]+"0};",1,"unsupported")]
+    # v1.4 parses the full import first: the doubled separators above are malformed.
+    rows.append(("namespace App;use Std\\Io\\{writeStdout};"+ENTRY.split("namespace App;")[1]+"0};",1,"unsupported"))
     boundary_start=len(rows)
     prefixes=[" "*1023+"//日本語😀\n"+ENTRY+"7};",
               "//"+"x"*1021+"\r\n"+ENTRY+"7};"]

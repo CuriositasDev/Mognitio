@@ -1,12 +1,12 @@
 namespace Mgnc\ItemStorage;
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem,Span};
-use Mgnc\Tables\{replaceItem};
+use Mgnc\Tables\{replaceItem,replaceList,atList};
 use Mgnc\ForestData\{ChartItem};
 // Generated scalar pages: no mutable collection, raw pointer, or seed/runtime extension.
 public type ItemPage=product{slot0:Int;origin0:Int;node0:Int;slot1:Int;origin1:Int;node1:Int;slot2:Int;origin2:Int;node2:Int;slot3:Int;origin3:Int;node3:Int;slot4:Int;origin4:Int;node4:Int;slot5:Int;origin5:Int;node5:Int;slot6:Int;origin6:Int;node6:Int;slot7:Int;origin7:Int;node7:Int;slot8:Int;origin8:Int;node8:Int;slot9:Int;origin9:Int;node9:Int;slot10:Int;origin10:Int;node10:Int;slot11:Int;origin11:Int;node11:Int;slot12:Int;origin12:Int;node12:Int;slot13:Int;origin13:Int;node13:Int;slot14:Int;origin14:Int;node14:Int;slot15:Int;origin15:Int;node15:Int;};
-public type ItemStore=product{pages:Paged<ItemPage>;tail:ItemPage;count:Int;};
+public type ItemStore=product{pages:Paged<ItemPage>;tail:List<ChartItem>;count:Int;};
 let zero:ItemPage=ItemPage{slot0:0,origin0:0,node0:0,slot1:0,origin1:0,node1:0,slot2:0,origin2:0,node2:0,slot3:0,origin3:0,node3:0,slot4:0,origin4:0,node4:0,slot5:0,origin5:0,node5:0,slot6:0,origin6:0,node6:0,slot7:0,origin7:0,node7:0,slot8:0,origin8:0,node8:0,slot9:0,origin9:0,node9:0,slot10:0,origin10:0,node10:0,slot11:0,origin11:0,node11:0,slot12:0,origin12:0,node12:0,slot13:0,origin13:0,node13:0,slot14:0,origin14:0,node14:0,slot15:0,origin15:0,node15:0};
-public let emptyItems:Function():ItemStore=function():ItemStore{ItemStore{pages:empty<ItemPage>(),tail:zero,count:0}};
+public let emptyItems:Function():ItemStore=function():ItemStore{ItemStore{pages:empty<ItemPage>(),tail:List<ChartItem>[],count:0}};
 let writePage:Function(ItemPage,Int,ChartItem):ItemPage=function(page:ItemPage,lane:Int,value:ChartItem):ItemPage{
 ItemPage{slot0:branch when{lane==0=>value->slot,else=>page->slot0},origin0:branch when{lane==0=>value->origin,else=>page->origin0},node0:branch when{lane==0=>value->node,else=>page->node0},slot1:branch when{lane==1=>value->slot,else=>page->slot1},origin1:branch when{lane==1=>value->origin,else=>page->origin1},node1:branch when{lane==1=>value->node,else=>page->node1},slot2:branch when{lane==2=>value->slot,else=>page->slot2},origin2:branch when{lane==2=>value->origin,else=>page->origin2},node2:branch when{lane==2=>value->node,else=>page->node2},slot3:branch when{lane==3=>value->slot,else=>page->slot3},origin3:branch when{lane==3=>value->origin,else=>page->origin3},node3:branch when{lane==3=>value->node,else=>page->node3},slot4:branch when{lane==4=>value->slot,else=>page->slot4},origin4:branch when{lane==4=>value->origin,else=>page->origin4},node4:branch when{lane==4=>value->node,else=>page->node4},slot5:branch when{lane==5=>value->slot,else=>page->slot5},origin5:branch when{lane==5=>value->origin,else=>page->origin5},node5:branch when{lane==5=>value->node,else=>page->node5},slot6:branch when{lane==6=>value->slot,else=>page->slot6},origin6:branch when{lane==6=>value->origin,else=>page->origin6},node6:branch when{lane==6=>value->node,else=>page->node6},slot7:branch when{lane==7=>value->slot,else=>page->slot7},origin7:branch when{lane==7=>value->origin,else=>page->origin7},node7:branch when{lane==7=>value->node,else=>page->node7},slot8:branch when{lane==8=>value->slot,else=>page->slot8},origin8:branch when{lane==8=>value->origin,else=>page->origin8},node8:branch when{lane==8=>value->node,else=>page->node8},slot9:branch when{lane==9=>value->slot,else=>page->slot9},origin9:branch when{lane==9=>value->origin,else=>page->origin9},node9:branch when{lane==9=>value->node,else=>page->node9},slot10:branch when{lane==10=>value->slot,else=>page->slot10},origin10:branch when{lane==10=>value->origin,else=>page->origin10},node10:branch when{lane==10=>value->node,else=>page->node10},slot11:branch when{lane==11=>value->slot,else=>page->slot11},origin11:branch when{lane==11=>value->origin,else=>page->origin11},node11:branch when{lane==11=>value->node,else=>page->node11},slot12:branch when{lane==12=>value->slot,else=>page->slot12},origin12:branch when{lane==12=>value->origin,else=>page->origin12},node12:branch when{lane==12=>value->node,else=>page->node12},slot13:branch when{lane==13=>value->slot,else=>page->slot13},origin13:branch when{lane==13=>value->origin,else=>page->origin13},node13:branch when{lane==13=>value->node,else=>page->node13},slot14:branch when{lane==14=>value->slot,else=>page->slot14},origin14:branch when{lane==14=>value->origin,else=>page->origin14},node14:branch when{lane==14=>value->node,else=>page->node14},slot15:branch when{lane==15=>value->slot,else=>page->slot15},origin15:branch when{lane==15=>value->origin,else=>page->origin15},node15:branch when{lane==15=>value->node,else=>page->node15}}
 };
@@ -28,19 +28,39 @@ lane==13=>ChartItem{slot:page->slot13,origin:page->origin13,node:page->node13},
 lane==14=>ChartItem{slot:page->slot14,origin:page->origin14,node:page->node14},
 else=>ChartItem{slot:page->slot15,origin:page->origin15,node:page->node15},
 }};
+let packPage:Function(List<ChartItem>):ItemPage=function(values:List<ChartItem>):ItemPage{
+ let v0:ChartItem=branch on values->at(0){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v1:ChartItem=branch on values->at(1){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v2:ChartItem=branch on values->at(2){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v3:ChartItem=branch on values->at(3){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v4:ChartItem=branch on values->at(4){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v5:ChartItem=branch on values->at(5){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v6:ChartItem=branch on values->at(6){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v7:ChartItem=branch on values->at(7){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v8:ChartItem=branch on values->at(8){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v9:ChartItem=branch on values->at(9){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v10:ChartItem=branch on values->at(10){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v11:ChartItem=branch on values->at(11){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v12:ChartItem=branch on values->at(12){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v13:ChartItem=branch on values->at(13){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v14:ChartItem=branch on values->at(14){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ let v15:ChartItem=branch on values->at(15){Result<ChartItem,IndexError>::Ok(value:ChartItem)=>value,Result<ChartItem,IndexError>::Err(error:IndexError)=>panic {"incomplete scalar page"}};
+ItemPage{slot0:v0->slot,origin0:v0->origin,node0:v0->node,slot1:v1->slot,origin1:v1->origin,node1:v1->node,slot2:v2->slot,origin2:v2->origin,node2:v2->node,slot3:v3->slot,origin3:v3->origin,node3:v3->node,slot4:v4->slot,origin4:v4->origin,node4:v4->node,slot5:v5->slot,origin5:v5->origin,node5:v5->node,slot6:v6->slot,origin6:v6->origin,node6:v6->node,slot7:v7->slot,origin7:v7->origin,node7:v7->node,slot8:v8->slot,origin8:v8->origin,node8:v8->node,slot9:v9->slot,origin9:v9->origin,node9:v9->node,slot10:v10->slot,origin10:v10->origin,node10:v10->node,slot11:v11->slot,origin11:v11->origin,node11:v11->node,slot12:v12->slot,origin12:v12->origin,node12:v12->node,slot13:v13->slot,origin13:v13->origin,node13:v13->node,slot14:v14->slot,origin14:v14->origin,node14:v14->node,slot15:v15->slot,origin15:v15->origin,node15:v15->node}
+};
 public let addItem:Function(ItemStore,ChartItem):ItemStore=function(table:ItemStore,value:ChartItem):ItemStore{
- var pages:Paged<ItemPage>=table->pages;var tail:ItemPage=table->tail;
- branch when{table->count>0&&table->count%16==0=>{pages=push<ItemPage>(pages,tail);tail=zero;},else=>unit};
- ItemStore{pages:pages,tail:writePage(tail,table->count%16,value),count:table->count+1}
+ var pages:Paged<ItemPage>=table->pages;var tail:List<ChartItem>=table->tail;
+ branch when{tail->length()==16=>{pages=push<ItemPage>(pages,packPage(tail));tail=List<ChartItem>[];},else=>unit};
+ ItemStore{pages:pages,tail:tail->append(value),count:table->count+1}
 };
 public let getItem:Function(ItemStore,Int):Result<ChartItem,Diagnostic>=function(table:ItemStore,index:Int):Result<ChartItem,Diagnostic>{
  branch when{index<0||index>=table->count=>{return Result<ChartItem,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid item arena index"));},else=>unit};
- let page:ItemPage=branch when{index/16==table->pages->count=>table->tail,else=>try lookup<ItemPage>(table->pages,index/16)};
+ branch when{index/16==table->pages->count=>{return atList<ChartItem>(table->tail,index%16);},else=>unit};
+ let page:ItemPage=try lookup<ItemPage>(table->pages,index/16);
  Result<ChartItem,Diagnostic>::Ok(readPage(page,index%16))
 };
 public let setItem:Function(ItemStore,Int,ChartItem):Result<ItemStore,Diagnostic>=function(table:ItemStore,index:Int,value:ChartItem):Result<ItemStore,Diagnostic>{
  let checked:ChartItem=try getItem(table,index);
- branch when{index/16==table->pages->count=>Result<ItemStore,Diagnostic>::Ok(ItemStore{pages:table->pages,tail:writePage(table->tail,index%16,value),count:table->count}),else=>{
+ branch when{index/16==table->pages->count=>Result<ItemStore,Diagnostic>::Ok(ItemStore{pages:table->pages,tail:replaceList<ChartItem>(table->tail,index%16,value),count:table->count}),else=>{
  let previous:ItemPage=try lookup<ItemPage>(table->pages,index/16);
  let pages:Paged<ItemPage>=try replaceItem<ItemPage>(table->pages,index/16,writePage(previous,index%16,value));
  Result<ItemStore,Diagnostic>::Ok(ItemStore{pages:pages,tail:table->tail,count:table->count})

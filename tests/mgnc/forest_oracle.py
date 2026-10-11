@@ -101,10 +101,37 @@ def decode(stdout):
    for children in prefix(left):families.setdefault(key(i),set()).add((rid,children))
  assert root is not None;return key(root),families
 
+def expression_core(data,text,families):
+ tokens=Tokens(text)
+ def visit(key):
+  answers=set()
+  for rid,children in families[key]:
+   name=data['rules'][rid]['name']
+   if name in ['integer','name','true','false']:
+    label='int' if name=='integer' else 'name' if name=='name' else 'bool'
+    answers.add((label,tokens.tokens[key[1]//2][0]))
+   elif name.startswith('binary_'):
+    for left,right in itertools.product(visit(children[0]),visit(children[2])):answers.add((name[7:],left,right))
+   elif name=='group':answers.update(('group',x) for x in visit(children[1]))
+   else:
+    assert len(children)==1 and children[0][0]>0,(name,children)
+    answers.update(visit(children[0]))
+  return answers
+ expressions=[children[5] for fs in families.values() for rid,children in fs if data['rules'][rid]['name']=='let_binding']
+ assert len(expressions)==1
+ return visit(expressions[0])
+GOLDENS={
+ 'namespace A;let x:Int=1+2*3;':('add',('int','1'),('mul',('int','2'),('int','3'))),
+ 'namespace A;let x:Int=(1+2)*3;':('mul',('group',('add',('int','1'),('int','2'))),('int','3')),
+ 'namespace A;let x:Bool=(a<b)==true;':('eq',('group',('lt',('name','a'),('name','b'))),('bool','true')),
+}
+
 def main():
  parser=argparse.ArgumentParser();parser.add_argument('--compiler',required=True);args=parser.parse_args();data=load(ROOT/'tests/mgnc/grammar.txt')
  positive=['namespace App;', 'namespace A;let x:Int=1+2*3;', 'namespace A;let x:Int=(1+2)*3;', 'namespace A;let x:Int=f<T>(a);', 'namespace A;let x:Int=f<T>==g;', 'namespace A;let x:Int=branch when{f<T>=>1,else=>2};', 'namespace A;let x:List<Int>=List<Int>[];', 'namespace A;let x:Int={let y:Int=1;y};']
  positive += ['namespace A;let x:Int=a->m();','namespace A;let x:Int=(a->f)(b);','namespace A;let x:Int=a->m<T>();','namespace A;let x:Int=loop while(false){}==unit;']
+ positive.append('namespace A;let x:Bool=(a<b)==true;')
+ golden_count=0;mutation_controls=set()
  negative=['namespace A;let x:Int=a<b<c;','namespace A;type T=product{x:Int};','namespace A;let x:Int=branch when{true=>1};']
  with tempfile.TemporaryDirectory(prefix='mgnc-oracle-') as work:
   for i,text in enumerate(positive+negative):
@@ -113,6 +140,20 @@ def main():
    if not accepted:assert p.returncode==1,(i,p.stderr);continue
    assert p.returncode==0,(i,p.stderr)
    actual_root,actual=decode(p.stdout);assert actual_root==expected_root
-   assert reachable(actual_root,actual)==reachable(expected_root,expected),(i,'forest differs')
- print(f'FOREST_ORACLE_OK positive={len(positive)} negative={len(negative)} all_reachable_families=True')
+   observed=reachable(actual_root,actual);wanted=reachable(expected_root,expected)
+   assert observed==wanted,(i,'forest differs')
+   if text in GOLDENS:
+    assert expression_core(data,text,observed)=={GOLDENS[text]},(i,'handwritten precedence/grouping golden')
+    golden_count+=1
+    # Inject group erasure into observed edges; the same complete-family oracle must reject it.
+    groups={key:children[1] for key,fs in observed.items() for rid,children in fs if data['rules'][rid]['name']=='group'}
+    if groups:
+     erased={key:{(rid,tuple(groups.get(child,child) for child in children)) for rid,children in fs} for key,fs in observed.items()}
+     assert reachable(actual_root,erased)!=wanted;mutation_controls.add('group-erasure')
+   ambiguous=next((key for key,fs in observed.items() if len(fs)>1),None)
+   if ambiguous:
+    dropped={key:set(fs) for key,fs in observed.items()};dropped[ambiguous].pop()
+    assert reachable(actual_root,dropped)!=wanted;mutation_controls.add('family-deletion')
+ assert golden_count==3 and len(mutation_controls)==2,(golden_count,mutation_controls)
+ print(f'FOREST_ORACLE_OK goldens={golden_count} mutation_controls={len(mutation_controls)} positive={len(positive)} negative={len(negative)} all_reachable_families=True')
 if __name__=='__main__':main()

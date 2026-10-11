@@ -1,6 +1,6 @@
 # Experimental native compiler
 
-This source project is the independent Mognitio 1.3 compiler, mgnc.
+This source project is the independent Mognitio 1.4 compiler, mgnc.
 It is built using the fixed Mognitio 1.2 seed and is not included in the
 regular Debian package, APT repository, or installer bundle.
 
@@ -23,11 +23,20 @@ Run the verified seed launcher, with an explicit path, from the repository root:
 ## Use
 
 ~~~sh
+/new/output/mgnc parse path/to/source.mgn
 /new/output/mgnc build path/to/source.mgn -o path/to/new-artifact
 /new/output/new-artifact argument
 ~~~
 
-The source profile is a single namespace with explicitly typed scalar helpers
+Parse checks one complete UTF-8 source file through EOF without resolving names,
+opening imports, checking types or writing artifacts. It accepts the documented
+type, alias, template, generic, function and control-flow syntax, including sources
+that need later semantic checking. Success has exit 0 and empty output streams.
+Contract, witness, attribute and assertion syntax remains outside this experimental
+profile; the normal toolchain continues to support it.
+
+Build uses the same structural parser before native classification and checking.
+The native profile is a single namespace with explicitly typed scalar helpers
 and main. Main takes List<String> and returns Int; its argument list supports
 direct length queries. Helpers operate on Int, Bool and Unit. Blocks, mutable
 locals, direct calls, branches, while loops, and checked signed arithmetic are

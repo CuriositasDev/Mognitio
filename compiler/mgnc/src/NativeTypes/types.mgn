@@ -1,0 +1,42 @@
+namespace Mgnc\NativeTypes;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\Syntax\{Parameter};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,selected,item,text,site,failure};
+use Mgnc\Grammar\{ruleTypeName,ruleTypeApply,ruleTypeFunction,ruleArgumentType};
+public type Signature=product{parameters:List<Parameter>;types:List<Int>;result:Int;};
+public let typeCode:Function(SyntaxForest,Int):Result<Int,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<Int,Diagnostic>{
+ let node:ForestNode=try getNode(tree->nodes,id);let children:List<Int>=try parts(tree,id);let name:String=try text(tree,id);
+ branch when{node->rule==ruleTypeName=>{
+  branch when{name=="Int"=>{return Result<Int,Diagnostic>::Ok(1);},name=="Bool"=>{return Result<Int,Diagnostic>::Ok(2);},name=="Unit"=>{return Result<Int,Diagnostic>::Ok(3);},else=>unit};
+  branch when{name!="String"&&name!="Function"&&name!="Bits"&&name!="Bytes"&&name!="List"&&name!="Result"&&name!="Signed"&&name!="Unsigned"=>{
+   return Result<Int,Diagnostic>::Err(try failure(tree,id,"semantic","unknown type"));
+  },else=>unit};
+ },node->rule==ruleTypeApply&&name=="List"=>{
+  let arguments:List<Int>=try parts(tree,try item(children,1));let generic:List<Int>=try parts(tree,try item(arguments,1));
+  let rest:List<Int>=try parts(tree,try item(generic,1));
+  branch when{rest->length()<=1=>{
+   let argument:List<Int>=try selected(tree,try item(generic,0),ruleArgumentType);
+   let element:Int=try item(argument,0);let elementNode:ForestNode=try getNode(tree->nodes,element);
+   branch when{elementNode->rule==ruleTypeName&&(try text(tree,element))=="String"=>{return Result<Int,Diagnostic>::Ok(4);},else=>unit};
+  },else=>unit};
+ },else=>unit};
+ Result<Int,Diagnostic>::Err(try failure(tree,id,"unsupported","type is outside the native profile"))
+};
+public let signature:Function(SyntaxForest,Int,Bool):Result<Signature,Diagnostic>=function(tree:SyntaxForest,id:Int,named:Bool):Result<Signature,Diagnostic>{
+ let children:List<Int>=try parts(tree,id);var parameters:List<Parameter>=List<Parameter>[];var types:List<Int>=List<Int>[];
+ let optional:List<Int>=try parts(tree,try item(children,2));
+ branch when{optional->length()>0=>{
+  var value:Int=try item(optional,0);var rest:Int=try item(optional,1);
+  loop while(true){
+   branch when{named=>{
+    let parameter:List<Int>=try parts(tree,value);let name:Int=try item(parameter,0);let code:Int=try typeCode(tree,try item(parameter,2));
+    parameters=parameters->append(Parameter{name:try text(tree,name),valueType:code,span:try site(tree,name)});types=types->append(code);
+   },else=>{types=types->append(try typeCode(tree,value));}};
+   let tail:List<Int>=try parts(tree,rest);branch when{tail->length()<=1=>{break;},else=>unit};value=try item(tail,1);rest=try item(tail,2);
+  };
+ },else=>unit};
+ Result<Signature,Diagnostic>::Ok(Signature{parameters:parameters,types:types,result:try typeCode(tree,try item(children,5))})
+};

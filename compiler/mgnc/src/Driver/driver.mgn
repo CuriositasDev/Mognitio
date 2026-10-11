@@ -3,6 +3,8 @@ use Std\Io\{readTextFile,writeStderr,IoError,IoErrorKind,IoErrorPhase};
 use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError,BinaryOutputErrorKind,BinaryOutputPhase,BinaryPublicationState};
 use Mgnc\Data\{Diagnostic,describe,contains};
 use Mgnc\Pipeline\{compile};
+use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\Forest\{SyntaxForest};
 public let report:Function(Int,String):Int=function(status:Int,message:String):Int{
  branch on writeStderr(message){
   Result<Unit,IoError>::Ok(value:Unit)=>status,
@@ -45,17 +47,17 @@ public let publicationMessage:Function(BinaryOutputError):String=function(error:
  "mgnc: publication: "+error->subject+": "+outputKind(error->kind)+" / "+outputPhase(error->phase)+" / "+publicationState(error->publication)+"\n"
 };
 public let run:Function(List<String>):Int=function(args:List<String>):Int{
- branch when{args->length()!=4=>{return report(2,"mgnc: cli: expected build source.mgn -o new-artifact\n");},else=>unit};
  let command:String=argument(args,0);let sourcePath:String=argument(args,1);
+ let parsing:Bool=command=="parse";
  let option:String=argument(args,2);let outputPath:String=argument(args,3);
- branch when{command!="build" || option!="-o"=>{
-  return report(2,"mgnc: cli: expected build source.mgn -o new-artifact\n");
+ branch when{!((parsing&&args->length()==2)||(command=="build"&&args->length()==4&&option=="-o"))=>{
+  return report(2,"mgnc: cli: expected parse source.mgn or build source.mgn -o new-artifact\n");
  },else=>unit};
- branch when{sourcePath=="" || outputPath=="" || contains(sourcePath,"\0") || contains(outputPath,"\0")=>{
+ branch when{sourcePath=="" || contains(sourcePath,"\0") || (!parsing&&(outputPath==""||contains(outputPath,"\0")))=>{
   return report(2,"mgnc: cli: InvalidPath: empty or NUL-containing path\n");
  },else=>unit};
  branch when{!endsWith(sourcePath,".mgn")=>{return report(2,"mgnc: cli: "+sourcePath+": source requires .mgn extension\n");},else=>unit};
- branch when{endsWith(outputPath,"/")=>{return report(2,"mgnc: cli: "+outputPath+": InvalidPath: trailing slash\n");},else=>unit};
+ branch when{!parsing&&endsWith(outputPath,"/")=>{return report(2,"mgnc: cli: "+outputPath+": InvalidPath: trailing slash\n");},else=>unit};
  let source:String=branch on readTextFile(sourcePath){
   Result<String,IoError>::Ok(text:String)=>text,
   Result<String,IoError>::Err(error:IoError)=>{
@@ -65,6 +67,12 @@ public let run:Function(List<String>):Int=function(args:List<String>):Int{
    }
   },
  };
+ branch when{parsing=>{
+  return branch on analyzeSyntax(source){
+   Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>0,
+   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>report(branch when{error->phase=="internal"=>3,else=>1},describe(sourcePath,error)),
+  };
+ },else=>unit};
  let bytes:Bytes=branch on compile(source){
   Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,
   Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{

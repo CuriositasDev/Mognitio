@@ -1,0 +1,66 @@
+namespace Mgnc\NativeBridge;
+use Mgnc\Data\{Paged,empty,Diagnostic,problem};
+use Mgnc\Syntax\{Node,Program,Parameter,Declaration};
+use Mgnc\Source\{location};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,concrete,text,site,failure,tokenAt};
+use Mgnc\BridgeLists\{leftList,reverse};
+use Mgnc\NativeTypes\{Signature,signature};
+use Mgnc\BridgeShape\{Binding};
+use Mgnc\BridgeBody\{Converted,body};
+use Mgnc\Grammar\{ruleTopLet,ruleTopVar,ruleVarBinding,ruleTypeFunction,ruleFunction};
+let moduleName:Function(SyntaxForest,Int):Result<String,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<String,Diagnostic>{
+ let namespaceParts:List<Int>=try parts(tree,id);var path:Int=try item(namespaceParts,1);var names:List<Int>=List<Int>[];
+ loop while(true){
+  let segments:List<Int>=try parts(tree,path);
+  branch when{segments->length()==1=>{names=names->append(try item(segments,0));break;},else=>unit};
+  names=names->append(try item(segments,2));path=try item(segments,0);
+ };
+ names=try reverse(names);var result:String="";
+ loop over(names as name:Int){
+  let word:String=try text(tree,name);
+  branch when{result==""=>{branch when{word=="Std"=>{return Result<String,Diagnostic>::Err(try failure(tree,name,"semantic","reserved namespace"));},else=>unit};result=word;},else=>{result=result+"\\"+word;}};
+ };
+ Result<String,Diagnostic>::Ok(result)
+};
+let directFunction:Function(SyntaxForest,Int):Result<Int,Diagnostic>=function(tree:SyntaxForest,expression:Int):Result<Int,Diagnostic>{
+ let id:Int=try concrete(tree,expression);let node:ForestNode=try getNode(tree->nodes,id);
+ branch when{node->rule==ruleFunction=>{return Result<Int,Diagnostic>::Ok(id);},else=>unit};
+ // A native top initializer requires one exact function, including its exact Block.
+ // Walk the retained left construct edge to report a suffix after its body.
+ branch when{(try text(tree,id))=="function"=>{
+  var current:Int=id;
+  loop while(true){
+   let found:ForestNode=try getNode(tree->nodes,current);
+   branch when{found->rule==ruleFunction=>{return Result<Int,Diagnostic>::Err(problem("parse",location(try tokenAt(tree,found->end)),"expected terminator after function body"));},else=>unit};
+   let children:List<Int>=try parts(tree,current);branch when{children->length()==0=>{break;},else=>unit};
+   let first:Int=try item(children,0);let child:ForestNode=try getNode(tree->nodes,first);branch when{child->symbol<=0=>{break;},else=>unit};current=try concrete(tree,first);
+  };
+ },else=>unit};
+ Result<Int,Diagnostic>::Err(try failure(tree,id,"unsupported","top-level values require a direct function"))
+};
+public let bridge:Function(SyntaxForest):Result<Program,Diagnostic>=function(tree:SyntaxForest):Result<Program,Diagnostic>{
+ let module:List<Int>=try parts(tree,tree->root);let name:String=try moduleName(tree,try item(module,0));
+ let uses:Int=try item(module,1);let imports:List<Int>=try parts(tree,uses);
+ branch when{imports->length()>0=>{return Result<Program,Diagnostic>::Err(try failure(tree,uses,"unsupported","imports are outside the native profile"));},else=>unit};
+ let tops:List<Int>=try leftList(tree,try item(module,2));var nodes:Paged<Node>=empty<Node>();var declarations:List<Declaration>=List<Declaration>[];var previous:List<Binding>=List<Binding>[];
+ loop over(tops as top:Int){
+  let topNode:ForestNode=try getNode(tree->nodes,top);
+  branch when{topNode->rule!=ruleTopLet&&topNode->rule!=ruleTopVar=>{return Result<Program,Diagnostic>::Err(try failure(tree,top,"unsupported","top-level feature is outside the native profile"));},else=>unit};
+  let binding:Int=try concrete(tree,top);let bindingNode:ForestNode=try getNode(tree->nodes,binding);let elements:List<Int>=try parts(tree,binding);
+  let bindingName:Int=try item(elements,1);let annotation:Int=try item(elements,3);let declaredType:ForestNode=try getNode(tree->nodes,annotation);
+  branch when{declaredType->rule!=ruleTypeFunction=>{return Result<Program,Diagnostic>::Err(try failure(tree,annotation,"unsupported","top-level values require a function annotation"));},else=>unit};
+  let actualId:Int=try directFunction(tree,try item(elements,5));
+  let declared:Signature=try signature(tree,annotation,false);let actual:Signature=try signature(tree,actualId,true);
+  let functionParts:List<Int>=try parts(tree,actualId);let block:Int=try item(functionParts,6);let blockNode:ForestNode=try getNode(tree->nodes,block);
+  var visible:List<Binding>=previous;
+  loop over(actual->parameters as parameter:Parameter){visible=visible->append(Binding{name:parameter->name,after:0,until:blockNode->end});};
+  let converted:Converted=try body(tree,block,nodes,visible);nodes=converted->nodes;
+  let spelling:String=try text(tree,bindingName);
+  declarations=declarations->append(Declaration{name:spelling,parameters:actual->parameters,declaredParameters:declared->types,result:actual->result,declaredResult:declared->result,body:converted->root,span:try site(tree,bindingName),mutable:bindingNode->rule==ruleVarBinding});
+  previous=previous->append(Binding{name:spelling,after:bindingNode->end,until:tree->source->tokens->count*2});
+ };
+ Result<Program,Diagnostic>::Ok(Program{nodes:nodes,declarations:declarations,moduleName:name,end:tree->source->end->span})
+};

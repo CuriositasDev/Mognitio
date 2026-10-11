@@ -4,15 +4,15 @@ use Mgnc\Data\{Diagnostic};
 use Mgnc\Checked\{CheckedProgram};
 use Mgnc\IR\{ModuleIR};
 use Mgnc\Machine\{Code};
-use Mgnc\Frontend\{scan};
-use Mgnc\Module\{parse};
+use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\NativeBridge\{bridge};
 use Mgnc\Check\{check};
 use Mgnc\Lower\{lower};
 use Mgnc\Verify\{verify};
 use Mgnc\Native\{generate};
 use Mgnc\Encode\{encode};
 let checkedIR:Function(String):Result<ModuleIR,Diagnostic>=function(source:String):Result<ModuleIR,Diagnostic>{
- lower(try check(try parse(try scan(source))))
+ lower(try check(try bridge(try analyzeSyntax(source))))
 };
 let verifiedIR:Function(String):Result<ModuleIR,Diagnostic>=function(source:String):Result<ModuleIR,Diagnostic>{
  let module:ModuleIR=try checkedIR(source);try verify(module);

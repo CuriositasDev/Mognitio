@@ -1,6 +1,12 @@
 # Verification
 
-The current [1.3.0 review corrections](v1.3.0-review.md) record all 55 conditions,
+The current [1.4.0 acceptance](v1.4.0.md) records complete-source parsing, shared
+frontend native continuity, [54 new conditions](v1.4.0-conformance.md), 55 inherited
+conditions and [all formal resource samples](v1.4.0-performance.md). Run
+`python3 tests/mgnc/acceptance.py` to check evidence and final source identities.
+Implementation acceptance does not authorize release publication.
+
+The retained [1.3.0 review corrections](v1.3.0-review.md) record all 55 conditions,
 63 additional regressions and a complete resource rerun with a fixed source/seed.
 The [initial acceptance](v1.3.0.md) and [resource results](v1.3.0-performance.md)
 remain available as historical evidence.

@@ -1,0 +1,65 @@
+namespace Mgnc\Projection;
+use Mgnc\Data\{Span,Diagnostic,problem};
+use Mgnc\Tables\{atList};
+use Mgnc\Source\{Lexeme,location,spelling};
+use Mgnc\Cursor\{Terminal,scanAt};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\NodeStorage\{getNode};
+public let item:Function(List<Int>,Int):Result<Int,Diagnostic>=function(values:List<Int>,index:Int):Result<Int,Diagnostic>{atList<Int>(values,index)};
+public let tokenAt:Function(SyntaxForest,Int):Result<Lexeme,Diagnostic>=function(tree:SyntaxForest,cursor:Int):Result<Lexeme,Diagnostic>{
+ let scanned:Terminal=try scanAt(tree->source,cursor,false);Result<Lexeme,Diagnostic>::Ok(scanned->token)
+};
+public let site:Function(SyntaxForest,Int):Result<Span,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<Span,Diagnostic>{
+ let node:ForestNode=try getNode(tree->nodes,id);Result<Span,Diagnostic>::Ok(location(try tokenAt(tree,node->start)))
+};
+public let text:Function(SyntaxForest,Int):Result<String,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<String,Diagnostic>{
+ let node:ForestNode=try getNode(tree->nodes,id);let token:Lexeme=try tokenAt(tree,node->start);
+ Result<String,Diagnostic>::Ok(branch when{token->text!=""=>token->text,else=>try spelling(tree->source,token)})
+};
+public let failure:Function(SyntaxForest,Int,String,String):Result<Diagnostic,Diagnostic>=function(tree:SyntaxForest,id:Int,phase:String,message:String):Result<Diagnostic,Diagnostic>{
+ Result<Diagnostic,Diagnostic>::Ok(problem(phase,try site(tree,id),message))
+};
+public let family:Function(SyntaxForest,Int,Int):Result<ForestNode,Diagnostic>=function(tree:SyntaxForest,id:Int,rule:Int):Result<ForestNode,Diagnostic>{
+ let node:ForestNode=try getNode(tree->nodes,id);
+ branch when{rule<0=>{
+  branch when{node->alternatives>=0=>{return Result<ForestNode,Diagnostic>::Err(try failure(tree,id,"unsupported","unresolved syntax classification"));},else=>unit};
+  return Result<ForestNode,Diagnostic>::Ok(node);
+ },else=>unit};
+ var choice:ForestNode=node;
+ loop while(true){
+  branch when{choice->rule==rule=>{return Result<ForestNode,Diagnostic>::Ok(choice);},else=>unit};
+  branch when{choice->alternatives<0=>{return Result<ForestNode,Diagnostic>::Err(try failure(tree,id,"unsupported","required classified syntax is absent"));},else=>unit};
+  choice=try getNode(tree->nodes,choice->alternatives);
+ };
+ panic {"unreachable family exit"}
+};
+// Project a binary prefix only after its classification is known. No token reparse.
+public let selected:Function(SyntaxForest,Int,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int,rule:Int):Result<List<Int>,Diagnostic>{
+ let choice:ForestNode=try family(tree,id,rule);var cursor:Int=choice->left;
+ var reverse:List<Int>=List<Int>[];
+ loop while(cursor>=0){
+  let node:ForestNode=try getNode(tree->nodes,cursor);
+  branch when{node->symbol!=0=>{reverse=reverse->append(cursor);break;},else=>unit};
+  branch when{node->alternatives>=0=>{return Result<List<Int>,Diagnostic>::Err(try failure(tree,cursor,"unsupported","unresolved prefix classification"));},else=>unit};
+  let prefix:ForestNode=node;
+  branch when{prefix->right>=0=>{reverse=reverse->append(prefix->right);},else=>unit};cursor=prefix->left;
+ };
+ var result:List<Int>=List<Int>[];var index:Int=reverse->length();
+ loop while(index>0){index=index-1;result=result->append(try item(reverse,index));};
+ Result<List<Int>,Diagnostic>::Ok(result)
+};
+public let parts:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{selected(tree,id,-1)};
+// Transparent grammar levels are skipped; terminal, grouping and construct nodes remain.
+public let concrete:Function(SyntaxForest,Int):Result<Int,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<Int,Diagnostic>{
+ var current:Int=id;
+ loop while(true){
+  let node:ForestNode=try family(tree,current,-1);
+  branch when{node->left<0=>{break;},else=>unit};
+  let child:ForestNode=try getNode(tree->nodes,node->left);
+  branch when{child->symbol<=0=>{break;},else=>unit};
+  // A positive direct prefix is exactly a one-nonterminal production.
+  current=node->left;
+ };
+ Result<Int,Diagnostic>::Ok(current)
+};

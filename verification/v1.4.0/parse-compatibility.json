@@ -1,0 +1,37 @@
+{
+  "compiler_sha256": "7a36bf4d473ced543dcb48d7617203945506d66ce1fc0f0abcedc1202f623e43",
+  "records": [
+    {
+      "name": "witness",
+      "sha256": "27a04b910ad620c921ecdf76554733cca46b22dabfb1fb9eeebe255af55020d2",
+      "normal_exit": 0,
+      "parse_exit": 1,
+      "parse_stderr": "mgnc: unsupported: <fixtures>/witness/src/app.mgn:1:36 [35,42): construct is outside the parse profile\n",
+      "test_stdout": null
+    },
+    {
+      "name": "contract",
+      "sha256": "d4ee15c2e3f2ce271c5fba63e6eb5cf0d8065ec9c063c2095233eeba8d05c83d",
+      "normal_exit": 0,
+      "parse_exit": 1,
+      "parse_stderr": "mgnc: unsupported: <fixtures>/contract/src/app.mgn:1:15 [14,22): construct is outside the parse profile\n",
+      "test_stdout": null
+    },
+    {
+      "name": "assert",
+      "sha256": "1f754666551c45c116a5332c35cbc63966f38df03767b5397b53d0c5775edb3b",
+      "normal_exit": 0,
+      "parse_exit": 1,
+      "parse_stderr": "mgnc: unsupported: <fixtures>/assert/src/app.mgn:1:83 [82,88): construct is outside the parse profile\n",
+      "test_stdout": null
+    },
+    {
+      "name": "attribute",
+      "sha256": "027b8cb4a88724f2532d5e3d54eb1f76017edced856a328395e356de80a74149",
+      "normal_exit": 0,
+      "parse_exit": 1,
+      "parse_stderr": "mgnc: unsupported: <fixtures>/attribute/src/app.mgn:1:15 [14,15): construct is outside the parse profile\n",
+      "test_stdout": "PASS src/app.mgn::App::check\ntests: total=1 passed=1 failed=0 errors=0 aborted=0 not_run=0\n"
+    }
+  ]
+}

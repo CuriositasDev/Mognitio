@@ -1,0 +1,49 @@
+{
+  "status": "pre-existing normal-toolchain limitation; not repaired by the v1.4 frontend change",
+  "seed_source_revision": "284a9b59abd2231a6bb15fefb3455ba3fa3fc481",
+  "current_normal_source_digest": "f4cb6f177346726f3ffea13c9bde940a7353b01b090db82eac443db90dc8c58a",
+  "shared_files": {
+    "mognitio.toml": "[project]\nname=\"app\"\nroot_namespace=\"App\"\n",
+    "src/Evidence/contract.mgn": "namespace App\\Evidence;public contract C{get(self:Self):Int;}"
+  },
+  "entry": "src/app.mgn",
+  "records": [
+    {
+      "body": "0",
+      "toolchain": "seed",
+      "source_sha256": "cfb4094a85f85a8990cad6a46c132fa7f716902db61866d43d8022841422a4ef",
+      "exit": 3,
+      "stdout": "",
+      "stderr": "mgn: internal: Unregistered concrete type\n",
+      "source": "namespace App;use App\\Evidence\\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}let main:Function(List<String>):Int=function(args:List<String>):Int{0};"
+    },
+    {
+      "body": "0",
+      "toolchain": "current",
+      "source_sha256": "cfb4094a85f85a8990cad6a46c132fa7f716902db61866d43d8022841422a4ef",
+      "exit": 3,
+      "stdout": "",
+      "stderr": "mgn: internal: Unregistered concrete type\n",
+      "source": "namespace App;use App\\Evidence\\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}let main:Function(List<String>):Int=function(args:List<String>):Int{0};"
+    },
+    {
+      "body": "C(0)->get()",
+      "toolchain": "seed",
+      "source_sha256": "27a04b910ad620c921ecdf76554733cca46b22dabfb1fb9eeebe255af55020d2",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "source": "namespace App;use App\\Evidence\\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}let main:Function(List<String>):Int=function(args:List<String>):Int{C(0)->get()};"
+    },
+    {
+      "body": "C(0)->get()",
+      "toolchain": "current",
+      "source_sha256": "27a04b910ad620c921ecdf76554733cca46b22dabfb1fb9eeebe255af55020d2",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "source": "namespace App;use App\\Evidence\\{C};witness Evidence=Int implements C{get(self:Self):Int{self}}let main:Function(List<String>):Int=function(args:List<String>):Int{C(0)->get()};"
+    }
+  ],
+  "disposition": "The positive imported-witness fixture exercises C(0)->get(); both toolchains accept it. The unused variant remains a recorded baseline failure, not a passing observation."
+}

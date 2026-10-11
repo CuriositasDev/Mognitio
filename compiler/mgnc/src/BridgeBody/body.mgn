@@ -1,0 +1,36 @@
+namespace Mgnc\BridgeBody;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
+use Mgnc\Syntax\{Node};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{concrete,item};
+use Mgnc\BridgeShape\{Binding,shape};
+public type Converted=product{nodes:Paged<Node>;root:Int;};
+type Work=product{parent:Int;source:Int;value:Node;block:Int;next:Int;children:List<Int>;};
+let start:Function(SyntaxForest,Int,Int,Int,List<Binding>):Result<Work,Diagnostic>=function(tree:SyntaxForest,source:Int,parent:Int,block:Int,bindings:List<Binding>):Result<Work,Diagnostic>{
+ let id:Int=try concrete(tree,source);let value:Node=try shape(tree,id,block,bindings);
+ Result<Work,Diagnostic>::Ok(Work{parent:parent,source:id,value:value,block:branch when{value->kind==8=>id,else=>block},next:0,children:List<Int>[]})
+};
+public let body:Function(SyntaxForest,Int,Paged<Node>,List<Binding>):Result<Converted,Diagnostic>=function(tree:SyntaxForest,id:Int,initial:Paged<Node>,visible:List<Binding>):Result<Converted,Diagnostic>{
+ var nodes:Paged<Node>=initial;var bindings:List<Binding>=visible;var stack:Paged<Work>=empty<Work>();
+ var current:Work=try start(tree,id,-1,id,bindings);
+ loop while(true){
+  let value:Node=current->value;
+  branch when{current->next<value->children->length()=>{
+   let child:Int=try item(value->children,current->next);
+   stack=push<Work>(stack,Work{parent:current->parent,source:current->source,value:value,block:current->block,next:current->next+1,children:current->children});
+   current=try start(tree,child,stack->count-1,current->block,bindings);continue;
+  },else=>unit};
+  nodes=push<Node>(nodes,Node{kind:value->kind,text:value->text,children:current->children,span:value->span,annotation:value->annotation,flag:value->flag});
+  let result:Int=nodes->count-1;
+  branch when{value->kind==9=>{
+   let declaration:ForestNode=try getNode(tree->nodes,current->source);let scope:ForestNode=try getNode(tree->nodes,current->block);
+   bindings=bindings->append(Binding{name:value->text,after:declaration->end,until:scope->end});
+  },else=>unit};
+  branch when{current->parent<0=>{return Result<Converted,Diagnostic>::Ok(Converted{nodes:nodes,root:result});},else=>unit};
+  let parent:Work=try lookup<Work>(stack,current->parent);
+  current=Work{parent:parent->parent,source:parent->source,value:parent->value,block:parent->block,next:parent->next,children:parent->children->append(result)};
+ };
+ panic {"unreachable bridge exit"}
+};

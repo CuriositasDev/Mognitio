@@ -1,6 +1,6 @@
 # Experimental native compiler
 
-This source project is the independent Mognitio 1.3 compiler, mgnc.
+This source project is the independent Mognitio 1.4 compiler, mgnc.
 It is built using the fixed Mognitio 1.2 seed and is not included in the
 regular Debian package, APT repository, or installer bundle.
 
@@ -23,11 +23,20 @@ Run the verified seed launcher, with an explicit path, from the repository root:
 ## Use
 
 ~~~sh
+/new/output/mgnc parse path/to/source.mgn
 /new/output/mgnc build path/to/source.mgn -o path/to/new-artifact
 /new/output/new-artifact argument
 ~~~
 
-The source profile is a single namespace with explicitly typed scalar helpers
+Parse checks one complete UTF-8 source file through EOF without resolving names,
+opening imports, checking types or writing artifacts. It accepts the documented
+type, alias, template, generic, function and control-flow syntax, including sources
+that need later semantic checking. Success has exit 0 and empty output streams.
+Contract, witness, attribute and assertion syntax remains outside this experimental
+profile; the normal toolchain continues to support it.
+
+Build uses the same structural parser before native classification and checking.
+The native profile is a single namespace with explicitly typed scalar helpers
 and main. Main takes List<String> and returns Int; its argument list supports
 direct length queries. Helpers operate on Int, Bool and Unit. Blocks, mutable
 locals, direct calls, branches, while loops, and checked signed arithmetic are
@@ -39,9 +48,10 @@ generated program during compilation. Normal compiler output streams are empty.
 The native runtime validates UTF-8 arguments and preserves primary failures
 even when its diagnostic stream is unavailable.
 
-Internal and end-to-end runners are under tests/mgnc. The 55-condition
-[implementation acceptance](../../verification/v1.3.0-review.md) includes the completed
-21-cell resource profile. Acceptance is separate from release and publication.
+Internal and end-to-end runners are under tests/mgnc. The
+[1.4 implementation acceptance](../../verification/v1.4.0.md) covers 54 new and
+55 inherited conditions, complete source corpora and the unchanged 21-cell native
+resource profile. Acceptance is separate from release and publication.
 
 The seed's public Product/Sum types, templates, immutable lists and strings,
 text I/O, numeric representation conversion and binary publication are the

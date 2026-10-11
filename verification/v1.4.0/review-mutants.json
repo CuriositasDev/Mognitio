@@ -1,0 +1,175 @@
+[
+  {
+    "name": "reserved-namespace",
+    "head": "f09353f8e25a79617408b75210949da57c7e008c",
+    "source_sha256": "9a1280c182b8677f64bb9bf6f8392aee8886b2bc95484598d6b318f3c62e3e40",
+    "mutated_file": "NativeBridge/bridge.mgn",
+    "old": "word==\"Std\"",
+    "new": "false",
+    "baseline": {
+      "command": [
+        "<evidence>/final-candidate/mgnc",
+        "build",
+        "/tmp/mgnc-review-mutants-ldqvj81i/reserved-namespace/input.mgn",
+        "-o",
+        "/tmp/mgnc-review-mutants-ldqvj81i/reserved-namespace/baseline-output"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": "6d676e633a2073656d616e7469633a202f746d702f6d676e632d7265766965772d6d7574616e74732d6c6471766a3831692f72657365727665642d6e616d6573706163652f696e7075742e6d676e3a313a3131205b31302c3133293a207265736572766564206e616d6573706163650a",
+      "passes": true,
+      "published": false
+    },
+    "mutant": {
+      "command": [
+        "/tmp/mgnc-review-mutants-ldqvj81i/reserved-namespace/mutant",
+        "build",
+        "/tmp/mgnc-review-mutants-ldqvj81i/reserved-namespace/input.mgn",
+        "-o",
+        "/tmp/mgnc-review-mutants-ldqvj81i/reserved-namespace/mutant-output"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passes": false,
+      "published": true
+    },
+    "mutant_sha256": "a7c2dca89f06b75d188b081e3fb3ca6d2a1605e588476445a52cc965b8b89ce7"
+  },
+  {
+    "name": "unknown-type",
+    "head": "f09353f8e25a79617408b75210949da57c7e008c",
+    "source_sha256": "b014da19e8f4e25b0fdf479d397333fafd58f5ff5767c187916a3e095f595368",
+    "mutated_file": "NativeTypes/types.mgn",
+    "old": "return Result<Int,Diagnostic>::Err(try failure(tree,id,\"semantic\",\"unknown type\"));",
+    "new": "return Result<Int,Diagnostic>::Ok(1);",
+    "baseline": {
+      "command": [
+        "<evidence>/final-candidate/mgnc",
+        "build",
+        "/tmp/mgnc-review-mutants-ldqvj81i/unknown-type/input.mgn",
+        "-o",
+        "/tmp/mgnc-review-mutants-ldqvj81i/unknown-type/baseline-output"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": "6d676e633a2073656d616e7469633a202f746d702f6d676e632d7265766965772d6d7574616e74732d6c6471766a3831692f756e6b6e6f776e2d747970652f696e7075742e6d676e3a313a3837205b38362c3839293a20756e6b6e6f776e20747970650a",
+      "passes": true,
+      "published": false
+    },
+    "mutant": {
+      "command": [
+        "/tmp/mgnc-review-mutants-ldqvj81i/unknown-type/mutant",
+        "build",
+        "/tmp/mgnc-review-mutants-ldqvj81i/unknown-type/input.mgn",
+        "-o",
+        "/tmp/mgnc-review-mutants-ldqvj81i/unknown-type/mutant-output"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passes": false,
+      "published": true
+    },
+    "mutant_sha256": "a4e57cbaba672f236c18c14be27704badb8994304c755008eb861f45098e828e"
+  },
+  {
+    "name": "residual-equals",
+    "head": "f09353f8e25a79617408b75210949da57c7e008c",
+    "source_sha256": "47db79fe11e2479a9b586ed196e1065ce56a36ddeffa3f8e4ad3c4669096eaee",
+    "mutated_file": "Cursor/scan.mgn",
+    "old": "text=combined;",
+    "new": "text=first;",
+    "baseline": {
+      "command": [
+        "<evidence>/final-candidate/mgnc",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-equals/input.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passes": true,
+      "published": false
+    },
+    "mutant": {
+      "command": [
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-equals/mutant",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-equals/input.mgn"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": "6d676e633a2070617273653a202f746d702f6d676e632d7265766965772d6d7574616e74732d6c6471766a3831692f726573696475616c2d657175616c732f696e7075742e6d676e3a313a3238205b32372c3239293a206e6f20636f6d706c657465207374727563747572616c2064657269766174696f6e0a",
+      "passes": false,
+      "published": false
+    },
+    "mutant_sha256": "244550cf2c3a7023a1d8d61a2fac6ac5c390a70ebf143e37b40a225b7a79a4b1"
+  },
+  {
+    "name": "residual-gap",
+    "head": "f09353f8e25a79617408b75210949da57c7e008c",
+    "source_sha256": "ecc21cb48383b0270edcab13b24c86f5818b80fc348454c63a59645142609da8",
+    "mutated_file": "Cursor/scan.mgn",
+    "old": "following->kind==3 && following->start+next%2==end",
+    "new": "following->kind==3",
+    "baseline": {
+      "command": [
+        "<evidence>/final-candidate/mgnc",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-gap/input.mgn"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": "6d676e633a2070617273653a202f746d702f6d676e632d7265766965772d6d7574616e74732d6c6471766a3831692f726573696475616c2d6761702f696e7075742e6d676e3a313a3238205b32372c3238293a206e6f20636f6d706c657465207374727563747572616c2064657269766174696f6e0a",
+      "passes": true,
+      "published": false
+    },
+    "mutant": {
+      "command": [
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-gap/mutant",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/residual-gap/input.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passes": false,
+      "published": false
+    },
+    "mutant_sha256": "fc0cc7c2c18de7c3e7e4024d083f698564437b2d29bf14a82e4b1c1a81a699c3"
+  },
+  {
+    "name": "ordinary-ge",
+    "head": "f09353f8e25a79617408b75210949da57c7e008c",
+    "source_sha256": "44f3bf66af9b3ebe9a4bae1bb7585b8f77a4749e6bf4cfb7f10f4140ba464f21",
+    "mutated_file": "Cursor/scan.mgn",
+    "old": "cursor:Int,genericClose:Bool):Result<Terminal,Diagnostic>{",
+    "new": "cursor:Int,requestedClose:Bool):Result<Terminal,Diagnostic>{let genericClose:Bool=true;",
+    "baseline": {
+      "command": [
+        "<evidence>/final-candidate/mgnc",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/ordinary-ge/input.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passes": true,
+      "published": false
+    },
+    "mutant": {
+      "command": [
+        "/tmp/mgnc-review-mutants-ldqvj81i/ordinary-ge/mutant",
+        "parse",
+        "/tmp/mgnc-review-mutants-ldqvj81i/ordinary-ge/input.mgn"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": "6d676e633a2070617273653a202f746d702f6d676e632d7265766965772d6d7574616e74732d6c6471766a3831692f6f7264696e6172792d67652f696e7075742e6d676e3a313a3236205b32352c3236293a206e6f20636f6d706c657465207374727563747572616c2064657269766174696f6e0a",
+      "passes": false,
+      "published": false
+    },
+    "mutant_sha256": "247b3dd5ffdb24b74c508f2a3d4ff30732baf42d99753c025d158e2770918ecf"
+  }
+]

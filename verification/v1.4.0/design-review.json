@@ -1,0 +1,502 @@
+{
+  "compiler_sha256": "7a36bf4d473ced543dcb48d7617203945506d66ce1fc0f0abcedc1202f623e43",
+  "cases": [
+    {
+      "id": "DR140-T01",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "namespace-Std",
+          "source_sha256": "9a1280c182b8677f64bb9bf6f8392aee8886b2bc95484598d6b318f3c62e3e40",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/136.mgn:1:11 [10,13): reserved namespace\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            10,
+            13,
+            1,
+            11
+          ]
+        },
+        {
+          "name": "namespace-Std\\X",
+          "source_sha256": "553965c053af26718cad1cd9d494e9976f91aa26eadccf56f44e39607dd2b504",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/137.mgn:1:11 [10,13): reserved namespace\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            10,
+            13,
+            1,
+            11
+          ]
+        },
+        {
+          "name": "namespace-App",
+          "source_sha256": "b9cf46170a53bfdc15c2c47267000835f5ecaa6b9c0c266d149511150ed90aa0",
+          "parse_exit": 0,
+          "build": {
+            "exit": 0,
+            "stderr": "",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "namespace-StdX",
+          "source_sha256": "4e281a3fd5afcaa5364ff65db3d6e95994a2d76ba7318da6dd53743a29bb191d",
+          "parse_exit": 0,
+          "build": {
+            "exit": 0,
+            "stderr": "",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "namespace-App\\Std",
+          "source_sha256": "a5f8f356d04e1aacdc85083c87ca233d68f2a1a8ba28bac3e6143fa2d4b9c767",
+          "parse_exit": 0,
+          "build": {
+            "exit": 0,
+            "stderr": "",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T02",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "Int",
+          "source_sha256": "bd45ee2db38a5d87c88d8f867473138d5b709397c08473a0adf4c17a628742a1",
+          "parse_exit": 0,
+          "build": {
+            "exit": 0,
+            "stderr": "",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "int",
+          "source_sha256": "a073be7075e3cb4df594b5ecd05bb4cffaa940f8f6507641dc93a235ea69599e",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/142.mgn:1:93 [92,95): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            92,
+            95,
+            1,
+            93
+          ]
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T03",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "helper-0",
+          "source_sha256": "d363364850e096c6ef4c62d4c7a6878102caf175842bb7ff97d86c23b4ebc784",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/143.mgn:1:30 [29,32): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            29,
+            32,
+            1,
+            30
+          ]
+        },
+        {
+          "name": "helper-1",
+          "source_sha256": "9b138a3615fbdbf22bc8870dc875b8ce4c5dea986fb3bfa2727e523210822904",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/144.mgn:1:35 [34,37): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            34,
+            37,
+            1,
+            35
+          ]
+        },
+        {
+          "name": "helper-2",
+          "source_sha256": "3d710b0055c5473e98ac4d362603ba07913f503a16324216354d21192f57260c",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/145.mgn:1:54 [53,56): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            53,
+            56,
+            1,
+            54
+          ]
+        },
+        {
+          "name": "helper-3",
+          "source_sha256": "09be8b46f783cdd2fdf10a705c3c1256dcabc71050cf04e782fee44d90a249a3",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/146.mgn:1:59 [58,61): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            58,
+            61,
+            1,
+            59
+          ]
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T04",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "annotation-0",
+          "source_sha256": "f479beb2a1aed9b36362ad0b982b96059b4ee534c575e0ee40e4b22ce107b152",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/147.mgn:1:93 [92,98): type is outside the native profile\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-1",
+          "source_sha256": "d24e0c27a65062bc6ff22a086b446aa0191d8844ce42c95c3e7a7b14de36bb25",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/148.mgn:1:93 [92,95): type is outside the native profile\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-2",
+          "source_sha256": "b2f20fe9c096dddb1be5e12f3573d2c5a65131e934ac4730684d21fa8edc865e",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/149.mgn:1:93 [92,96): type is outside the native profile\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-3",
+          "source_sha256": "add41fc5779fc83072358e18bdffad5ff23c030df38af08c2276ee192f5b550b",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/150.mgn:1:93 [92,97): type is outside the native profile\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-4",
+          "source_sha256": "56c7f03b2da12f1578b4d8a9ec97adedf652dc702ae375c542c81c91ddc920fd",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/151.mgn:1:93 [92,96): type is outside the native profile\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-5",
+          "source_sha256": "b495c69609cf32459794817d36927c43f3f0048e8bebdf597a864b3798fd9851",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: unsupported: <fixtures>/152.mgn:1:87 [86,91): local values must be primitive\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "annotation-6",
+          "source_sha256": "a073be7075e3cb4df594b5ecd05bb4cffaa940f8f6507641dc93a235ea69599e",
+          "parse_exit": 0,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: semantic: <fixtures>/153.mgn:1:93 [92,95): unknown type\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": [
+            92,
+            95,
+            1,
+            93
+          ]
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T05",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "structure-first",
+          "source_sha256": "c2dae5bbbf894efeb4670cf834d1445a2fd8f4b117d376a82696a60324e79c35",
+          "parse_exit": 1,
+          "build": {
+            "exit": 1,
+            "stderr": "mgnc: parse: <fixtures>/154.mgn:1:97 [96,97): no complete structural derivation\n",
+            "passed": true
+          },
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T06",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "equality-0",
+          "source_sha256": "5553c5b5d98399d50d0f75b95d4ac429fe416149023820b6f48aa96d220b4af2",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "equality-1",
+          "source_sha256": "a1c52075f30f1e39be809cc2da75c18f8fb328b1cedf6a21ece25067e64e6f43",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json",
+        "structural.json"
+      ]
+    },
+    {
+      "id": "DR140-T07",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "arrow-0",
+          "source_sha256": "19c4d65c027a14dd1d8e7fa58ca0402f581c3cd060face3d3e2bc3dd7381b8f7",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "arrow-1",
+          "source_sha256": "2799e50e7bca282ec3b09fd67822e5b36b751fafe2573ec0208917c500c41c4a",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json",
+        "structural.json"
+      ]
+    },
+    {
+      "id": "DR140-T08",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "equality-gap-0",
+          "source_sha256": "a33fcb183a5affd63126463e4df927a4e7910858a1ed2623ec5cdcd43c26d64d",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "arrow-gap-0",
+          "source_sha256": "1acc6613073427f0e15de2e935cd5a512c13486498c3dc499f5228e20977e831",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "equality-gap-1",
+          "source_sha256": "33c3e7fb87d93564635cce62087614b981d69f7deab6e9a117d90917698dcea3",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "arrow-gap-1",
+          "source_sha256": "59a9d186c5ba5e97ae6ebf367b137f82db5b6fac01841f1c6f0cdd50435cc779",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "equality-gap-2",
+          "source_sha256": "8e6e9892e9e720531b3f36411d541f97bfd6047d2ce4434dd230e9c0dc120a48",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "arrow-gap-2",
+          "source_sha256": "c366323a19b5b54c7caefd16c3536578b1ff183a90179d6f33bc0737ab2e95f0",
+          "parse_exit": 1,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json"
+      ]
+    },
+    {
+      "id": "DR140-T09",
+      "required": true,
+      "result": "pass",
+      "variants": [
+        {
+          "name": "control-0",
+          "source_sha256": "edece1c05f8336f7b5eeee1b8910cf07cceb47ce1dfd16918d056b73d9df79fc",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "control-1",
+          "source_sha256": "60ef5b5a3cce4910d6856ff83b32d0bfbe5b5c578657239e6871c1f717bd2261",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "control-2",
+          "source_sha256": "93437d8854de3458de2257237b2235903ba16dae7a91e18e63efc03432709d8a",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        },
+        {
+          "name": "assignment",
+          "source_sha256": "1c272d6f0f8b82487bbe7d8ad61b234362c88dba908321e4e7756b89114f2d5d",
+          "parse_exit": 0,
+          "build": null,
+          "expected_span": null,
+          "expected_build_span": null
+        }
+      ],
+      "evidence": [
+        "parse-cases.json",
+        "structural.json"
+      ]
+    },
+    {
+      "id": "DR140-T10",
+      "required": true,
+      "result": "pass",
+      "runner": "shared_lexer.py",
+      "observation": "SHARED_LEXER_OK good=10 negative=18 residual_cases=8",
+      "evidence": [
+        "functional.json",
+        "identity.json"
+      ]
+    },
+    {
+      "id": "DR140-T11",
+      "required": true,
+      "result": "pass",
+      "runner": "residual_locations.py",
+      "observation": "RESIDUAL_LOCATIONS_OK 6",
+      "evidence": [
+        "functional.json",
+        "identity.json"
+      ]
+    }
+  ],
+  "structural_oracles": "structural.json",
+  "mutation_controls": "review-mutants.json"
+}

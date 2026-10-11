@@ -1,0 +1,26 @@
+namespace Mgnc\BridgeLists;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\Projection\{parts,item};
+public let reverse:Function(List<Int>):Result<List<Int>,Diagnostic>=function(values:List<Int>):Result<List<Int>,Diagnostic>{
+ var result:List<Int>=List<Int>[];var index:Int=values->length();loop while(index>0){index=index-1;result=result->append(try item(values,index));};Result<List<Int>,Diagnostic>::Ok(result)
+};
+public let leftList:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{
+ var current:Int=id;var values:List<Int>=List<Int>[];
+ loop while(true){let children:List<Int>=try parts(tree,current);branch when{children->length()==0=>{break;},else=>unit};values=values->append(try item(children,1));current=try item(children,0);};reverse(values)
+};
+public let expressions:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{
+ let optional:List<Int>=try parts(tree,id);var values:List<Int>=List<Int>[];
+ branch when{optional->length()>0=>{
+  var current:Int=try item(optional,0);
+  loop while(true){
+   let children:List<Int>=try parts(tree,current);
+   branch when{children->length()==1=>{values=values->append(try item(children,0));break;},else=>unit};
+   values=values->append(try item(children,2));current=try item(children,0);
+  };
+ },else=>unit};reverse(values)
+};
+public let conditions:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{
+ var current:Int=id;var values:List<Int>=List<Int>[];
+ loop while(true){let children:List<Int>=try parts(tree,current);branch when{children->length()==0=>{break;},else=>unit};values=values->append(try item(children,3))->append(try item(children,1));current=try item(children,0);};reverse(values)
+};

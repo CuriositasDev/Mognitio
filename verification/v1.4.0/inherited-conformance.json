@@ -1,0 +1,659 @@
+{
+  "source_revision": "f09353f8e25a79617408b75210949da57c7e008c",
+  "compiler_sha256": "7a36bf4d473ced543dcb48d7617203945506d66ce1fc0f0abcedc1202f623e43",
+  "acceptance_harness_revision": "4e491dde82d8e38e2f7af596cbbb07af37fcf03a",
+  "required": 55,
+  "pass_count": 55,
+  "fail_count": 0,
+  "unrun_count": 0,
+  "case_definitions_from": "v1.3.0-review-conformance.json",
+  "execution_evidence": [
+    "functional.json",
+    "review.json",
+    "source-profile.json",
+    "native.json",
+    "workloads.json",
+    "isolated.json",
+    "native-measurement.json",
+    "normal-toolchain.log",
+    "consumer.json",
+    "consumer-controls.json",
+    "normal-payload.json",
+    "identity.json"
+  ],
+  "cases": [
+    {
+      "id": "C130-S01",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "native.py",
+        "workloads.py",
+        "review.py"
+      ],
+      "observation": "Scalar helpers and the dynamic argument workloads",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S02",
+      "result": "pass",
+      "runners": [
+        "frontend.py",
+        "driver.py",
+        "source_profile.py",
+        "review.py"
+      ],
+      "observation": "UTF-8, CRLF, byte spans, scalar positions and chunk boundaries",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S03",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "source_profile.py",
+        "review.py"
+      ],
+      "observation": "Encoding, empty input and missing syntax",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S04",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "native.py"
+      ],
+      "observation": "Signed 64-bit literal endpoints and rejected neighboring literals",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S05",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "parser.py",
+        "review.py"
+      ],
+      "observation": "Annotations, mutability and call shape",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S06",
+      "result": "pass",
+      "runners": [
+        "source_profile.py"
+      ],
+      "observation": "Declaration order and initializer visibility",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S07",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "review.py"
+      ],
+      "observation": "Reserved names, shadowing and independent sibling scopes",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S08",
+      "result": "pass",
+      "runners": [
+        "source_profile.py"
+      ],
+      "observation": "Entry existence, mutability, signature and body completion",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S09",
+      "result": "pass",
+      "runners": [
+        "source_profile.py"
+      ],
+      "observation": "Unused helpers, unselected branches and short-circuit static checking",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S10",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "parser.py"
+      ],
+      "observation": "Recognized but unsupported language constructs",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S11",
+      "result": "pass",
+      "runners": [
+        "source_profile.py"
+      ],
+      "observation": "Function and argument-list uses outside the direct profile",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S12",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "review.py"
+      ],
+      "observation": "Reserved identifiers, spelling and comparison syntax",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S13",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "native.py"
+      ],
+      "observation": "Non-completing operands retain the complete operator candidate set",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S14",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "workloads.py",
+        "native.py"
+      ],
+      "observation": "Transparent grouping versus intermediate values",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-S15",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "native.py"
+      ],
+      "observation": "While-condition control targets",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R01",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Normal exits and both invalid exit boundaries",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R02",
+      "result": "pass",
+      "runners": [
+        "workloads.py"
+      ],
+      "observation": "Dynamic branch with eight argument lists on one executable",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R03",
+      "result": "pass",
+      "runners": [
+        "workloads.py"
+      ],
+      "observation": "Dynamic total with eight argument lists on one executable",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R04",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Operand and argument snapshots, mutation and first failure",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R05",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Short circuit and ordered branch conditions",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R06",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Nested loops, break, continue and return",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R07",
+      "result": "pass",
+      "runners": [
+        "source_profile.py",
+        "native.py"
+      ],
+      "observation": "Unit, tails, returns, discard and unreachable statements",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R08",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Signed division/remainder and minimum integer remainder",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R09",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Reached and skipped arithmetic failures",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R10",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Thirty valid and invalid UTF-8 argument vectors",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R11",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Failing and non-terminating program compilation",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R12",
+      "result": "pass",
+      "runners": [
+        "isolated.py"
+      ],
+      "observation": "Generated executable without compiler or source access",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R13",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Arithmetic failures with closed stderr and a broken pipe",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R14",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Startup rejection with both stderr failures",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R15",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Successful execution with both stderr failures",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-R16",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Outer loop targets from an inner condition",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P01",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "native.py"
+      ],
+      "observation": "New complete ELF, empty streams and success",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P02",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "CLI validation precedes filesystem actions",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P03",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "Literal relative, absolute, spaced and hyphen-leading paths",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P04",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "faults.py"
+      ],
+      "observation": "Missing, denied, directory and injected read failure",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P05",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "Static error precedes output collision and preserves the entry",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P06",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "File, directory, symlink, dangling symlink and hardlink collisions",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P07",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "Source and input alias preservation",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P08",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "faults.py"
+      ],
+      "observation": "Write, close, permission and commit failures",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P09",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "Eight competing compilers and a subsequent collision",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P10",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "noexec.py"
+      ],
+      "observation": "Umask, inherited ACL and noexec restrictions",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P11",
+      "result": "pass",
+      "runners": [
+        "faults.py"
+      ],
+      "observation": "Unknown with absent or complete output; Published cleanup failure",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P12",
+      "result": "pass",
+      "runners": [
+        "driver.py"
+      ],
+      "observation": "Trailing separator and missing parent",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-P13",
+      "result": "pass",
+      "runners": [
+        "driver.py",
+        "driver-internal.py"
+      ],
+      "observation": "Compiler diagnostic write failure",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B01",
+      "result": "pass",
+      "runners": [
+        "compiler/mgnc/README.md"
+      ],
+      "observation": "Fixed source, seed, manifest and compiler identities",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B02",
+      "result": "pass",
+      "runners": [
+        "isolated.py"
+      ],
+      "observation": "Compilation and execution without development tools",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B03",
+      "result": "pass",
+      "runners": [
+        "compiler/mgnc/src"
+      ],
+      "observation": "Public imports and source-authored machine encoder/runtime",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B04",
+      "result": "pass",
+      "runners": [
+        "native.py"
+      ],
+      "observation": "Relocated repeated inputs produce identical executable bytes",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B05",
+      "result": "pass",
+      "runners": [
+        "native.py",
+        "workloads.py"
+      ],
+      "observation": "Independent expected results and fixed-seed comparison",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B06",
+      "result": "pass",
+      "runners": [
+        "scripts/test.lisp",
+        "Levi/tools/verify.py",
+        "Levi/tools/regression.py"
+      ],
+      "observation": "Existing compiler suite and consumer regression",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B07",
+      "result": "pass",
+      "runners": [
+        "scripts/test.lisp"
+      ],
+      "observation": "Regular command behavior and replacement semantics remain unchanged",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B08",
+      "result": "pass",
+      "runners": [
+        "measure.py"
+      ],
+      "observation": "Twenty-one frozen cells, one warm-up and five measured samples",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B09",
+      "result": "pass",
+      "runners": [
+        "faults.py",
+        "driver-internal.py"
+      ],
+      "observation": "Internal error, runtime allocation failure and external timeout",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B10",
+      "result": "pass",
+      "runners": [
+        "isolated.py"
+      ],
+      "observation": "Non-root Ubuntu 24.04 and 26.04 userlands on the same host kernel",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    },
+    {
+      "id": "C130-B11",
+      "result": "pass",
+      "runners": [
+        "compiler/mgnc/README.md"
+      ],
+      "observation": "Explicit source build; unchanged regular packaging and backend",
+      "required": true,
+      "fail": false,
+      "unrun": false
+    }
+  ]
+}

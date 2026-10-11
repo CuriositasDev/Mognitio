@@ -1,6 +1,6 @@
 namespace Mgnc\Structural;
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
-use Mgnc\Buckets\{bucket};
+use Mgnc\Buckets\{bucket,blank};
 use Mgnc\Tables\{atList};
 use Mgnc\Source\{location,Snapshot,Lexeme};
 use Mgnc\Lexical\{scanSource};
@@ -9,13 +9,13 @@ use Mgnc\Grammar\{Slot,Prediction,Lookahead,lookahead,possible,slots,predictions
 use Mgnc\ForestData\{Family,ForestNode,ChartItem};
 use Mgnc\Forest\{Column,Stable,LiveColumn,Pending,ComparisonFailure,SyntaxForest};
 use Mgnc\NodeStorage\{NodeStore,emptyNodes,addNode,getNode};
-use Mgnc\ItemStorage\{getItem};
+use Mgnc\ItemStorage\{getItem,emptyItems};
 use Mgnc\ChartLifetime\{historical,retain};
 use Mgnc\Chart\{column,addItem,addSymbol};
 let isComparison:Function(String):Bool=function(text:String):Bool{text=="<"||text=="<="||text==">"||text==">="||text=="=="||text=="!="};
 public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=function(source:Snapshot):Result<SyntaxForest,Diagnostic>{
  var nodes:NodeStore=emptyNodes();
- var history:List<LiveColumn>=List<LiveColumn>[];
+ var history:Paged<LiveColumn>=empty<LiveColumn>();
  var comparisons:List<ComparisonFailure>=List<ComparisonFailure>[];
  var upcoming:List<Pending>=List<Pending>[];
  var nextOne:List<Pending>=List<Pending>[];var nextTwo:List<Pending>=List<Pending>[];var nextThree:List<Pending>=List<Pending>[];var nextFour:List<Pending>=List<Pending>[];
@@ -35,6 +35,7 @@ public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=func
    let close:Terminal=try scanAt(source,cursor,true);
    let ahead:Lookahead=lookahead(ordinary->token,close->token);
    var predicted:List<Int>=List<Int>[];
+   var historicalCursor:Int=-1;var historicalColumn:Stable=Stable{items:emptyItems(),waits:blank()};
    var work:Int=0;
    loop while(work<active->items->count){
     let item:ChartItem=try getItem(active->items,work);work=work+1;
@@ -75,7 +76,8 @@ public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=func
       branch when{shape->lhs==ntModule&&item->origin==0&&cursor==end=>{root=completedNode;},else=>unit};
       branch when{shape->lhs==ntComparison&&shape->rule>=ruleBinaryLt&&shape->rule<=ruleBinaryNe&&isComparison(ordinary->token->text)=>{comparisons=comparisons->append(ComparisonFailure{start:item->origin,cursor:cursor});},else=>unit};
       branch when{active->fresh=>{
-       let origin:Stable=branch when{item->origin==cursor=>Stable{items:active->items,waits:active->waits},else=>try historical(history,item->origin)};
+       branch when{item->origin!=cursor&&historicalCursor!=item->origin=>{historicalColumn=try historical(history,item->origin);historicalCursor=item->origin;},else=>unit};
+       let origin:Stable=branch when{item->origin==cursor=>Stable{items:active->items,waits:active->waits},else=>historicalColumn};
        let waiting:List<Int>=bucket(origin->waits,shape->lhs%16);
        loop over(waiting as index:Int){
         let parent:ChartItem=try getItem(origin->items,index);
@@ -89,7 +91,7 @@ public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=func
   },else=>unit};
   var index:Int=0;loop while(index<active->nodes->count){nodes=addNode(nodes,try getNode(active->nodes,index));index=index+1;};
   itemCount=itemCount+active->items->count;
-  branch when{active->items->count>0=>{history=history->append(LiveColumn{cursor:cursor,body:Stable{items:active->items,waits:active->waits}});},else=>unit};
+  branch when{active->items->count>0=>{history=push<LiveColumn>(history,LiveColumn{cursor:cursor,body:Stable{items:active->items,waits:active->waits}});},else=>unit};
   branch when{cursor%64==63=>{history=try retain(history,List<List<Pending>>[nextOne,nextTwo,nextThree,nextFour]);},else=>unit};
   upcoming=nextOne;nextOne=nextTwo;nextTwo=nextThree;nextThree=nextFour;nextFour=List<Pending>[];
   cursor=cursor+1;

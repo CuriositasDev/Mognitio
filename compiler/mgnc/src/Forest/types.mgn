@@ -8,7 +8,6 @@ use Mgnc\Source\{Snapshot};
 public type Column=product{cursor:Int;base:Int;items:ItemStore;nodes:NodeStore;itemBins:Buckets;symbolBins:Buckets;waits:Buckets;last:Int;fresh:Bool;};
 public type Stable=product{items:ItemStore;waits:Buckets;};
 public type LiveColumn=product{cursor:Int;body:Stable;};
-public type Need=product{cursor:Int;symbol:Int;};
 public type Pending=product{slot:Int;origin:Int;left:Int;symbol:Int;start:Int;};
 public type ComparisonFailure=product{start:Int;cursor:Int;};
 public type SyntaxForest=product{source:Snapshot;nodes:NodeStore;root:Int;itemCount:Int;comparisons:List<ComparisonFailure>;};

@@ -1,0 +1,124 @@
+{
+  "compiler_sha256": "31887b8b95df882743c242d1ac1d9dce1be2cc322aded8c230f149cb280a919b",
+  "records": [
+    {
+      "id": "C140-S03",
+      "source": "compiler/mgnc/src/Data/data.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "7c8bc81e369e11a176690581b6c3dc6f9d23f3d0667dfda2f073b6f3f0f7f1b7",
+      "mutated_sha256": "bd5b88c7ec4129d0114be1639ce8a53ffb259bcd70129062c088b79f974354d1",
+      "edit": {
+        "start": 3161,
+        "removed_hex": "3b",
+        "inserted_hex": ""
+      },
+      "expected_phase": "parse",
+      "expected_span": [
+        3162,
+        3162,
+        78,
+        1
+      ],
+      "exit": 1,
+      "stderr": "mgnc: parse: <fixtures>/data.mgn:78:1 [3162,3162): no complete structural derivation\n",
+      "passed": true
+    },
+    {
+      "id": "C140-S03",
+      "source": "compiler/mgnc/src/Fields/fields.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "8e3bffd507c1870e2e484ecbb03d6c7bd3af4ae92fd1422dda49e5a17440cebc",
+      "mutated_sha256": "c913a71377d364a23295d8ed8acda8531ea2d04a74ef6379d6617159a747f92e",
+      "edit": {
+        "start": 232,
+        "removed_hex": "3e",
+        "inserted_hex": "29"
+      },
+      "expected_phase": "parse",
+      "expected_span": [
+        232,
+        233,
+        5,
+        58
+      ],
+      "exit": 1,
+      "stderr": "mgnc: parse: <fixtures>/fields.mgn:5:58 [232,233): no complete structural derivation\n",
+      "passed": true
+    },
+    {
+      "id": "C140-S03",
+      "source": "compiler/mgnc/src/Parser/expression.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "77952a3621e8942a392e4a0026036a38430776f6e4cc612c42b80dd5de6a2dda",
+      "mutated_sha256": "a343701628bc152515834c338f6f30bafa8b7e44edf7a3eca3dd16122b31b1b3",
+      "edit": {
+        "start": 905,
+        "removed_hex": "7b",
+        "inserted_hex": "29"
+      },
+      "expected_phase": "parse",
+      "expected_span": [
+        905,
+        906,
+        22,
+        18
+      ],
+      "exit": 1,
+      "stderr": "mgnc: parse: <fixtures>/expression.mgn:22:18 [905,906): no complete structural derivation\n",
+      "passed": true
+    },
+    {
+      "id": "C140-S03",
+      "source": "compiler/mgnc/src/Width/width.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "8091746b104b9088204f72ee89d51df21f7031971f36b7789a7fc17bacb7c340",
+      "mutated_sha256": "d28b1b484f5a56eae2aeb281fd04d5c47b429a441ed309b2cb06b4940340497d",
+      "edit": {
+        "start": 503708,
+        "removed_hex": "22",
+        "inserted_hex": "0a"
+      },
+      "expected_phase": "lexical",
+      "expected_span": [
+        503708,
+        503709,
+        5,
+        489495
+      ],
+      "exit": 1,
+      "stderr": "mgnc: lexical: <fixtures>/width.mgn:5:489495 [503708,503709): newline in string\n",
+      "passed": true
+    },
+    {
+      "id": "C140-S03",
+      "variant": "valid-comment",
+      "source": "compiler/mgnc/src/Width/width.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "8091746b104b9088204f72ee89d51df21f7031971f36b7789a7fc17bacb7c340",
+      "valid_source_sha256": "a4bdfd4bbe107cc85d6a795c4252b11eae67de31df8928ea36a0e88ae2808e9a",
+      "source_sha256": "a4bdfd4bbe107cc85d6a795c4252b11eae67de31df8928ea36a0e88ae2808e9a",
+      "expected_span": null,
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "id": "C140-S03",
+      "variant": "broken-tail",
+      "source": "compiler/mgnc/src/Width/width.mgn",
+      "commit": "d14764bb2d9561eba99b584d31efa5a11aef0262",
+      "original_sha256": "8091746b104b9088204f72ee89d51df21f7031971f36b7789a7fc17bacb7c340",
+      "valid_source_sha256": "a4bdfd4bbe107cc85d6a795c4252b11eae67de31df8928ea36a0e88ae2808e9a",
+      "source_sha256": "0dbce872855dbe69279cf13212a711182c66cc86d4c431d46925d8167506f4f2",
+      "expected_span": [
+        512128,
+        512129,
+        151,
+        1
+      ],
+      "exit": 1,
+      "stderr": "mgnc: parse: <fixtures>/width-multibyte.mgn:151:1 [512128,512129): no complete structural derivation\n",
+      "passed": true
+    }
+  ]
+}

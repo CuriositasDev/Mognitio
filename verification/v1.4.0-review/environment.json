@@ -1,0 +1,135 @@
+{
+  "source_revision": "10ac5499dd5d2ddaffdc2b5808c3f02754890084",
+  "compiler_sha256": "31887b8b95df882743c242d1ac1d9dce1be2cc322aded8c230f149cb280a919b",
+  "cpu": "Intel(R) Core(TM) i9-10850K CPU @ 3.60GHz",
+  "os_release": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo",
+  "kernel": "7.0.0-38-generic",
+  "nonroot": true,
+  "memory": "MemTotal:       31445168 kB\nMemFree:        17193672 kB\nMemAvailable:   22408804 kB\nBuffers:          445404 kB\nCached:          8465684 kB\nSwapCached:            0 kB\nActive:          9616824 kB\nInactive:        3328556 kB\nActive(anon):    7635464 kB\nInactive(anon):        0 kB\nActive(file):    1981360 kB\nInactive(file):  3328556 kB\nUnevictable:         432 kB\nMlocked:             432 kB\nSwapTotal:       8388604 kB\nSwapFree:        8388604 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:                32 kB\nWriteback:             0 kB\nAnonPages:       4035028 kB\nMapped:          1215080 kB\nShmem:           3601140 kB\nKReclaimable:     342772 kB\nSlab:             652196 kB\nSReclaimable:     279708 kB\nSUnreclaim:       372488 kB\nKernelStack:       29728 kB\nPageTables:        77388 kB\nSecPageTables:      3376 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    24111188 kB\nCommitted_AS:   36067648 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      123584 kB\nVmallocChunk:          0 kB\nPercpu:            69840 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:    577536 kB\nFilePmdMapped:      2048 kB\nCmaTotal:              0 kB\nCmaFree:         5367808 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:             0 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      719344 kB\nDirectMap2M:    10715136 kB\nDirectMap1G:    22020096 kB",
+  "swap": "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n/swap.img                               file\t\t8388604\t\t0\t\t-1",
+  "filesystem": "ext4 rw,relatime",
+  "governor": "powersave",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "limits": {
+    "RLIMIT_CPU": [
+      -1,
+      -1
+    ],
+    "RLIMIT_AS": [
+      -1,
+      -1
+    ],
+    "RLIMIT_DATA": [
+      -1,
+      -1
+    ],
+    "RLIMIT_FSIZE": [
+      -1,
+      -1
+    ]
+  },
+  "load_before": [
+    1.64599609375,
+    1.6279296875,
+    1.1455078125
+  ],
+  "processes_before": [
+    "COMMAND         %CPU",
+    "<background-service>  9.4",
+    "python3          1.9",
+    "mysqld           0.6",
+    "code             0.6",
+    "code             0.2",
+    "tailscaled       0.1",
+    "copilot-runtime  0.1",
+    "nvidia-modeset/  0.1",
+    "code             0.1",
+    "code             0.1",
+    "code             0.0",
+    "gnome-shell      0.0",
+    "code             0.0",
+    "code             0.0"
+  ],
+  "started_utc": "2026-10-13T03:07:40Z",
+  "warmups": 1,
+  "repeats": 5,
+  "noise_policy": "Retain all samples; repeat a complete cell only for a documented external invalidation.",
+  "cgroup_limits": [
+    {
+      "cpu.max": "max 100000",
+      "memory.max": "max",
+      "memory.high": "max"
+    },
+    {
+      "cpu.max": "max 100000",
+      "memory.max": "max",
+      "memory.high": "max"
+    },
+    {
+      "cpu.max": "max 100000",
+      "memory.max": "max",
+      "memory.high": "max",
+      "cpuset.cpus.effective": "0-19"
+    },
+    {
+      "cpuset.cpus.effective": "0-19"
+    }
+  ],
+  "load_after": [
+    1.49169921875,
+    1.56494140625,
+    1.38427734375
+  ],
+  "finished_utc": "2026-10-13T03:21:02Z",
+  "results": [
+    {
+      "name": "parse",
+      "exit": 0,
+      "command": [
+        "python3",
+        "tests/mgnc/parse_measure.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--fixtures",
+        "<evidence>/fixtures",
+        "--evidence",
+        "<evidence>/parse-measurement.json"
+      ]
+    },
+    {
+      "name": "native",
+      "exit": 0,
+      "command": [
+        "python3",
+        "tests/mgnc/measure.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--fixtures",
+        "tests/mgnc/fixtures/scale",
+        "--evidence",
+        "<evidence>/native-measurement.json"
+      ]
+    }
+  ]
+}

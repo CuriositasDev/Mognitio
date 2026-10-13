@@ -1,0 +1,243 @@
+{
+  "source_revision": "10ac5499dd5d2ddaffdc2b5808c3f02754890084",
+  "compiler_sha256": "31887b8b95df882743c242d1ac1d9dce1be2cc322aded8c230f149cb280a919b",
+  "records": [
+    {
+      "command": [
+        "generate-width.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.20329010201385245,
+      "stdout": "MGNC_WIDTH_OK unicode_scalars=1112064\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "generate_grammar.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.03647549098241143,
+      "stdout": "GRAMMAR_OK productions=158 slots=539 nonterminals=61 zero_cycles=0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "generate_storage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.032063682010630146,
+      "stdout": "STORAGE_GENERATION_OK\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_workload_shapes.py"
+      ],
+      "exit": 0,
+      "seconds": 0.08943985699443147,
+      "stdout": "PARSE_WORKLOAD_SHAPES_OK {\"declarations\": 1000, \"syntax_depth\": 128, \"type_depth\": 128} mutation_controls=3 sha256=f84f5c27d98dde92ce74c27306a5ac68d8d453159657c651322db5c96b37a3f3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "classification.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--baseline",
+        "<evidence>/baseline/mgnc",
+        "--evidence",
+        "<evidence>/functional/classification.json"
+      ],
+      "exit": 0,
+      "seconds": 0.8042047079943586,
+      "stdout": "CLASSIFICATION_OK 20 baseline True\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "source_profile.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/source_profile.json"
+      ],
+      "exit": 0,
+      "seconds": 0.741845395998098,
+      "stdout": "MGNC_SOURCE_PROFILE_OK cases=77\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_cases.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/parse_cases.json"
+      ],
+      "exit": 0,
+      "seconds": 1.900502012023935,
+      "stdout": "PARSE_CASES 169 / 169\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "review.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/review.json"
+      ],
+      "exit": 0,
+      "seconds": 1.703963420004584,
+      "stdout": "MGNC_REVIEW cases=63 passed=63 failed=[]\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_driver.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/parse_driver.json"
+      ],
+      "exit": 0,
+      "seconds": 0.06969870801549405,
+      "stdout": "PARSE_DRIVER_OK 21\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_faults.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/parse_faults.json"
+      ],
+      "exit": 0,
+      "seconds": 0.09234719900996424,
+      "stdout": "PARSE_FAULTS_OK 3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_mutations.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/parse_mutations.json"
+      ],
+      "exit": 0,
+      "seconds": 6.1861492460011505,
+      "stdout": "PARSE_MUTATIONS_OK 6\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_compatibility.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--evidence",
+        "<evidence>/functional/parse_compatibility.json"
+      ],
+      "exit": 0,
+      "seconds": 1.199001783010317,
+      "stdout": "PARSE_COMPATIBILITY_OK 4\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "native.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--seed",
+        "<fixed-seed>/bin/mgn",
+        "--evidence",
+        "<evidence>/functional/native.json"
+      ],
+      "exit": 0,
+      "seconds": 8.675104623980587,
+      "stdout": "MGNC_NATIVE_OK checks=90 differential=True\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "workloads.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--seed",
+        "<fixed-seed>/bin/mgn",
+        "--evidence",
+        "<evidence>/functional/workloads.json"
+      ],
+      "exit": 0,
+      "seconds": 0.6124756450008135,
+      "stdout": "MGNC_WORKLOADS_OK observations=24 differential=True\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "driver.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--bindfs",
+        "<fixtures>/root/usr/bin/bindfs"
+      ],
+      "exit": 0,
+      "seconds": 0.6948344249976799,
+      "stdout": "MGNC_DRIVER_OK checks=50\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "faults.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc"
+      ],
+      "exit": 0,
+      "seconds": 0.3754829319950659,
+      "stdout": "MGNC_FAULTS_OK checks=9\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "isolated.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--userland",
+        "<userlands>/24.04.5",
+        "--userland",
+        "<userlands>/26.04.1",
+        "--evidence",
+        "<evidence>/functional/isolated.json"
+      ],
+      "exit": 0,
+      "seconds": 4.268654230021639,
+      "stdout": "MGNC_ISOLATED_OK cases=100 environments=2\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "parse_isolated.py",
+        "--compiler",
+        "<evidence>/candidate/mgnc",
+        "--userland",
+        "<userlands>/24.04.5",
+        "--userland",
+        "<userlands>/26.04.1",
+        "--evidence",
+        "<evidence>/functional/parse_isolated.json",
+        "--fixtures",
+        "<evidence>/fixtures"
+      ],
+      "exit": 0,
+      "seconds": 65.235557840002,
+      "stdout": "PARSE_ISOLATED 24.04.5 82\nPARSE_ISOLATED 26.04.1 82\nPARSE_ISOLATED_OK 164\n",
+      "stderr": ""
+    }
+  ],
+  "complete": true,
+  "passed": true
+}

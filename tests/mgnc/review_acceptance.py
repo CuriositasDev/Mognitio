@@ -9,6 +9,8 @@ def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def verify_review(base=ROOT/'verification/v1.4.0-review'):
  def read(name):return json.loads((base/name).read_text())
  identity=read('identity.json');bootstrap=read('bootstrap.json');candidate=next(x for x in bootstrap if x['label']=='candidate');compiler=candidate['compiler_sha256']
+ seed=read('seed-check.json');assert seed['passed'] and seed['verified_files']>0 and seed['identity']['version']=='1.2.0'
+ assert seed['bundle_sha256']==json.loads((ROOT/'verification/v1.4.0/bootstrap.json').read_text())['seed_bundle_sha256']
  current={str(p.relative_to(ROOT)):sha(p) for p in (ROOT/'compiler/mgnc/src').rglob('*.mgn')}
  assert current==candidate['source_files']==identity['source_files']
  assert candidate['revision']==identity['source_revision'] and compiler==identity['compiler_sha256']

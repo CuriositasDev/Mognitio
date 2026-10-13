@@ -1,0 +1,67 @@
+namespace Mgnc\Classification;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{NodeStore,emptyNodes,addNode,getNode};
+use Mgnc\Projection\{parts,item,text,failure};
+use Mgnc\BridgeShape\{Binding,runtimeName};
+use Mgnc\Grammar\{ruleBlock,ruleLetBinding,ruleVarBinding,ruleGenericApply};
+// The parse forest is immutable. Only build evaluates declaration guards.
+public let hasGenericGuards:Function(SyntaxForest):Result<Bool,Diagnostic>=function(tree:SyntaxForest):Result<Bool,Diagnostic>{
+ var index:Int=0;
+ loop while(index<tree->nodes->count){let node:ForestNode=try getNode(tree->nodes,index);branch when{node->symbol>0&&node->rule==ruleGenericApply=>{return Result<Bool,Diagnostic>::Ok(true);},else=>unit};index=index+1;};
+ Result<Bool,Diagnostic>::Ok(false)
+};
+type Visit=product{id:Int;block:Int;};
+type Pending=product{id:Int;parent:Int;};
+public let classify:Function(SyntaxForest,Int,List<Binding>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,visible:List<Binding>):Result<SyntaxForest,Diagnostic>{
+ var seen:Paged<Bool>=empty<Bool>();var memo:Paged<Int>=empty<Int>();var index:Int=0;
+ loop while(index<tree->nodes->count){seen=push<Bool>(seen,false);memo=push<Int>(memo,-2);index=index+1;};
+ var visits:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,block:root});var bindings:List<Binding>=visible;var generic:List<Int>=List<Int>[];index=0;
+ // Declaration visibility is a source interval: after the initializer, before its block ends.
+ // Traverse retained families without selecting an expression interpretation first.
+ loop while(index<visits->count){
+  let visit:Visit=try lookup<Visit>(visits,index);index=index+1;
+  branch when{try lookup<Bool>(seen,visit->id)=>{continue;},else=>unit};seen=try replaceItem<Bool>(seen,visit->id,true);
+  let node:ForestNode=try getNode(tree->nodes,visit->id);
+  let block:Int=branch when{node->symbol>0&&node->rule==ruleBlock=>visit->id,else=>visit->block};
+  branch when{node->symbol>0&&(node->rule==ruleLetBinding||node->rule==ruleVarBinding)=>{
+   let children:List<Int>=try parts(tree,visit->id);let scope:ForestNode=try getNode(tree->nodes,block);
+   bindings=bindings->append(Binding{name:try text(tree,try item(children,1)),after:node->end,until:scope->end});
+  },else=>unit};
+  branch when{node->symbol>0&&node->rule==ruleGenericApply=>{generic=generic->append(visit->id);},else=>unit};
+  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{visits=push<Visit>(visits,Visit{id:child,block:block});},else=>unit};};
+ };
+ var rejected:List<Int>=List<Int>[];
+ loop over(generic as id:Int){let node:ForestNode=try getNode(tree->nodes,id);branch when{runtimeName(bindings,try text(tree,id),node->start)=>{rejected=rejected->append(id);},else=>unit};};
+ branch when{rejected->length()==0=>{return Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:tree->nodes,root:root,itemCount:tree->itemCount,comparisons:tree->comparisons});},else=>unit};
+ var nodes:NodeStore=emptyNodes();var stack:Paged<Pending>=push<Pending>(empty<Pending>(),Pending{id:root,parent:-1});var active:Int=0;
+ // Memoized postorder over the shared DAG; a dead child invalidates its parent family,
+ // while a surviving alternative remains available to every parent referencing it.
+ loop while(active>=0){
+  let work:Pending=try lookup<Pending>(stack,active);let node:ForestNode=try getNode(tree->nodes,work->id);var missing:Int=-1;
+  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0&&(try lookup<Int>(memo,child))== -2=>{missing=child;break;},else=>unit};};
+  branch when{missing>=0=>{stack=push<Pending>(stack,Pending{id:missing,parent:active});active=stack->count-1;continue;},else=>unit};
+  let left:Int=branch when{node->left>=0=>try lookup<Int>(memo,node->left),else=> -1};
+  let right:Int=branch when{node->right>=0=>try lookup<Int>(memo,node->right),else=> -1};
+  let alternative:Int=branch when{node->alternatives>=0=>try lookup<Int>(memo,node->alternatives),else=> -1};
+  var live:Bool=(node->left<0||left>=0)&&(node->right<0||right>=0);
+  loop over(rejected as id:Int){branch when{id==work->id=>{live=false;break;},else=>unit};};
+  var result:Int=alternative;
+  branch when{live=>{result=nodes->count;nodes=addNode(nodes,ForestNode{symbol:node->symbol,slot:node->slot,start:node->start,end:node->end,rule:node->rule,left:left,right:right,split:node->split,alternatives:alternative});},else=>unit};
+  // Alternative records carry only a family (symbol -1000); promotion retains
+  // the owning symbol/prefix span, rather than treating that record as a terminal.
+  branch when{!live&&alternative>=0&&node->symbol!= -1000=>{
+   let choice:ForestNode=try getNode(nodes,alternative);result=nodes->count;
+   nodes=addNode(nodes,ForestNode{symbol:node->symbol,slot:node->slot,start:node->start,end:node->end,rule:choice->rule,left:choice->left,right:choice->right,split:choice->split,alternatives:choice->alternatives});
+  },else=>unit};
+  memo=try replaceItem<Int>(memo,work->id,result);active=work->parent;
+ };
+ let selected:Int=try lookup<Int>(memo,root);
+ branch when{selected<0=>{
+  let id:Int=try item(rejected,0);let application:List<Int>=try parts(tree,id);let arguments:List<Int>=try parts(tree,try item(application,1));
+  return Result<SyntaxForest,Diagnostic>::Err(try failure(tree,try item(arguments,2),"parse","comparison operators do not chain"));
+ },else=>unit};
+ Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:nodes,root:selected,itemCount:tree->itemCount,comparisons:tree->comparisons})
+};

@@ -9,7 +9,7 @@ use Mgnc\NativeTypes\{typeCode};
 use Mgnc\BridgeLists\{leftList,expressions,conditions};
 use Mgnc\Grammar\{ruleInteger,ruleTrue,ruleFalse,ruleUnit,ruleName,ruleGroup,ruleUnaryNeg,ruleUnaryNot,ruleBinaryOr,ruleBinaryAnd,ruleBinaryLt,ruleBinaryLe,ruleBinaryGt,ruleBinaryGe,ruleBinaryEq,ruleBinaryNe,ruleBinaryAdd,ruleBinarySub,ruleBinaryMul,ruleBinaryDiv,ruleBinaryRem,ruleCall,ruleMethod,ruleBlock,ruleLetBinding,ruleVarBinding,ruleStatementAssign,ruleStatementReturn,ruleStatementBreak,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleBranchWhen,ruleLoopWhile,ruleGenericApply};
 public type Binding=product{name:String;after:Int;until:Int;};
-let runtimeName:Function(List<Binding>,String,Int):Bool=function(bindings:List<Binding>,name:String,cursor:Int):Bool{
+public let runtimeName:Function(List<Binding>,String,Int):Bool=function(bindings:List<Binding>,name:String,cursor:Int):Bool{
  loop over(bindings as binding:Binding){branch when{binding->name==name&&cursor>=binding->after&&cursor<binding->until=>{return true;},else=>unit};};false
 };
 // Node children are forest IDs here; BridgeBody replaces them with old AST IDs.

@@ -1,0 +1,37 @@
+{
+  "identity": {
+    "build": "9a74ec7c6016995d40054fc9aa32dd407281ea176f98f9dec37e220f3a25e686",
+    "components": {
+      "compiler": "9a74ec7c6016995d40054fc9aa32dd407281ea176f98f9dec37e220f3a25e686",
+      "frontend": "9a74ec7c6016995d40054fc9aa32dd407281ea176f98f9dec37e220f3a25e686",
+      "lsp": "9a74ec7c6016995d40054fc9aa32dd407281ea176f98f9dec37e220f3a25e686",
+      "stdlib": "9a74ec7c6016995d40054fc9aa32dd407281ea176f98f9dec37e220f3a25e686"
+    },
+    "inputs": {
+      "baseVersion": "1.2.0",
+      "commit": "284a9b59abd2231a6bb15fefb3455ba3fa3fc481",
+      "dirty": false,
+      "flags": [
+        "--no-userinit",
+        "--no-sysinit"
+      ],
+      "generator": 1,
+      "imageDigest": "sha256:f610ab94648195aa356059f5b41d6085c9d4d903c072430cdd1af7bdb646106b",
+      "inputCoreDigest": "ff039c28938a7516e8c4b4438488d90d7188c728f9166ec1345797c9516fa2eb",
+      "mode": "release",
+      "prerelease": "",
+      "runtimeDigest": "2409c8befe0ca3d6309fcce4f820d8257ceff316a437b38115e228d9259f5670",
+      "runtimeNoticeDigest": "3107a0b340a0d718c5e5525ce4d4060b20b0fe125a2ea10548133eddda6c26f1",
+      "runtimeVersion": "SBCL 2.2.9.debian",
+      "schema": 1,
+      "source": "dfd8d0ac4e24a145b1da7b94645c3479b4a1b44a2e24fd250767101a5611e4a0",
+      "target": "linux-amd64"
+    },
+    "schema": 1,
+    "version": "1.2.0"
+  },
+  "bundle_sha256": "36bcd0f9c60236b8b92cae51ab60dcf63bb79344e359d1f62e7d595cfe01c31d",
+  "payload_manifest_sha256": "c7cce996ec498cf3f018fd99c77024d1c8a0331b9370290e5bc410327fb1a946",
+  "verified_files": 14,
+  "passed": true
+}

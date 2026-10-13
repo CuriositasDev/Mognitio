@@ -90,3 +90,5 @@ Historical counts and old source oracles apply to their pinned revisions.
 Version-branch completion does not authorize main integration, a tag, or release.
 
 - [v0.15.1 package permissions](v0.15.1.md): archive modes and non-owner execution regression.
+
+- [1.4.0 review correction](v1.4.0-review.md): native argument classification, exact combined depth and fresh acceptance evidence.

@@ -1,0 +1,404 @@
+{
+  "head": "10ac5499dd5d2ddaffdc2b5808c3f02754890084",
+  "reverse_prediction": true,
+  "binary_sha256": "08ed24eaf3636d6eb192c3a5fd0ee7a7985c9550dfc70a8652d9a6824850abce",
+  "exit": 0,
+  "stdout": "CLASSIFICATION_OK 20 baseline False\n",
+  "stderr": "",
+  "observations": {
+    "compiler_sha256": "08ed24eaf3636d6eb192c3a5fd0ee7a7985c9550dfc70a8652d9a6824850abce",
+    "baseline_sha256": null,
+    "records": [
+      {
+        "case": "plain",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f73652861203c20322c2033203e20283129297d3b",
+        "source_sha256": "0aed491c88a10fec56bbf5a62295873da04352eb46e02865d47402ac227b4499",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "grouped",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f7365282861203c2032292c202833203e2028312929297d3b",
+        "source_sha256": "17e5f7d608f4dc5da3e68a3907e85c2093473bd8aa7ed9396b3ecbae0d70b65f",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "compact",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f736528613c322c333e283129297d3b",
+        "source_sha256": "2645b61bd18d4c3638a940e74275f749a59d0f7b9c9aa47b981d448f2b8ab3af",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "renamed",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420413a496e743d313b63686f6f736528413c322c333e283129297d3b",
+        "source_sha256": "e0d0592b7b43f301d5b0a3c4e0bb98378d71c06b404e7306ce30c5b1447faeca",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "comments",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f73652861202f2f206e616d650a203c322c333e283129297d3b",
+        "source_sha256": "9fa9a3f93a05e6b40989b6d890b5adb8c492e566ef3d1348631f9ca25471df88",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "negative-value",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f73652861203c202d322c2033203e20283129297d3b",
+        "source_sha256": "da5ff331c4e9c2ccb91741c777a01c26926ec555731cdba16c607b16c566716a",
+        "expected": 9,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 9,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "parameter",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c65742070726f62653a46756e6374696f6e28496e74293a496e743d66756e6374696f6e28613a496e74293a496e747b63686f6f736528613c322c333e283129297d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b70726f62652831297d3b",
+        "source_sha256": "e8550e196094c3b7df41bc3945a802c0603dfe737ea4b932743977665e2303ed",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "mutable",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b76617220613a496e743d313b63686f6f736528613c322c333e283129297d3b",
+        "source_sha256": "4883cff2325427db702f7cc50935bfdf1852ac2f258f5eafbb8741e4a6eead7e",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "nested-scope",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b7b6c657420613a496e743d313b63686f6f736528613c322c333e283129297d7d3b",
+        "source_sha256": "7b464dbc06a20275491b411dc43864e4d6a07e43ffc4f44061e25464a302612e",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "initializer",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b6c657420623a496e743d63686f6f736528613c322c333e283129293b627d3b",
+        "source_sha256": "46518ce027acbd54d440cc8ca5662e2b9ab729777e9bb6e6ce92eecf453b63c6",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "nested-call",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f73652863686f6f736528613c322c333e283129293d3d372c74727565297d3b",
+        "source_sha256": "5b2225176bd6ec1d4ec96bcf31fb177582710808b1a154cb46b7018c78fd0b04",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "argument-block",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b63686f6f7365287b6c657420613a496e743d313b63686f6f736528613c322c333e283129293d3d377d2c74727565297d3b",
+        "source_sha256": "5334ef62b54878b18be8ef67ec1d5cbc52782f78f868f31c45842e7ecd3ce85b",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "sibling-scopes",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b7b6c657420613a496e743d313b646973636172642063686f6f736528613c322c333e283129293b756e69747d3b7b6c657420613a496e743d313b63686f6f736528613c322c333e283129297d7d3b",
+        "source_sha256": "00fe2f893457426021deb3a057b686570e2c7bc764abf1eaf9c99a5ac44db114",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "two-ambiguous-pairs",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c657420666f75723a46756e6374696f6e28426f6f6c2c426f6f6c2c426f6f6c2c426f6f6c293a496e743d66756e6374696f6e28773a426f6f6c2c783a426f6f6c2c793a426f6f6c2c7a3a426f6f6c293a496e747b6272616e6368207768656e7b7726267826267926267a3d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b6c657420623a496e743d313b666f757228613c322c333e2831292c623c322c333e283129297d3b",
+        "source_sha256": "cccbc59f805f7c6df0eac041d82450372468093679efb5095960741368b1c4f7",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "named-value-arguments",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b6c657420623a496e743d323b6c657420633a496e743d333b63686f6f736528613c622c633e283129297d3b",
+        "source_sha256": "d5c12958db07c1026d94c1c2140d40d87a89e0539611f004f6e4cfecdfdb6491",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "ordinary-comparison",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b63686f6f736528613c322c333e3d31297d3b",
+        "source_sha256": "ee7653e2da801dba9814f425707a535a34f6127ef13cb9e88ab59d15682abbae",
+        "expected": 7,
+        "phase": null,
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 0,
+            "stdout_hex": "",
+            "stderr": "",
+            "artifact": true,
+            "run_exit": 7,
+            "run_stdout_hex": "",
+            "run_stderr_hex": ""
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "chain-rejected",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d313b6c657420623a496e743d323b6c657420633a496e743d333b613c623e2863297d3b",
+        "source_sha256": "9e2debcc3306842b3c9b1099ee2280d1ce091c9558faf4643ffb44a46f8987b2",
+        "expected": 7,
+        "phase": "parse",
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 1,
+            "stdout_hex": "",
+            "stderr": "mgnc: parse: <fixtures>/chain-rejected.mgn:1:229 [228,229): comparison operators do not chain\n",
+            "artifact": false
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "initializer-not-visible",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420613a496e743d63686f6f736528613c322c333e283129293b617d3b",
+        "source_sha256": "37e1a63d40eb4716af87d45b4f64081eb062068e1712e54812f287128b66f1c8",
+        "expected": 7,
+        "phase": "semantic",
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 1,
+            "stdout_hex": "",
+            "stderr": "mgnc: semantic: <fixtures>/initializer-not-visible.mgn:1:207 [206,207): name is not visible for syntax classification\n",
+            "artifact": false
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "later-local-not-visible",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b6c657420623a496e743d63686f6f736528613c322c333e283129293b6c657420613a496e743d313b627d3b",
+        "source_sha256": "27832c805eab73ec997b6766deefa5f4ccefa96bcdfafc841bb78ace5989847a",
+        "expected": 7,
+        "phase": "semantic",
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 1,
+            "stdout_hex": "",
+            "stderr": "mgnc: semantic: <fixtures>/later-local-not-visible.mgn:1:207 [206,207): name is not visible for syntax classification\n",
+            "artifact": false
+          }
+        },
+        "passed": true
+      },
+      {
+        "case": "sibling-not-visible",
+        "source_hex": "6e616d657370616365204170703b6c65742063686f6f73653a46756e6374696f6e28426f6f6c2c426f6f6c293a496e743d66756e6374696f6e286c6566743a426f6f6c2c72696768743a426f6f6c293a496e747b6272616e6368207768656e7b6c656674262672696768743d3e372c656c73653d3e397d7d3b6c6574206d61696e3a46756e6374696f6e284c6973743c537472696e673e293a496e743d66756e6374696f6e28617267733a4c6973743c537472696e673e293a496e747b7b6c657420613a496e743d313b756e69747d3b63686f6f736528613c322c333e283129297d3b",
+        "source_sha256": "e3088e4cbb4178480176a89542dca2811d1a190c6f248f229edeef883be06a73",
+        "expected": 7,
+        "phase": "semantic",
+        "parse_exit": 0,
+        "results": {
+          "candidate": {
+            "build_exit": 1,
+            "stdout_hex": "",
+            "stderr": "mgnc: semantic: <fixtures>/sibling-not-visible.mgn:1:216 [215,216): name is not visible for syntax classification\n",
+            "artifact": false
+          }
+        },
+        "passed": true
+      }
+    ],
+    "complete": true,
+    "passed": true
+  }
+}

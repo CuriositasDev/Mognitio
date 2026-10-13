@@ -49,7 +49,7 @@ The native runtime validates UTF-8 arguments and preserves primary failures
 even when its diagnostic stream is unavailable.
 
 Internal and end-to-end runners are under tests/mgnc. The
-[1.4 implementation acceptance](../../verification/v1.4.0.md) covers 54 new and
+[1.4 acceptance after review](../../verification/v1.4.0-review.md) covers 54 new and
 55 inherited conditions, complete source corpora and the unchanged 21-cell native
 resource profile. Acceptance is separate from release and publication.
 

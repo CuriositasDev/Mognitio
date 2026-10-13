@@ -10,6 +10,7 @@ use Mgnc\BridgeLists\{leftList,reverse};
 use Mgnc\NativeTypes\{Signature,signature};
 use Mgnc\BridgeShape\{Binding};
 use Mgnc\BridgeBody\{Converted,body};
+use Mgnc\Classification\{genericGuards,classify};
 use Mgnc\Grammar\{ruleTopLet,ruleTopVar,ruleVarBinding,ruleTypeFunction,ruleFunction};
 let moduleName:Function(SyntaxForest,Int):Result<String,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<String,Diagnostic>{
  let namespaceParts:List<Int>=try parts(tree,id);var path:Int=try item(namespaceParts,1);var names:List<Int>=List<Int>[];
@@ -45,6 +46,7 @@ public let bridge:Function(SyntaxForest):Result<Program,Diagnostic>=function(tre
  let module:List<Int>=try parts(tree,tree->root);let name:String=try moduleName(tree,try item(module,0));
  let uses:Int=try item(module,1);let imports:List<Int>=try parts(tree,uses);
  branch when{imports->length()>0=>{return Result<Program,Diagnostic>::Err(try failure(tree,uses,"unsupported","imports are outside the native profile"));},else=>unit};
+ let guards:List<Int>=try genericGuards(tree);
  let tops:List<Int>=try leftList(tree,try item(module,2));var nodes:Paged<Node>=empty<Node>();var declarations:List<Declaration>=List<Declaration>[];var previous:List<Binding>=List<Binding>[];
  loop over(tops as top:Int){
   let topNode:ForestNode=try getNode(tree->nodes,top);
@@ -57,7 +59,9 @@ public let bridge:Function(SyntaxForest):Result<Program,Diagnostic>=function(tre
   let functionParts:List<Int>=try parts(tree,actualId);let block:Int=try item(functionParts,6);let blockNode:ForestNode=try getNode(tree->nodes,block);
   var visible:List<Binding>=previous;
   loop over(actual->parameters as parameter:Parameter){visible=visible->append(Binding{name:parameter->name,after:0,until:blockNode->end});};
-  let converted:Converted=try body(tree,block,nodes,visible);nodes=converted->nodes;
+  var choices:Bool=false;loop over(guards as cursor:Int){branch when{cursor>=blockNode->start&&cursor<blockNode->end=>{choices=true;break;},else=>unit};};
+  let classified:SyntaxForest=branch when{choices=>try classify(tree,block,visible),else=>SyntaxForest{source:tree->source,nodes:tree->nodes,root:block,itemCount:tree->itemCount,comparisons:tree->comparisons}};
+  let converted:Converted=try body(classified,classified->root,nodes,visible);nodes=converted->nodes;
   let spelling:String=try text(tree,bindingName);
   declarations=declarations->append(Declaration{name:spelling,parameters:actual->parameters,declaredParameters:declared->types,result:actual->result,declaredResult:declared->result,body:converted->root,span:try site(tree,bindingName),mutable:bindingNode->rule==ruleVarBinding});
   previous=previous->append(Binding{name:spelling,after:bindingNode->end,until:tree->source->tokens->count*2});

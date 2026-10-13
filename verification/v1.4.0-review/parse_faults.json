@@ -1,0 +1,26 @@
+{
+  "compiler_sha256": "31887b8b95df882743c242d1ac1d9dce1be2cc322aded8c230f149cb280a919b",
+  "source_sha256": "1af699c7a43fceaeed552051f0890f6f164f99500fd4c412af2e47007fe495a7",
+  "records": [
+    {
+      "kind": "allocation",
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20616c6c6f636174696f6e206661696c7572650a"
+    },
+    {
+      "kind": "os-kill",
+      "signal": 9,
+      "exit": -9,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "kind": "harness-timeout",
+      "timeout_seconds": 0.01,
+      "exit": null,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    }
+  ]
+}

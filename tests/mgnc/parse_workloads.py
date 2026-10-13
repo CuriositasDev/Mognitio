@@ -16,7 +16,7 @@ def sources():
   add(f'branches-{depth}','namespace A;let x:Int='+'branch when{true=>0,else=>'*depth+'0'+'}'*depth+';',syntax_depth=depth)
   add(f'types-{depth}','namespace A;let x:'+'List<'*depth+'Int'+'>'*depth+'=value;',type_depth=depth)
  deep='List<'*128+'Int'+'>'*128
- add('combined','namespace A;'+''.join(f'type T{i}=product{{value:Int;}};' for i in range(999))+'let f:Function():Int=function():Int{let x:'+deep+'=value;'+'{'*127+'0'+'}'*127+'};',declarations=1000,syntax_depth=128,type_depth=128)
+ add('combined','namespace A;'+''.join(f'type T{i}=product{{value:Int;}};' for i in range(999))+'let f:Function():Int=function():Int{let x:'+deep+'=value;'+'{'*128+'0'+'}'*128+'};',declarations=1000,syntax_depth=128,type_depth=128)
  for kind in ['string','comment']:
   for encoding in ['ascii','unicode']:
    for size in [1024,65536,1048576]:

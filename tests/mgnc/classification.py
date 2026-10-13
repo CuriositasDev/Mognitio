@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Paired native regressions for declaration-guard propagation through the forest."""
-import argparse,hashlib,json,subprocess,tempfile
+import argparse,hashlib,json,re,subprocess,tempfile
 from pathlib import Path
 HEADER='namespace App;let choose:Function(Bool,Bool):Int=function(left:Bool,right:Bool):Int{branch when{left&&right=>7,else=>9}};'
 ENTRY='let main:Function(List<String>):Int=function(args:List<String>):Int{'
@@ -46,6 +46,9 @@ def main():
      run=subprocess.run([target],capture_output=True,timeout=30);result.update(run_exit=run.returncode,run_stdout_hex=run.stdout.hex(),run_stderr_hex=run.stderr.hex())
      assert (run.returncode,run.stdout,run.stderr)==(case['expected'],b'',b''),(case,result)
     results[label]=result
+   if case['phase'] and args.baseline:
+    pattern=r':(\d+):(\d+) \[(\d+),(\d+)\)'
+    assert re.search(pattern,results['candidate']['stderr']).groups()==re.search(pattern,results['baseline']['stderr']).groups(),results
    assert path.read_bytes()==source
    rows.append(dict(case=case['name'],source_hex=source.hex(),source_sha256=hashlib.sha256(source).hexdigest(),expected=case['expected'],phase=case['phase'],parse_exit=0,results=results,passed=True))
    args.evidence.write_text(json.dumps(dict(compiler_sha256=hashlib.sha256(args.compiler.read_bytes()).hexdigest(),records=rows,complete=False),indent=2)+'\n')

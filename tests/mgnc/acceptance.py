@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Check v1.4 evidence completeness, identities and every retained formal sample."""
-import argparse,collections,hashlib,json,statistics
+import argparse,collections,hashlib,json,statistics,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -17,7 +17,13 @@ def main():
  inherited=load('inherited-conformance.json');old=json.loads((ROOT/'verification/v1.3.0-review-conformance.json').read_text())
  assert len(inherited['cases'])==55 and {x['id'] for x in inherited['cases']}=={x['id'] for x in old['cases']}
  assert all(c['result']=='pass' and not c['unrun'] and not c['fail'] for c in inherited['cases'])
- current={str(p.relative_to(ROOT)):digest(p) for p in (ROOT/'compiler/mgnc').rglob('*.mgn')}
+ review=(ROOT/'verification/v1.4.0-review/identity.json').is_file() and base.resolve()==(ROOT/'verification/v1.4.0').resolve()
+ if review:
+  # Preserve the reviewed snapshot as historical evidence, including its two corrected gaps.
+  revision=identity['source_revision']
+  paths=subprocess.check_output(['git','ls-tree','-r','--name-only',revision,'compiler/mgnc/src'],cwd=ROOT,text=True).splitlines()
+  current={p:hashlib.sha256(subprocess.check_output(['git','show',revision+':'+p],cwd=ROOT)).hexdigest() for p in paths if p.endswith('.mgn')}
+ else:current={str(p.relative_to(ROOT)):digest(p) for p in (ROOT/'compiler/mgnc').rglob('*.mgn')}
  assert len(current)==56 and current==identity['executable_source_files']=={r['path']:r['sha256'] for r in bootstrap['inventory']}
  assert digest(ROOT/'compiler/mgnc/mognitio.toml')==identity['manifest_sha256']==bootstrap['manifest_sha256']
  assert bootstrap['exit']==0 and bootstrap['stdout_hex']==bootstrap['stderr_hex']=='' and bootstrap['compiler_sha256']==compiler
@@ -71,5 +77,9 @@ def main():
  supplemental=load('ambiguity-measurement.json');assert supplemental['passed'] and len(supplemental['records'])==156 and all(r['passed'] for r in supplemental['records'])
  normal=load('normal-equivalence.json');assert normal['unchanged'] and all(digest(ROOT/p)==h for p,h in normal['normal_input_files'].items())
  assert len(load('consumer.json')['records'])==182 and load('consumer-controls.json')['passed']==11
- print('V140_ACCEPTANCE_OK cases=54 inherited=55 corpus=81 parse_samples=696 native_samples=126 auxiliary_samples=156')
+ if review:
+  print('V140_BASELINE_INTEGRITY_OK historical_snapshot=True corrected_findings=2')
+  from review_acceptance import verify_review
+  verify_review()
+ else:print('V140_ACCEPTANCE_OK cases=54 inherited=55 corpus=81 parse_samples=696 native_samples=126 auxiliary_samples=156')
 if __name__=='__main__':main()

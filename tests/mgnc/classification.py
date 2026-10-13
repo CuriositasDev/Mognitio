@@ -20,9 +20,9 @@ def fixtures():
  add('named-value-arguments','let a:Int=1;let b:Int=2;let c:Int=3;choose(a<b,c>(1))')
  add('ordinary-comparison','let a:Int=1;choose(a<2,3>=1)')
  add('chain-rejected','let a:Int=1;let b:Int=2;let c:Int=3;a<b>(c)',phase='parse')
- add('initializer-not-visible','let a:Int=choose(a<2,3>(1));a',phase='reject')
- add('later-local-not-visible','let b:Int=choose(a<2,3>(1));let a:Int=1;b',phase='reject')
- add('sibling-not-visible','{let a:Int=1;unit};choose(a<2,3>(1))',phase='reject')
+ add('initializer-not-visible','let a:Int=choose(a<2,3>(1));a',phase='semantic')
+ add('later-local-not-visible','let b:Int=choose(a<2,3>(1));let a:Int=1;b',phase='semantic')
+ add('sibling-not-visible','{let a:Int=1;unit};choose(a<2,3>(1))',phase='semantic')
  return rows
 
 def main():

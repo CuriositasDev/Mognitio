@@ -15,27 +15,8 @@ public let genericGuards:Function(SyntaxForest):Result<List<Int>,Diagnostic>=fun
 };
 type Visit=product{id:Int;block:Int;};
 type Pending=product{id:Int;parent:Int;};
-public let classify:Function(SyntaxForest,Int,List<Binding>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,visible:List<Binding>):Result<SyntaxForest,Diagnostic>{
- var seen:Paged<Bool>=empty<Bool>();var memo:Paged<Int>=empty<Int>();var index:Int=0;
- loop while(index<tree->nodes->count){seen=push<Bool>(seen,false);memo=push<Int>(memo,-2);index=index+1;};
- var visits:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,block:root});var bindings:List<Binding>=visible;var generic:List<Int>=List<Int>[];index=0;
- // Declaration visibility is a source interval: after the initializer, before its block ends.
- // Traverse retained families without selecting an expression interpretation first.
- loop while(index<visits->count){
-  let visit:Visit=try lookup<Visit>(visits,index);index=index+1;
-  branch when{try lookup<Bool>(seen,visit->id)=>{continue;},else=>unit};seen=try replaceItem<Bool>(seen,visit->id,true);
-  let node:ForestNode=try getNode(tree->nodes,visit->id);
-  let block:Int=branch when{node->symbol>0&&node->rule==ruleBlock=>visit->id,else=>visit->block};
-  branch when{node->symbol>0&&(node->rule==ruleLetBinding||node->rule==ruleVarBinding)=>{
-   let children:List<Int>=try parts(tree,visit->id);let scope:ForestNode=try getNode(tree->nodes,block);
-   bindings=bindings->append(Binding{name:try text(tree,try item(children,1)),after:node->end,until:scope->end});
-  },else=>unit};
-  branch when{node->symbol>0&&node->rule==ruleGenericApply=>{generic=generic->append(visit->id);},else=>unit};
-  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{visits=push<Visit>(visits,Visit{id:child,block:block});},else=>unit};};
- };
- var rejected:List<Int>=List<Int>[];
- loop over(generic as id:Int){let node:ForestNode=try getNode(tree->nodes,id);branch when{runtimeName(bindings,try text(tree,id),node->start)=>{rejected=rejected->append(id);},else=>unit};};
- branch when{rejected->length()==0=>{return Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:tree->nodes,root:root,itemCount:tree->itemCount,comparisons:tree->comparisons});},else=>unit};
+let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,rejected:List<Int>):Result<SyntaxForest,Diagnostic>{
+ var memo:Paged<Int>=empty<Int>();var index:Int=0;loop while(index<tree->nodes->count){memo=push<Int>(memo,-2);index=index+1;};
  var nodes:NodeStore=emptyNodes();var stack:Paged<Pending>=push<Pending>(empty<Pending>(),Pending{id:root,parent:-1});var active:Int=0;
  // Memoized postorder over the shared DAG; a dead child invalidates its parent family,
  // while a surviving alternative remains available to every parent referencing it.
@@ -58,10 +39,41 @@ public let classify:Function(SyntaxForest,Int,List<Binding>):Result<SyntaxForest
   },else=>unit};
   memo=try replaceItem<Int>(memo,work->id,result);active=work->parent;
  };
- let selected:Int=try lookup<Int>(memo,root);
+ Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:nodes,root:try lookup<Int>(memo,root),itemCount:tree->itemCount,comparisons:tree->comparisons})
+};
+public let classify:Function(SyntaxForest,Int,List<Binding>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,visible:List<Binding>):Result<SyntaxForest,Diagnostic>{
+ var seen:Paged<Bool>=empty<Bool>();var index:Int=0;
+ loop while(index<tree->nodes->count){seen=push<Bool>(seen,false);index=index+1;};
+ var visits:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,block:root});var bindings:List<Binding>=visible;var generic:List<Int>=List<Int>[];index=0;
+ // Declaration visibility is a source interval: after the initializer, before its block ends.
+ // Traverse retained families without selecting an expression interpretation first.
+ loop while(index<visits->count){
+  let visit:Visit=try lookup<Visit>(visits,index);index=index+1;
+  branch when{try lookup<Bool>(seen,visit->id)=>{continue;},else=>unit};seen=try replaceItem<Bool>(seen,visit->id,true);
+  let node:ForestNode=try getNode(tree->nodes,visit->id);
+  let block:Int=branch when{node->symbol>0&&node->rule==ruleBlock=>visit->id,else=>visit->block};
+  branch when{node->symbol>0&&(node->rule==ruleLetBinding||node->rule==ruleVarBinding)=>{
+   let children:List<Int>=try parts(tree,visit->id);let scope:ForestNode=try getNode(tree->nodes,block);
+   bindings=bindings->append(Binding{name:try text(tree,try item(children,1)),after:node->end,until:scope->end});
+  },else=>unit};
+  branch when{node->symbol>0&&node->rule==ruleGenericApply=>{generic=generic->append(visit->id);},else=>unit};
+  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{visits=push<Visit>(visits,Visit{id:child,block:block});},else=>unit};};
+ };
+ var rejected:List<Int>=List<Int>[];var unresolved:List<Int>=List<Int>[];
+ loop over(generic as id:Int){let node:ForestNode=try getNode(tree->nodes,id);branch when{runtimeName(bindings,try text(tree,id),node->start)=>{rejected=rejected->append(id);},else=>{unresolved=unresolved->append(id);}};};
+ let classified:SyntaxForest=branch when{rejected->length()>0=>try prune(tree,root,rejected),else=>SyntaxForest{source:tree->source,nodes:tree->nodes,root:root,itemCount:tree->itemCount,comparisons:tree->comparisons}};
+ let selected:Int=classified->root;
  branch when{selected<0=>{
   let id:Int=try item(rejected,0);let application:List<Int>=try parts(tree,id);let arguments:List<Int>=try parts(tree,try item(application,1));
   return Result<SyntaxForest,Diagnostic>::Err(try failure(tree,try item(arguments,2),"parse","comparison operators do not chain"));
  },else=>unit};
- Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:nodes,root:selected,itemCount:tree->itemCount,comparisons:tree->comparisons})
+ // An unresolved guard must not become a new runtime/template classification.
+ // If removing generic candidates exposes a complete native derivation, choosing
+ // between those interpretations requires the missing declaration: report its name.
+ branch when{unresolved->length()>0=>{
+  var excluded:List<Int>=rejected;loop over(unresolved as id:Int){excluded=excluded->append(id);};
+  let native:SyntaxForest=try prune(tree,root,excluded);
+  branch when{native->root>=0=>{return Result<SyntaxForest,Diagnostic>::Err(try failure(tree,try item(unresolved,0),"semantic","name is not visible for syntax classification"));},else=>unit};
+ },else=>unit};
+ Result<SyntaxForest,Diagnostic>::Ok(classified)
 };

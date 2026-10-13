@@ -8,10 +8,10 @@ use Mgnc\Projection\{parts,item,text,failure};
 use Mgnc\BridgeShape\{Binding,runtimeName};
 use Mgnc\Grammar\{ruleBlock,ruleLetBinding,ruleVarBinding,ruleGenericApply};
 // The parse forest is immutable. Only build evaluates declaration guards.
-public let hasGenericGuards:Function(SyntaxForest):Result<Bool,Diagnostic>=function(tree:SyntaxForest):Result<Bool,Diagnostic>{
- var index:Int=0;
- loop while(index<tree->nodes->count){let node:ForestNode=try getNode(tree->nodes,index);branch when{node->symbol>0&&node->rule==ruleGenericApply=>{return Result<Bool,Diagnostic>::Ok(true);},else=>unit};index=index+1;};
- Result<Bool,Diagnostic>::Ok(false)
+public let genericGuards:Function(SyntaxForest):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest):Result<List<Int>,Diagnostic>{
+ var index:Int=0;var starts:List<Int>=List<Int>[];
+ loop while(index<tree->nodes->count){let node:ForestNode=try getNode(tree->nodes,index);branch when{node->symbol>0&&node->rule==ruleGenericApply=>{starts=starts->append(node->start);},else=>unit};index=index+1;};
+ Result<List<Int>,Diagnostic>::Ok(starts)
 };
 type Visit=product{id:Int;block:Int;};
 type Pending=product{id:Int;parent:Int;};

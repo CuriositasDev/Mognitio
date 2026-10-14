@@ -7,12 +7,14 @@
   (runtime-unit :validate
     (append
       '((:load-word :rdx :rsp 8))
-      (loop for id below literal-count append
-        (append (when (option :gc-counters) (bump 120))
-                `((:lea-text (:text ,id)) (:cmp-rax-rdx) (:jz :static))))
-      (loop for object in (static-objects) append
-        (append (when (option :gc-counters) (bump 120))
-                `((:lea-object ,(first object)) (:cmp-rax-rdx) (:jz :static))))
+      (ordered-address-dispatch
+        (loop for id below literal-count collect (list (list :lea-text (list :text id)) :static))
+        :rdx "ROOT-TEXT" :root-objects (when (option :gc-counters) 120))
+      '((:label :root-objects))
+      (ordered-address-dispatch
+        (loop for object in (static-objects) collect (list (list :lea-object (first object)) :static))
+        :rdx "ROOT-OBJECT" :root-arenas (when (option :gc-counters) 120))
+      '((:label :root-arenas))
       '((:load-word :r8 :rsp 16) (:cmp-imm :r8 0) (:jz :bad)
         (:load-word :r11 :r8 24) (:load-word :rax :r8 8)
         (:add-reg :r8 :rax) (:add-imm :r8 32)

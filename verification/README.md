@@ -97,3 +97,6 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [1.4.0 review correction](v1.4.0-review.md): native argument classification, exact combined depth and fresh acceptance evidence.
 
 - [v1.5 internal seed](v1.5.0-seed.md): accepted Lisp source, frozen bundle identity and isolated restoration.
+
+- [v1.5 replacement seed](v1.5.0-seed2.md): accepted GC repair with a new immutable seed identity.
+- [v1.5 compiler implementation](v1.5.0-compiler.md): shared semantics and fixed-candidate verification.

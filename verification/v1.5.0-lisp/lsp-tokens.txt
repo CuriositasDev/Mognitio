@@ -1,0 +1,7 @@
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.648s
+
+OK
+16 x 3 MiB front token cancel/shutdown: 0.0004s
+16 x 3 MiB tail token cancel/shutdown: 0.0055s

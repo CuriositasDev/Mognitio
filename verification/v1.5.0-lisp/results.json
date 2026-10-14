@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "date": "2026-10-14",
+  "scope": "Lisp capability implementation; not implementation acceptance or seed freeze",
+  "baseline_commit": "4908a1a91be61d64695b9e048b833637aee0aefc",
+  "production_commit": "7ea0bbd151584d4f6eeee991c53ae1665d466f86",
+  "test_extension_commit": "982a1d901d1fd511316b80d3ffa4f2d728527592",
+  "source_unchanged_after_production_commit": true,
+  "production_trees": {
+    "src": "a2cc71fa60e64e382f9375416ec1eb224f1afc4e",
+    "bin": "034db32b7cc19bcece4383543f7171e26e6d82d5",
+    "mognitio.asd": "01d924d9e5e51760e17d17abd8df104de3b25118",
+    "compiler": "af8c7d3b24e5d03935556a02059f681503b10f2b"
+  },
+  "environments": [
+    {
+      "os": "Ubuntu 26.04",
+      "sbcl": "2.6.0.debian",
+      "python": "3.14.4",
+      "kernel": "7.0.0-38-generic",
+      "checks": "all cumulative Lisp/Python; focused; integrations"
+    },
+    {
+      "os": "Ubuntu 24.04.5",
+      "sbcl": "2.2.9.debian",
+      "python": "3.12.3",
+      "glibc": "2.39",
+      "kernel": "7.0.0-38-generic (shared with host)",
+      "isolation": "unprivileged user/mount namespace",
+      "checks": "all Lisp; focused; new API integration",
+      "base_image_sha256": "e77b6f10c2590cef872b33ee9f635a0e3fd1f57fb074c0e52b5c7f56147a0c86"
+    }
+  ],
+  "counts": {
+    "all_lisp_groups": 228,
+    "all_lisp_assertions": 9564,
+    "all_lisp_processes": 1310,
+    "focused_groups": 15,
+    "focused_assertions": 318,
+    "focused_processes": 47,
+    "api_checks": 55,
+    "new_analysis_cases": 7,
+    "legacy_analysis_examples": 19,
+    "toolchain_tests": 22,
+    "lsp_boundary_tests": 9,
+    "lsp_projection_tests": 6,
+    "lsp_token_tests": 7,
+    "levi_records": 182,
+    "levi_negative_controls": 11,
+    "legacy_classification_cases": 20
+  },
+  "development_payload_identity": "137f7533c7191d07c815ffaf40bd7454ec9c00717f810588dab07fd745733d94",
+  "development_payload_mode": "development; regression artifact, not fixed seed",
+  "levi_commit": "0b11655172c636bb44c856dc3469a99b33f1071c",
+  "legacy_mgnc_elf_sha256": "cc665c85a7272ef03dd2df518376e3e8e48b8281580fbfe21dc981b4dbb26273",
+  "isolated_api_elf_sha256": "5e69bc354cc20fe61cba50e07aaa8fede60493d9f5cca99d6c813804b0ef539b",
+  "historical_v140_verifier_scope": "Frozen baseline source; current Lisp emitter changes old artifact hashes, so historical normal-equivalence is not rerun against new source.",
+  "log_processing": "Captured output; Ubuntu 24 focused log omits compilation chatter; Levi evidence directory replaced with a placeholder.",
+  "logs": {
+    "cumulative-ubuntu26.txt": "358e51d9d685a7dfb4957ba435a74c4e61b2dad05b10725bd1591b17ece95e24",
+    "lisp-and-api-ubuntu24.txt": "f241fc997148b70d6eaee1e467d710197dd80a054edb0f92ce1751be4ecaf23b",
+    "focused-ubuntu26.txt": "bd68a4de1e25351e43783d6bc322e2f988d82e93715802faaf92f7eb197f26cf",
+    "focused-ubuntu24.txt": "6165bffcc635073c4926e8a8cb4274eb87e872a4506a9d469b64c821f83479a0",
+    "analysis.txt": "86cfd78716580dd9f27bf83ce3fd0df6fff9ccd3e02597a920db131ec1984378",
+    "isolated.txt": "8b5eb8795cb8c6b303df5e2e80a546f7c81ea8dec46222b2c1e20a106d3f8a3d",
+    "analysis-legacy.txt": "2c03a2e22d7be93b222c1d6e5e14a6f34b10d02f1e5d97ead82eeb17259a0257",
+    "toolchain.txt": "44d0d169355fe6edaf1029fbf2ceaacc05803b7f85a184f435031501299ab6a4",
+    "lsp-boundaries.txt": "84848a84cc57318797bdbcc090dc9d518d142824579776ce52e5befaff062f63",
+    "lsp-projection.txt": "a18138a2798532ebbaedad0b6d20e75cc4ec71990022771fb98ac390b13235df",
+    "lsp-tokens.txt": "df266d01020ca22310292653cdf9a194d91382b343bd23f0ae870999d75c1b8a",
+    "levi.txt": "4fb21b55adbb99e2977db854e412118bbf7d4c6fbc92b1588a712d6a23160d0c",
+    "levi-negative.txt": "025858d502e9a1b8d8ddf13e6b8a239f095ad3d04a86d4b5e202bb179da582b5",
+    "historical-v140.txt": "b3a94135fbde277d8a81f349847bbdd884ffcbab087a8ad7b1a911ce63df7665",
+    "legacy-classification.txt": "1721fb78553322733bed68bdecb967980abe0f94ba5464a295a7af351dbc3eed"
+  }
+}

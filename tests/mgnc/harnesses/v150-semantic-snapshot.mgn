@@ -1,0 +1,44 @@
+namespace Mgnc\SemanticSnapshot;
+use Mgnc\Data\{Diagnostic,Span,lookup,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{Integer};
+use Mgnc\TypeData\{Type,Argument,ValueTerm,Structure,Member,Obligation};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo,Loop,BodyState};
+use Mgnc\SemanticData\{Declaration,Parameter,Introduction};
+use Std\Io\{writeStderr};
+let parent:Function(Parent):String=function(value:Parent):String{branch on value{Parent::None=>"-",Parent::Some(id:Int)=>number(id)}};
+let boolean:Function(Bool):String=function(value:Bool):String{branch when{value=>"1",else=>"0"}};
+let span:Function(Span):String=function(value:Span):String{number(value->start)+","+number(value->end)+","+number(value->line)+","+number(value->column)};
+let integers:Function(List<Int>):String=function(values:List<Int>):String{var text:String="";loop over(values as value:Int){text=text+number(value)+",";};text};
+let arguments:Function(List<Argument>):String=function(values:List<Argument>):String{var text:String="";loop over(values as value:Argument){text=text+branch on value{Argument::Type(id:Int)=>"T"+number(id),Argument::Value(term:ValueTerm)=>"V"+parent(term->parameter)+":"+number(term->owner)+":"+number(term->value)}+",";};text};
+let emit:Function(String):Unit=function(text:String):Unit{discard writeStderr("SNAP|"+text+"\n");};
+public let snapshot:Function(State):Result<Unit,Diagnostic>=function(state:State):Result<Unit,Diagnostic>{
+ emit("BEGIN");var index:Int=0;
+ loop while(index<state->types->headers->declarations->count){
+  let d:Declaration=try lookup<Declaration>(state->types->headers->declarations,index);
+  var parameters:String="";loop over(d->parameters as p:Parameter){parameters=parameters+p->name+":"+number(p->kind)+":"+number(p->node)+":"+span(p->span)+",";};
+  emit("D|"+number(d->file)+"|"+number(d->ordinal)+"|"+number(d->kind)+"|"+d->name+"|"+boolean(d->exported)+"|"+number(d->node)+"|"+number(d->annotation)+"|"+number(d->body)+"|"+parameters+"|"+span(d->span));index=index+1;
+ };
+ index=0;loop while(index<state->types->headers->names->count){let n:Introduction=try lookup<Introduction>(state->types->headers->names,index);emit("I|"+number(n->file)+"|"+n->name+"|"+number(n->declaration)+"|"+boolean(n->imported)+"|"+span(n->span));index=index+1;};
+ index=0;loop while(index<state->types->types->count){
+  let t:Type=try lookup<Type>(state->types->types,index);var members:String="";
+  loop over(t->members as m:Member){members=members+m->name+":"+parent(m->value)+":"+span(m->span)+",";};
+  emit("T|"+number(t->kind)+"|"+parent(t->owner)+"|"+arguments(t->arguments)+"|"+members);index=index+1;
+ };
+ index=0;loop while(index<state->types->declarations->count){
+  var requirements:String="";loop over((try lookup<List<Obligation>>(state->types->constraints,index)) as o:Obligation){requirements=requirements+number(o->owner)+":"+number(o->parameter)+":"+number(o->minimum)+":"+number(o->maximum)+":"+span(o->span)+",";};
+  emit("S|"+parent(try lookup<Parent>(state->types->declarations,index))+"|"+requirements);index=index+1;
+ };
+ index=0;loop while(index<state->nodes->count){
+  let n:Node=try lookup<Node>(state->nodes,index);let structure:String=branch on n->structure{Structure::Unknown=>"?",Structure::Known(id:Int)=>number(id)};
+  var literals:String="";loop over(n->literal as value:Integer){literals=literals+boolean(value->negative)+":"+value->digits+",";};
+  emit("N|"+number(n->file)+"|"+number(n->cursor)+"|"+number(n->rule)+"|"+boolean(n->flag)+"|"+structure+"|"+boolean(n->normal)+"|"+n->operation+"|"+parent(n->binding)+"|"+parent(n->target)+"|"+integers(n->children)+"|"+span(n->span)+"|"+number(n->integer)+"|"+boolean(n->minimum)+"|"+integers(n->mapping)+"|"+arguments(n->arguments)+"|"+literals);index=index+1;
+ };
+ index=0;loop while(index<state->symbols->count){let s:Symbol=try lookup<Symbol>(state->symbols,index);emit("Y|"+number(s->file)+"|"+s->name+"|"+number(s->valueType)+"|"+boolean(s->mutable)+"|"+parent(s->functionOwner)+"|"+parent(s->declaration)+"|"+span(s->span));index=index+1;};
+ index=0;loop while(index<state->globals->count){emit("G|"+parent(try lookup<Parent>(state->globals,index)));index=index+1;};
+ index=0;loop while(index<state->functions->count){let f:FunctionInfo=try lookup<FunctionInfo>(state->functions,index);emit("F|"+number(f->file)+"|"+number(f->cursor)+"|"+number(f->valueType)+"|"+integers(f->parameters)+"|"+parent(f->body)+"|"+integers(f->captures)+"|"+parent(f->templateOwner));index=index+1;};
+ index=0;loop while(index<state->loops->count){let l:Loop=try lookup<Loop>(state->loops,index);emit("L|"+number(l->kind)+"|"+integers(l->breaks));index=index+1;};
+ loop over(state->obligations as o:Obligation){emit("O|"+number(o->owner)+"|"+number(o->parameter)+"|"+number(o->minimum)+"|"+number(o->maximum)+"|"+span(o->span));};
+ index=0;loop while(index<state->bodies->count){let b:BodyState=try lookup<BodyState>(state->bodies,index);emit("B|"+branch on b{BodyState::NotRequired=>"none",BodyState::Pending=>"pending",BodyState::Checking=>"checking",BodyState::Complete(root:Int)=>number(root)});index=index+1;};
+ emit("END");Result<Unit,Diagnostic>::Ok(unit)
+};

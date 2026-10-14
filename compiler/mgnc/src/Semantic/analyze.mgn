@@ -1,6 +1,7 @@
 namespace Mgnc\Semantic;
+use Mgnc\NameIndex\{create as createIndex};
 use Mgnc\InputDiagnostics\{escapePath};
-use Mgnc\Data\{Diagnostic,lookup,problem,Span};
+use Mgnc\Data\{Diagnostic,lookup,problem,Span,Paged,empty,push};
 use Mgnc\Syntax\{Parent};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
 use Mgnc\SemanticData\{Headers,Module,Declaration};
@@ -16,7 +17,7 @@ use Mgnc\TypeDeclarations\{define,Parameters,parameters};
 use Mgnc\Signatures\{declaration as signature,publicSignature};
 use Mgnc\SemanticValues\{State,Environment,Node,FunctionInfo,BodyState,Checked};
 use Mgnc\ValueSupport\{initialize as initializeValues,withTypes,withBodies,expect};
-use Mgnc\SemanticClassification\{classify};
+use Mgnc\SemanticClassification\{BindingIndex,prepare,classifyPrepared};
 use Mgnc\BodyCheck\{check};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\VariantSupport\{memberType};
@@ -39,15 +40,15 @@ let ordered:Function(Headers,Graph,String):Result<List<Int>,InputError>=function
  };
  Result<List<Int>,InputError>::Ok(result->values)
 };
-let body:Function(State,Int):Result<State,Diagnostic>=function(initial:State,id:Int):Result<State,Diagnostic>{
+let body:Function(State,Int,BindingIndex):Result<State,Diagnostic>=function(initial:State,id:Int,bindings:BindingIndex):Result<State,Diagnostic>{
  var state:State=initial;let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,id);
  let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);
  state=withBodies(state,try replaceItem<BodyState>(state->bodies,id,BodyState::Checking));
  let generic:Bool=declared->kind==3;var arguments:List<Argument>=List<Argument>[];
  branch when{generic=>{let params:Parameters=try parameters(state->types,id);state=withTypes(state,params->store,params->obligations);arguments=params->arguments;},else=>unit};
  let owner:Parent=branch when{generic=>Parent::Some(id),else=>Parent::None};
- let tree:SyntaxForest=try classify(state->types->headers,declared->file,declared->body,owner);
- let environment:Environment=Environment{file:declared->file,symbols:List<Int>[],reserved:branch when{generic=>List<String>[],else=>List<String>[declared->name]},functionOwner:Parent::None,loopTarget:Parent::None,returnType:Parent::None,templateOwner:owner,arguments:arguments,reachable:true};
+ let tree:SyntaxForest=try classifyPrepared(state->types->headers,declared->file,declared->body,owner,bindings);
+ let environment:Environment=Environment{file:declared->file,symbols:createIndex(),reserved:branch when{generic=>List<String>[],else=>List<String>[declared->name]},functionOwner:Parent::None,loopTarget:Parent::None,returnType:Parent::None,templateOwner:owner,arguments:arguments,reachable:true};
  let before:Int=state->obligations->length();
  let checked:Checked=try check(state,tree,tree->root,environment);state=checked->state;
  let expected:Int=branch on try lookup<Parent>(state->types->declarations,id){Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",declared->span,"declaration signature is incomplete"));}};
@@ -100,13 +101,24 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
  var state:State=branch on initializeValues(types){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
  let templatesGraph:Graph=branch on templateGraph(headers){Result<Graph,Diagnostic>::Ok(value:Graph)=>value,Result<Graph,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
  let templateOrder:List<Int>=try ordered(headers,templatesGraph,"template");
- loop over(templateOrder as id:Int){state=branch on body(state,id){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};};
+ var contexts:Paged<BindingIndex>=empty<BindingIndex>();var templateContexts:Paged<BindingIndex>=empty<BindingIndex>();index=0;
+ loop while(index<input->sources->length()){
+  let normal:BindingIndex=branch on prepare(headers,index,false){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  let isolated:BindingIndex=branch on prepare(headers,index,true){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  contexts=push<BindingIndex>(contexts,normal);templateContexts=push<BindingIndex>(templateContexts,isolated);index=index+1;
+ };
+
+ loop over(templateOrder as id:Int){
+  let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  let bindings:BindingIndex=branch on lookup<BindingIndex>(templateContexts,declared->file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};};
  loop over(headers->order as file:Int){
   let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   branch when{module->standard=>{continue;},else=>unit};
+  let bindings:BindingIndex=branch on lookup<BindingIndex>(contexts,file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   loop over(module->declarations as id:Int){
    let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
-   branch when{declared->kind>=4=>{state=branch on body(state,id){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};},else=>unit};
+   branch when{declared->kind>=4=>{state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};},else=>unit};
   };
  };
  index=0;

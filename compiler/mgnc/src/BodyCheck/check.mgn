@@ -20,7 +20,8 @@ public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Dia
    let prepared:ChildEnvironment=try child(state,tree,frame);state=prepared->state;frames=try replaceItem<Frame>(frames,active,prepared->frame);
    let allowed:Bool=rule==ruleUnaryNeg||(rule==ruleGroup&&frame->minimumAllowed);
    let entered:Started=try start(state,tree,try item(frame->expression->children,frame->next),prepared->environment,active,allowed);
-   state=entered->state;frames=push<Frame>(frames,entered->frame);active=frames->count-1;continue;
+   state=entered->state;active=active+1;
+   frames=branch when{active<frames->count=>try replaceItem<Frame>(frames,active,entered->frame),else=>push<Frame>(frames,entered->frame)};continue;
   },else=>unit};
   let evaluated:Evaluated=branch when{
    rule==rulePanic||rule==ruleStatementReturn||rule==ruleStatementBreak||rule==ruleStatementBreakValue||rule==ruleStatementContinue||rule==ruleUnaryTry||rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever||rule==ruleBranchWhen||rule==ruleBranchOn=>try control(state,frame),

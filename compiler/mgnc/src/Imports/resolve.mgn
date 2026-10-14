@@ -1,5 +1,6 @@
 namespace Mgnc\Imports;
 use Mgnc\InputDiagnostics\{escapePath};
+use Mgnc\NameIndex\{Index,create as createIndex,insert};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\InputData\{InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Import,Introduction,Parameter as MgncParameter};
@@ -32,7 +33,7 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
    exports=branch on replaceItem<List<Int>>(exports,key,bucket->append(exportedIndex)){Result<Paged<List<Int>>,Diagnostic>::Ok(value:Paged<List<Int>>)=>value,Result<Paged<List<Int>>,Diagnostic>::Err(error:Diagnostic)=>panic{"export bucket invariant"}};
   },else=>unit};exportedIndex=exportedIndex+1;
  };
- var fileNames:Paged<List<Int>>=empty<List<Int>>();
+ var fileNames:Paged<List<Int>>=empty<List<Int>>();var nameBuckets:Paged<Index>=empty<Index>();
  var file:Int=0;
  loop while(file<headers->modules->count){
   let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
@@ -77,6 +78,12 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
    names=push<Introduction>(names,Introduction{file:file,name:imported->local,declaration:target,imported:true,span:imported->span});
    edges=edges->append(Edge{owner:file,target:declaration->file,file:file,span:imported->span});
   };
+  var named:Index=createIndex();
+  loop over(visible as id:Int){
+   let entry:Introduction=branch on lookup<Introduction>(names,id){Result<Introduction,Diagnostic>::Ok(value:Introduction)=>value,Result<Introduction,Diagnostic>::Err(error:Diagnostic)=>panic{"name arena invariant"}};
+   named=branch on insert(named,entry->name,id){Result<Index,Diagnostic>::Ok(value:Index)=>value,Result<Index,Diagnostic>::Err(error:Diagnostic)=>panic{"name index invariant"}};
+  };
+  nameBuckets=push<Index>(nameBuckets,named);
   fileNames=push<List<Int>>(fileNames,visible);file=file+1;
  };
  var vertices:List<Int>=List<Int>[];file=0;loop while(file<headers->modules->count){vertices=vertices->append(file);file=file+1;};
@@ -90,5 +97,5 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
   return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->span,"cyclic source imports through "+escapePath(target->source->displayPath))));
  };
  let order:List<Int>=ordered->values;
- Result<Headers,InputError>::Ok(Headers{input:headers->input,modules:headers->modules,declarations:headers->declarations,names:names,fileNames:fileNames,order:order})
+ Result<Headers,InputError>::Ok(Headers{input:headers->input,modules:headers->modules,declarations:headers->declarations,names:names,fileNames:fileNames,nameBuckets:nameBuckets,order:order})
 };

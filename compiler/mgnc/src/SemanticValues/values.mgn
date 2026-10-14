@@ -1,4 +1,5 @@
 namespace Mgnc\SemanticValues;
+use Mgnc\NameIndex\{Index};
 use Mgnc\Data\{Paged,Span};
 use Mgnc\MathValue\{Integer};
 use Mgnc\Expressions\{Expression};
@@ -10,7 +11,7 @@ public type FunctionInfo=product{file:Int;cursor:Int;valueType:Int;parameters:Li
 public type Loop=product{kind:Int;breaks:List<Int>;};
 public type BodyState=sum{NotRequired;Pending;Checking;Complete(Int);};
 public type State=product{types:Store;nodes:Paged<Node>;symbols:Paged<Symbol>;globals:Paged<Parent>;functions:Paged<FunctionInfo>;loops:Paged<Loop>;obligations:List<Obligation>;bodies:Paged<BodyState>;};
-public type Environment=product{file:Int;symbols:List<Int>;reserved:List<String>;functionOwner:Parent;loopTarget:Parent;returnType:Parent;templateOwner:Parent;arguments:List<Argument>;reachable:Bool;};
+public type Environment=product{file:Int;symbols:Index;reserved:List<String>;functionOwner:Parent;loopTarget:Parent;returnType:Parent;templateOwner:Parent;arguments:List<Argument>;reachable:Bool;};
 public type Checked=product{state:State;root:Int;};
 
 public type Frame=product{expression:Expression;environment:Environment;annotation:Parent;target:Parent;loopTarget:Parent;binder:Parent;arguments:List<Argument>;children:List<Int>;mapping:List<Int>;parent:Int;next:Int;minimumAllowed:Bool;};

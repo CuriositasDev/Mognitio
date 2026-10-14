@@ -1,4 +1,5 @@
 namespace Mgnc\ValueNames;
+use Mgnc\NameIndex\{Index,candidates};
 use Mgnc\Data\{Diagnostic,Span,lookup,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticValues\{State,Environment,Symbol,FunctionInfo};
@@ -13,7 +14,7 @@ use Mgnc\Tables\{replaceItem};
 public type Reference=sum{Symbol(Int);ValueParameter(ValueTerm);};
 public let introduction:Function(State,Environment,String,Int):Result<Parent,Diagnostic>=function(state:State,environment:Environment,name:String,cursor:Int):Result<Parent,Diagnostic>{
  let isolated:Bool=branch on environment->templateOwner{Parent::None=>false,Parent::Some(owner:Int)=>true};
- loop over((try lookup<List<Int>>(state->types->headers->fileNames,environment->file)) as index:Int){
+ loop over((try candidates(try lookup<Index>(state->types->headers->nameBuckets,environment->file),name)) as index:Int){
   let entry:Introduction=try lookup<Introduction>(state->types->headers->names,index);
   branch when{entry->file==environment->file&&entry->name==name=>{
    let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,entry->declaration);
@@ -30,13 +31,13 @@ public let introduction:Function(State,Environment,String,Int):Result<Parent,Dia
 public let available:Function(State,Environment,String,Span,Int):Result<Unit,Diagnostic>=function(state:State,environment:Environment,name:String,span:Span,cursor:Int):Result<Unit,Diagnostic>{
  var conflict:Bool=reserved(name);
  loop over(environment->reserved as previous:String){branch when{previous==name=>{conflict=true;},else=>unit};};
- loop over(environment->symbols as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{conflict=true;},else=>unit};};
+ loop over((try candidates(environment->symbols,name)) as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{conflict=true;},else=>unit};};
  branch on try parameter(state->types->headers,environment->templateOwner,name){Parent::None=>unit,Parent::Some(ordinal:Int)=>{conflict=true;}};
  branch on try introduction(state,environment,name,cursor){Parent::None=>unit,Parent::Some(id:Int)=>{conflict=true;}};
  branch when{conflict=>Result<Unit,Diagnostic>::Err(problem("semantic",span,"binding shadows a visible or reserved name")),else=>Result<Unit,Diagnostic>::Ok(unit)}
 };
 public let resolve:Function(State,Environment,String,Span,Int):Result<Reference,Diagnostic>=function(state:State,environment:Environment,name:String,span:Span,cursor:Int):Result<Reference,Diagnostic>{
- loop over(environment->symbols as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{return Result<Reference,Diagnostic>::Ok(Reference::Symbol(id));},else=>unit};};
+ loop over((try candidates(environment->symbols,name)) as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{return Result<Reference,Diagnostic>::Ok(Reference::Symbol(id));},else=>unit};};
  branch on try parameter(state->types->headers,environment->templateOwner,name){
  Parent::None=>unit,Parent::Some(ordinal:Int)=>{
   return branch on try argumentAt(environment->arguments,ordinal,span){

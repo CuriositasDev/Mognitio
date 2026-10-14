@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Create deterministic v1.5 scale cells and single-violation siblings."""
-import argparse,hashlib,json,re
+import argparse,hashlib,json,re,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument("--output",required=True,type=Path);a=p.parse_args()
 a.output.mkdir(parents=True,exist_ok=False);cells=[]
@@ -87,6 +87,19 @@ deep="List<"*128+"Int"+">"*128
 files["app.mgn"]+=f"let identity:Function({deep}):{deep}=function(value:{deep}):{deep}{{value}};\n"+entry()
 assert len(files)==64 and sum(len(re.findall(r"\blet value\d+:Int=",v)) for v in files.values())==1000
 publish("combined",files,"combined",1000,detail={"modules":64,"declarations":1000,"signature_type_depth":128})
+repository=Path(__file__).resolve().parents[2]
+for corpus,revision in [("C0","4908a1a91be61d64695b9e048b833637aee0aefc"),("C1",subprocess.check_output(["git","rev-parse","HEAD"],cwd=repository,text=True).strip())]:
+ paths=subprocess.check_output(["git","ls-tree","-r","--name-only",revision,"compiler/mgnc/src"],cwd=repository,text=True).splitlines()
+ files={str(Path(path).relative_to("compiler/mgnc/src")):subprocess.check_output(["git","show",revision+":"+path],cwd=repository).decode() for path in paths if path.endswith(".mgn")}
+ publish(corpus,files,"corpus",len(files),negative=False,detail={"revision":revision})
+ row=cells[-1]
+ original_manifest=subprocess.check_output(["git","show",revision+":compiler/mgnc/mognitio.toml"],cwd=repository)
+ (a.output/corpus/"mognitio.toml").write_bytes(original_manifest);row["manifest_sha256"]=sha(original_manifest)
+ inventory_hash=sha("".join(item["sha256"]+"  compiler/mgnc/"+item["path"]+"\n" for item in row["inventory"]).encode())
+ row["inventory_sha256"]=inventory_hash
+ if corpus=="C0":
+  assert len(files)==57 and row["source_bytes"]==823559
+  assert inventory_hash=="9f0a7f789d99d91da9257f7a7d816d437961eadf540c3f78c1c0adfa5460e177"
 manifest={"schema":1,"generator":"python3 tests/mgnc/v150-scale-fixtures.py --output FIXTURES","seed":150,"cells":cells}
 (a.output/"manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
 print("V150_SCALE_FIXTURES_OK cells="+str(len(cells)))

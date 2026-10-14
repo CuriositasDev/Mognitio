@@ -24,7 +24,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   let functionInfo:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);let shape:Type=try lookup<Type>(state->types->types,functionInfo->valueType);
   let result:Int=try memberType(shape->arguments,shape->arguments->length()-1,expression->span);
   scope=Environment{file:scope->file,symbols:scope->symbols,reserved:scope->reserved,functionOwner:frame->target,loopTarget:Parent::None,returnType:Parent::Some(result),templateOwner:scope->templateOwner,arguments:scope->arguments,reachable:true};
-  loop over(functionInfo->parameters as id:Int){scope=introduce(scope,id);};canReach=true;
+  loop over(functionInfo->parameters as id:Int){scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);};canReach=true;
  },rule==ruleBranchWhen=>{
   var index:Int=0;loop while(index<next){branch when{index%2==0=>{
    let condition:Node=try lookup<Node>(state->nodes,try item(frame->children,index));canReach=canReach&&condition->normal;
@@ -44,7 +44,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
    let formed:Formed=try form(state->types,scope->file,tree,try item(pattern->annotation,0),scope->templateOwner,scope->arguments);state=withTypes(state,formed->store,formed->obligations);
    branch when{formed->value!=payload=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("type",label->span,"payload binder type mismatch"));},else=>unit};
    try available(state,scope,label->name,label->span,(try getNode(tree->nodes,try item(expression->children,next)))->start);
-   let id:Int=state->symbols->count;state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:scope->file,name:label->name,valueType:payload,mutable:false,functionOwner:scope->functionOwner,declaration:Parent::None,span:label->span}));scope=introduce(scope,id);
+   let id:Int=state->symbols->count;state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:scope->file,name:label->name,valueType:payload,mutable:false,functionOwner:scope->functionOwner,declaration:Parent::None,span:label->span}));scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);
   },else=>unit};
  },else=>{
   loop over(frame->children as id:Int){let previous:Node=try lookup<Node>(state->nodes,id);canReach=canReach&&previous->normal;};
@@ -58,7 +58,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   // non-completing operand does not erase its own normally completing breaks.
   canReach=branch when{rule==ruleLoopForever=>true,else=>(try lookup<Node>(state->nodes,try item(frame->children,0)))->normal};
   scope=Environment{file:scope->file,symbols:scope->symbols,reserved:scope->reserved,functionOwner:scope->functionOwner,loopTarget:frame->loopTarget,returnType:scope->returnType,templateOwner:scope->templateOwner,arguments:scope->arguments,reachable:canReach};
-  branch when{rule==ruleLoopOver=>{branch on frame->binder{Parent::Some(id:Int)=>{scope=introduce(scope,id);},Parent::None=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"loop binder invariant"));}};},else=>unit};
+  branch when{rule==ruleLoopOver=>{branch on frame->binder{Parent::Some(id:Int)=>{scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);},Parent::None=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"loop binder invariant"));}};},else=>unit};
  },else=>unit};
  let updated:Frame=Frame{expression:expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed};
  Result<ChildEnvironment,Diagnostic>::Ok(ChildEnvironment{state:state,frame:updated,environment:reachable(scope,canReach)})

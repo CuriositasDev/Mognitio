@@ -42,7 +42,7 @@ public let start:Function(State,SyntaxForest,Int,Environment,Int,Bool):Result<St
    try available(state,scope,param->name,param->span,cursor);
    let id:Int=state->symbols->count;
    state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:param->name,valueType:param->valueType,mutable:false,functionOwner:target,declaration:Parent::None,span:param->span}));
-   scope=introduce(scope,id);parameters=parameters->append(id);
+   scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);parameters=parameters->append(id);
   };
   state=withFunctions(state,push<FunctionInfo>(state->functions,FunctionInfo{file:environment->file,cursor:expression->cursor,valueType:signature->value,parameters:parameters,body:Parent::None,captures:List<Int>[],templateOwner:environment->templateOwner}));
  },rule==ruleGenericApply=>{

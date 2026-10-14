@@ -1,0 +1,18 @@
+namespace Mgnc\NameIndex;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\IntMap\{Map,create as createMap,get,put};
+use Mgnc\NameHash\{hash};
+public type Index=product{slots:Map;buckets:Paged<List<Int>>;};
+public let create:Function():Index=function():Index{Index{slots:createMap(),buckets:empty<List<Int>>()}};
+public let insert:Function(Index,String,Int):Result<Index,Diagnostic>=function(index:Index,name:String,id:Int):Result<Index,Diagnostic>{
+ let key:Int=hash("",name);let slot:Int=try get(index->slots,key);
+ branch when{slot<0=>Result<Index,Diagnostic>::Ok(Index{slots:try put(index->slots,key,index->buckets->count),buckets:push<List<Int>>(index->buckets,List<Int>[id])}),else=>{
+  let previous:List<Int>=try lookup<List<Int>>(index->buckets,slot);
+  Result<Index,Diagnostic>::Ok(Index{slots:index->slots,buckets:try replaceItem<List<Int>>(index->buckets,slot,previous->append(id))})
+ }}
+};
+public let candidates:Function(Index,String):Result<List<Int>,Diagnostic>=function(index:Index,name:String):Result<List<Int>,Diagnostic>{
+ let slot:Int=try get(index->slots,hash("",name));
+ branch when{slot<0=>Result<List<Int>,Diagnostic>::Ok(List<Int>[]),else=>lookup<List<Int>>(index->buckets,slot)}
+};

@@ -1,11 +1,12 @@
 namespace Mgnc\TypeNames;
+use Mgnc\NameIndex\{Index,candidates};
 use Mgnc\Data\{Diagnostic,Span,lookup,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticData\{Headers,Introduction,Declaration,Parameter};
 use Mgnc\TypeData\{Argument,ValueTerm};
 use Mgnc\TypeOps\{argumentAt};
 public let declaration:Function(Headers,Int,String):Result<Parent,Diagnostic>=function(headers:Headers,file:Int,name:String):Result<Parent,Diagnostic>{
- loop over((try lookup<List<Int>>(headers->fileNames,file)) as index:Int){let entry:Introduction=try lookup<Introduction>(headers->names,index);
+ loop over((try candidates(try lookup<Index>(headers->nameBuckets,file),name)) as index:Int){let entry:Introduction=try lookup<Introduction>(headers->names,index);
   branch when{entry->file==file&&entry->name==name=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(entry->declaration));},else=>unit};};
  Result<Parent,Diagnostic>::Ok(Parent::None)
 };

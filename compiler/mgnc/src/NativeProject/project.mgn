@@ -29,9 +29,13 @@ public let project:Function(SemanticProject):Result<Projected,Diagnostic>=functi
  var symbols:Paged<NativeSymbol>=empty<NativeSymbol>();var symbolOrigins:Paged<Int>=empty<Int>();var owners:List<Int>=List<Int>[];var originalDeclarations:List<Int>=List<Int>[];
  var ordinal:Int=0;
  loop over(selected as chosen:Selected){declarationMap=try replaceItem<Parent>(declarationMap,chosen->declaration,Parent::Some(ordinal));owners=owners->append(chosen->owner);originalDeclarations=originalDeclarations->append(chosen->declaration);ordinal=ordinal+1;};
- var index:Int=0;
+ var ownedSymbols:Paged<Paged<Int>>=empty<Paged<Int>>();var index:Int=0;
+ loop while(index<state->functions->count){ownedSymbols=push<Paged<Int>>(ownedSymbols,empty<Int>());index=index+1;};index=0;
  loop while(index<state->symbols->count){
   let symbol:Symbol=try lookup<Symbol>(state->symbols,index);
+  branch on symbol->functionOwner{Parent::None=>unit,Parent::Some(owner:Int)=>{
+   ownedSymbols=try replaceItem<Paged<Int>>(ownedSymbols,owner,push<Int>(try lookup<Paged<Int>>(ownedSymbols,owner),index));
+  }};
   branch on symbol->declaration{Parent::None=>unit,Parent::Some(id:Int)=>{
    branch on try lookup<Parent>(declarationMap,id){Parent::None=>unit,Parent::Some(functionId:Int)=>{
     symbolMap=try replaceItem<Parent>(symbolMap,index,Parent::Some(symbols->count));symbolOrigins=push<Int>(symbolOrigins,index);
@@ -44,10 +48,11 @@ public let project:Function(SemanticProject):Result<Projected,Diagnostic>=functi
  loop over(selected as chosen:Selected){
   let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,chosen->declaration);
   let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,chosen->owner);let firstSymbol:Int=symbols->count;
-  index=0;
-  loop while(index<state->symbols->count){
+  let owned:Paged<Int>=try lookup<Paged<Int>>(ownedSymbols,chosen->owner);var ownedIndex:Int=0;
+  loop while(ownedIndex<owned->count){
+   index=try lookup<Int>(owned,ownedIndex);ownedIndex=ownedIndex+1;
    let symbol:Symbol=try lookup<Symbol>(state->symbols,index);
-   branch when{parentEqual(symbol->functionOwner,Parent::Some(chosen->owner))=>{
+   {
     let valueType:Int=try code(state,Structure::Known(symbol->valueType),symbol->span);
     branch when{valueType==5=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",symbol->span,"Function storage is outside the native profile"));},else=>unit};
     branch when{valueType==4=>{
@@ -56,7 +61,7 @@ public let project:Function(SemanticProject):Result<Projected,Diagnostic>=functi
     },else=>unit};
     symbolMap=try replaceItem<Parent>(symbolMap,index,Parent::Some(symbols->count));symbolOrigins=push<Int>(symbolOrigins,index);
     symbols=push<NativeSymbol>(symbols,NativeSymbol{parent:Parent::None,name:symbol->name,valueType:valueType,mutable:symbol->mutable,visible:true,functionId:ordinal});
-   },else=>unit};index=index+1;
+   };
   };
   let endSymbol:Int=symbols->count;var parameters:List<Int>=List<Int>[];var parameterSyntax:List<Parameter>=List<Parameter>[];var parameterTypes:List<Int>=List<Int>[];
   loop over(info->parameters as id:Int){

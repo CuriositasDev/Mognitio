@@ -50,7 +50,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"binding label invariant"));}};
   let id:Int=state->symbols->count;binding=Parent::Some(id);
   state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:label->name,valueType:valueType,mutable:rule==ruleVarBinding,functionOwner:environment->functionOwner,declaration:Parent::None,span:label->span}));
-  environment=introduce(environment,id);structure=Structure::Known(0);operation="declare";
+  environment=try introduce(environment,id,(try lookup<Symbol>(state->symbols,id))->name);structure=Structure::Known(0);operation="declare";
  },rule==ruleStatementAssign=>{
   let left:Node=try lookup<Node>(state->nodes,try item(frame->children,0));let right:Node=try lookup<Node>(state->nodes,try item(frame->children,1));
   branch when{left->rule!=ruleName=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",left->span,"assignment requires a variable binding"));},else=>unit};

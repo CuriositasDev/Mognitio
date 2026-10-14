@@ -15,21 +15,21 @@ public let genericGuards:Function(SyntaxForest):Result<List<Int>,Diagnostic>=fun
  Result<List<Int>,Diagnostic>::Ok(starts)
 };
 type Visit=product{id:Int;block:Int;};
-type Pending=product{id:Int;parent:Int;};
 public let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,rejected:List<Int>):Result<SyntaxForest,Diagnostic>{
- var memo:IntMap=createMap();
- var nodes:NodeStore=emptyNodes();var stack:Paged<Pending>=push<Pending>(empty<Pending>(),Pending{id:root,parent:-1});var active:Int=0;
+ var memo:IntMap=createMap();var excluded:IntMap=createMap();
+ loop over(rejected as id:Int){excluded=try mapPut(excluded,id,1);};
+ var nodes:NodeStore=emptyNodes();var stackIds:Paged<Int>=push<Int>(empty<Int>(),root);var stackParents:Paged<Int>=push<Int>(empty<Int>(),-1);var active:Int=0;
  // Memoized postorder over the shared DAG; a dead child invalidates its parent family,
  // while a surviving alternative remains available to every parent referencing it.
  loop while(active>=0){
-  let work:Pending=try lookup<Pending>(stack,active);let node:ForestNode=try getNode(tree->nodes,work->id);var missing:Int=-1;
+  let workId:Int=try lookup<Int>(stackIds,active);let workParent:Int=try lookup<Int>(stackParents,active);let node:ForestNode=try getNode(tree->nodes,workId);var missing:Int=-1;
   loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0&&(try mapGet(memo,child))== -2=>{missing=child;break;},else=>unit};};
-  branch when{missing>=0=>{stack=push<Pending>(stack,Pending{id:missing,parent:active});active=stack->count-1;continue;},else=>unit};
+  branch when{missing>=0=>{stackIds=push<Int>(stackIds,missing);stackParents=push<Int>(stackParents,active);active=stackIds->count-1;continue;},else=>unit};
   let left:Int=branch when{node->left>=0=>try mapGet(memo,node->left),else=> -1};
   let right:Int=branch when{node->right>=0=>try mapGet(memo,node->right),else=> -1};
   let alternative:Int=branch when{node->alternatives>=0=>try mapGet(memo,node->alternatives),else=> -1};
   var live:Bool=(node->left<0||left>=0)&&(node->right<0||right>=0);
-  loop over(rejected as id:Int){branch when{id==work->id=>{live=false;break;},else=>unit};};
+  branch when{(try mapGet(excluded,workId))==1=>{live=false;},else=>unit};
   var result:Int=alternative;
   branch when{live=>{result=nodes->count;nodes=addNode(nodes,ForestNode{symbol:node->symbol,slot:node->slot,start:node->start,end:node->end,rule:node->rule,left:left,right:right,split:node->split,alternatives:alternative});},else=>unit};
   // Alternative records carry only a family (symbol -1000); promotion retains
@@ -38,7 +38,7 @@ public let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagno
    let choice:ForestNode=try getNode(nodes,alternative);result=nodes->count;
    nodes=addNode(nodes,ForestNode{symbol:node->symbol,slot:node->slot,start:node->start,end:node->end,rule:choice->rule,left:choice->left,right:choice->right,split:choice->split,alternatives:choice->alternatives});
   },else=>unit};
-  memo=try mapPut(memo,work->id,result);active=work->parent;
+  memo=try mapPut(memo,workId,result);active=workParent;
  };
  Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:nodes,root:try mapGet(memo,root),itemCount:tree->itemCount,comparisons:tree->comparisons})
 };

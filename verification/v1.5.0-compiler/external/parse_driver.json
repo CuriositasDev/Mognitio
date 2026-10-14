@@ -1,0 +1,233 @@
+{
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "records": [
+    {
+      "name": "C140-I01-0",
+      "argv": [],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-1",
+      "argv": [
+        "parse"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-2",
+      "argv": [
+        "parse",
+        "source.mgn",
+        "extra"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-3",
+      "argv": [
+        "parse",
+        "source.mgn",
+        "-o",
+        "new"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-4",
+      "argv": [
+        "parse",
+        "mognitio.toml"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: mognitio.toml: source requires .mgn extension\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-5",
+      "argv": [
+        "parse",
+        ""
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: InvalidPath: empty or NUL-containing path\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-6",
+      "argv": [
+        "unknown",
+        "source.mgn"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I02-0",
+      "argv": [
+        "parse",
+        "relative.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I02-1",
+      "argv": [
+        "parse",
+        "space input.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I02-2",
+      "argv": [
+        "parse",
+        "-leading.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I02-absolute",
+      "argv": [
+        "parse",
+        "<temporary>/source.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I02-symlink",
+      "argv": [
+        "parse",
+        "<temporary>/link.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I03-missing",
+      "argv": [
+        "parse",
+        "<temporary>/missing.mgn"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: io: <temporary>/missing.mgn: position unknown: readTextFile / NotFound / Target\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I03-directory",
+      "argv": [
+        "parse",
+        "<temporary>/dir.mgn"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: io: <temporary>/dir.mgn: position unknown: readTextFile / UnsupportedTarget / Target\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I03-denied",
+      "argv": [
+        "parse",
+        "<temporary>/denied.mgn"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr": "mgnc: io: <temporary>/denied.mgn: position unknown: readTextFile / PermissionDenied / Target\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I04-success",
+      "argv": [
+        "parse",
+        "<temporary>/source.mgn"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I04-invalid",
+      "argv": [
+        "parse",
+        "<temporary>/bad.mgn"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: parse: <temporary>/bad.mgn:1:25 [24,25): no complete structural derivation\n",
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I04-closed",
+      "exit": 2,
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I04-pipe",
+      "exit": 2,
+      "unchanged": true,
+      "passed": true
+    },
+    {
+      "name": "C140-I01-single-read-source",
+      "source_opens": 1,
+      "trace": "648640 execve(\"<candidate-A>\", [\"<candidate-A>\", \"parse\", \"<temporary>/\"...], 0x7ffeb87d0770 /* 16 vars */) = 0\n648640 newfstatat(AT_FDCWD, \"<temporary>/source.mgn\", {st_mode=S_IFREG|0664, st_size=36, ...}, 0) = 0\n648640 open(\"<temporary>/source.mgn\", O_RDONLY|O_NONBLOCK|O_CLOEXEC) = 3\n",
+      "passed": true
+    },
+    {
+      "name": "C140-I01-single-read-cli",
+      "source_opens": 0,
+      "trace": "648643 execve(\"<candidate-A>\", [\"<candidate-A>\", \"parse\", \"<temporary>/\"..., \"extra\"], 0x7fff6a76e368 /* 16 vars */) = 0\n",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

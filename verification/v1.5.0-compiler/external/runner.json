@@ -1,0 +1,280 @@
+[
+  {
+    "name": "classification",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/classification.json"
+    ],
+    "exit": 0,
+    "seconds": 1.1550140380859375
+  },
+  {
+    "name": "v150-conformance",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-conformance.json"
+    ],
+    "exit": 0,
+    "seconds": 4.239077568054199
+  },
+  {
+    "name": "v150-boundaries",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-boundaries.json"
+    ],
+    "exit": 0,
+    "seconds": 1.1532106399536133
+  },
+  {
+    "name": "v150-catalog",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-catalog.json"
+    ],
+    "exit": 0,
+    "seconds": 2.5426294803619385
+  },
+  {
+    "name": "native",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/native.json"
+    ],
+    "exit": 0,
+    "seconds": 1.8105292320251465
+  },
+  {
+    "name": "v150-inherited",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-inherited.json"
+    ],
+    "exit": 0,
+    "seconds": 1.6968903541564941
+  },
+  {
+    "name": "v150-review",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-review.json"
+    ],
+    "exit": 0,
+    "seconds": 1.0981011390686035
+  },
+  {
+    "name": "parse_cases",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/parse_cases.json",
+      "--parse-only"
+    ],
+    "exit": 0,
+    "seconds": 0.5454428195953369
+  },
+  {
+    "name": "parse_compatibility",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/parse_compatibility.json"
+    ],
+    "exit": 1,
+    "seconds": 0.07992911338806152
+  },
+  {
+    "name": "parse_compatibility",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/parse_compatibility.json"
+    ],
+    "exit": 0,
+    "seconds": 1.2373015880584717
+  },
+  {
+    "name": "parse_driver",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/parse_driver.json"
+    ],
+    "exit": 0,
+    "seconds": 0.08676815032958984
+  },
+  {
+    "name": "v150-project-faults",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<external-evidence>/v150-project-faults.json"
+    ],
+    "exit": 0,
+    "seconds": 0.7671599388122559
+  },
+  {
+    "name": "v150-semantics",
+    "argv": [
+      "--compiler",
+      "<candidate-A>"
+    ],
+    "exit": 0,
+    "seconds": 1.9606592655181885
+  },
+  {
+    "name": "faults",
+    "argv": [
+      "--compiler",
+      "<candidate-A>"
+    ],
+    "exit": 0,
+    "seconds": 0.6723182201385498
+  },
+  {
+    "name": "driver",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--bindfs",
+      "<bindfs>"
+    ],
+    "exit": 0,
+    "seconds": 1.2659928798675537
+  },
+  {
+    "name": "v150-scale-fixtures",
+    "argv": [
+      "--output",
+      "<semantic-fixtures>"
+    ],
+    "exit": 0,
+    "seconds": 0.2588202953338623
+  },
+  {
+    "name": "v150-corpus--C0",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--corpus",
+      "C0",
+      "--evidence",
+      "<external-evidence>/corpus-C0.json"
+    ],
+    "exit": 1,
+    "seconds": 112.91347885131836
+  },
+  {
+    "name": "v150-corpus--C0",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--corpus",
+      "C0",
+      "--evidence",
+      "<external-evidence>/corpus-C0-r2.json"
+    ],
+    "exit": 0,
+    "seconds": 113.04376220703125
+  },
+  {
+    "name": "v150-corpus--C1",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--corpus",
+      "C1",
+      "--evidence",
+      "<external-evidence>/corpus-C1.json"
+    ],
+    "exit": 0,
+    "seconds": 292.5086314678192
+  },
+  {
+    "name": "v150-corpus-mutations",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<semantic-fixtures>",
+      "--evidence",
+      "<external-evidence>/mutations.json"
+    ],
+    "exit": 1,
+    "seconds": 968.1314151287079
+  },
+  {
+    "name": "v150-corpus-mutations",
+    "exit": 0,
+    "kind": "focused expectation correction",
+    "evidence": "mutations-final.json",
+    "observations_retained": true
+  },
+  {
+    "name": "measure",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<native-fixtures>",
+      "--evidence",
+      "<external-evidence>/native-measure.json"
+    ],
+    "exit": 0,
+    "seconds": 342.63539838790894
+  },
+  {
+    "name": "parse_workloads",
+    "argv": [
+      "--output",
+      "<parse-fixtures>"
+    ],
+    "exit": 0,
+    "seconds": 0.21599173545837402
+  },
+  {
+    "name": "parse_measure",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<parse-fixtures>",
+      "--evidence",
+      "<external-evidence>/parse-measure.json"
+    ],
+    "exit": 0,
+    "seconds": 147.48965454101562
+  },
+  {
+    "name": "v150-measure",
+    "argv": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<semantic-fixtures>",
+      "--output",
+      "<external-evidence>/preliminary"
+    ],
+    "exit": 0,
+    "seconds": 1708.734360218048
+  }
+]

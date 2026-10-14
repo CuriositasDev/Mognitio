@@ -1,0 +1,18 @@
+{
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "records": [
+    {
+      "corpus": "C0",
+      "case": "C150-F01-width",
+      "path": "mgnc.mgn",
+      "mutation_sha256": "89979e35ce397fe102cc8a215f119d4b8a7d813fc572861d54b2e1bd5288d549",
+      "exit": 1,
+      "stderr": "mgnc: type: src/mgnc.mgn:6:22 [165,166): generic width or literal range requirement is not satisfied\n",
+      "primary": [
+        165,
+        166
+      ],
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "records": [
+    {
+      "syscall": "newfstatat",
+      "ordinal": 1,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/mognitio.toml: position unknown: inspectPath / Other\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "newfstatat",
+      "ordinal": 2,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/mognitio.toml: position unknown: readTextFile / Other / Target\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "newfstatat",
+      "ordinal": 11,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src/app.mgn: position unknown: readTextFile / Other / Target\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "openat",
+      "ordinal": 1,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src: position unknown: readDirectory / Other / Target\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "openat",
+      "ordinal": 2,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src/Unused: position unknown: readDirectory / Other / Target\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "read",
+      "ordinal": 1,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/mognitio.toml: position unknown: readTextFile / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "read",
+      "ordinal": 2,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/mognitio.toml: position unknown: readTextFile / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "read",
+      "ordinal": 6,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src/app.mgn: position unknown: readTextFile / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "getdents64",
+      "ordinal": 1,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src: position unknown: readDirectory / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "getdents64",
+      "ordinal": 2,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src: position unknown: readDirectory / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "getdents64",
+      "ordinal": 4,
+      "after": false,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src/Unused: position unknown: readDirectory / Other / Body\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "close",
+      "ordinal": 1,
+      "after": true,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/mognitio.toml: position unknown: readTextFile / Other / Cleanup\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "close",
+      "ordinal": 2,
+      "after": true,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src: position unknown: readDirectory / Other / Cleanup\n",
+      "input_unchanged": true,
+      "passed": true
+    },
+    {
+      "syscall": "close",
+      "ordinal": 5,
+      "after": true,
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/input/src/app.mgn: position unknown: readTextFile / Other / Cleanup\n",
+      "input_unchanged": true,
+      "passed": true
+    }
+  ]
+}

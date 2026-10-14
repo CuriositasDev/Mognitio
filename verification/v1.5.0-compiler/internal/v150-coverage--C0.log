@@ -1,0 +1,1 @@
+V150_COVERAGE_OK {"completed_bodies": 548, "corpus": "C0", "declarations": 615, "exit": 0, "harness_sha256": "ebf6fdc3bc139709b4145da7bd6c8e582791223ad3f17159b8b90a6aa58fa4ba", "membership_matches": true, "passed": true, "source_files": 57}

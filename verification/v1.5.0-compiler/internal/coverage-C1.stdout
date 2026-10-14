@@ -1,0 +1,971 @@
+M	BodyCheck/check.mgn
+D	BodyCheck/check.mgn	check	4	1
+M	BridgeBody/body.mgn
+D	BridgeBody/body.mgn	Converted	0	0
+D	BridgeBody/body.mgn	Work	0	0
+D	BridgeBody/body.mgn	start	4	1
+D	BridgeBody/body.mgn	body	4	1
+M	BridgeLists/lists.mgn
+D	BridgeLists/lists.mgn	reverse	4	1
+D	BridgeLists/lists.mgn	leftList	4	1
+D	BridgeLists/lists.mgn	expressions	4	1
+D	BridgeLists/lists.mgn	conditions	4	1
+M	BridgeShape/shape.mgn
+D	BridgeShape/shape.mgn	Binding	0	0
+D	BridgeShape/shape.mgn	runtimeName	4	1
+D	BridgeShape/shape.mgn	shape	4	1
+M	Buckets/data.mgn
+D	Buckets/data.mgn	Buckets	0	0
+D	Buckets/data.mgn	blank	4	1
+D	Buckets/data.mgn	bucket	4	1
+D	Buckets/data.mgn	putBucket	4	1
+M	Catalog/catalog.mgn
+D	Catalog/catalog.mgn	io	4	1
+D	Catalog/catalog.mgn	numeric	4	1
+D	Catalog/catalog.mgn	binary	4	1
+D	Catalog/catalog.mgn	attach	4	1
+M	Chart/column.mgn
+D	Chart/column.mgn	column	4	1
+D	Chart/column.mgn	addItem	4	1
+D	Chart/column.mgn	addSymbol	4	1
+M	ChartLifetime/collect.mgn
+D	ChartLifetime/collect.mgn	historical	4	1
+D	ChartLifetime/collect.mgn	Origins	0	0
+D	ChartLifetime/collect.mgn	contains	4	1
+D	ChartLifetime/collect.mgn	enqueue	4	1
+D	ChartLifetime/collect.mgn	retain	4	1
+M	Check/check.mgn
+D	Check/check.mgn	check	4	1
+M	CheckBody/check.mgn
+D	CheckBody/check.mgn	checkBody	4	1
+M	CheckSupport/support.mgn
+D	CheckSupport/support.mgn	value	4	1
+D	CheckSupport/support.mgn	reserved	4	1
+D	CheckSupport/support.mgn	find	4	1
+D	CheckSupport/support.mgn	available	4	1
+D	CheckSupport/support.mgn	childId	4	1
+D	CheckSupport/support.mgn	direct	4	1
+D	CheckSupport/support.mgn	context	4	1
+D	CheckSupport/support.mgn	literal	4	1
+D	CheckSupport/support.mgn	operation	4	1
+M	Checked/types.mgn
+D	Checked/types.mgn	Symbol	0	0
+D	Checked/types.mgn	Value	0	0
+D	Checked/types.mgn	Frame	0	0
+D	Checked/types.mgn	Body	0	0
+D	Checked/types.mgn	CheckedFunction	0	0
+D	Checked/types.mgn	CheckedProgram	0	0
+M	Classification/classify.mgn
+D	Classification/classify.mgn	genericGuards	4	1
+D	Classification/classify.mgn	Visit	0	0
+D	Classification/classify.mgn	prune	4	1
+D	Classification/classify.mgn	classify	4	1
+M	Cursor/scan.mgn
+D	Cursor/scan.mgn	Terminal	0	0
+D	Cursor/scan.mgn	character	4	1
+D	Cursor/scan.mgn	advance	4	1
+D	Cursor/scan.mgn	paired	4	1
+D	Cursor/scan.mgn	scanAt	4	1
+M	Data/data.mgn
+D	Data/data.mgn	Paged	0	0
+D	Data/data.mgn	empty	3	1
+D	Data/data.mgn	push	3	1
+D	Data/data.mgn	item	3	1
+D	Data/data.mgn	Span	0	0
+D	Data/data.mgn	Diagnostic	0	0
+D	Data/data.mgn	Token	0	0
+D	Data/data.mgn	problem	4	1
+D	Data/data.mgn	lookup	3	1
+D	Data/data.mgn	contains	4	1
+D	Data/data.mgn	number	4	1
+D	Data/data.mgn	describe	4	1
+M	DependencyGraph/order.mgn
+D	DependencyGraph/order.mgn	Edge	0	0
+D	DependencyGraph/order.mgn	Graph	0	0
+D	DependencyGraph/order.mgn	Order	0	0
+D	DependencyGraph/order.mgn	Frame	0	0
+D	DependencyGraph/order.mgn	sort	4	1
+M	Driver/driver.mgn
+D	Driver/driver.mgn	report	4	1
+D	Driver/driver.mgn	argument	4	1
+D	Driver/driver.mgn	endsWith	4	1
+D	Driver/driver.mgn	ioKind	4	1
+D	Driver/driver.mgn	ioPhase	4	1
+D	Driver/driver.mgn	outputKind	4	1
+D	Driver/driver.mgn	outputPhase	4	1
+D	Driver/driver.mgn	publicationState	4	1
+D	Driver/driver.mgn	publicationMessage	4	1
+D	Driver/driver.mgn	Analyzed	1	0
+D	Driver/driver.mgn	front	4	1
+D	Driver/driver.mgn	run	4	1
+M	Encode/encode.mgn
+D	Encode/encode.mgn	LabelMap	0	0
+D	Encode/encode.mgn	newMap	4	1
+D	Encode/encode.mgn	bucketAt	4	1
+D	Encode/encode.mgn	locate	4	1
+D	Encode/encode.mgn	addLabel	4	1
+D	Encode/encode.mgn	size	4	1
+D	Encode/encode.mgn	encode	4	1
+M	Evaluate/evaluate.mgn
+D	Evaluate/evaluate.mgn	childValue	4	1
+D	Evaluate/evaluate.mgn	evaluate	4	1
+M	Expressions/read.mgn
+D	Expressions/read.mgn	Label	0	0
+D	Expressions/read.mgn	Pattern	0	0
+D	Expressions/read.mgn	Expression	0	0
+D	Expressions/read.mgn	read	4	1
+M	Facts/facts.mgn
+D	Facts/facts.mgn	mask	4	1
+D	Facts/facts.mgn	words	4	1
+D	Facts/facts.mgn	at	4	1
+D	Facts/facts.mgn	combine	4	1
+D	Facts/facts.mgn	equal	4	1
+D	Facts/facts.mgn	define	4	1
+D	Facts/facts.mgn	require	4	1
+D	Facts/facts.mgn	fromSlots	4	1
+D	Facts/facts.mgn	requireAvailable	4	1
+M	Fields/fields.mgn
+D	Fields/fields.mgn	i32	4	1
+D	Fields/fields.mgn	i64	4	1
+D	Fields/fields.mgn	u16	4	1
+D	Fields/fields.mgn	u32	4	1
+D	Fields/fields.mgn	u64	4	1
+D	Fields/fields.mgn	byte	4	1
+D	Fields/fields.mgn	appendField	4	1
+M	FinishBasic/basic.mgn
+D	FinishBasic/basic.mgn	finish	4	1
+M	FinishConstruct/construct.mgn
+D	FinishConstruct/construct.mgn	isProduct	4	1
+D	FinishConstruct/construct.mgn	finish	4	1
+M	FinishControl/control.mgn
+D	FinishControl/control.mgn	join	4	1
+D	FinishControl/control.mgn	finish	4	1
+M	Forest/types.mgn
+D	Forest/types.mgn	Column	0	0
+D	Forest/types.mgn	Stable	0	0
+D	Forest/types.mgn	LiveColumn	0	0
+D	Forest/types.mgn	Pending	0	0
+D	Forest/types.mgn	ComparisonFailure	0	0
+D	Forest/types.mgn	SyntaxForest	0	0
+M	ForestData/types.mgn
+D	ForestData/types.mgn	Family	0	0
+D	ForestData/types.mgn	ForestNode	0	0
+D	ForestData/types.mgn	ChartItem	0	0
+M	Frontend/lexer.mgn
+D	Frontend/lexer.mgn	WidthEntry	0	0
+D	Frontend/lexer.mgn	isLetter	4	1
+D	Frontend/lexer.mgn	isDigit	4	1
+D	Frontend/lexer.mgn	wordKind	4	1
+D	Frontend/lexer.mgn	scan	4	1
+M	GenericApplication/apply.mgn
+D	GenericApplication/apply.mgn	Applied	0	0
+D	GenericApplication/apply.mgn	arguments	4	1
+D	GenericApplication/apply.mgn	standard	4	1
+D	GenericApplication/apply.mgn	structural	4	1
+M	Grammar/table.mgn
+D	Grammar/table.mgn	Slot	2	0
+D	Grammar/table.mgn	Prediction	2	0
+D	Grammar/table.mgn	makeSlots	4	1
+D	Grammar/table.mgn	slots	4	1
+D	Grammar/table.mgn	makePredictions	4	1
+D	Grammar/table.mgn	predictions	4	1
+D	Grammar/table.mgn	ntModule	4	1
+D	Grammar/table.mgn	ntNamespace	4	1
+D	Grammar/table.mgn	ntPath	4	1
+D	Grammar/table.mgn	ntUses	4	1
+D	Grammar/table.mgn	ntUse	4	1
+D	Grammar/table.mgn	ntImports	4	1
+D	Grammar/table.mgn	ntImportRest	4	1
+D	Grammar/table.mgn	ntImport	4	1
+D	Grammar/table.mgn	ntDeclarations	4	1
+D	Grammar/table.mgn	ntTop	4	1
+D	Grammar/table.mgn	ntCompile	4	1
+D	Grammar/table.mgn	ntParametersOpt	4	1
+D	Grammar/table.mgn	ntParameters	4	1
+D	Grammar/table.mgn	ntGenericParameters	4	1
+D	Grammar/table.mgn	ntGenericParameterRest	4	1
+D	Grammar/table.mgn	ntGenericParameter	4	1
+D	Grammar/table.mgn	ntFields	4	1
+D	Grammar/table.mgn	ntVariants	4	1
+D	Grammar/table.mgn	ntType	4	1
+D	Grammar/table.mgn	ntTypesOpt	4	1
+D	Grammar/table.mgn	ntTypeRest	4	1
+D	Grammar/table.mgn	ntArguments	4	1
+D	Grammar/table.mgn	ntGenericArguments	4	1
+D	Grammar/table.mgn	ntArgumentRest	4	1
+D	Grammar/table.mgn	ntArgument	4	1
+D	Grammar/table.mgn	ntValueArgument	4	1
+D	Grammar/table.mgn	ntPositiveScalar	4	1
+D	Grammar/table.mgn	ntScalar	4	1
+D	Grammar/table.mgn	ntLet	4	1
+D	Grammar/table.mgn	ntVar	4	1
+D	Grammar/table.mgn	ntFunction	4	1
+D	Grammar/table.mgn	ntParamsOpt	4	1
+D	Grammar/table.mgn	ntParamRest	4	1
+D	Grammar/table.mgn	ntParam	4	1
+D	Grammar/table.mgn	ntBlock	4	1
+D	Grammar/table.mgn	ntStatements	4	1
+D	Grammar/table.mgn	ntStatement	4	1
+D	Grammar/table.mgn	ntTail	4	1
+D	Grammar/table.mgn	ntExpr	4	1
+D	Grammar/table.mgn	ntOr	4	1
+D	Grammar/table.mgn	ntAnd	4	1
+D	Grammar/table.mgn	ntComparison	4	1
+D	Grammar/table.mgn	ntAdd	4	1
+D	Grammar/table.mgn	ntMultiply	4	1
+D	Grammar/table.mgn	ntUnary	4	1
+D	Grammar/table.mgn	ntPostfix	4	1
+D	Grammar/table.mgn	ntInvocable	4	1
+D	Grammar/table.mgn	ntExpressionsOpt	4	1
+D	Grammar/table.mgn	ntExpressions	4	1
+D	Grammar/table.mgn	ntPrimary	4	1
+D	Grammar/table.mgn	ntNamed	4	1
+D	Grammar/table.mgn	ntTypeName	4	1
+D	Grammar/table.mgn	ntValuesOpt	4	1
+D	Grammar/table.mgn	ntValues	4	1
+D	Grammar/table.mgn	ntValue	4	1
+D	Grammar/table.mgn	ntConditions	4	1
+D	Grammar/table.mgn	ntCommaOpt	4	1
+D	Grammar/table.mgn	ntOnArms	4	1
+D	Grammar/table.mgn	ntOnArmRest	4	1
+D	Grammar/table.mgn	ntOnArm	4	1
+D	Grammar/table.mgn	ntPattern	4	1
+D	Grammar/table.mgn	ruleModule	4	1
+D	Grammar/table.mgn	ruleNamespace	4	1
+D	Grammar/table.mgn	rulePathName	4	1
+D	Grammar/table.mgn	rulePathExtend	4	1
+D	Grammar/table.mgn	ruleUsesEmpty	4	1
+D	Grammar/table.mgn	ruleUsesAppend	4	1
+D	Grammar/table.mgn	ruleImport	4	1
+D	Grammar/table.mgn	ruleImports	4	1
+D	Grammar/table.mgn	ruleImportsEnd	4	1
+D	Grammar/table.mgn	ruleImportsTrailing	4	1
+D	Grammar/table.mgn	ruleImportsMore	4	1
+D	Grammar/table.mgn	ruleImportName	4	1
+D	Grammar/table.mgn	ruleImportAlias	4	1
+D	Grammar/table.mgn	ruleDeclarationsEmpty	4	1
+D	Grammar/table.mgn	ruleDeclarationsAppend	4	1
+D	Grammar/table.mgn	ruleTopCompile	4	1
+D	Grammar/table.mgn	ruleTopLet	4	1
+D	Grammar/table.mgn	ruleTopVar	4	1
+D	Grammar/table.mgn	rulePublicCompile	4	1
+D	Grammar/table.mgn	rulePublicLet	4	1
+D	Grammar/table.mgn	ruleTypeProduct	4	1
+D	Grammar/table.mgn	ruleTypeSum	4	1
+D	Grammar/table.mgn	ruleAlias	4	1
+D	Grammar/table.mgn	ruleTemplate	4	1
+D	Grammar/table.mgn	ruleParametersNone	4	1
+D	Grammar/table.mgn	ruleParametersSome	4	1
+D	Grammar/table.mgn	ruleParameters	4	1
+D	Grammar/table.mgn	ruleGenericParameters	4	1
+D	Grammar/table.mgn	ruleGenericParametersEnd	4	1
+D	Grammar/table.mgn	ruleGenericParametersTrailing	4	1
+D	Grammar/table.mgn	ruleGenericParametersMore	4	1
+D	Grammar/table.mgn	ruleTypeParameter	4	1
+D	Grammar/table.mgn	ruleValueParameter	4	1
+D	Grammar/table.mgn	ruleFieldsEmpty	4	1
+D	Grammar/table.mgn	ruleFieldsAppend	4	1
+D	Grammar/table.mgn	ruleVariantsEmpty	4	1
+D	Grammar/table.mgn	ruleVariantsEmptyPayload	4	1
+D	Grammar/table.mgn	ruleVariantsPayload	4	1
+D	Grammar/table.mgn	ruleTypeName	4	1
+D	Grammar/table.mgn	ruleTypeApply	4	1
+D	Grammar/table.mgn	ruleTypeFunction	4	1
+D	Grammar/table.mgn	ruleTypesEmpty	4	1
+D	Grammar/table.mgn	ruleTypes	4	1
+D	Grammar/table.mgn	ruleTypesEnd	4	1
+D	Grammar/table.mgn	ruleTypesTrailing	4	1
+D	Grammar/table.mgn	ruleTypesMore	4	1
+D	Grammar/table.mgn	ruleArguments	4	1
+D	Grammar/table.mgn	ruleGenericArguments	4	1
+D	Grammar/table.mgn	ruleArgumentsEnd	4	1
+D	Grammar/table.mgn	ruleArgumentsTrailing	4	1
+D	Grammar/table.mgn	ruleArgumentsMore	4	1
+D	Grammar/table.mgn	ruleArgumentType	4	1
+D	Grammar/table.mgn	ruleArgumentValue	4	1
+D	Grammar/table.mgn	ruleValueDigits	4	1
+D	Grammar/table.mgn	ruleValueNegative	4	1
+D	Grammar/table.mgn	ruleValueGroup	4	1
+D	Grammar/table.mgn	ruleValueReference	4	1
+D	Grammar/table.mgn	rulePositiveDigits	4	1
+D	Grammar/table.mgn	rulePositiveGroup	4	1
+D	Grammar/table.mgn	ruleScalarDigits	4	1
+D	Grammar/table.mgn	ruleScalarNegative	4	1
+D	Grammar/table.mgn	ruleScalarGroup	4	1
+D	Grammar/table.mgn	ruleLetBinding	4	1
+D	Grammar/table.mgn	ruleVarBinding	4	1
+D	Grammar/table.mgn	ruleFunction	4	1
+D	Grammar/table.mgn	ruleParamsEmpty	4	1
+D	Grammar/table.mgn	ruleParams	4	1
+D	Grammar/table.mgn	ruleParamsEnd	4	1
+D	Grammar/table.mgn	ruleParamsTrailing	4	1
+D	Grammar/table.mgn	ruleParamsMore	4	1
+D	Grammar/table.mgn	ruleParameter	4	1
+D	Grammar/table.mgn	ruleBlock	4	1
+D	Grammar/table.mgn	ruleStatementsEmpty	4	1
+D	Grammar/table.mgn	ruleStatementsAppend	4	1
+D	Grammar/table.mgn	ruleStatementLet	4	1
+D	Grammar/table.mgn	ruleStatementVar	4	1
+D	Grammar/table.mgn	ruleStatementReturn	4	1
+D	Grammar/table.mgn	ruleStatementDiscard	4	1
+D	Grammar/table.mgn	ruleStatementBreak	4	1
+D	Grammar/table.mgn	ruleStatementBreakValue	4	1
+D	Grammar/table.mgn	ruleStatementContinue	4	1
+D	Grammar/table.mgn	ruleStatementAssign	4	1
+D	Grammar/table.mgn	ruleStatementExpression	4	1
+D	Grammar/table.mgn	ruleNoTail	4	1
+D	Grammar/table.mgn	ruleTail	4	1
+D	Grammar/table.mgn	ruleExpression	4	1
+D	Grammar/table.mgn	ruleOrBase	4	1
+D	Grammar/table.mgn	ruleBinaryOr	4	1
+D	Grammar/table.mgn	ruleAndBase	4	1
+D	Grammar/table.mgn	ruleBinaryAnd	4	1
+D	Grammar/table.mgn	ruleComparisonBase	4	1
+D	Grammar/table.mgn	ruleBinaryLt	4	1
+D	Grammar/table.mgn	ruleBinaryLe	4	1
+D	Grammar/table.mgn	ruleBinaryGt	4	1
+D	Grammar/table.mgn	ruleBinaryGe	4	1
+D	Grammar/table.mgn	ruleBinaryEq	4	1
+D	Grammar/table.mgn	ruleBinaryNe	4	1
+D	Grammar/table.mgn	ruleAddBase	4	1
+D	Grammar/table.mgn	ruleBinaryAdd	4	1
+D	Grammar/table.mgn	ruleBinarySub	4	1
+D	Grammar/table.mgn	ruleMultiplyBase	4	1
+D	Grammar/table.mgn	ruleBinaryMul	4	1
+D	Grammar/table.mgn	ruleBinaryDiv	4	1
+D	Grammar/table.mgn	ruleBinaryRem	4	1
+D	Grammar/table.mgn	ruleUnaryBase	4	1
+D	Grammar/table.mgn	ruleUnaryNeg	4	1
+D	Grammar/table.mgn	ruleUnaryNot	4	1
+D	Grammar/table.mgn	ruleUnaryTry	4	1
+D	Grammar/table.mgn	rulePostfixBase	4	1
+D	Grammar/table.mgn	ruleInvocableBase	4	1
+D	Grammar/table.mgn	ruleCall	4	1
+D	Grammar/table.mgn	ruleField	4	1
+D	Grammar/table.mgn	ruleMethod	4	1
+D	Grammar/table.mgn	ruleGenericMethod	4	1
+D	Grammar/table.mgn	ruleExpressionsEmpty	4	1
+D	Grammar/table.mgn	ruleExpressions	4	1
+D	Grammar/table.mgn	ruleExpressionsOne	4	1
+D	Grammar/table.mgn	ruleExpressionsAppend	4	1
+D	Grammar/table.mgn	ruleInteger	4	1
+D	Grammar/table.mgn	ruleString	4	1
+D	Grammar/table.mgn	ruleTrue	4	1
+D	Grammar/table.mgn	ruleFalse	4	1
+D	Grammar/table.mgn	ruleUnit	4	1
+D	Grammar/table.mgn	rulePrimaryName	4	1
+D	Grammar/table.mgn	ruleGroup	4	1
+D	Grammar/table.mgn	rulePrimaryBlock	4	1
+D	Grammar/table.mgn	rulePrimaryFunction	4	1
+D	Grammar/table.mgn	ruleLoopForever	4	1
+D	Grammar/table.mgn	ruleLoopWhile	4	1
+D	Grammar/table.mgn	ruleLoopOver	4	1
+D	Grammar/table.mgn	ruleBranchWhen	4	1
+D	Grammar/table.mgn	ruleBranchOn	4	1
+D	Grammar/table.mgn	rulePanic	4	1
+D	Grammar/table.mgn	ruleName	4	1
+D	Grammar/table.mgn	ruleGenericApply	4	1
+D	Grammar/table.mgn	ruleProduct	4	1
+D	Grammar/table.mgn	ruleScalarLiteral	4	1
+D	Grammar/table.mgn	ruleList	4	1
+D	Grammar/table.mgn	ruleVariant	4	1
+D	Grammar/table.mgn	ruleVariantPayload	4	1
+D	Grammar/table.mgn	ruleConstructName	4	1
+D	Grammar/table.mgn	ruleConstructGeneric	4	1
+D	Grammar/table.mgn	ruleValuesEmpty	4	1
+D	Grammar/table.mgn	ruleValues	4	1
+D	Grammar/table.mgn	ruleValuesOne	4	1
+D	Grammar/table.mgn	ruleValuesAppend	4	1
+D	Grammar/table.mgn	ruleFieldValue	4	1
+D	Grammar/table.mgn	ruleConditionsEmpty	4	1
+D	Grammar/table.mgn	ruleConditionsAppend	4	1
+D	Grammar/table.mgn	ruleCommaNone	4	1
+D	Grammar/table.mgn	ruleCommaSome	4	1
+D	Grammar/table.mgn	ruleOnArms	4	1
+D	Grammar/table.mgn	ruleOnArmsEnd	4	1
+D	Grammar/table.mgn	ruleOnArmsTrailing	4	1
+D	Grammar/table.mgn	ruleOnArmsMore	4	1
+D	Grammar/table.mgn	ruleOnArm	4	1
+D	Grammar/table.mgn	rulePatternEmpty	4	1
+D	Grammar/table.mgn	rulePatternPayload	4	1
+D	Grammar/table.mgn	closeTerminal	4	1
+D	Grammar/table.mgn	Lookahead	0	0
+D	Grammar/table.mgn	lookahead	4	1
+D	Grammar/table.mgn	possible	4	1
+D	Grammar/table.mgn	matches	4	1
+M	GrammarData/types.mgn
+D	GrammarData/types.mgn	Slot	0	0
+D	GrammarData/types.mgn	Prediction	0	0
+M	GrammarPart0/slots.mgn
+D	GrammarPart0/slots.mgn	extend	4	1
+M	GrammarPart1/slots.mgn
+D	GrammarPart1/slots.mgn	extend	4	1
+M	GrammarPart2/slots.mgn
+D	GrammarPart2/slots.mgn	extend	4	1
+M	GrammarPart3/slots.mgn
+D	GrammarPart3/slots.mgn	extend	4	1
+M	GrammarPart4/slots.mgn
+D	GrammarPart4/slots.mgn	extend	4	1
+M	GrammarPart5/slots.mgn
+D	GrammarPart5/slots.mgn	extend	4	1
+M	GrammarPart6/slots.mgn
+D	GrammarPart6/slots.mgn	extend	4	1
+M	GrammarPart7/slots.mgn
+D	GrammarPart7/slots.mgn	extend	4	1
+M	GrammarPart8/slots.mgn
+D	GrammarPart8/slots.mgn	extend	4	1
+M	HeaderRead/read.mgn
+D	HeaderRead/read.mgn	path	4	1
+D	HeaderRead/read.mgn	rightList	4	1
+D	HeaderRead/read.mgn	parameters	4	1
+D	HeaderRead/read.mgn	imports	4	1
+M	Headers/collect.mgn
+D	Headers/collect.mgn	sourceError	4	1
+D	Headers/collect.mgn	scan	4	1
+D	Headers/collect.mgn	collect	4	1
+M	IR/types.mgn
+D	IR/types.mgn	Instruction	0	0
+D	IR/types.mgn	Block	0	0
+D	IR/types.mgn	FunctionIR	0	0
+D	IR/types.mgn	ModuleIR	0	0
+D	IR/types.mgn	LoopTarget	0	0
+D	IR/types.mgn	Frame	0	0
+M	IRShape/shape.mgn
+D	IRShape/shape.mgn	integerAt	4	1
+D	IRShape/shape.mgn	blockIndex	4	1
+D	IRShape/shape.mgn	shape	4	1
+M	Imports/resolve.mgn
+D	Imports/resolve.mgn	reserved	4	1
+D	Imports/resolve.mgn	resolve	4	1
+M	InputData/types.mgn
+D	InputData/types.mgn	InputError	0	0
+D	InputData/types.mgn	SourceUnit	0	0
+D	InputData/types.mgn	ProjectInput	0	0
+D	InputData/types.mgn	failure	4	1
+D	InputData/types.mgn	kindName	4	1
+D	InputData/types.mgn	fromIo	4	1
+D	InputData/types.mgn	fromInspection	4	1
+M	InputDiagnostics/diagnostics.mgn
+D	InputDiagnostics/diagnostics.mgn	escapePath	4	1
+D	InputDiagnostics/diagnostics.mgn	message	4	1
+M	IntMap/map.mgn
+D	IntMap/map.mgn	replaceSlot	3	1
+D	IntMap/map.mgn	Level9	0	0
+D	IntMap/map.mgn	Level8	0	0
+D	IntMap/map.mgn	Level7	0	0
+D	IntMap/map.mgn	Level6	0	0
+D	IntMap/map.mgn	Level5	0	0
+D	IntMap/map.mgn	Level4	0	0
+D	IntMap/map.mgn	Level3	0	0
+D	IntMap/map.mgn	Level2	0	0
+D	IntMap/map.mgn	Level1	0	0
+D	IntMap/map.mgn	Level0	0	0
+D	IntMap/map.mgn	Entry	0	0
+D	IntMap/map.mgn	Map	0	0
+D	IntMap/map.mgn	create	4	1
+D	IntMap/map.mgn	get	4	1
+D	IntMap/map.mgn	put	4	1
+M	ItemStorage/data.mgn
+D	ItemStorage/data.mgn	ItemPage	0	0
+D	ItemStorage/data.mgn	ItemStore	0	0
+D	ItemStorage/data.mgn	zero	4	1
+D	ItemStorage/data.mgn	emptyItems	4	1
+D	ItemStorage/data.mgn	writePage	4	1
+D	ItemStorage/data.mgn	readPage	4	1
+D	ItemStorage/data.mgn	packPage	4	1
+D	ItemStorage/data.mgn	addItem	4	1
+D	ItemStorage/data.mgn	getItem	4	1
+D	ItemStorage/data.mgn	setItem	4	1
+M	Lexical/scan.mgn
+D	Lexical/scan.mgn	WidthEntry	0	0
+D	Lexical/scan.mgn	isLetter	4	1
+D	Lexical/scan.mgn	isDigit	4	1
+D	Lexical/scan.mgn	wordKind	4	1
+D	Lexical/scan.mgn	canonical	4	1
+D	Lexical/scan.mgn	hexAlphabet	4	1
+D	Lexical/scan.mgn	hexDigit	4	1
+D	Lexical/scan.mgn	pairKind	4	1
+D	Lexical/scan.mgn	scanSource	4	1
+M	Lower/lower.mgn
+D	Lower/lower.mgn	operandSlot	4	1
+D	Lower/lower.mgn	operationCode	4	1
+D	Lower/lower.mgn	lowerFunction	4	1
+D	Lower/lower.mgn	lower	4	1
+M	Machine/machine.mgn
+D	Machine/machine.mgn	Record	0	0
+D	Machine/machine.mgn	Code	0	0
+D	Machine/machine.mgn	Label	0	0
+D	Machine/machine.mgn	Layout	0	0
+D	Machine/machine.mgn	raw	4	1
+D	Machine/machine.mgn	flush	4	1
+D	Machine/machine.mgn	label	4	1
+D	Machine/machine.mgn	field	4	1
+D	Machine/machine.mgn	reference	4	1
+D	Machine/machine.mgn	jump	4	1
+D	Machine/machine.mgn	fresh	4	1
+M	Manifest/manifest.mgn
+D	Manifest/manifest.mgn	Manifest	0	0
+D	Manifest/manifest.mgn	TextRead	0	0
+D	Manifest/manifest.mgn	KeyRead	0	0
+D	Manifest/manifest.mgn	bad	4	1
+D	Manifest/manifest.mgn	space	4	1
+D	Manifest/manifest.mgn	newline	4	1
+D	Manifest/manifest.mgn	comment	4	1
+D	Manifest/manifest.mgn	lines	4	1
+D	Manifest/manifest.mgn	hex	4	1
+D	Manifest/manifest.mgn	quoted	4	1
+D	Manifest/manifest.mgn	keyPath	4	1
+D	Manifest/manifest.mgn	parse	4	1
+M	MathValue/decimal.mgn
+D	MathValue/decimal.mgn	Integer	0	0
+D	MathValue/decimal.mgn	normalize	4	1
+D	MathValue/decimal.mgn	compare	4	1
+D	MathValue/decimal.mgn	powers	4	1
+D	MathValue/decimal.mgn	fits	4	1
+D	MathValue/decimal.mgn	minimumWidth	4	1
+D	MathValue/decimal.mgn	ordinary	4	1
+M	Methods/methods.mgn
+D	Methods/methods.mgn	Signature	0	0
+D	Methods/methods.mgn	genericKinds	4	1
+D	Methods/methods.mgn	typeArgument	4	1
+D	Methods/methods.mgn	resolve	4	1
+M	Module/parser.mgn
+D	Module/parser.mgn	parse	4	1
+M	NameHash/hash.mgn
+D	NameHash/hash.mgn	hash	4	1
+M	NameIndex/index.mgn
+D	NameIndex/index.mgn	Index	0	0
+D	NameIndex/index.mgn	create	4	1
+D	NameIndex/index.mgn	insert	4	1
+D	NameIndex/index.mgn	candidates	4	1
+M	Native/native.mgn
+D	Native/native.mgn	Plan	0	0
+D	Native/native.mgn	plan	4	1
+D	Native/native.mgn	layoutAt	4	1
+D	Native/native.mgn	loadRax	4	1
+D	Native/native.mgn	loadRcx	4	1
+D	Native/native.mgn	storeRax	4	1
+D	Native/native.mgn	emitOperation	4	1
+D	Native/native.mgn	emitTerminator	4	1
+D	Native/native.mgn	includes	4	1
+D	Native/native.mgn	reachedFunctions	4	1
+D	Native/native.mgn	generate	4	1
+M	NativeBridge/bridge.mgn
+D	NativeBridge/bridge.mgn	moduleName	4	1
+D	NativeBridge/bridge.mgn	directFunction	4	1
+D	NativeBridge/bridge.mgn	bridge	4	1
+M	NativeLayout/validate.mgn
+D	NativeLayout/validate.mgn	require	4	1
+D	NativeLayout/validate.mgn	validate	4	1
+M	NativeProfile/profile.mgn
+D	NativeProfile/profile.mgn	Selected	0	0
+D	NativeProfile/profile.mgn	identity	4	1
+D	NativeProfile/profile.mgn	code	4	1
+D	NativeProfile/profile.mgn	direct	4	1
+D	NativeProfile/profile.mgn	select	4	1
+M	NativeProject/project.mgn
+D	NativeProject/project.mgn	Projected	0	0
+D	NativeProject/project.mgn	Frame	0	0
+D	NativeProject/project.mgn	blanks	4	1
+D	NativeProject/project.mgn	mapped	4	1
+D	NativeProject/project.mgn	operatorText	4	1
+D	NativeProject/project.mgn	project	4	1
+M	NativeTypes/types.mgn
+D	NativeTypes/types.mgn	Signature	0	0
+D	NativeTypes/types.mgn	typeCode	4	1
+D	NativeTypes/types.mgn	signature	4	1
+M	NodeStorage/data.mgn
+D	NodeStorage/data.mgn	NodePage	0	0
+D	NodeStorage/data.mgn	NodeStore	0	0
+D	NodeStorage/data.mgn	zero	4	1
+D	NodeStorage/data.mgn	emptyNodes	4	1
+D	NodeStorage/data.mgn	writePage	4	1
+D	NodeStorage/data.mgn	readPage	4	1
+D	NodeStorage/data.mgn	packPage	4	1
+D	NodeStorage/data.mgn	addNode	4	1
+D	NodeStorage/data.mgn	getNode	4	1
+D	NodeStorage/data.mgn	setNode	4	1
+M	Operators/operators.mgn
+D	Operators/operators.mgn	Operation	0	0
+D	Operators/operators.mgn	nodeAt	4	1
+D	Operators/operators.mgn	resolve	4	1
+M	ParseSupport/support.mgn
+D	ParseSupport/support.mgn	Signature	0	0
+D	ParseSupport/support.mgn	requireToken	4	1
+D	ParseSupport/support.mgn	parseType	4	1
+D	ParseSupport/support.mgn	signature	4	1
+D	ParseSupport/support.mgn	precedence	4	1
+M	Parser/expression.mgn
+D	Parser/expression.mgn	parseFrom	4	1
+D	Parser/expression.mgn	expression	4	1
+D	Parser/expression.mgn	bodyBlock	4	1
+M	Pipeline/compile.mgn
+D	Pipeline/compile.mgn	prepare	4	1
+D	Pipeline/compile.mgn	compile	4	1
+M	Project/load.mgn
+D	Project/load.mgn	Pending	0	0
+D	Project/load.mgn	inspect	4	1
+D	Project/load.mgn	directory	4	1
+D	Project/load.mgn	regular	4	1
+D	Project/load.mgn	symlink	4	1
+D	Project/load.mgn	join	4	1
+D	Project/load.mgn	read	4	1
+D	Project/load.mgn	parent	4	1
+D	Project/load.mgn	before	4	1
+D	Project/load.mgn	single	4	1
+D	Project/load.mgn	project	4	1
+M	Projection/read.mgn
+D	Projection/read.mgn	item	4	1
+D	Projection/read.mgn	tokenAt	4	1
+D	Projection/read.mgn	site	4	1
+D	Projection/read.mgn	text	4	1
+D	Projection/read.mgn	failure	4	1
+D	Projection/read.mgn	family	4	1
+D	Projection/read.mgn	selected	4	1
+D	Projection/read.mgn	parts	4	1
+D	Projection/read.mgn	concrete	4	1
+M	Runtime/runtime.mgn
+D	Runtime/runtime.mgn	startup	4	1
+D	Runtime/runtime.mgn	failures	4	1
+D	Runtime/runtime.mgn	messages	4	1
+M	ScalarLiteral/literal.mgn
+D	ScalarLiteral/literal.mgn	Literal	0	0
+D	ScalarLiteral/literal.mgn	check	4	1
+M	Semantic/analyze.mgn
+D	Semantic/analyze.mgn	SemanticProject	0	0
+D	Semantic/analyze.mgn	internal	4	1
+D	Semantic/analyze.mgn	atDeclaration	4	1
+D	Semantic/analyze.mgn	ordered	4	1
+D	Semantic/analyze.mgn	body	4	1
+D	Semantic/analyze.mgn	entryType	4	1
+D	Semantic/analyze.mgn	entry	4	1
+D	Semantic/analyze.mgn	analyze	4	1
+M	SemanticClassification/classify.mgn
+D	SemanticClassification/classify.mgn	Binding	0	0
+D	SemanticClassification/classify.mgn	BindingIndex	0	0
+D	SemanticClassification/classify.mgn	introduce	4	1
+D	SemanticClassification/classify.mgn	kindAt	4	1
+D	SemanticClassification/classify.mgn	prepare	4	1
+D	SemanticClassification/classify.mgn	classifyPrepared	4	1
+D	SemanticClassification/classify.mgn	classify	4	1
+M	SemanticData/headers.mgn
+D	SemanticData/headers.mgn	Parameter	0	0
+D	SemanticData/headers.mgn	Declaration	0	0
+D	SemanticData/headers.mgn	Import	0	0
+D	SemanticData/headers.mgn	Module	0	0
+D	SemanticData/headers.mgn	Introduction	0	0
+D	SemanticData/headers.mgn	Headers	0	0
+M	SemanticValues/values.mgn
+D	SemanticValues/values.mgn	Symbol	0	0
+D	SemanticValues/values.mgn	Node	0	0
+D	SemanticValues/values.mgn	FunctionInfo	0	0
+D	SemanticValues/values.mgn	Loop	0	0
+D	SemanticValues/values.mgn	BodyState	1	0
+D	SemanticValues/values.mgn	State	0	0
+D	SemanticValues/values.mgn	Environment	0	0
+D	SemanticValues/values.mgn	Checked	0	0
+D	SemanticValues/values.mgn	Frame	0	0
+D	SemanticValues/values.mgn	Started	0	0
+D	SemanticValues/values.mgn	ChildEnvironment	0	0
+D	SemanticValues/values.mgn	Finished	0	0
+D	SemanticValues/values.mgn	Evaluated	0	0
+M	Signatures/signatures.mgn
+D	Signatures/signatures.mgn	Formal	0	0
+D	Signatures/signatures.mgn	FunctionType	0	0
+D	Signatures/signatures.mgn	functionType	4	1
+D	Signatures/signatures.mgn	declaration	4	1
+D	Signatures/signatures.mgn	publicSignature	4	1
+M	Source/types.mgn
+D	Source/types.mgn	Site	2	0
+D	Source/types.mgn	Lexeme	2	0
+D	Source/types.mgn	location	4	1
+D	Source/types.mgn	Snapshot	0	0
+D	Source/types.mgn	spelling	4	1
+M	SourceData/types.mgn
+D	SourceData/types.mgn	Site	0	0
+D	SourceData/types.mgn	Lexeme	0	0
+M	Structural/parse.mgn
+D	Structural/parse.mgn	isComparison	4	1
+D	Structural/parse.mgn	parseSnapshot	4	1
+D	Structural/parse.mgn	analyzeSyntax	4	1
+M	Syntax/types.mgn
+D	Syntax/types.mgn	Node	0	0
+D	Syntax/types.mgn	Parameter	0	0
+D	Syntax/types.mgn	Declaration	0	0
+D	Syntax/types.mgn	Program	0	0
+D	Syntax/types.mgn	ParsedType	0	0
+D	Syntax/types.mgn	ParsedExpression	0	0
+D	Syntax/types.mgn	Parent	1	0
+D	Syntax/types.mgn	Frame	0	0
+M	Tables/update.mgn
+D	Tables/update.mgn	replaceList	3	1
+D	Tables/update.mgn	replaceItem	3	1
+D	Tables/update.mgn	atList	3	1
+M	TemplateDependencies/order.mgn
+D	TemplateDependencies/order.mgn	graph	4	1
+M	TextUtil/text.mgn
+D	TextUtil/text.mgn	ascii	4	1
+D	TextUtil/text.mgn	at	4	1
+D	TextUtil/text.mgn	code	4	1
+D	TextUtil/text.mgn	scalar	4	1
+D	TextUtil/text.mgn	letter	4	1
+D	TextUtil/text.mgn	digit	4	1
+D	TextUtil/text.mgn	keyword	4	1
+D	TextUtil/text.mgn	identifier	4	1
+D	TextUtil/text.mgn	nameSpace	4	1
+D	TextUtil/text.mgn	projectName	4	1
+D	TextUtil/text.mgn	cut	4	1
+D	TextUtil/text.mgn	starts	4	1
+D	TextUtil/text.mgn	ends	4	1
+D	TextUtil/text.mgn	position	4	1
+M	TokenStorage/data.mgn
+D	TokenStorage/data.mgn	TokenPage	0	0
+D	TokenStorage/data.mgn	TokenStore	0	0
+D	TokenStorage/data.mgn	zero	4	1
+D	TokenStorage/data.mgn	emptyTokens	4	1
+D	TokenStorage/data.mgn	writePage	4	1
+D	TokenStorage/data.mgn	readPage	4	1
+D	TokenStorage/data.mgn	packPage	4	1
+D	TokenStorage/data.mgn	addToken	4	1
+D	TokenStorage/data.mgn	getToken	4	1
+D	TokenStorage/data.mgn	setToken	4	1
+M	TypeData/types.mgn
+D	TypeData/types.mgn	ValueTerm	0	0
+D	TypeData/types.mgn	Argument	1	0
+D	TypeData/types.mgn	Member	0	0
+D	TypeData/types.mgn	Type	0	0
+D	TypeData/types.mgn	Obligation	0	0
+D	TypeData/types.mgn	Store	0	0
+D	TypeData/types.mgn	Formed	0	0
+D	TypeData/types.mgn	Structure	1	0
+M	TypeDeclarations/define.mgn
+D	TypeDeclarations/define.mgn	Parameters	0	0
+D	TypeDeclarations/define.mgn	parameters	4	1
+D	TypeDeclarations/define.mgn	define	4	1
+M	TypeDependencies/order.mgn
+D	TypeDependencies/order.mgn	graph	4	1
+D	TypeDependencies/order.mgn	order	4	1
+M	TypeForm/form.mgn
+D	TypeForm/form.mgn	Frame	0	0
+D	TypeForm/form.mgn	widthRequirements	4	1
+D	TypeForm/form.mgn	complete	4	1
+D	TypeForm/form.mgn	form	4	1
+M	TypeNames/names.mgn
+D	TypeNames/names.mgn	declaration	4	1
+D	TypeNames/names.mgn	parameter	4	1
+D	TypeNames/names.mgn	valueParameter	4	1
+M	TypeOps/operations.mgn
+D	TypeOps/operations.mgn	unitKind	4	1
+D	TypeOps/operations.mgn	intKind	4	1
+D	TypeOps/operations.mgn	boolKind	4	1
+D	TypeOps/operations.mgn	stringKind	4	1
+D	TypeOps/operations.mgn	indexKind	4	1
+D	TypeOps/operations.mgn	sliceKind	4	1
+D	TypeOps/operations.mgn	listKind	4	1
+D	TypeOps/operations.mgn	resultKind	4	1
+D	TypeOps/operations.mgn	functionKind	4	1
+D	TypeOps/operations.mgn	productKind	4	1
+D	TypeOps/operations.mgn	sumKind	4	1
+D	TypeOps/operations.mgn	parameterKind	4	1
+D	TypeOps/operations.mgn	fixedKind	4	1
+D	TypeOps/operations.mgn	bitsKind	4	1
+D	TypeOps/operations.mgn	bytesKind	4	1
+D	TypeOps/operations.mgn	identityKind	4	1
+D	TypeOps/operations.mgn	signedKind	4	1
+D	TypeOps/operations.mgn	unsignedKind	4	1
+D	TypeOps/operations.mgn	parentEqual	4	1
+D	TypeOps/operations.mgn	valueEqual	4	1
+D	TypeOps/operations.mgn	argumentEqual	4	1
+D	TypeOps/operations.mgn	argumentsEqual	4	1
+D	TypeOps/operations.mgn	hash	4	1
+D	TypeOps/operations.mgn	cached	4	1
+D	TypeOps/operations.mgn	initialize	4	1
+D	TypeOps/operations.mgn	intern	4	1
+D	TypeOps/operations.mgn	concreteValue	4	1
+D	TypeOps/operations.mgn	argumentAt	4	1
+D	TypeOps/operations.mgn	substituteValue	4	1
+D	TypeOps/operations.mgn	Visit	0	0
+D	TypeOps/operations.mgn	mapped	4	1
+D	TypeOps/operations.mgn	substitute	4	1
+D	TypeOps/operations.mgn	substituteObligationsAt	4	1
+D	TypeOps/operations.mgn	substituteObligations	4	1
+M	TypeSyntax/read.mgn
+D	TypeSyntax/read.mgn	Child	0	0
+D	TypeSyntax/read.mgn	Request	0	0
+D	TypeSyntax/read.mgn	value	4	1
+D	TypeSyntax/read.mgn	argumentNode	4	1
+D	TypeSyntax/read.mgn	request	4	1
+M	ValueChildren/children.mgn
+D	ValueChildren/children.mgn	child	4	1
+M	ValueFactory/factory.mgn
+D	ValueFactory/factory.mgn	node	4	1
+D	ValueFactory/factory.mgn	withMapping	4	1
+D	ValueFactory/factory.mgn	withArguments	4	1
+D	ValueFactory/factory.mgn	withTarget	4	1
+M	ValueNames/names.mgn
+D	ValueNames/names.mgn	Reference	1	0
+D	ValueNames/names.mgn	introduction	4	1
+D	ValueNames/names.mgn	available	4	1
+D	ValueNames/names.mgn	resolve	4	1
+D	ValueNames/names.mgn	capture	4	1
+M	ValueStart/start.mgn
+D	ValueStart/start.mgn	start	4	1
+M	ValueSupport/support.mgn
+D	ValueSupport/support.mgn	known	4	1
+D	ValueSupport/support.mgn	structureEqual	4	1
+D	ValueSupport/support.mgn	expect	4	1
+D	ValueSupport/support.mgn	initialize	4	1
+D	ValueSupport/support.mgn	emit	4	1
+D	ValueSupport/support.mgn	withTypes	4	1
+D	ValueSupport/support.mgn	withSymbols	4	1
+D	ValueSupport/support.mgn	withFunctions	4	1
+D	ValueSupport/support.mgn	withLoops	4	1
+D	ValueSupport/support.mgn	reachable	4	1
+D	ValueSupport/support.mgn	reserve	4	1
+D	ValueSupport/support.mgn	introduce	4	1
+D	ValueSupport/support.mgn	withBodies	4	1
+M	VariantSupport/variants.mgn
+D	VariantSupport/variants.mgn	memberType	4	1
+D	VariantSupport/variants.mgn	variants	4	1
+D	VariantSupport/variants.mgn	ordinal	4	1
+D	VariantSupport/variants.mgn	at	4	1
+M	Verify/verify.mgn
+D	Verify/verify.mgn	containsId	4	1
+D	Verify/verify.mgn	verifyFunction	4	1
+D	Verify/verify.mgn	verify	4	1
+M	Width/width.mgn
+D	Width/width.mgn	width1	4	1
+D	Width/width.mgn	width2	4	1
+D	Width/width.mgn	width3	4	1
+D	Width/width.mgn	asciiAt	4	1
+D	Width/width.mgn	ascii0	4	1
+D	Width/width.mgn	ascii1	4	1
+D	Width/width.mgn	ascii2	4	1
+D	Width/width.mgn	ascii3	4	1
+D	Width/width.mgn	ascii4	4	1
+D	Width/width.mgn	ascii5	4	1
+D	Width/width.mgn	ascii6	4	1
+D	Width/width.mgn	ascii7	4	1
+D	Width/width.mgn	ascii8	4	1
+D	Width/width.mgn	ascii9	4	1
+D	Width/width.mgn	ascii10	4	1
+D	Width/width.mgn	ascii11	4	1
+D	Width/width.mgn	ascii12	4	1
+D	Width/width.mgn	ascii13	4	1
+D	Width/width.mgn	ascii14	4	1
+D	Width/width.mgn	ascii15	4	1
+D	Width/width.mgn	ascii16	4	1
+D	Width/width.mgn	ascii17	4	1
+D	Width/width.mgn	ascii18	4	1
+D	Width/width.mgn	ascii19	4	1
+D	Width/width.mgn	ascii20	4	1
+D	Width/width.mgn	ascii21	4	1
+D	Width/width.mgn	ascii22	4	1
+D	Width/width.mgn	ascii23	4	1
+D	Width/width.mgn	ascii24	4	1
+D	Width/width.mgn	ascii25	4	1
+D	Width/width.mgn	ascii26	4	1
+D	Width/width.mgn	ascii27	4	1
+D	Width/width.mgn	ascii28	4	1
+D	Width/width.mgn	ascii29	4	1
+D	Width/width.mgn	ascii30	4	1
+D	Width/width.mgn	ascii31	4	1
+D	Width/width.mgn	ascii32	4	1
+D	Width/width.mgn	ascii33	4	1
+D	Width/width.mgn	ascii34	4	1
+D	Width/width.mgn	ascii35	4	1
+D	Width/width.mgn	ascii36	4	1
+D	Width/width.mgn	ascii37	4	1
+D	Width/width.mgn	ascii38	4	1
+D	Width/width.mgn	ascii39	4	1
+D	Width/width.mgn	ascii40	4	1
+D	Width/width.mgn	ascii41	4	1
+D	Width/width.mgn	ascii42	4	1
+D	Width/width.mgn	ascii43	4	1
+D	Width/width.mgn	ascii44	4	1
+D	Width/width.mgn	ascii45	4	1
+D	Width/width.mgn	ascii46	4	1
+D	Width/width.mgn	ascii47	4	1
+D	Width/width.mgn	ascii48	4	1
+D	Width/width.mgn	ascii49	4	1
+D	Width/width.mgn	ascii50	4	1
+D	Width/width.mgn	ascii51	4	1
+D	Width/width.mgn	ascii52	4	1
+D	Width/width.mgn	ascii53	4	1
+D	Width/width.mgn	ascii54	4	1
+D	Width/width.mgn	ascii55	4	1
+D	Width/width.mgn	ascii56	4	1
+D	Width/width.mgn	ascii57	4	1
+D	Width/width.mgn	ascii58	4	1
+D	Width/width.mgn	ascii59	4	1
+D	Width/width.mgn	ascii60	4	1
+D	Width/width.mgn	ascii61	4	1
+D	Width/width.mgn	ascii62	4	1
+D	Width/width.mgn	ascii63	4	1
+D	Width/width.mgn	ascii64	4	1
+D	Width/width.mgn	ascii65	4	1
+D	Width/width.mgn	ascii66	4	1
+D	Width/width.mgn	ascii67	4	1
+D	Width/width.mgn	ascii68	4	1
+D	Width/width.mgn	ascii69	4	1
+D	Width/width.mgn	ascii70	4	1
+D	Width/width.mgn	ascii71	4	1
+D	Width/width.mgn	ascii72	4	1
+D	Width/width.mgn	ascii73	4	1
+D	Width/width.mgn	ascii74	4	1
+D	Width/width.mgn	ascii75	4	1
+D	Width/width.mgn	ascii76	4	1
+D	Width/width.mgn	ascii77	4	1
+D	Width/width.mgn	ascii78	4	1
+D	Width/width.mgn	ascii79	4	1
+D	Width/width.mgn	ascii80	4	1
+D	Width/width.mgn	ascii81	4	1
+D	Width/width.mgn	ascii82	4	1
+D	Width/width.mgn	ascii83	4	1
+D	Width/width.mgn	ascii84	4	1
+D	Width/width.mgn	ascii85	4	1
+D	Width/width.mgn	ascii86	4	1
+D	Width/width.mgn	ascii87	4	1
+D	Width/width.mgn	ascii88	4	1
+D	Width/width.mgn	ascii89	4	1
+D	Width/width.mgn	ascii90	4	1
+D	Width/width.mgn	ascii91	4	1
+D	Width/width.mgn	ascii92	4	1
+D	Width/width.mgn	ascii93	4	1
+D	Width/width.mgn	ascii94	4	1
+D	Width/width.mgn	ascii95	4	1
+D	Width/width.mgn	ascii96	4	1
+D	Width/width.mgn	ascii97	4	1
+D	Width/width.mgn	ascii98	4	1
+D	Width/width.mgn	ascii99	4	1
+D	Width/width.mgn	ascii100	4	1
+D	Width/width.mgn	ascii101	4	1
+D	Width/width.mgn	ascii102	4	1
+D	Width/width.mgn	ascii103	4	1
+D	Width/width.mgn	ascii104	4	1
+D	Width/width.mgn	ascii105	4	1
+D	Width/width.mgn	ascii106	4	1
+D	Width/width.mgn	ascii107	4	1
+D	Width/width.mgn	ascii108	4	1
+D	Width/width.mgn	ascii109	4	1
+D	Width/width.mgn	ascii110	4	1
+D	Width/width.mgn	ascii111	4	1
+D	Width/width.mgn	ascii112	4	1
+D	Width/width.mgn	ascii113	4	1
+D	Width/width.mgn	ascii114	4	1
+D	Width/width.mgn	ascii115	4	1
+D	Width/width.mgn	ascii116	4	1
+D	Width/width.mgn	ascii117	4	1
+D	Width/width.mgn	ascii118	4	1
+D	Width/width.mgn	ascii119	4	1
+D	Width/width.mgn	ascii120	4	1
+D	Width/width.mgn	ascii121	4	1
+D	Width/width.mgn	ascii122	4	1
+D	Width/width.mgn	ascii123	4	1
+D	Width/width.mgn	ascii124	4	1
+D	Width/width.mgn	ascii125	4	1
+D	Width/width.mgn	ascii126	4	1
+D	Width/width.mgn	ascii127	4	1
+D	Width/width.mgn	scalarWidth	4	1
+M	mgnc.mgn
+D	mgnc.mgn	main	4	1

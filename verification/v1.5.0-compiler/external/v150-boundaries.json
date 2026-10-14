@@ -1,0 +1,289 @@
+{
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "records": [
+    {
+      "case": "C150-A02-type",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:82 [81,82): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A02-type-parse",
+      "command": "parse",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-A02-name",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:83 [82,89): runtime name is not visible\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A02-name-parse",
+      "command": "parse",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-A03-product",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-A03-product-parse",
+      "command": "parse",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-B02-parameter",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:87 [86,90): binding shadows a visible or reserved name\n",
+      "passed": true
+    },
+    {
+      "case": "C150-B05-parameter",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:83 [82,86): cannot assign an immutable or captured binding\n",
+      "passed": true
+    },
+    {
+      "case": "C150-B06-standard",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:78 [77,86): runtime name is not visible\n",
+      "passed": true
+    },
+    {
+      "case": "C150-B09-simple",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-B10-case",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-C06-other-sum",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:141 [140,141): pattern belongs to a different Sum identity\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C06-binder",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:136 [135,136): payload binder type mismatch\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C07-arity",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:130 [129,130): call argument arity mismatch\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C07-return",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:90 [89,93): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C11-outer",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-C13-continue",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:127 [126,134): control transfer has no enclosing loop\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D02-below",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:56 [55,74): integer literal is outside Int range\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D02-above",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:55 [54,73): integer literal is outside Int range\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D04-runtime",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:183 [182,183): generic argument kind mismatch\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D05-arithmetic",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:47 [46,47): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D06-uninstantiated",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-D09-owner",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-D14-64",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-D14-63",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:190 [189,191): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E13-value",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "SC150-A03-storage",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "SC150-A08-call",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:117 [116,128): compile-time declaration requires its declared application form\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-A08-convert",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:120 [119,128): integer conversion target must be an integer type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-0",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-1",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: InvalidPath: empty or NUL-containing path\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-2",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: src: source requires .mgn extension\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-3",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-4",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A04-5",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: cli: other.toml: source requires .mgn extension\n",
+      "passed": true
+    },
+    {
+      "case": "C150-A07",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-E10-definition-site",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-D08-import-obligation",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:122 [121,122): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E09-diamond",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-F05-True",
+      "exit": 2,
+      "passed": true
+    },
+    {
+      "case": "C150-F05-False",
+      "exit": 2,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

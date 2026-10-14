@@ -1,0 +1,15 @@
+newfstatat 1 True
+newfstatat 2 True
+newfstatat 11 True
+openat 1 True
+openat 2 True
+read 1 True
+read 2 True
+read 6 True
+getdents64 1 True
+getdents64 2 True
+getdents64 4 True
+close 1 True
+close 2 True
+close 5 True
+V150_PROJECT_FAULTS_OK checks=14

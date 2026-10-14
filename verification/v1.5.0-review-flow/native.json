@@ -1,0 +1,1054 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "checks": 90,
+  "records": [
+    {
+      "fixture": "zero",
+      "source_sha256": "b9cf46170a53bfdc15c2c47267000835f5ecaa6b9c0c266d149511150ed90aa0",
+      "artifact_sha256": "ff9f22d6cceca1239bd5c3f4dba67ed06fef69825591d73d741c895eb4714e21",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "source_sha256": "a2a18866e81e22e122b26f038537df8ead204b3f7034e080974bc4fcdb6723ad",
+      "artifact_sha256": "0a4c6aee69ea8bcbb740dbba3c8be71fb18053e05173e851dc9ce8c3cc4ca4a2",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "max-exit",
+      "source_sha256": "0e538699600b2dcfa71232c1950491b38f173bf9e3c58b441ae6b83aeb2bc4d3",
+      "artifact_sha256": "5e540d7f0a2a292a13355dddda2e001519ec91d8494f3d47c9937f0e733b1748",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 255,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "argc",
+      "source_sha256": "efa0ea0507015b24105add13144e80c7c23caf526ae6ed7ea129363a27205d5b",
+      "artifact_sha256": "7add808371502c68b9e6caf758ca05ffa6dd2d9335132865b76c1e771bd811a8",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 3,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "invalid-low",
+      "source_sha256": "1fb995b1e28a29d91aa632c386f2a8f976d74b33d58034d3dc09ca24fdc1321a",
+      "artifact_sha256": "f948b9dfed3c29c13de449e0e2f2a06720b1372548d4381f2eb7f235b9cd94da",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e76616c69642065786974207374617475730a"
+    },
+    {
+      "fixture": "invalid-high",
+      "source_sha256": "76c501137d9777ba1604f7cb9a7cad852cf2bddb74014b3811fe0dccf855593d",
+      "artifact_sha256": "df62532fc332a11fb34bab48fadaa72e0d2d22f062bd15f1c02707724e2423c2",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e76616c69642065786974207374617475730a"
+    },
+    {
+      "fixture": "compare-0",
+      "source_sha256": "ade297d23869dbcd0a6e9ec039a7293e37d0614df3ca30d49cf2bbdb735598af",
+      "artifact_sha256": "eaace0845e4505760cf78228f9cebf1b34d97d52bbdee66091c4e4874c37896f",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-1",
+      "source_sha256": "f9808ebd4dcedc4c89aaa85ceaed2023f93ab4ff258e886bd2382ac4c2987056",
+      "artifact_sha256": "c454d9a974dcd4b82be8d555f8469af7086348fc6b52c8ef37f76b3404e537fb",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-2",
+      "source_sha256": "d89664d7cd67db15b95830ed45f680df28ec8ebeac42a1d2396650af7a02aa41",
+      "artifact_sha256": "c22acde31c66294a4a8a7f84e795d2f93186a2702483fe9638868f832fac830e",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-3",
+      "source_sha256": "f259920d28795b7ba86a986d79cf57f719ebe96aa73c2ee5812dc4ad56dd6432",
+      "artifact_sha256": "d95c9ccf713d35192490e1643b9e7b8919fbfde01a7adfdc7b3a8243bd3c03d1",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-4",
+      "source_sha256": "5f25bb8268c950e8573c83b2466bb51c481e644e2f85e0ce42d019aaa5c4d5e3",
+      "artifact_sha256": "f2e4352a91526039032b43b9027d236e2a2da30209d65d443c2cbdf0235c0e49",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-5",
+      "source_sha256": "6695031f86009c07e6ad306ec67a78f090dc396d583611e0e2ccbfb343bf83f1",
+      "artifact_sha256": "e44aa1c62ac3e84dae1901e05d89e1c2450f8682b9b9dd3e5ce93e2bbb3540d7",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-6",
+      "source_sha256": "36dccfb295749a722a00c891ac989cf2f932bac4e17424caa2f69ebccc550fc6",
+      "artifact_sha256": "f2f263239c8426f37c767fd0aa7484aa450b9d958cfa4e638cee2f194584912a",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-7",
+      "source_sha256": "7b5679c84d98401d4fc1a9292036f49454799ed7c312883d1c92efe47cb96eca",
+      "artifact_sha256": "41520d225cd7b6477cab5497316777c55181f949b6d9ac9f5bd1eef0433fd3d2",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-8",
+      "source_sha256": "09cdbda46c5c4eb82b70c567f783b2978506883cbb4afeab1940842df68a6ad4",
+      "artifact_sha256": "ea374c9c3197e47c730c9f3d423e04f2d545ab9b7b573ea2301852d91c7664ad",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-9",
+      "source_sha256": "5422e725e2c8fc4ccc29269b48c07ef77d4fdad069211525d537f86b14b4e3a7",
+      "artifact_sha256": "02bbcc2ad7d857381478b7ebbaa526b17aebfb9bb895ad6bff02644f5e65ddc7",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-10",
+      "source_sha256": "b12668ab08fdd84c176daa6f441fb2fdebe012cdc02920425fba434e7428b93f",
+      "artifact_sha256": "58b84f94390befd703d5ed278791aac893579a3332d8a5a73bb8965736db7094",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-11",
+      "source_sha256": "4fcc40ebbc016cbfc450acf238463593fc9e4fda62f5f0bd060ef6f27a79c866",
+      "artifact_sha256": "62178dde7ced5fac596499353f47465ec775a86239efb884d4be5145a8a0f59c",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "compare-12",
+      "source_sha256": "de191d60525783e70cd247aa9752ba2a17e3c022f09ece151337324dd77a1c13",
+      "artifact_sha256": "db12bc539cee305fdaab6302dbb10d23faeedb64067458d1bae0351cf2065233",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "overflow-0",
+      "source_sha256": "dfa99d5cd88cb9e2dc390702d12f40af4a2aa9114d05113cb3786457a11818e3",
+      "artifact_sha256": "0969dc1a36d224fc96f1fc414882abd27895363c8ed167b71e8c9140fb865799",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e7465676572206f766572666c6f770a"
+    },
+    {
+      "fixture": "overflow-1",
+      "source_sha256": "7c94075a47a8fdd2f9777a15dfb425fef9c4975367441d62ce4113c9489b5fbc",
+      "artifact_sha256": "d77c0fb2c31ea8176923fd911c1579b87122e4b0db9205d0715c4d7c22ef3126",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e7465676572206f766572666c6f770a"
+    },
+    {
+      "fixture": "overflow-2",
+      "source_sha256": "c371e40da7cc1319be54a925650cf9aeb533eb755e4af36b92ec260435d59ee7",
+      "artifact_sha256": "3c4f45720b3bcf345eca4a2ea1e559922aab7eb449ccb834100282e88d114767",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e7465676572206f766572666c6f770a"
+    },
+    {
+      "fixture": "overflow-3",
+      "source_sha256": "449b74262e271b7c31a5087e89b0fc691da28684e6808ee8694e0a750503e2b8",
+      "artifact_sha256": "9889b249a239cdaca3f8dd05c998408254598ed24399d05f85adb7acf746d5b3",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e7465676572206f766572666c6f770a"
+    },
+    {
+      "fixture": "overflow-4",
+      "source_sha256": "cd2919c16dea603707edacba4d4a9a46a3ba65e99c9f5d1d02f95ad414703278",
+      "artifact_sha256": "0c3b331e601143cddc5926436ee58896176b9e89d3b8e915e1507db90ccc1e88",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a20696e7465676572206f766572666c6f770a"
+    },
+    {
+      "fixture": "zero-div-0",
+      "source_sha256": "671792612a90199b95122930d210ccdb6201f077cbabb35ce2de525f4ab9c1c5",
+      "artifact_sha256": "7057e982c60dd75d51a7ed826df85cd570a94b48d0ce962054fe06c342e63942",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a206469766973696f6e206279207a65726f0a"
+    },
+    {
+      "fixture": "zero-div-1",
+      "source_sha256": "e28dc1dd0f90592ef3411837e8a72109ffef5a1eaea10a8e6d950e9f5e764707",
+      "artifact_sha256": "a973b721dd7ada062ea85a4e8ec2752df38c40337596d6701e7a976fc9d6bcfe",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a206469766973696f6e206279207a65726f0a"
+    },
+    {
+      "fixture": "operand-order",
+      "source_sha256": "f7410bb00ffd0f08b89153f5ea00c09749188c976dc4c9c7980c164bf6d8d2ed",
+      "artifact_sha256": "ea731b37993379d87d6dbb972bc8e8101a53ce83aabd12946d847f49237bf22c",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 9,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "snapshot-left",
+      "source_sha256": "3147f86104b6f5fbc16e6f639d682fbc1425b657e1802bfd828d5624a369e994",
+      "artifact_sha256": "2742eff021e7d9d6dd218415ac94dee33c745f7eee34e349e5181ed8abee0231",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 6,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "first-failure",
+      "source_sha256": "bbcd7c5eb84bbf1fb71fde7f7a30b9298ad24225b6aa769059d373a7258fe522",
+      "artifact_sha256": "011376587449fe47552c76893eac25060d1371e4510591b7475250302819410d",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d65206572726f723a206469766973696f6e206279207a65726f0a"
+    },
+    {
+      "fixture": "short-and",
+      "source_sha256": "968cd334d6e911bee8ed4ea41ee92637716e3c53c9cd4ffa71dc688872174c78",
+      "artifact_sha256": "65d44222e88fb3427dc1c63c0af470182ac5f5d90870e30266e7fd5d06be346f",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "short-or",
+      "source_sha256": "3d1510e43f51ccd4a2ec87a1d64f08edad3a106a9b4d5146683b02756437bf4f",
+      "artifact_sha256": "ff368a538f4c249e14e53d6e7056906fe7d4a467006fb5c07f019d35add7b192",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "branch-order",
+      "source_sha256": "73afb62383a27be539876bd9bb5a9f5ad1f478b6b80119fe9e218a7f7f5db9b7",
+      "artifact_sha256": "f23fd69fd1d8c505115fde4ba2768501e44dfd557d99b006bd3ff17e90a7e3dc",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 8,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "non-completion",
+      "source_sha256": "1536f58ea9ccdf3b9bef29c0c41d1a502b61efe0e232c62d8a480a81d3130861",
+      "artifact_sha256": "05d2ba8c3301116083adaa9f37c2c63362104886379ee25dafd37ad147d4a75b",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "loop",
+      "source_sha256": "4540621e34d367932b954bd222b5f39b55fe6617062720882b7628c962ea39b9",
+      "artifact_sha256": "8932b4045d428c471adfbfd44554ac8d4f6e113f92dd9a7c4b40b495285d89fb",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 3,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "loop-control",
+      "source_sha256": "8b1f60699c94151d8ba9b8a2c8f1fff6edafcea53725b52bb839c366bbef9b1a",
+      "artifact_sha256": "3c6f06733377efbc84bce6c1f1b3385a7bbb1cccf02e531ee2e930760e0f1da8",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 4,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "loop-return",
+      "source_sha256": "5787eef6001db7cca5a2f6af44dd62ddc748d1490adf9b0cf9fdcf12db0d31c6",
+      "artifact_sha256": "050a31be42b539c53278d9a15843d0bbf8b160282738317fe1a370ea7a1ff4e9",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "nested",
+      "source_sha256": "75c33a305c88e61fd6ea9b32e1d3fd13b32f226ff056063e7af270721fcabe3c",
+      "artifact_sha256": "dd87926da02887ac86d0432cafed240202eb83ce79167b0f3fdd0951cdd5cba5",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 3,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "condition-break",
+      "source_sha256": "f73fe4baa4174a8e3bb2eb06088c1cfa03ea4e7acc5703bac388b9fc8afe564f",
+      "artifact_sha256": "bfbe4d439f6fb869b7a1df2e0029bfeea71902b7ebd852008da5c584c38d7047",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "condition-continue",
+      "source_sha256": "a0046aeb66fa6dc51015bdc82c32c921aaba879c1c054e4c713b7a4f7d5248a1",
+      "artifact_sha256": "fdec1d78a100cacb12477d04130b098f3daf651b33a3beb3ab001ac2dd6b6618",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "unselected-overflow",
+      "source_sha256": "479f10687a110d5b9b03e06482f7643b7f33a6de97c1243bc9ad1fbf0ff85057",
+      "artifact_sha256": "87a6d17d2b1cb7af1468878dcbc5ca4e78e8b845fc9cf21aba222c0fe4078eee",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "unit",
+      "source_sha256": "3fa1db8c143cf443e460b03423234d9a53588bcea59dbdad609c8592d2a1fb92",
+      "artifact_sha256": "bf800e938f2d3ec2a273a8098beb7f9902b50d1570492585ce62d88bd0df1315",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "call-order",
+      "source_sha256": "a6d2e5ae0803e7de32490afade0abc5ba0b3ddc5be93d8eebd2bfee2d15ed8fe",
+      "artifact_sha256": "cb50eac8613801fe82f0451cc7059b9706241b25d48c982303342d205247141a",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 12,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "call-snapshot",
+      "source_sha256": "f93249d37135b2fec542fa322cf001e66878f6b7b3acd5072cc75fe9323ca064",
+      "artifact_sha256": "f1a0b601ac10f8e81a01d1b4abe1150164269280dc7b38786f285f060107c977",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 13,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "unit-call",
+      "source_sha256": "438b8e4cb4e43878a30cadd20f416c640fd386f02c937f3a2eebf84ceb861765",
+      "artifact_sha256": "0b2541f24d9784e70ae0455dbf8449bc966995bf94e110be6538cf92e9e01e5a",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "bool-call",
+      "source_sha256": "5a5ce56f93585fe521b974ce0638902671ef981bc749f6c3a57e75507cc572e0",
+      "artifact_sha256": "4c878dc6399b7dab1f0f4f9fed73f315b791b93c04886df228236599f153674c",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "nested-call",
+      "source_sha256": "f37fd723711d77401fde1c95b19969e644a1d9848846ed8b6b0ad1df67aa41b0",
+      "artifact_sha256": "f33b26a0107089e57eae84ef8c48667cc29762f18c7f4a68c8108a78573aa432",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 5,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "many-args",
+      "source_sha256": "ae7b3d9b60e939d6588f4cfdec638bb77fc01c4942974605368ec0f664661455",
+      "artifact_sha256": "e942e61df2ee634f43f745508ad07dfdddce7a40dc7f923a03f28d6c1ee49dcc",
+      "mode": "0o775",
+      "argv_hex": [
+        "61",
+        "62",
+        "63"
+      ],
+      "exit": 36,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "20",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "2d2d",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e697a5e69cace8aa9e",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "7f",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "c280",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "dfbf",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e0a080",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "ed9fbf",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "ee8080",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "efbfbf",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f0908080",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f48fbfbf",
+        "62"
+      ],
+      "exit": 7,
+      "stdout_hex": "",
+      "stderr_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "80",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "bf",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "c080",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "c1bf",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "c2",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e09fbf",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "eda080",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f08fbfbf",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f4908080",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f5808080",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "ff",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e1",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e180",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f18080",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "c261",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "e18061",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "61",
+        "f1808061",
+        "62"
+      ],
+      "exit": 2,
+      "stdout_hex": "",
+      "stderr_hex": "72756e74696d653a20696e76616c6964205554462d382072756e74696d6520617267756d656e740a"
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [],
+      "stderr_fault": "closed",
+      "exit": 7,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "zero-div-0",
+      "argv_hex": [],
+      "stderr_fault": "closed",
+      "exit": 4,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "overflow-0",
+      "argv_hex": [],
+      "stderr_fault": "closed",
+      "exit": 4,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "ff"
+      ],
+      "stderr_fault": "closed",
+      "exit": 2,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [],
+      "stderr_fault": "pipe",
+      "exit": 7,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "zero-div-0",
+      "argv_hex": [],
+      "stderr_fault": "pipe",
+      "exit": 4,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "overflow-0",
+      "argv_hex": [],
+      "stderr_fault": "pipe",
+      "exit": 4,
+      "stdout_hex": ""
+    },
+    {
+      "fixture": "seven",
+      "argv_hex": [
+        "ff"
+      ],
+      "stderr_fault": "pipe",
+      "exit": 2,
+      "stdout_hex": ""
+    }
+  ]
+}

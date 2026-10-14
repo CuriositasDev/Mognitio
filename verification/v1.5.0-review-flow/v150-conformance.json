@@ -1,0 +1,1057 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "records": [
+    {
+      "case": "C150-B03",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03047664900077507,
+      "passed": true
+    },
+    {
+      "case": "C150-B03",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-B04-forward",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.0313963060034439,
+      "passed": true
+    },
+    {
+      "case": "C150-B04-forward",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:21 [20,21): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-B07",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03293694701278582,
+      "passed": true
+    },
+    {
+      "case": "C150-B07",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:24 [23,27): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-B09-chain",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:122 [121,122): comparison operators do not chain\n",
+      "seconds": 0.03160428203409538,
+      "passed": true
+    },
+    {
+      "case": "C150-B09-chain",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:122 [121,122): comparison operators do not chain\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C01-nominal",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:125 [124,125): expression type does not match required type\n",
+      "seconds": 0.05191779602319002,
+      "passed": true
+    },
+    {
+      "case": "C150-C01-nominal",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:125 [124,125): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C01-alias",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.04499627300538123,
+      "passed": true
+    },
+    {
+      "case": "C150-C01-alias",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,20): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C02-empty",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.02980655897408724,
+      "passed": true
+    },
+    {
+      "case": "C150-C02-empty",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,24): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C02-empty-sum",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:20 [19,24): Sum requires at least one variant\n",
+      "seconds": 0.025767000974155962,
+      "passed": true
+    },
+    {
+      "case": "C150-C02-empty-sum",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:20 [19,24): Sum requires at least one variant\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C03-unknown",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:120 [119,124): unknown field or variant\n",
+      "seconds": 0.030859852966386825,
+      "passed": true
+    },
+    {
+      "case": "C150-C03-unknown",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:120 [119,124): unknown field or variant\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C04",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.04226950800511986,
+      "passed": true
+    },
+    {
+      "case": "C150-C04",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,20): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C05-unknown",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:109 [108,115): unknown field or variant\n",
+      "seconds": 0.030562956002540886,
+      "passed": true
+    },
+    {
+      "case": "C150-C05-unknown",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:109 [108,115): unknown field or variant\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C05-missing",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:114 [113,114): variant requires one payload\n",
+      "seconds": 0.030420991010032594,
+      "passed": true
+    },
+    {
+      "case": "C150-C05-missing",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:114 [113,114): variant requires one payload\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C05-extra",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:109 [108,109): variant has no payload\n",
+      "seconds": 0.030644514015875757,
+      "passed": true
+    },
+    {
+      "case": "C150-C05-extra",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:109 [108,109): variant has no payload\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C06-ignored-payload",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.046108990034554154,
+      "passed": true
+    },
+    {
+      "case": "C150-C06-ignored-payload",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,20): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C06-alias-duplicate",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:144 [143,144): duplicate branch variant\n",
+      "seconds": 0.03316950105363503,
+      "passed": true
+    },
+    {
+      "case": "C150-C06-alias-duplicate",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:144 [143,144): duplicate branch variant\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C08-List<A>",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:28 [27,28): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "seconds": 0.02696817897958681,
+      "passed": true
+    },
+    {
+      "case": "C150-C08-List<A>",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:28 [27,28): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C08-Result<Int,A>",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:34 [33,34): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "seconds": 0.023403057013638318,
+      "passed": true
+    },
+    {
+      "case": "C150-C08-Result<Int,A>",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:34 [33,34): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C08-Function():A",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:34 [33,34): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "seconds": 0.026532702962867916,
+      "passed": true
+    },
+    {
+      "case": "C150-C08-Function():A",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:34 [33,34): cyclic named type dependency through <temporary>/case.mgn / A\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C10-ambiguous",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:83 [82,87): operator cannot be selected from unknown operand structures\n",
+      "seconds": 0.027434756979346275,
+      "passed": true
+    },
+    {
+      "case": "C150-C10-ambiguous",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:83 [82,87): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C11-while",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:95 [94,99): control transfer has no enclosing loop\n",
+      "seconds": 0.026784387009683996,
+      "passed": true
+    },
+    {
+      "case": "C150-C11-while",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:95 [94,99): control transfer has no enclosing loop\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C11-over",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:94 [93,101): control transfer has no enclosing loop\n",
+      "seconds": 0.028525214991532266,
+      "passed": true
+    },
+    {
+      "case": "C150-C11-over",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:94 [93,101): control transfer has no enclosing loop\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C12-reference",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:93 [92,93): runtime name is not visible\n",
+      "seconds": 0.028444128984119743,
+      "passed": true
+    },
+    {
+      "case": "C150-C12-reference",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:93 [92,93): runtime name is not visible\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C12-reserved",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:98 [97,98): binding shadows a visible or reserved name\n",
+      "seconds": 0.03220971400151029,
+      "passed": true
+    },
+    {
+      "case": "C150-C12-reserved",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:98 [97,98): binding shadows a visible or reserved name\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C14-try",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:83 [82,85): try requires Result operand and function return types\n",
+      "seconds": 0.029182929021771997,
+      "passed": true
+    },
+    {
+      "case": "C150-C14-try",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:83 [82,85): try requires Result operand and function return types\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C14-panic",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:88 [87,88): expression type does not match required type\n",
+      "seconds": 0.04196823202073574,
+      "passed": true
+    },
+    {
+      "case": "C150-C14-panic",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:88 [87,88): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-C16-overflow",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.04139607201796025,
+      "passed": true
+    },
+    {
+      "case": "C150-C16-overflow",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-C16-divzero",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.027106320019811392,
+      "passed": true
+    },
+    {
+      "case": "C150-C16-divzero",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "C150-D01-kind",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:136 [135,136): generic argument kind mismatch\n",
+      "seconds": 0.03167996898991987,
+      "passed": true
+    },
+    {
+      "case": "C150-D01-kind",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:136 [135,136): generic argument kind mismatch\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D01-bare",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:93 [92,100): name kind does not permit this expression\n",
+      "seconds": 0.03067618701606989,
+      "passed": true
+    },
+    {
+      "case": "C150-D01-bare",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:93 [92,100): name kind does not permit this expression\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D01-arity",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:133 [132,134): all generic arguments must be supplied with matching arity\n",
+      "seconds": 0.032233852019999176,
+      "passed": true
+    },
+    {
+      "case": "C150-D01-arity",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:133 [132,134): all generic arguments must be supplied with matching arity\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D02--1",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.0327228470123373,
+      "passed": true
+    },
+    {
+      "case": "C150-D02--1",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,22): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D02--0",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.031838756054639816,
+      "passed": true
+    },
+    {
+      "case": "C150-D02--0",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,22): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D02--9223372036854775808",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.046401100989896804,
+      "passed": true
+    },
+    {
+      "case": "C150-D02--9223372036854775808",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:20 [19,22): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-1",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.031777481955941767,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-1",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:144 [143,143): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-7",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03325683198636398,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-7",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:144 [143,143): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-8",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03303233801852912,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-8",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:144 [143,143): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-63",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.031424591958057135,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-63",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:146 [145,145): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-64",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.030948387982789427,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-64",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:146 [145,145): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-0",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,117): generic width or literal range requirement is not satisfied\n",
+      "seconds": 0.030064928985666484,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-0",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,117): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03-65",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,118): generic width or literal range requirement is not satisfied\n",
+      "seconds": 0.030383322038687766,
+      "passed": true
+    },
+    {
+      "case": "C150-D03-65",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,118): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D03--1",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,117): generic width or literal range requirement is not satisfied\n",
+      "seconds": 0.03092856501461938,
+      "passed": true
+    },
+    {
+      "case": "C150-D03--1",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:117 [116,117): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D04-1+7",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:75 [74,75): no complete structural derivation\n",
+      "seconds": 0.0017180629656650126,
+      "passed": true
+    },
+    {
+      "case": "C150-D04-1+7",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:75 [74,75): no complete structural derivation\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D04--N",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:75 [74,75): no complete structural derivation\n",
+      "seconds": 0.0013814799604006112,
+      "passed": true
+    },
+    {
+      "case": "C150-D04--N",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: parse: <temporary>/case.mgn:1:75 [74,75): no complete structural derivation\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D07-7",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:274 [273,274): generic width or literal range requirement is not satisfied\n",
+      "seconds": 0.040298054984305054,
+      "passed": true
+    },
+    {
+      "case": "C150-D07-7",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:274 [273,274): generic width or literal range requirement is not satisfied\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D07-8",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.04209137300495058,
+      "passed": true
+    },
+    {
+      "case": "C150-D07-8",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:292 [291,291): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D09-shadow",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:45 [44,45): generic parameter shadows a visible compile-time name\n",
+      "seconds": 0.026613528025336564,
+      "passed": true
+    },
+    {
+      "case": "C150-D09-shadow",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:45 [44,45): generic parameter shadows a visible compile-time name\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D10-changing",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:54 [53,56): cyclic template dependency through <temporary>/case.mgn / bad\n",
+      "seconds": 0.030719705973751843,
+      "passed": true
+    },
+    {
+      "case": "C150-D10-changing",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:54 [53,56): cyclic template dependency through <temporary>/case.mgn / bad\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D11-method",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:94 [93,102): integer conversion target must be an integer type\n",
+      "seconds": 0.028330423985607922,
+      "passed": true
+    },
+    {
+      "case": "C150-D11-method",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:94 [93,102): integer conversion target must be an integer type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D11-unknown",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:94 [93,100): unknown builtin method\n",
+      "seconds": 0.02809329895535484,
+      "passed": true
+    },
+    {
+      "case": "C150-D11-unknown",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:94 [93,100): unknown builtin method\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D12-impossible",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:85 [84,104): typed literal fits no allowed width\n",
+      "seconds": 0.03077048301929608,
+      "passed": true
+    },
+    {
+      "case": "C150-D12-impossible",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:85 [84,104): typed literal fits no allowed width\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D13-alias",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:102 [101,121): typed literal fits no allowed width\n",
+      "seconds": 0.03242383600445464,
+      "passed": true
+    },
+    {
+      "case": "C150-D13-alias",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:102 [101,121): typed literal fits no allowed width\n",
+      "passed": true
+    },
+    {
+      "case": "C150-D14-declaration",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.0318319050129503,
+      "passed": true
+    },
+    {
+      "case": "C150-D14-declaration",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:180 [179,179): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E11-unknown",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:27 [26,33): public import is not defined\n",
+      "seconds": 0.024076537985820323,
+      "passed": true
+    },
+    {
+      "case": "C150-E11-unknown",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:27 [26,33): public import is not defined\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E11-implicit",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:91 [90,101): runtime name is not visible\n",
+      "seconds": 0.027488983992952853,
+      "passed": true
+    },
+    {
+      "case": "C150-E11-implicit",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:91 [90,101): runtime name is not visible\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E11-wrong",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:128 [127,128): expression type does not match required type\n",
+      "seconds": 0.02870367799187079,
+      "passed": true
+    },
+    {
+      "case": "C150-E11-wrong",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:128 [127,128): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E13-alias",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.030364847974851727,
+      "passed": true
+    },
+    {
+      "case": "C150-E13-alias",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:21 [20,24): top-level declaration is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-A01",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.040287830983288586,
+      "passed": true
+    },
+    {
+      "case": "SC150-A01",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:424 [423,423): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-A07-<",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:201 [200,201): operator is not defined for this type structure\n",
+      "seconds": 0.0312346660066396,
+      "passed": true
+    },
+    {
+      "case": "SC150-A07-<",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:201 [200,201): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-A07-+",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:201 [200,201): operator is not defined for this type structure\n",
+      "seconds": 0.030563022010028362,
+      "passed": true
+    },
+    {
+      "case": "SC150-A07-+",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:201 [200,201): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-B12-error-construct",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.0474758530035615,
+      "passed": true
+    },
+    {
+      "case": "SC150-B12-error-construct",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <temporary>/case.mgn:1:187 [186,186): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "SC150-B12-error-try",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:194 [193,196): try error type does not match enclosing Result\n",
+      "seconds": 0.03601956699276343,
+      "passed": true
+    },
+    {
+      "case": "SC150-B12-error-try",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:194 [193,196): try error type does not match enclosing Result\n",
+      "passed": true
+    },
+    {
+      "case": "C150-E02-unused-invalid",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/Other/bad.mgn:1:36 [35,40): expression type does not match required type\n",
+      "seconds": 0.028197697014547884,
+      "passed": true
+    },
+    {
+      "case": "C150-E05-explicit",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.030889284040313214,
+      "passed": true
+    },
+    {
+      "case": "C150-E05-no-use",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/app.mgn:1:83 [82,83): runtime name is not visible\n",
+      "seconds": 0.0293953669606708,
+      "passed": true
+    },
+    {
+      "case": "C150-E06-alias-duplicate",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/app.mgn:1:35 [34,35): duplicate import name or original declaration\n",
+      "seconds": 0.023703299986664206,
+      "passed": true
+    },
+    {
+      "case": "C150-E07-alias",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03722997900331393,
+      "passed": true
+    },
+    {
+      "case": "C150-E08-private",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/Lib/one.mgn:1:54 [53,57): public signature exposes a private nominal type\n",
+      "seconds": 0.04576413601171225,
+      "passed": true
+    },
+    {
+      "case": "C150-E09-cycle",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/B/b.mgn:1:28 [27,28): cyclic source imports through src/A/a.mgn\n",
+      "seconds": 0.023787673970218748,
+      "passed": true
+    },
+    {
+      "case": "C150-B08-import-template",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.041820586018729955,
+      "passed": true
+    },
+    {
+      "case": "C150-A06",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.029939979955088347,
+      "passed": true
+    },
+    {
+      "case": "C150-F03-utf8",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: source: <temporary>/case.mgn: position unknown: readTextFile / InvalidEncoding / Body\n",
+      "seconds": 0.0011807389673776925,
+      "passed": true
+    },
+    {
+      "case": "C150-F03-bom",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: source: <temporary>/case.mgn:1:1 [0,3): BOM is not allowed\n",
+      "seconds": 0.016103013011161238,
+      "passed": true
+    },
+    {
+      "case": "C150-F03-escape",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: lexical: <temporary>/case.mgn:1:93 [92,93): invalid escape\n",
+      "seconds": 0.0013345180195756257,
+      "passed": true
+    },
+    {
+      "case": "C150-F03-eof",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:15 [14,14): entry file has no main declaration\n",
+      "seconds": 0.02739271300379187,
+      "passed": true
+    },
+    {
+      "case": "C150-A05-with space.mgn",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.03992089896928519,
+      "passed": true
+    },
+    {
+      "case": "C150-A05--entry.mgn",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "seconds": 0.04274775099474937,
+      "passed": true
+    },
+    {
+      "case": "C150-A09-directory.mgn",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/directory.mgn: position unknown: readTextFile / UnsupportedTarget / Target\n",
+      "seconds": 0.0011810129508376122,
+      "passed": true
+    },
+    {
+      "case": "C150-A09-mognitio.toml",
+      "command": "check",
+      "exit": 2,
+      "stderr": "mgnc: io: <temporary>/mognitio.toml: position unknown: manifest must be a regular file without a symlink\n",
+      "seconds": 0.0009145850199274719,
+      "passed": true
+    }
+  ],
+  "failures": 0
+}

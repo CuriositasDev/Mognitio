@@ -1,0 +1,53 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "environment": {
+    "name": "26.04.1",
+    "os_release": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n",
+    "inventory_sha256": "bd02d9bf26a0be42856a59c421143c0793f706d5191834bd8896acc054a206e2",
+    "files": 5815,
+    "kernel": "7.0.0-38-generic"
+  },
+  "functional_only": true,
+  "records": [
+    {
+      "corpus": "C0",
+      "seconds": 101.9590072259889,
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "exec_count_including_sandbox": 2,
+      "input_unchanged": true,
+      "output_directory_unchanged": true,
+      "trace_sha256": "883c3980842b818c37e52a78c907d75c04011ce400ec87f237a54f0f7a6f957b",
+      "passed": true
+    },
+    {
+      "corpus": "C1",
+      "seconds": 308.4452612019959,
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "exec_count_including_sandbox": 2,
+      "input_unchanged": true,
+      "output_directory_unchanged": true,
+      "trace_sha256": "54da8f85b698c93c413cbd63303234952962593e909142c59d55d85db136e50f",
+      "passed": true
+    }
+  ],
+  "generation": {
+    "source_sha256": "bb15d3a59ce2610a2129ddbad0ba2e4adbc957a4d70b7b96885c8c206aa9387b",
+    "artifact_sha256": "d404d3859db92c8fc6b45267312b55d0f6da4c345dcb789f6db17faec331d36d",
+    "runtime": [
+      {
+        "arguments": 0,
+        "exit": 3
+      },
+      {
+        "arguments": 3,
+        "exit": 6
+      }
+    ],
+    "passed": true
+  },
+  "passed": true
+}

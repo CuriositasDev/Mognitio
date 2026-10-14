@@ -1,0 +1,17 @@
+{
+  "command": [
+    "sbcl",
+    "--noinform",
+    "--script",
+    "scripts/test.lisp"
+  ],
+  "exit": 0,
+  "lisp_groups": 232,
+  "assertions": 34098,
+  "processes": 1314,
+  "failures": 0,
+  "python_integration_complete": true,
+  "final_path_inspection_checks": 55,
+  "runtime_source_tree": "e859ab6a6eb1998a8f19303fb5ac6bbff7b833c8",
+  "test_driver_blob": "f53e960faf7a3d8918a98b69b92855bcca478a61"
+}

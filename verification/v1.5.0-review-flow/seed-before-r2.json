@@ -1,0 +1,19 @@
+[
+  {
+    "case": "neg",
+    "exit": 0,
+    "stderr": "",
+    "program_exit": 7
+  },
+  {
+    "case": "sub",
+    "exit": 0,
+    "stderr": "",
+    "program_exit": 7
+  },
+  {
+    "case": "sequence",
+    "exit": 1,
+    "stderr": "src/probe.mgn:1:45: semantic: Unreachable sequence element [bytes 44,115)\n"
+  }
+]

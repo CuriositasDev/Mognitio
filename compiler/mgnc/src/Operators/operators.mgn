@@ -22,7 +22,18 @@ public let resolve:Function(Store,Int,List<Node>,Span):Result<Operation,Diagnost
  branch when{logical=>{
   branch when{selected>=0&&selected!=2=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"logical operator requires Bool"));},else=>unit};
   return Result<Operation,Diagnostic>::Ok(Operation{valueType:2,normal:left->normal,name:branch when{rule==ruleUnaryNot=>"not",rule==ruleBinaryAnd=>"and",else=>"or"}});
- },selected<0=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"operator cannot be selected from unknown operand structures"));},else=>unit};
+ },else=>unit};
+ branch when{selected<0=>{
+  // No numeric specialization is supplied by Unknown. Use the ordinary
+  // operator domain; an annotation does not constrain these candidates.
+  let candidates:List<Int>=branch when{
+   rule==ruleBinaryAdd=>List<Int>[intKind,stringKind],
+   rule==ruleBinaryEq||rule==ruleBinaryNe=>List<Int>[intKind,boolKind,unitKind,stringKind,bytesKind,identityKind],
+   else=>List<Int>[intKind]
+  };
+  branch when{candidates->length()!=1=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"operator cannot be selected from unknown operand structures"));},else=>unit};
+  selected=branch on candidates->at(0){Result<Int,IndexError>::Ok(value:Int)=>value,Result<Int,IndexError>::Err(error:IndexError)=>{return Result<Operation,Diagnostic>::Err(problem("internal",span,"operator candidate invariant"));}};
+ },else=>unit};
  let shape:Type=try lookup<Type>(store->types,selected);let integer:Bool=shape->kind==intKind||shape->kind==fixedKind;
  let equality:Bool=rule==ruleBinaryEq||rule==ruleBinaryNe;
  let comparison:Bool=equality||rule==ruleBinaryLt||rule==ruleBinaryLe||rule==ruleBinaryGt||rule==ruleBinaryGe;

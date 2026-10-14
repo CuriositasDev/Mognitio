@@ -116,9 +116,17 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   branch when{module->standard=>{continue;},else=>unit};
   let bindings:BindingIndex=branch on lookup<BindingIndex>(contexts,file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  var reachable:Bool=true;
   loop over(module->declarations as id:Int){
    let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
-   branch when{declared->kind>=4=>{state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};},else=>unit};
+   branch when{declared->kind>=4=>{
+    branch when{!reachable=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,problem("semantic",declared->span,"unreachable module declaration")));},else=>unit};
+    state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};
+    let completed:BodyState=branch on lookup<BodyState>(state->bodies,id){Result<BodyState,Diagnostic>::Ok(value:BodyState)=>value,Result<BodyState,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+    let root:Int=branch on completed{BodyState::Complete(value:Int)=>value,BodyState::NotRequired=>{return Result<SemanticProject,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));},BodyState::Pending=>{return Result<SemanticProject,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));},BodyState::Checking=>{return Result<SemanticProject,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));}};
+    let initialized:Node=branch on lookup<Node>(state->nodes,root){Result<Node,Diagnostic>::Ok(value:Node)=>value,Result<Node,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+    reachable=initialized->normal;
+   },else=>unit};
   };
  };
  index=0;

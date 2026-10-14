@@ -1,0 +1,53 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "environment": {
+    "name": "24.04.5",
+    "os_release": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+    "inventory_sha256": "4077822376cddbc5baecea256cc516cef2525c6bbefb84daa3f1244d95a40f1f",
+    "files": 2762,
+    "kernel": "7.0.0-38-generic"
+  },
+  "functional_only": true,
+  "records": [
+    {
+      "corpus": "C0",
+      "seconds": 102.71593067795038,
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "exec_count_including_sandbox": 2,
+      "input_unchanged": true,
+      "output_directory_unchanged": true,
+      "trace_sha256": "524683e0dea6d58b90d95d6d323af4a706d93868dc8e6e124394be834a825c6c",
+      "passed": true
+    },
+    {
+      "corpus": "C1",
+      "seconds": 318.4063160410151,
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "exec_count_including_sandbox": 2,
+      "input_unchanged": true,
+      "output_directory_unchanged": true,
+      "trace_sha256": "a5b326ab041e3ad68f960a124dcdbf3be516dd107a8d1175c381f6b474e59f82",
+      "passed": true
+    }
+  ],
+  "generation": {
+    "source_sha256": "bb15d3a59ce2610a2129ddbad0ba2e4adbc957a4d70b7b96885c8c206aa9387b",
+    "artifact_sha256": "d404d3859db92c8fc6b45267312b55d0f6da4c345dcb789f6db17faec331d36d",
+    "runtime": [
+      {
+        "arguments": 0,
+        "exit": 3
+      },
+      {
+        "arguments": 3,
+        "exit": 6
+      }
+    ],
+    "passed": true
+  },
+  "passed": true
+}

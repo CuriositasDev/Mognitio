@@ -16,6 +16,12 @@ let test:Function():Result<Int,Diagnostic>=function():Result<Int,Diagnostic>{
  count=0;loop while(count<2048){branch when{(try get(table,count*257))!=count+99=>{return Result<Int,Diagnostic>::Ok(4);},else=>unit};count=count+1;};
  branch when{(try get(snapshot,0))!=0||(try get(snapshot,9223372036854775807))!=12=>{return Result<Int,Diagnostic>::Ok(5);},else=>unit};
  branch on get(table,-1){Result<Int,Diagnostic>::Ok(value:Int)=>{return Result<Int,Diagnostic>::Ok(6);},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{branch when{error->phase!="internal"=>{return Result<Int,Diagnostic>::Ok(7);},else=>unit};}};
- discard writeStdout("V150_INT_MAP_OK boundaries=13 updates=2048 snapshots=true\n");Result<Int,Diagnostic>::Ok(0)
+ let highSnapshot:Map=table;count=0;
+ loop while(count<32){table=try put(table,1048576+count*1048576,count);count=count+1;};
+ count=0;loop while(count<32){let old:Map=table;table=try put(table,1048576+count*1048576,-1);
+  branch when{(try get(old,1048576+count*1048576))!=count||(try get(table,1048576+count*1048576))!= -1=>{return Result<Int,Diagnostic>::Ok(9);},else=>unit};count=count+1;};
+ branch when{(try get(highSnapshot,1048576))!=10||(try get(table,1048577))!= -2=>{return Result<Int,Diagnostic>::Ok(10);},else=>unit};
+ branch on put(table,-1,0){Result<Map,Diagnostic>::Ok(value:Map)=>{return Result<Int,Diagnostic>::Ok(11);},Result<Map,Diagnostic>::Err(error:Diagnostic)=>unit};
+ discard writeStdout("V150_INT_MAP_OK boundaries=13 updates=2048 high_updates=64 snapshots=true\n");Result<Int,Diagnostic>::Ok(0)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Int,Diagnostic>::Ok(value:Int)=>value,Result<Int,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message);8}}};

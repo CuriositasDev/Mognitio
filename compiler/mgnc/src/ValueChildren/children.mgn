@@ -46,6 +46,9 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
    try available(state,scope,label->name,label->span,(try getNode(tree->nodes,try item(expression->children,next)))->start);
    let id:Int=state->symbols->count;state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:scope->file,name:label->name,valueType:payload,mutable:false,functionOwner:scope->functionOwner,declaration:Parent::None,span:label->span}));scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);
   },else=>unit};
+ },rule==ruleBlock=>{
+  // Entering every previous block element already proved normal completion.
+  // The immediate predecessor was checked above; rescanning the prefix is redundant.
  },else=>{
   loop over(frame->children as id:Int){let previous:Node=try lookup<Node>(state->nodes,id);canReach=canReach&&previous->normal;};
  }};

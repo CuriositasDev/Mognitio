@@ -2,6 +2,7 @@ namespace Mgnc\Pipeline;
 use Std\Binary\{Bytes};
 use Mgnc\Data\{Diagnostic};
 use Mgnc\Semantic\{SemanticProject};
+use Mgnc\Checked\{CheckedProgram};
 use Mgnc\NativeProject\{Projected,project};
 use Mgnc\NativeLayout\{validate};
 use Mgnc\IR\{ModuleIR};
@@ -9,8 +10,11 @@ use Mgnc\Lower\{lower};
 use Mgnc\Verify\{verify};
 use Mgnc\Native\{generate};
 use Mgnc\Encode\{encode};
-public let compile:Function(SemanticProject):Result<Bytes,Diagnostic>=function(semantic:SemanticProject):Result<Bytes,Diagnostic>{
+public let prepare:Function(SemanticProject):Result<CheckedProgram,Diagnostic>=function(semantic:SemanticProject):Result<CheckedProgram,Diagnostic>{
  let projected:Projected=try project(semantic);try validate(semantic,projected);
- let module:ModuleIR=try lower(projected->program);try verify(module);
+ Result<CheckedProgram,Diagnostic>::Ok(projected->program)
+};
+public let compile:Function(CheckedProgram):Result<Bytes,Diagnostic>=function(program:CheckedProgram):Result<Bytes,Diagnostic>{
+ let module:ModuleIR=try lower(program);try verify(module);
  encode(try generate(module))
 };

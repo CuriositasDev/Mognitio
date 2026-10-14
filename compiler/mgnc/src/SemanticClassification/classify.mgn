@@ -12,14 +12,14 @@ use Mgnc\HeaderRead\{rightList};
 use Mgnc\BridgeLists\{expressions as callArguments};
 use Mgnc\Tables\{replaceItem};
 use Mgnc\Classification\{prune};
-use Mgnc\Grammar\{ruleCall,ruleVariant,ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleOnArm,ruleGenericApply,ruleName,ruleTypeName,ruleTypeApply,ruleConstructName,ruleConstructGeneric,ruleValueReference};
+use Mgnc\Grammar\{ruleArgumentType,ruleArgumentValue,ruleCall,ruleVariant,ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleOnArm,ruleGenericApply,ruleName,ruleTypeName,ruleTypeApply,ruleConstructName,ruleConstructGeneric,ruleValueReference};
 public type Binding=product{name:String;kind:Int;after:Int;until:Int;};
-public type BindingIndex=product{slots:IntMap;buckets:Paged<List<Binding>>;};
+public type BindingIndex=product{slots:IntMap;buckets:Paged<List<Binding>>;required:Bool;};
 let introduce:Function(BindingIndex,Binding):Result<BindingIndex,Diagnostic>=function(index:BindingIndex,binding:Binding):Result<BindingIndex,Diagnostic>{
  let key:Int=hash("",binding->name);let slot:Int=try mapGet(index->slots,key);
- branch when{slot<0=>Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:try mapPut(index->slots,key,index->buckets->count),buckets:push<List<Binding>>(index->buckets,List<Binding>[binding])}),else=>{
+ branch when{slot<0=>Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:try mapPut(index->slots,key,index->buckets->count),buckets:push<List<Binding>>(index->buckets,List<Binding>[binding]),required:index->required}),else=>{
   let previous:List<Binding>=try lookup<List<Binding>>(index->buckets,slot);
-  Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:index->slots,buckets:try replaceItem<List<Binding>>(index->buckets,slot,previous->append(binding))})
+  Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:index->slots,buckets:try replaceItem<List<Binding>>(index->buckets,slot,previous->append(binding)),required:index->required})
  }}
 };
 let kindAt:Function(BindingIndex,String,Int):Result<Int,Diagnostic>=function(bindings:BindingIndex,name:String,cursor:Int):Result<Int,Diagnostic>{
@@ -30,8 +30,18 @@ let kindAt:Function(BindingIndex,String,Int):Result<Int,Diagnostic>=function(bin
 };
 public let prepare:Function(Headers,Int,Bool):Result<BindingIndex,Diagnostic>=function(headers:Headers,file:Int,isolated:Bool):Result<BindingIndex,Diagnostic>{
  let module:Module=try lookup<Module>(headers->modules,file);
+ // Only expression-choice guards require a separate forest classification pass.
+ // All declarations and bodies still undergo the same semantic checker.
+ var required:Bool=false;
+ loop over(module->declarations as id:Int){branch when{(try lookup<Declaration>(headers->declarations,id))->kind<4=>{required=true;break;},else=>unit};};
+ var nodeId:Int=0;
+ loop while(!required&&nodeId<module->tree->nodes->count){
+  let node:ForestNode=try getNode(module->tree->nodes,nodeId);
+  branch when{node->symbol>0&&(node->rule==ruleGenericApply||node->rule==ruleVariant||node->rule==ruleConstructGeneric||(node->alternatives>=0&&node->rule!=ruleArgumentType&&node->rule!=ruleArgumentValue))=>{required=true;},else=>unit};nodeId=nodeId+1;
+ };
+ branch when{!required=>{return Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:createMap(),buckets:empty<List<Binding>>(),required:false});},else=>unit};
  let boundary:ForestNode=try getNode(module->tree->nodes,module->tree->root);
- var bindings:BindingIndex=BindingIndex{slots:createMap(),buckets:empty<List<Binding>>()};
+ var bindings:BindingIndex=BindingIndex{slots:createMap(),buckets:empty<List<Binding>>(),required:true};
  loop over(List<String>["Unit","Int","Bool","String","List","Result","IndexError","SliceError","Function"] as name:String){bindings=try introduce(bindings,Binding{name:name,kind:0,after:0,until:boundary->end});};
 
  loop over((try lookup<List<Int>>(headers->fileNames,file)) as nameIndex:Int){
@@ -46,6 +56,7 @@ public let prepare:Function(Headers,Int,Bool):Result<BindingIndex,Diagnostic>=fu
 };
 public let classifyPrepared:Function(Headers,Int,Int,Parent,BindingIndex):Result<SyntaxForest,Diagnostic>=function(headers:Headers,file:Int,root:Int,templateOwner:Parent,prepared:BindingIndex):Result<SyntaxForest,Diagnostic>{
  let module:Module=try lookup<Module>(headers->modules,file);let tree:SyntaxForest=module->tree;
+ branch when{!prepared->required=>{return Result<SyntaxForest,Diagnostic>::Ok(SyntaxForest{source:tree->source,nodes:tree->nodes,root:root,itemCount:tree->itemCount,comparisons:tree->comparisons});},else=>unit};
  let boundary:ForestNode=try getNode(tree->nodes,root);
  var bindings:BindingIndex=prepared;var index:Int=0;
  branch on templateOwner{Parent::None=>unit,Parent::Some(owner:Int)=>{

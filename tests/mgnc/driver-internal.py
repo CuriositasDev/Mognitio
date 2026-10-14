@@ -12,10 +12,14 @@ def main():
 use Std\Binary\{Bytes};
 use Mgnc\Data\{Diagnostic,Span,problem};
 use Mgnc\Semantic\{SemanticProject};
+use Mgnc\Checked\{CheckedProgram};
 use Mgnc\SemanticSnapshot\{snapshot};
-public let compile:Function(SemanticProject):Result<Bytes,Diagnostic>=function(semantic:SemanticProject):Result<Bytes,Diagnostic>{
+public let prepare:Function(SemanticProject):Result<CheckedProgram,Diagnostic>=function(semantic:SemanticProject):Result<CheckedProgram,Diagnostic>{
  discard snapshot(semantic->state);
- Result<Bytes,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"injected phase invariant"))
+ Result<CheckedProgram,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"injected phase invariant"))
+};
+public let compile:Function(CheckedProgram):Result<Bytes,Diagnostic>=function(program:CheckedProgram):Result<Bytes,Diagnostic>{
+ panic{"backend entered after failed projection"}
 };
 """)
         probe=project/"src/SemanticSnapshot";probe.mkdir()

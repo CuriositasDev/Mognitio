@@ -2,7 +2,8 @@ namespace Mgnc\Driver;
 use Std\Io\{readTextFile,writeStderr,IoError,IoErrorKind,IoErrorPhase};
 use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError,BinaryOutputErrorKind,BinaryOutputPhase,BinaryPublicationState};
 use Mgnc\Data\{Diagnostic,describe,contains};
-use Mgnc\Pipeline\{compile};
+use Mgnc\Pipeline\{prepare,compile};
+use Mgnc\Checked\{CheckedProgram};
 use Mgnc\Project\{single,project};
 use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
 use Mgnc\InputDiagnostics\{message as inputMessage,escapePath};
@@ -50,6 +51,20 @@ let publicationState:Function(BinaryPublicationState):String=function(state:Bina
 public let publicationMessage:Function(BinaryOutputError):String=function(error:BinaryOutputError):String{
  "mgnc: publication: "+error->subject+": "+outputKind(error->kind)+" / "+outputPhase(error->phase)+" / "+publicationState(error->publication)+"\n"
 };
+// End the semantic ownership scope before allocating backend code and bytes.
+type Analyzed=sum{Checked;Native(CheckedProgram);};
+let front:Function(ProjectInput,Bool):Result<Analyzed,InputError>=function(input:ProjectInput,checking:Bool):Result<Analyzed,InputError>{
+ let semantic:SemanticProject=try analyze(input);
+ branch when{checking=>{return Result<Analyzed,InputError>::Ok(Analyzed::Checked);},else=>unit};
+ let program:CheckedProgram=branch on prepare(semantic){
+  Result<CheckedProgram,Diagnostic>::Ok(value:CheckedProgram)=>value,
+  Result<CheckedProgram,Diagnostic>::Err(error:Diagnostic)=>{
+   let source:SourceUnit=branch on input->sources->at(input->entry){Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,Result<SourceUnit,IndexError>::Err(failure:IndexError)=>{panic{"input entry invariant"};}};
+   return Result<Analyzed,InputError>::Err(InputError{status:branch when{error->phase=="internal"=>3,else=>1},path:source->displayPath,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""});
+  }
+ };
+ Result<Analyzed,InputError>::Ok(Analyzed::Native(program))
+};
 public let run:Function(List<String>):Int=function(args:List<String>):Int{
  let command:String=argument(args,0);let sourcePath:String=argument(args,1);
  let parsing:Bool=command=="parse";let checking:Bool=command=="check";
@@ -74,12 +89,11 @@ public let run:Function(List<String>):Int=function(args:List<String>):Int{
    Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>report(branch when{error->phase=="internal"=>3,else=>1},describe(escapePath(sourcePath),error)),
   };
  },else=>unit};
- let semantic:SemanticProject=branch on analyze(input){
-  Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,
-  Result<SemanticProject,InputError>::Err(error:InputError)=>{return report(error->status,inputMessage(error));}
- };
- branch when{checking=>{return 0;},else=>unit};
- let bytes:Bytes=branch on compile(semantic){
+ let program:CheckedProgram=branch on branch on front(input,checking){
+  Result<Analyzed,InputError>::Ok(value:Analyzed)=>value,
+  Result<Analyzed,InputError>::Err(error:InputError)=>{return report(error->status,inputMessage(error));}
+ }{Analyzed::Checked=>{return 0;},Analyzed::Native(value:CheckedProgram)=>value};
+ let bytes:Bytes=branch on compile(program){
   Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,
   Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{
    return report(branch when{error->phase=="internal"=>3,else=>1},describe(escapePath(sourcePath),error));

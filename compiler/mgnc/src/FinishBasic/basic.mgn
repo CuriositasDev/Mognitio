@@ -20,7 +20,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
  var state:State=initial;var frame:Frame=original;let expression:Expression=frame->expression;let rule:Int=expression->rule;var environment:Environment=frame->environment;
  var structure:Structure=Structure::Unknown;var normal:Bool=true;var operation:String="";var binding:Parent=Parent::None;var integer:Int=0;var minimum:Bool=false;
  var children:List<Node>=List<Node>[];
- loop over(frame->children as id:Int){let child:Node=try lookup<Node>(state->nodes,id);children=children->append(child);normal=normal&&child->normal;};
+ loop over(frame->children as id:Int){let child:Node=try lookup<Node>(state->nodes,id);branch when{rule!=ruleBlock=>{children=children->append(child);},else=>unit};normal=normal&&child->normal;};
  branch when{rule==ruleInteger=>{
   let value:Integer=normalize(false,expression->text);
   branch when{frame->minimumAllowed&&value->digits=="9223372036854775808"=>{minimum=true;integer=0;},

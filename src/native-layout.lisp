@@ -135,3 +135,25 @@
       (:label :payload-ready))
     `((:imm-rcx ,(+ 1 (* kind 16))) (:store-word :rdx 8 :rcx)
       (:lea-meta ,descriptor) (:store-word :rdx 16 :rax) (:imm-rax ,variant) (:store-word :rdx 24 :rax))))
+
+
+(defun ordered-address-dispatch (rows register prefix missing &optional counter)
+  ;; ROWS are emitted in this same order within one static metadata/text unit.
+  ;; Only exact known starts reach a handler; candidates are never dereferenced.
+  (let ((entries (coerce rows 'vector)))
+    (labels ((name (index) (intern (format nil "~A-~D" prefix index) :keyword))
+             (target (lo hi) (if (< lo hi) (name (floor (+ lo hi) 2)) missing))
+             (emit (lo hi)
+               (when (< lo hi)
+                 (let* ((mid (floor (+ lo hi) 2)) (entry (aref entries mid)))
+                   (append
+                     (list (list :label (name mid)))
+                     (when counter (bump counter))
+                     (list (first entry)
+                           (list :cmp-reg :rax register)
+                           (list :jz (second entry))
+                           (list :ja (target lo mid))
+                           (list :jmp (target (1+ mid) hi)))
+                     (emit lo mid) (emit (1+ mid) hi))))))
+      (if (zerop (length entries)) (list (list :jmp missing))
+          (emit 0 (length entries))))))

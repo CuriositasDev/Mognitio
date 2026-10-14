@@ -60,12 +60,17 @@
     '((:load-word :rax :rdx 8))
     `((:and-imm :rax ,+kind-mask+) (:test) (:jz :trace-next-block))
     '((:load-word :rcx :rdx 16) (:store-frame -80 :rcx))
+    (ordered-address-dispatch
+      (loop for row in (descriptors context) for serial from 0
+            collect (list (list :lea-meta (first row))
+                          (intern (format nil "DESC-HIT-~D" serial) :keyword)))
+      :rcx "DESC-LOOKUP" :bad)
     (loop for row in (descriptors context) for serial from 0 append
       (destructuring-bind (name kind id variant count refs &optional dynamic) row
         (declare (ignore refs))
-        (let ((next (intern (format nil "DESC-~D" serial) :keyword)))
+        (let ((hit (intern (format nil "DESC-HIT-~D" serial) :keyword)))
           (append
-            `((:lea-meta ,name) (:cmp-reg :rax :rcx) (:jnz ,next)
+            `((:label ,hit) (:lea-meta ,name) (:cmp-reg :rax :rcx) (:jnz :bad)
               (:load-word :rax :rdx 8) (:and-imm :rax ,+kind-mask+) (:cmp-imm :rax ,(* kind 16)) (:jnz :bad)
               (:load-word :rax :rdx 0) (:cmp-imm :rax ,(+ 32 (* 8 (max 1 count)))) (:jb :bad))
             (if (= kind 3)
@@ -86,7 +91,7 @@
                       '((:jmp :trace-next-block))))
                 '((:load-frame :rax -80) (:load-word :rcx :rax 32) (:store-frame -88 :rcx)
                   (:add-imm :rax 40) (:store-frame -96 :rax) (:imm-rax 0) (:store-frame -136 :rax) (:jmp :trace-ref))))
-            `((:label ,next))))))
+            nil))))
     '((:jmp :bad)
       (:label :trace-ref) (:load-frame :rcx -88) (:test-rcx) (:jz :trace-next-block)
       (:load-frame :rax -136) (:test) (:jnz :trace-buffer-ref)

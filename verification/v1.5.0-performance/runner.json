@@ -1,0 +1,60 @@
+[
+  {
+    "name": "scale-fixtures",
+    "command": [
+      "python3",
+      "tests/mgnc/v150-scale-fixtures.py",
+      "--output",
+      "<performance-evidence>/fixtures"
+    ],
+    "started": 1791993022.8174357,
+    "exit": 0,
+    "seconds": 0.25873303413391113
+  },
+  {
+    "name": "parse-fixtures",
+    "command": [
+      "python3",
+      "tests/mgnc/parse_workloads.py",
+      "--output",
+      "<performance-evidence>/parse-fixtures",
+      "--revision",
+      "9937649804183f357aca30029a3f7b1d1e869285"
+    ],
+    "started": 1791993023.076255,
+    "exit": 0,
+    "seconds": 0.212355375289917
+  },
+  {
+    "name": "preliminary",
+    "command": [
+      "python3",
+      "tests/mgnc/v150-measure.py",
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<performance-evidence>/fixtures",
+      "--output",
+      "<performance-evidence>/preliminary"
+    ],
+    "started": 1791993023.2887,
+    "exit": 0,
+    "seconds": 1659.6937923431396
+  },
+  {
+    "name": "parse-measure",
+    "command": [
+      "python3",
+      "tests/mgnc/parse_measure.py",
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<performance-evidence>/parse-fixtures",
+      "--evidence",
+      "<performance-evidence>/parse-measure.json"
+    ],
+    "started": 1791994682.9825835,
+    "exit": 0,
+    "seconds": 142.53515648841858
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "source_revision": "9937649804183f357aca30029a3f7b1d1e869285",
+  "collection_revision": "bc0b02c900e6c1246a15e23501e6339460701826",
+  "preliminary_cells": 118,
+  "preliminary_runs": 472,
+  "generated_max_median_seconds": 2.0064998679445125,
+  "generated_max_rss_bytes": 31875072,
+  "corpus": {
+    "C0": {
+      "median_seconds": 102.92402699100785,
+      "rss_max_bytes": 130244608
+    },
+    "C1": {
+      "median_seconds": 285.8108170420164,
+      "rss_max_bytes": 206598144
+    }
+  },
+  "parse_inputs": 162,
+  "parse_samples": 972,
+  "parse_max_median_seconds": 1.1559257910121232,
+  "parse_max_rss_mib": 28.2109375,
+  "parse_round_median_seconds": {
+    "C0": 3.777326124953106,
+    "C1": 11.51796493009897
+  },
+  "formal_budget_adopted": false,
+  "final_compiler_acceptance": false,
+  "validation": "V150_CORRECTED_PERFORMANCE_EVIDENCE_OK"
+}

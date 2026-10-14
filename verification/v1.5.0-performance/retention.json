@@ -1,0 +1,8 @@
+{
+  "archive_sha256": "ea191670b3269c2fc8fe7e6e5caeb0ecd1eb641709b8df94c01c53812bc68b24",
+  "archive_bytes": 1161261,
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "source_revision": "9937649804183f357aca30029a3f7b1d1e869285",
+  "collection_revision": "bc0b02c900e6c1246a15e23501e6339460701826",
+  "stage": "preliminary-only"
+}

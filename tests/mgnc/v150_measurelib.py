@@ -5,7 +5,7 @@ from pathlib import Path
 def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interval=.05):
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
     stdout=directory/"stdout";stderr=directory/"stderr"
-    samples=[];reason=None;failure=None;status=None;usage=None
+    samples=[];reason=None;failure=None;status=None;usage=None;missing_since=None
     started=time.monotonic()
     with stdout.open("wb") as out,stderr.open("wb") as err:
         child=subprocess.Popen(list(map(str,command)),stdout=out,stderr=err,start_new_session=True)
@@ -18,33 +18,31 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
                 now=time.monotonic()
                 try:
                     contents=Path(f"/proc/{child.pid}/status").read_text()
-                    entries=[line.split() for line in contents.splitlines() if line.startswith("VmRSS:")]
-                    if entries:
-                        assert len(entries)==1 and entries[0][2]=="kB"
-                        current_rss=int(entries[0][1])*1024
-                        samples.append({"seconds":now-started,"rss_bytes":current_rss})
-                    else:
-                        # A zombie can lose VmRSS before wait4 observes its exit.
-                        pid,current,observed=os.wait4(child.pid,os.WNOHANG)
-                        if pid:
-                            status,usage=current,observed
-                            break
-                        if "State:\tZ" not in contents:
-                            raise RuntimeError("live process has no VmRSS")
-                        continue
                 except FileNotFoundError:
+                    contents=""
+                entries=[line.split() for line in contents.splitlines() if line.startswith("VmRSS:")]
+                if entries:
+                    assert len(entries)==1 and entries[0][2]=="kB"
+                    current_rss=int(entries[0][1])*1024
+                    samples.append({"seconds":now-started,"rss_bytes":current_rss})
+                    missing_since=None
+                else:
+                    # Linux releases mm before the task becomes waitable. Its
+                    # status can still say R during this short exit interval.
                     pid,current,observed=os.wait4(child.pid,os.WNOHANG)
                     if pid:
                         status,usage=current,observed
                         break
-                    raise RuntimeError("live process status is unavailable")
+                    if missing_since is None:missing_since=now
+                    if now-missing_since>=.1:
+                        raise RuntimeError("process RSS unavailable beyond exit grace")
                 if samples and samples[-1]["rss_bytes"]>rss_limit:reason="rss"
                 elif now-started>=timeout:reason="wall"
                 if reason:
                     os.killpg(child.pid,signal.SIGKILL)
                     _,status,usage=os.wait4(child.pid,0)
                     break
-                time.sleep(min(interval,max(0,timeout-(time.monotonic()-started))))
+                time.sleep(min(.001 if missing_since is not None else interval,max(0,timeout-(time.monotonic()-started))))
         except BaseException as error:
             failure=type(error).__name__+": "+str(error)
             if status is None:
@@ -63,5 +61,5 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
             "exit":child.returncode if child.returncode>=0 else None,
             "signal":-child.returncode if child.returncode<0 else None,
             "cutoff":reason,"harness_failure":failure,"sample_interval_seconds":interval,
-            "last_sample":samples[-1] if samples else None,"sample_count":len(samples),
+            "rss_exit_grace_seconds":.1,"last_sample":samples[-1] if samples else None,"sample_count":len(samples),
             "streams":streams}

@@ -7,8 +7,8 @@ performance-budget adoption, and release are separate stages.
 
 ## Build
 
-Use the [frozen v1.5 Lisp seed](../../verification/v1.5.0-seed.md), whose accepted
-source revision is f0e582da5f97467544e861d0ad3390b2cd9776b4.
+Use the [replacement frozen v1.5 Lisp seed](../../verification/v1.5.0-seed2.md), whose accepted
+source revision is 860a7550cb610e3a60642e427db659df7447fcf5.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 

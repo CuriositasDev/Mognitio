@@ -1,0 +1,44 @@
+namespace Mgnc\MathValue;
+use Mgnc\Data\{Span,Diagnostic,problem};
+use Mgnc\TextUtil\{at,code,scalar,digit};
+public type Integer=product{negative:Bool;digits:String;};
+public let normalize:Function(Bool,String):Integer=function(negative:Bool,digits:String):Integer{
+ var result:String="";var leading:Bool=true;
+ loop over(digits->scalars() as c:String){branch when{leading&&c=="0"=>unit,else=>{leading=false;result=result+c;}};};
+ branch when{result==""=>{result="0";},else=>unit};Integer{negative:negative&&result!="0",digits:result}
+};
+public let compare:Function(String,String):Int=function(a:String,b:String):Int{
+ branch when{a->length()<b->length()=>{return -1;},a->length()>b->length()=>{return 1;},else=>unit};
+ let left:List<String>=a->scalars();let right:List<String>=b->scalars();var index:Int=0;
+ loop while(index<left->length()){
+  let x:Int=code(at(left,index));let y:Int=code(at(right,index));
+  branch when{x<y=>{return -1;},x>y=>{return 1;},else=>unit};index=index+1;
+ };0
+};
+let powers:List<String>={
+ var result:List<String>=List<String>["1"];var digits:String="1";var width:Int=0;
+ loop while(width<64){
+  let chars:List<String>=digits->scalars();var next:String="";var carry:Int=0;var index:Int=chars->length();
+  loop while(index>0){index=index-1;let value:Int=(code(at(chars,index))-48)*2+carry;carry=value/10;next=scalar(48+value%10)+next;};
+  branch when{carry>0=>{next="1"+next;},else=>unit};digits=next;result=result->append(digits);width=width+1;
+ };result
+};
+public let fits:Function(Integer,Int,Bool):Bool=function(value:Integer,width:Int,signed:Bool):Bool{
+ branch when{width<1||width>64||(!signed&&value->negative)=>{return false;},else=>unit};
+ let power:String=at(powers,branch when{signed=>width-1,else=>width});
+ let comparison:Int=compare(value->digits,power);
+ branch when{value->negative=>comparison<=0,else=>comparison<0}
+};
+public let minimumWidth:Function(Integer,Bool):Int=function(value:Integer,signed:Bool):Int{
+ var width:Int=1;loop while(width<=64){branch when{fits(value,width,signed)=>{return width;},else=>unit};width=width+1;};0
+};
+public let ordinary:Function(Integer,Span):Result<Int,Diagnostic>=function(value:Integer,span:Span):Result<Int,Diagnostic>{
+ branch when{!fits(value,64,true)=>{return Result<Int,Diagnostic>::Err(problem("type",span,"integer literal is outside Int range"));},else=>unit};
+ var result:Int=0;
+ loop over(value->digits->scalars() as c:String){
+  branch when{!digit(c)=>{return Result<Int,Diagnostic>::Err(problem("internal",span,"invalid mathematical integer digits"));},else=>unit};
+  let d:Int=code(c)-48;
+  // Accumulate negative values directly, including -9223372036854775808.
+  result=branch when{value->negative=>result*10-d,else=>result*10+d};
+ };Result<Int,Diagnostic>::Ok(result)
+};

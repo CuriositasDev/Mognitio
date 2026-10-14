@@ -1,0 +1,100 @@
+namespace Mgnc\Project;
+use Std\Io\{readTextFile,readDirectory,inspectPath,joinPath,IoError,PathInfo,PathInfoError,FileIdentity,DirectoryEntry,DirectoryEntryKind};
+use Mgnc\InputData\{InputError,SourceUnit,ProjectInput,failure,fromIo,fromInspection,kindName};
+use Mgnc\Data\{Diagnostic};
+use Mgnc\TextUtil\{at,code,cut,starts,ends,identifier};
+use Mgnc\Manifest\{Manifest,parse};
+type Pending=product{path:String;relative:String;nameSpace:String;valid:Bool;info:PathInfo;order:Int;name:String;};
+let inspect:Function(String):Result<PathInfo,InputError>=function(path:String):Result<PathInfo,InputError>{
+ branch on inspectPath(path){Result<PathInfo,PathInfoError>::Ok(info:PathInfo)=>Result<PathInfo,InputError>::Ok(info),
+ Result<PathInfo,PathInfoError>::Err(error:PathInfoError)=>Result<PathInfo,InputError>::Err(fromInspection(error))}
+};
+let directory:Function(DirectoryEntryKind):Bool=function(kind:DirectoryEntryKind):Bool{
+ branch on kind{DirectoryEntryKind::Directory=>true,DirectoryEntryKind::File=>false,DirectoryEntryKind::Symlink=>false,DirectoryEntryKind::Other=>false}
+};
+let regular:Function(DirectoryEntryKind):Bool=function(kind:DirectoryEntryKind):Bool{
+ branch on kind{DirectoryEntryKind::File=>true,DirectoryEntryKind::Directory=>false,DirectoryEntryKind::Symlink=>false,DirectoryEntryKind::Other=>false}
+};
+let symlink:Function(DirectoryEntryKind):Bool=function(kind:DirectoryEntryKind):Bool{
+ branch on kind{DirectoryEntryKind::Symlink=>true,DirectoryEntryKind::Directory=>false,DirectoryEntryKind::File=>false,DirectoryEntryKind::Other=>false}
+};
+let join:Function(String,String):Result<String,InputError>=function(base:String,relative:String):Result<String,InputError>{
+ branch on joinPath(base,relative){Result<String,IoError>::Ok(path:String)=>Result<String,InputError>::Ok(path),
+ Result<String,IoError>::Err(error:IoError)=>Result<String,InputError>::Err(fromIo(error))}
+};
+let read:Function(String,Bool):Result<String,InputError>=function(path:String,manifest:Bool):Result<String,InputError>{
+ branch on readTextFile(path){Result<String,IoError>::Ok(text:String)=>Result<String,InputError>::Ok(text),
+ Result<String,IoError>::Err(error:IoError)=>{
+  branch when{kindName(error->kind)=="InvalidEncoding"=>{
+   let original:InputError=fromIo(error);
+   return Result<String,InputError>::Err(InputError{status:branch when{manifest=>2,else=>1},path:original->path,
+    diagnostic:Diagnostic{phase:branch when{manifest=>"manifest",else=>"source"},span:original->diagnostic->span,message:"InvalidEncoding"},
+    positionKnown:false,operation:original->operation,kind:original->kind,ioPhase:original->ioPhase});
+  },else=>unit};
+  Result<String,InputError>::Err(fromIo(error))
+ }}
+};
+let parent:Function(String):String=function(path:String):String{
+ var end:Int=0;var index:Int=0;loop over(path->scalars() as c:String){index=index+1;branch when{c=="/"=>{end=index;},else=>unit};};
+ branch when{end==0=>".",else=>cut(path,0,end)}
+};
+// readDirectory returns UTF-8 byte order. Appending "/" to directory keys
+// changes only prefix pairs; no Unicode decoding or locale comparison is needed.
+let before:Function(Pending,Pending):Bool=function(a:Pending,b:Pending):Bool{
+ branch when{directory(a->info->kind)&&starts(b->name,a->name)&&b->name->length()>a->name->length()=>{
+  let next:Int=code(cut(b->name,a->name->length(),a->name->length()+1));return !(next>=0&&next<47);
+ },directory(b->info->kind)&&starts(a->name,b->name)&&a->name->length()>b->name->length()=>{
+  let next:Int=code(cut(a->name,b->name->length(),b->name->length()+1));return next>=0&&next<47;
+ },else=>unit};a->order<b->order
+};
+public let single:Function(String):Result<ProjectInput,InputError>=function(path:String):Result<ProjectInput,InputError>{
+ let text:String=try read(path,false);
+ Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,
+ sources:List<SourceUnit>[SourceUnit{path:path,displayPath:path,relativePath:path,expectedNamespace:"",text:text}]})
+};
+public let project:Function(String):Result<ProjectInput,InputError>=function(path:String):Result<ProjectInput,InputError>{
+ let manifestInfo:PathInfo=try inspect(path);
+ branch when{!regular(manifestInfo->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,path,"io","manifest must be a regular file without a symlink"));},else=>unit};
+ let manifestText:String=try read(path,true);
+ let manifest:Manifest=branch on parse(manifestText){Result<Manifest,Diagnostic>::Ok(value:Manifest)=>value,
+ Result<Manifest,Diagnostic>::Err(error:Diagnostic)=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""});}};
+ let src:String=try join(parent(path),"src");let srcInfo:PathInfo=try inspect(src);
+ branch when{!directory(srcInfo->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,src,"io","src must be a directory without a symlink"));},else=>unit};
+ var pending:List<Pending>=List<Pending>[Pending{path:src,relative:"",nameSpace:manifest->root,valid:true,info:srcInfo,order:0,name:""}];
+ var identities:List<FileIdentity>=List<FileIdentity>[manifestInfo->identity];var sources:List<SourceUnit>=List<SourceUnit>[];
+ var entry:Int= -1;
+ loop while(pending->length()>0){
+  let current:Pending=branch on pending->at(0){Result<Pending,IndexError>::Ok(value:Pending)=>value,Result<Pending,IndexError>::Err(error:IndexError)=>panic{"pending worklist invariant"}};
+  var remaining:List<Pending>=List<Pending>[];var first:Bool=true;
+  loop over(pending as value:Pending){branch when{first=>{first=false;},else=>{remaining=remaining->append(value);}};};pending=remaining;
+  branch when{directory(current->info->kind)=>{
+   let entries:List<DirectoryEntry>=branch on readDirectory(current->path){Result<List<DirectoryEntry>,IoError>::Ok(value:List<DirectoryEntry>)=>value,
+    Result<List<DirectoryEntry>,IoError>::Err(error:IoError)=>{return Result<ProjectInput,InputError>::Err(fromIo(error));}};
+   var children:List<Pending>=List<Pending>[];var order:Int=0;
+   loop over(entries as item:DirectoryEntry){
+    let childPath:String=try join(current->path,item->name);
+    branch when{symlink(item->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,childPath,"io","symlink input is forbidden"));},else=>unit};
+    let info:PathInfo=try inspect(childPath);
+    branch when{symlink(info->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,childPath,"io","symlink input is forbidden"));},else=>unit};
+    let relative:String=branch when{current->relative==""=>item->name,else=>current->relative+"/"+item->name};
+    let isDirectory:Bool=directory(info->kind);
+    let child:Pending=Pending{path:childPath,relative:relative,nameSpace:current->nameSpace+branch when{isDirectory=>"\\"+item->name,else=>""},
+     valid:current->valid&&(!isDirectory||identifier(item->name)),info:info,order:order,name:item->name};
+    var sorted:List<Pending>=List<Pending>[];var inserted:Bool=false;
+    loop over(children as previous:Pending){branch when{!inserted&&before(child,previous)=>{sorted=sorted->append(child);inserted=true;},else=>unit};sorted=sorted->append(previous);};
+    branch when{!inserted=>{sorted=sorted->append(child);},else=>unit};children=sorted;order=order+1;
+   };
+   loop over(pending as rest:Pending){children=children->append(rest);};pending=children;
+  },ends(current->relative,".mgn")=>{
+   branch when{!regular(current->info->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","source must be a regular file"));},
+    !current->valid=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","invalid namespace directory"));},else=>unit};
+   loop over(identities as seen:FileIdentity){branch when{seen==current->info->identity=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","duplicate physical input"));},else=>unit};};
+   identities=identities->append(current->info->identity);
+   let source:String=try read(current->path,false);
+   branch when{current->relative==manifest->name+".mgn"=>{entry=sources->length();},else=>unit};
+   sources=sources->append(SourceUnit{path:current->path,displayPath:"src/"+current->relative,relativePath:current->relative,expectedNamespace:current->nameSpace,text:source});
+  },else=>unit};
+ };
+ branch when{entry<0=>{return Result<ProjectInput,InputError>::Err(failure(2,path,"manifest","entry source is missing"));},else=>unit};
+ Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:path,manifestText:manifestText,rootNamespace:manifest->root,entry:entry,sources:sources})
+};

@@ -1,0 +1,126 @@
+namespace Mgnc\Manifest;
+use Mgnc\Data\{Diagnostic,problem};
+use Mgnc\TextUtil\{at,code,scalar,letter,digit,position,projectName,nameSpace};
+public type Manifest=product{name:String;root:String;};
+type TextRead=product{value:String;next:Int;};
+type KeyRead=product{parts:List<String>;next:Int;};
+let bad:Function(List<String>,Int):Diagnostic=function(chars:List<String>,index:Int):Diagnostic{problem("manifest",position(chars,index),"invalid project manifest")};
+let space:Function(List<String>,Int):Int=function(chars:List<String>,start:Int):Int{
+ var atIndex:Int=start;loop while(at(chars,atIndex)==" "||at(chars,atIndex)=="\t"){atIndex=atIndex+1;};atIndex
+};
+let newline:Function(List<String>,Int):Result<Int,Diagnostic>=function(chars:List<String>,start:Int):Result<Int,Diagnostic>{
+ var index:Int=start;branch when{at(chars,index)=="\r"=>{index=index+1;},else=>unit};
+ branch when{at(chars,index)!="\n"=>{return Result<Int,Diagnostic>::Err(bad(chars,index));},else=>unit};
+ Result<Int,Diagnostic>::Ok(index+1)
+};
+let comment:Function(List<String>,Int):Result<Int,Diagnostic>=function(chars:List<String>,start:Int):Result<Int,Diagnostic>{
+ var index:Int=start;
+ branch when{at(chars,index)=="#"=>{loop while(index<chars->length()&&at(chars,index)!="\n"&&at(chars,index)!="\r"){
+  let n:Int=code(at(chars,index));branch when{((n>=0&&n<32)||n==127)&&n!=9=>{return Result<Int,Diagnostic>::Err(bad(chars,index));},else=>unit};index=index+1;
+ };},else=>unit};Result<Int,Diagnostic>::Ok(index)
+};
+let lines:Function(List<String>,Int):Result<Int,Diagnostic>=function(chars:List<String>,start:Int):Result<Int,Diagnostic>{
+ var index:Int=start;loop while(true){index=try comment(chars,space(chars,index));
+  branch when{at(chars,index)=="\r"||at(chars,index)=="\n"=>{index=try newline(chars,index);},else=>{break;}};};
+ Result<Int,Diagnostic>::Ok(index)
+};
+let hex:Function(String):Int=function(c:String):Int{let n:Int=code(c);branch when{n>=48&&n<=57=>n-48,n>=65&&n<=70=>n-55,n>=97&&n<=102=>n-87,else=> -1}};
+let quoted:Function(List<String>,Int,Bool):Result<TextRead,Diagnostic>=function(chars:List<String>,start:Int,key:Bool):Result<TextRead,Diagnostic>{
+ let quote:String=at(chars,start);branch when{quote!="\""&&quote!="'"=>{return Result<TextRead,Diagnostic>::Err(bad(chars,start));},else=>unit};
+ var index:Int=start+1;var multi:Bool=false;var fragments:List<String>=List<String>[];
+ branch when{!key&&at(chars,index)==quote&&at(chars,index+1)==quote=>{multi=true;index=index+2;
+  branch when{at(chars,index)=="\r"||at(chars,index)=="\n"=>{index=try newline(chars,index);},else=>unit};
+ },else=>unit};
+ loop while(index<chars->length()){
+  let c:String=at(chars,index);index=index+1;
+  branch when{c==quote=>{
+   branch when{!multi=>{return Result<TextRead,Diagnostic>::Ok(TextRead{value:fragments->join(""),next:index});},else=>unit};
+   var count:Int=1;loop while(at(chars,index)==quote){count=count+1;index=index+1;};
+   branch when{count>5=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));},else=>unit};
+   var emit:Int=branch when{count>=3=>count-3,else=>count};loop while(emit>0){fragments=fragments->append(quote);emit=emit-1;};
+   branch when{count>=3=>{return Result<TextRead,Diagnostic>::Ok(TextRead{value:fragments->join(""),next:index});},else=>unit};
+  },c=="\\"&&quote=="\""=>{
+   let escape:String=at(chars,index);
+   branch when{multi&&(escape==" "||escape=="\t"||escape=="\r"||escape=="\n")=>{
+    index=try newline(chars,space(chars,index));
+    loop while(true){index=space(chars,index);branch when{at(chars,index)=="\r"||at(chars,index)=="\n"=>{index=try newline(chars,index);},else=>{break;}};};
+   },else=>{
+    index=index+1;
+    branch when{escape=="u"||escape=="U"=>{
+     let count:Int=branch when{escape=="u"=>4,else=>8};var value:Int=0;var part:Int=0;
+     loop while(part<count){let d:Int=hex(at(chars,index));branch when{d<0=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));},else=>unit};value=value*16+d;index=index+1;part=part+1;};
+     // Every admitted schema key and value is ASCII. A non-ASCII decoded value
+     // cannot satisfy this schema, even when it is a valid TOML scalar.
+     branch when{value>127=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));},else=>unit};
+     fragments=fragments->append(scalar(value));
+    },escape=="b"=>{fragments=fragments->append("\u{8}");},escape=="t"=>{fragments=fragments->append("\t");},
+    escape=="n"=>{fragments=fragments->append("\n");},escape=="f"=>{fragments=fragments->append("\u{c}");},
+    escape=="r"=>{fragments=fragments->append("\r");},escape=="\""||escape=="\\"=>{fragments=fragments->append(escape);},
+    else=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));}};
+   }};
+  },c=="\r"||c=="\n"=>{
+   branch when{!multi=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));},else=>unit};
+   branch when{c=="\r"=>{index=try newline(chars,index-1);},else=>unit};fragments=fragments->append("\n");
+  },else=>{
+   let n:Int=code(c);branch when{((n>=0&&n<32)||n==127)&&n!=9=>{return Result<TextRead,Diagnostic>::Err(bad(chars,index));},else=>unit};
+   fragments=fragments->append(c);
+  }};
+ };
+ Result<TextRead,Diagnostic>::Err(bad(chars,index))
+};
+let keyPath:Function(List<String>,Int):Result<KeyRead,Diagnostic>=function(chars:List<String>,start:Int):Result<KeyRead,Diagnostic>{
+ var index:Int=space(chars,start);var parts:List<String>=List<String>[];
+ loop while(true){
+  var word:String="";
+  branch when{at(chars,index)=="\""||at(chars,index)=="'"=>{let read:TextRead=try quoted(chars,index,true);word=read->value;index=read->next;},
+  else=>{loop while(letter(at(chars,index))||digit(at(chars,index))||at(chars,index)=="-"){word=word+at(chars,index);index=index+1;};
+   branch when{word==""=>{return Result<KeyRead,Diagnostic>::Err(bad(chars,index));},else=>unit};}};
+  parts=parts->append(word);index=space(chars,index);
+  branch when{at(chars,index)!="."=>{break;},else=>{index=space(chars,index+1);}};
+ };
+ Result<KeyRead,Diagnostic>::Ok(KeyRead{parts:parts,next:index})
+};
+public let parse:Function(String):Result<Manifest,Diagnostic>=function(text:String):Result<Manifest,Diagnostic>{
+ let chars:List<String>=text->scalars();var index:Int=try lines(chars,0);
+ var table:Bool=false;var dotted:Bool=false;var inlineTable:Bool=false;var inside:Bool=false;
+ var name:String="";var root:String="";var nameSeen:Bool=false;var rootSeen:Bool=false;
+ loop while(index<chars->length()){
+  branch when{at(chars,index)=="["=>{
+   branch when{table||dotted||inlineTable=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+   let key:KeyRead=try keyPath(chars,index+1);index=key->next;
+   branch when{key->parts->length()!=1||at(key->parts,0)!="project"||at(chars,index)!="]"=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+   table=true;index=index+1;
+  },else=>{
+   let key:KeyRead=try keyPath(chars,index);index=key->next;
+   branch when{at(chars,index)!="="=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};index=space(chars,index+1);
+   let count:Int=key->parts->length();let first:String=at(key->parts,0);
+   branch when{!table&&!inside&&count==1&&first=="project"=>{
+    branch when{dotted||inlineTable||at(chars,index)!="{"=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+    inlineTable=true;inside=true;index=space(chars,index+1);
+    branch when{at(chars,index)=="}"=>{inside=false;index=index+1;},else=>{continue;}};
+   },else=>{
+    var field:String="";
+    branch when{table||inside=>{
+     branch when{count!=1=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};field=first;
+    },else=>{
+     branch when{inlineTable||count!=2||first!="project"=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+     dotted=true;field=at(key->parts,1);
+    }};
+    branch when{(field!="name"&&field!="root_namespace")||(field=="name"&&nameSeen)||(field=="root_namespace"&&rootSeen)=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+    let value:TextRead=try quoted(chars,index,false);index=value->next;
+    branch when{field=="name"=>{name=value->value;nameSeen=true;},else=>{root=value->value;rootSeen=true;}};
+    branch when{inside=>{
+     index=space(chars,index);
+     branch when{at(chars,index)==","=>{index=space(chars,index+1);branch when{at(chars,index)=="}"=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};continue;},
+      at(chars,index)=="}"=>{inside=false;index=index+1;},
+      else=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));}};
+    },else=>unit};
+   }};
+  }};
+  index=try comment(chars,space(chars,index));
+  branch when{index<chars->length()=>{index=try newline(chars,index);},else=>unit};
+  index=try lines(chars,index);
+ };
+ branch when{inside||!nameSeen||!rootSeen||!projectName(name)||!nameSpace(root)=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
+ Result<Manifest,Diagnostic>::Ok(Manifest{name:name,root:root})
+};

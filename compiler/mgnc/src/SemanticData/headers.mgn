@@ -1,0 +1,10 @@
+namespace Mgnc\SemanticData;
+use Mgnc\Data\{Paged,Span,Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\InputData\{SourceUnit,ProjectInput};
+public type Parameter=product{name:String;kind:Int;node:Int;span:Span;};
+public type Declaration=product{file:Int;ordinal:Int;kind:Int;name:String;exported:Bool;node:Int;annotation:Int;body:Int;parameters:List<Parameter>;span:Span;};
+public type Import=product{nameSpace:String;name:String;local:String;span:Span;};
+public type Module=product{source:SourceUnit;tree:SyntaxForest;nameSpace:String;declarations:List<Int>;imports:List<Import>;standard:Bool;};
+public type Introduction=product{file:Int;name:String;declaration:Int;imported:Bool;span:Span;};
+public type Headers=product{input:ProjectInput;modules:Paged<Module>;declarations:Paged<Declaration>;names:Paged<Introduction>;order:List<Int>;};

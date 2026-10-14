@@ -1,0 +1,12 @@
+namespace Mgnc\SemanticValues;
+use Mgnc\Data\{Paged,Span};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Structure,Argument,Obligation};
+public type Symbol=product{file:Int;name:String;valueType:Int;mutable:Bool;functionOwner:Parent;declaration:Parent;span:Span;};
+public type Node=product{file:Int;syntax:Int;rule:Int;structure:Structure;normal:Bool;operation:String;binding:Parent;target:Parent;children:List<Int>;span:Span;integer:Int;minimum:Bool;mapping:List<Int>;arguments:List<Argument>;};
+public type FunctionInfo=product{file:Int;syntax:Int;valueType:Int;parameters:List<Int>;body:Parent;captures:List<Int>;templateOwner:Parent;};
+public type Loop=product{kind:Int;breaks:List<Int>;};
+public type BodyState=sum{NotRequired;Pending;Checking;Complete(Int);};
+public type State=product{types:Store;nodes:Paged<Node>;symbols:Paged<Symbol>;globals:Paged<Parent>;functions:Paged<FunctionInfo>;loops:Paged<Loop>;obligations:List<Obligation>;bodies:Paged<BodyState>;};
+public type Environment=product{file:Int;symbols:List<Int>;reserved:List<String>;functionOwner:Parent;loopTarget:Parent;returnType:Parent;templateOwner:Parent;arguments:List<Argument>;reachable:Bool;};
+public type Checked=product{state:State;root:Int;};

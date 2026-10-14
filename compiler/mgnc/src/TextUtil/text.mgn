@@ -1,0 +1,47 @@
+namespace Mgnc\TextUtil;
+use Mgnc\Data\{Span,Diagnostic,problem,contains};
+use Mgnc\Width\{scalarWidth};
+let ascii:List<String>="\u{0}\u{1}\u{2}\u{3}\u{4}\u{5}\u{6}\u{7}\u{8}\u{9}\u{a}\u{b}\u{c}\u{d}\u{e}\u{f}\u{10}\u{11}\u{12}\u{13}\u{14}\u{15}\u{16}\u{17}\u{18}\u{19}\u{1a}\u{1b}\u{1c}\u{1d}\u{1e}\u{1f}\u{20}\u{21}\u{22}\u{23}\u{24}\u{25}\u{26}\u{27}\u{28}\u{29}\u{2a}\u{2b}\u{2c}\u{2d}\u{2e}\u{2f}\u{30}\u{31}\u{32}\u{33}\u{34}\u{35}\u{36}\u{37}\u{38}\u{39}\u{3a}\u{3b}\u{3c}\u{3d}\u{3e}\u{3f}\u{40}\u{41}\u{42}\u{43}\u{44}\u{45}\u{46}\u{47}\u{48}\u{49}\u{4a}\u{4b}\u{4c}\u{4d}\u{4e}\u{4f}\u{50}\u{51}\u{52}\u{53}\u{54}\u{55}\u{56}\u{57}\u{58}\u{59}\u{5a}\u{5b}\u{5c}\u{5d}\u{5e}\u{5f}\u{60}\u{61}\u{62}\u{63}\u{64}\u{65}\u{66}\u{67}\u{68}\u{69}\u{6a}\u{6b}\u{6c}\u{6d}\u{6e}\u{6f}\u{70}\u{71}\u{72}\u{73}\u{74}\u{75}\u{76}\u{77}\u{78}\u{79}\u{7a}\u{7b}\u{7c}\u{7d}\u{7e}\u{7f}"->scalars();
+public let at:Function(List<String>,Int):String=function(values:List<String>,index:Int):String{
+ branch on values->at(index){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>""}
+};
+public let code:Function(String):Int=function(scalar:String):Int{
+ var index:Int=0;loop over(ascii as value:String){branch when{value==scalar=>{return index;},else=>unit};index=index+1;};-1
+};
+public let scalar:Function(Int):String=function(value:Int):String{at(ascii,value)};
+public let letter:Function(String):Bool=function(value:String):Bool{
+ let n:Int=code(value);(n>=65&&n<=90)||(n>=97&&n<=122)||n==95
+};
+public let digit:Function(String):Bool=function(value:String):Bool{let n:Int=code(value);n>=48&&n<=57};
+public let keyword:Function(String):Bool=function(value:String):Bool{
+ var found:Bool=false;
+ loop over(List<String>["assert","alias","as","branch","break","continue","contract","discard","else","function","implements","let","loop","on","over","panic","product","return","sum","template","try","type","var","when","while","witness","true","false","unit","namespace","use","public"] as word:String){branch when{word==value=>{found=true;break;},else=>unit};};found
+};
+public let identifier:Function(String):Bool=function(value:String):Bool{
+ let chars:List<String>=value->scalars();branch when{!letter(at(chars,0))||keyword(value)=>{return false;},else=>unit};
+ var index:Int=1;loop while(index<chars->length()){let c:String=at(chars,index);branch when{!(letter(c)||digit(c))=>{return false;},else=>unit};index=index+1;};true
+};
+public let nameSpace:Function(String):Bool=function(value:String):Bool{
+ var segment:String="";var first:Bool=true;
+ loop over(value->scalars() as c:String){branch when{c=="\\"=>{
+  branch when{!identifier(segment)||(first&&segment=="Std")=>{return false;},else=>unit};first=false;segment="";
+ },else=>{segment=segment+c;}};};
+ identifier(segment)&&!(first&&segment=="Std")
+};
+public let projectName:Function(String):Bool=function(value:String):Bool{
+ let chars:List<String>=value->scalars();let initial:Int=code(at(chars,0));
+ branch when{initial<97||initial>122=>{return false;},else=>unit};
+ loop over(chars as c:String){let n:Int=code(c);branch when{!((n>=97&&n<=122)||(n>=48&&n<=57)||n==95)=>{return false;},else=>unit};};true
+};
+public let cut:Function(String,Int,Int):String=function(value:String,first:Int,last:Int):String{
+ branch on value->slice(first,last){Result<String,SliceError>::Ok(part:String)=>part,Result<String,SliceError>::Err(error:SliceError)=>""}
+};
+public let starts:Function(String,String):Bool=function(value:String,prefix:String):Bool{value->length()>=prefix->length()&&cut(value,0,prefix->length())==prefix};
+public let ends:Function(String,String):Bool=function(value:String,suffix:String):Bool{value->length()>=suffix->length()&&cut(value,value->length()-suffix->length(),value->length())==suffix};
+public let position:Function(List<String>,Int):Span=function(chars:List<String>,index:Int):Span{
+ var offset:Int=0;var line:Int=1;var column:Int=1;var previous:String="";var cursor:Int=0;
+ loop while(cursor<index&&cursor<chars->length()){let c:String=at(chars,cursor);offset=offset+scalarWidth(c);
+  branch when{c=="\r"=>{line=line+1;column=1;},c=="\n"=>{branch when{previous!="\r"=>{line=line+1;},else=>unit};column=1;},else=>{column=column+1;}};
+  previous=c;cursor=cursor+1;};
+ Span{start:offset,end:offset+branch when{index<chars->length()=>scalarWidth(at(chars,index)),else=>0},line:line,column:column}
+};

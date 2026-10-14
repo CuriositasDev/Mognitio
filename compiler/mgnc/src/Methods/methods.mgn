@@ -1,0 +1,73 @@
+namespace Mgnc\Methods;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Type,Argument,ValueTerm,Obligation,Formed,Member};
+use Mgnc\TypeOps\{argumentAt,concreteValue,intern,listKind,resultKind,intKind,fixedKind,bitsKind,bytesKind,stringKind,signedKind,unsignedKind};
+use Mgnc\GenericApplication\{standard,structural};
+use Mgnc\TypeForm\{widthRequirements};
+public type Signature=product{store:Store;result:Int;parameters:List<Int>;obligations:List<Obligation>;};
+public let genericKinds:Function(Int,String):List<Int>=function(kind:Int,name:String):List<Int>{
+ branch when{(kind==intKind||kind==fixedKind)&&name=="convertTo"=>List<Int>[0],
+ kind==bitsKind&&name=="asInteger"=>List<Int>[0],kind==bytesKind&&name=="toBits"=>List<Int>[1],else=>List<Int>[]}
+};
+let typeArgument:Function(List<Argument>,Int,Span):Result<Int,Diagnostic>=function(arguments:List<Argument>,index:Int,span:Span):Result<Int,Diagnostic>{
+ branch on try argumentAt(arguments,index,span){Argument::Type(value:Int)=>Result<Int,Diagnostic>::Ok(value),Argument::Value(value:ValueTerm)=>Result<Int,Diagnostic>::Err(problem("type",span,"method requires a type argument"))}
+};
+public let resolve:Function(Store,Int,String,List<Argument>,Span):Result<Signature,Diagnostic>=function(initial:Store,receiver:Int,name:String,arguments:List<Argument>,span:Span):Result<Signature,Diagnostic>{
+ var store:Store=initial;let shape:Type=try lookup<Type>(store->types,receiver);
+ branch when{arguments->length()!=genericKinds(shape->kind,name)->length()=>{return Result<Signature,Diagnostic>::Err(problem("type",span,"method generic arity mismatch"));},else=>unit};
+ var parameters:List<Int>=List<Int>[];var result:Int=0;var errorType:Parent=Parent::None;var valid:Bool=true;
+ var obligations:List<Obligation>=List<Obligation>[];
+ branch when{shape->kind==listKind=>{
+  let element:Int=try typeArgument(shape->arguments,0,span);
+  branch when{name=="length"=>{result=1;},name=="append"=>{parameters=List<Int>[element];result=receiver;},
+   name=="at"=>{parameters=List<Int>[1];result=element;errorType=Parent::Some(4);},
+   name=="join"&&element==3=>{parameters=List<Int>[3];result=3;},else=>{valid=false;}};
+ },shape->kind==stringKind=>{
+  branch when{name=="length"=>{result=1;},name=="slice"=>{parameters=List<Int>[1,1];result=3;errorType=Parent::Some(5);},
+   name=="scalars"=>{let formed:Formed=try structural(store,listKind,List<Int>[3]);store=formed->store;result=formed->value;},
+   else=>{valid=false;}};
+ },shape->kind==intKind||shape->kind==fixedKind=>{
+  branch when{name=="convertTo"=>{
+   result=try typeArgument(arguments,0,span);let target:Type=try lookup<Type>(store->types,result);
+   branch when{target->kind!=intKind&&target->kind!=fixedKind=>{return Result<Signature,Diagnostic>::Err(problem("type",span,"integer conversion target must be an integer type"));},else=>unit};
+   let error:Formed=try standard(store,"Std\\Numeric","IntegerConversionError",List<Argument>[],span);store=error->store;errorType=Parent::Some(error->value);
+  },name=="toBits"=>{
+   let width:Argument=branch when{shape->kind==intKind=>Argument::Value(concreteValue(64)),else=>try argumentAt(shape->arguments,0,span)};
+   let formed:Formed=try standard(store,"Std\\Numeric","Bits",List<Argument>[width],span);store=formed->store;result=formed->value;obligations=formed->obligations;
+  },else=>{valid=false;}};
+ },shape->kind==bitsKind=>{
+  branch when{name=="length"=>{result=1;},
+   name=="and"||name=="or"||name=="xor"=>{parameters=List<Int>[receiver];result=receiver;},
+   name=="not"=>{result=receiver;},name=="at"=>{parameters=List<Int>[1];result=2;errorType=Parent::Some(4);},
+   name=="shiftLeft"||name=="shiftRight"=>{
+    parameters=List<Int>[1];result=receiver;let error:Formed=try standard(store,"Std\\Numeric","BitShiftError",List<Argument>[],span);store=error->store;errorType=Parent::Some(error->value);
+   },name=="asInteger"=>{
+    let sign:Int=try typeArgument(arguments,0,span);let target:Type=try lookup<Type>(store->types,sign);
+    branch when{target->kind!=signedKind&&target->kind!=unsignedKind=>{return Result<Signature,Diagnostic>::Err(problem("type",span,"integer interpretation requires Signed or Unsigned"));},else=>unit};
+    let args:List<Argument>=List<Argument>[try argumentAt(shape->arguments,0,span),Argument::Type(sign)];
+    obligations=try widthRequirements(store,fixedKind,args,span);
+    let formed:Formed=try intern(store,Type{kind:fixedKind,owner:Parent::None,arguments:args,members:List<Member>[]});store=formed->store;result=formed->value;
+   },name=="toBytes"=>{
+    let order:Formed=try standard(store,"Std\\Binary","ByteOrder",List<Argument>[],span);store=order->store;parameters=List<Int>[order->value];
+    let bytes:Formed=try standard(store,"Std\\Binary","Bytes",List<Argument>[],span);store=bytes->store;result=bytes->value;
+    let error:Formed=try standard(store,"Std\\Binary","BitWidthError",List<Argument>[],span);store=error->store;errorType=Parent::Some(error->value);
+   },else=>{valid=false;}};
+ },shape->kind==bytesKind=>{
+  branch when{name=="length"=>{result=1;},name=="concat"=>{parameters=List<Int>[receiver];result=receiver;},
+   name=="slice"=>{parameters=List<Int>[1,1];result=receiver;errorType=Parent::Some(5);},
+   name=="at"||name=="append"=>{
+    let byte:Formed=try standard(store,"Std\\Numeric","Bits",List<Argument>[Argument::Value(concreteValue(8))],span);store=byte->store;
+    branch when{name=="at"=>{parameters=List<Int>[1];result=byte->value;errorType=Parent::Some(4);},else=>{parameters=List<Int>[byte->value];result=receiver;}};
+   },name=="toBits"=>{
+    let order:Formed=try standard(store,"Std\\Binary","ByteOrder",List<Argument>[],span);store=order->store;parameters=List<Int>[order->value];
+    let formed:Formed=try standard(store,"Std\\Numeric","Bits",arguments,span);store=formed->store;result=formed->value;obligations=formed->obligations;
+    let error:Formed=try standard(store,"Std\\Binary","BinaryDecodeError",List<Argument>[],span);store=error->store;errorType=Parent::Some(error->value);
+   },else=>{valid=false;}};
+ },else=>{valid=false;}};
+ branch when{!valid=>{return Result<Signature,Diagnostic>::Err(problem("semantic",span,"unknown builtin method"));},else=>unit};
+ branch on errorType{Parent::None=>unit,Parent::Some(error:Int)=>{
+  let formed:Formed=try structural(store,resultKind,List<Int>[result,error]);store=formed->store;result=formed->value;
+ }};
+ Result<Signature,Diagnostic>::Ok(Signature{store:store,result:result,parameters:parameters,obligations:obligations})
+};

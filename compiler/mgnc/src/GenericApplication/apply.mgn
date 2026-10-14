@@ -1,0 +1,48 @@
+namespace Mgnc\GenericApplication;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\Projection\{parts,item,site};
+use Mgnc\HeaderRead\{rightList};
+use Mgnc\TypeData\{Store,Type,Member,Argument,Obligation,Formed};
+use Mgnc\TypeSyntax\{Child,argumentNode,value};
+use Mgnc\TypeForm\{form};
+use Mgnc\TypeOps\{intern,substitute,substituteObligations};
+use Mgnc\SemanticData\{Module,Declaration};
+public type Applied=product{store:Store;arguments:List<Argument>;obligations:List<Obligation>;};
+public let arguments:Function(Store,Int,SyntaxForest,Parent,List<Int>,Parent,List<Argument>,Span):Result<Applied,Diagnostic>=function(initial:Store,file:Int,tree:SyntaxForest,syntax:Parent,kinds:List<Int>,owner:Parent,environment:List<Argument>,span:Span):Result<Applied,Diagnostic>{
+ var store:Store=initial;var nodes:List<Int>=List<Int>[];
+ branch on syntax{Parent::None=>unit,Parent::Some(id:Int)=>{let fields:List<Int>=try parts(tree,id);nodes=try rightList(tree,try item(fields,1));}};
+ branch when{nodes->length()!=kinds->length()=>{return Result<Applied,Diagnostic>::Err(problem("type",span,"all generic arguments must be supplied with matching arity"));},else=>unit};
+ var result:List<Argument>=List<Argument>[];var obligations:List<Obligation>=List<Obligation>[];var index:Int=0;
+ loop over(kinds as kind:Int){
+  let node:Int=try argumentNode(tree,Child{node:try item(nodes,index),kind:kind,argument:true});
+  branch when{kind==0=>{
+   let formed:Formed=try form(store,file,tree,node,owner,environment);store=formed->store;result=result->append(Argument::Type(formed->value));
+   loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
+  },else=>{result=result->append(Argument::Value(try value(store,tree,node,owner,environment)));}};
+  index=index+1;
+ };
+ Result<Applied,Diagnostic>::Ok(Applied{store:store,arguments:result,obligations:obligations})
+};
+public let standard:Function(Store,String,String,List<Argument>,Span):Result<Formed,Diagnostic>=function(store:Store,nameSpace:String,name:String,actual:List<Argument>,span:Span):Result<Formed,Diagnostic>{
+ var index:Int=0;
+ loop while(index<store->headers->declarations->count){
+  let declaration:Declaration=try lookup<Declaration>(store->headers->declarations,index);
+  branch when{declaration->name==name=>{
+   let module:Module=try lookup<Module>(store->headers->modules,declaration->file);
+   branch when{module->standard&&module->nameSpace==nameSpace=>{
+    branch when{declaration->parameters->length()!=actual->length()=>{return Result<Formed,Diagnostic>::Err(problem("internal",span,"standard type argument arity invariant"));},else=>unit};
+    let canonical:Int=branch on try lookup<Parent>(store->declarations,index){Parent::Some(id:Int)=>id,Parent::None=>{return Result<Formed,Diagnostic>::Err(problem("internal",span,"standard type is not completed"));}};
+    let required:List<Obligation>=try substituteObligations(try lookup<List<Obligation>>(store->constraints,index),index,actual,span);
+    let formed:Formed=try substitute(store,canonical,index,actual,span);
+    return Result<Formed,Diagnostic>::Ok(Formed{store:formed->store,value:formed->value,obligations:required});
+   },else=>unit};
+  },else=>unit};index=index+1;
+ };
+ Result<Formed,Diagnostic>::Err(problem("internal",span,"required standard type is absent"))
+};
+public let structural:Function(Store,Int,List<Int>):Result<Formed,Diagnostic>=function(store:Store,kind:Int,types:List<Int>):Result<Formed,Diagnostic>{
+ var args:List<Argument>=List<Argument>[];loop over(types as id:Int){args=args->append(Argument::Type(id));};
+ intern(store,Type{kind:kind,owner:Parent::None,arguments:args,members:List<Member>[]})
+};

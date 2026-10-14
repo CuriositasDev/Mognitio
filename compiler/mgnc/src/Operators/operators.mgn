@@ -1,0 +1,36 @@
+namespace Mgnc\Operators;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\TypeData\{Store,Type,Structure};
+use Mgnc\SemanticValues\{Node};
+use Mgnc\TypeOps\{intKind,boolKind,stringKind,unitKind,fixedKind,bitsKind,bytesKind,identityKind};
+use Mgnc\Grammar\{ruleUnaryNeg,ruleUnaryNot,ruleBinaryOr,ruleBinaryAnd,ruleBinaryLt,ruleBinaryLe,ruleBinaryGt,ruleBinaryGe,ruleBinaryEq,ruleBinaryNe,ruleBinaryAdd,ruleBinarySub,ruleBinaryMul,ruleBinaryDiv,ruleBinaryRem};
+public type Operation=product{valueType:Int;normal:Bool;name:String;};
+let nodeAt:Function(List<Node>,Int,Span):Result<Node,Diagnostic>=function(nodes:List<Node>,index:Int,span:Span):Result<Node,Diagnostic>{
+ branch on nodes->at(index){Result<Node,IndexError>::Ok(value:Node)=>Result<Node,Diagnostic>::Ok(value),Result<Node,IndexError>::Err(error:IndexError)=>Result<Node,Diagnostic>::Err(problem("internal",span,"operator arity invariant"))}
+};
+public let resolve:Function(Store,Int,List<Node>,Span):Result<Operation,Diagnostic>=function(store:Store,rule:Int,nodes:List<Node>,span:Span):Result<Operation,Diagnostic>{
+ let unary:Bool=rule==ruleUnaryNeg||rule==ruleUnaryNot;
+ branch when{nodes->length()!=branch when{unary=>1,else=>2}=>{return Result<Operation,Diagnostic>::Err(problem("internal",span,"operator arity invariant"));},else=>unit};
+ let left:Node=try nodeAt(nodes,0,span);let right:Node=branch when{unary=>left,else=>try nodeAt(nodes,1,span)};
+ var selected:Int= -1;
+ loop over(nodes as operand:Node){
+  branch on operand->structure{Structure::Unknown=>unit,Structure::Known(value:Int)=>{
+   branch when{selected>=0&&selected!=value=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"operator operands have different type structures"));},else=>unit};selected=value;
+  }};
+ };
+ let logical:Bool=rule==ruleUnaryNot||rule==ruleBinaryAnd||rule==ruleBinaryOr;
+ branch when{logical=>{
+  branch when{selected>=0&&selected!=2=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"logical operator requires Bool"));},else=>unit};
+  return Result<Operation,Diagnostic>::Ok(Operation{valueType:2,normal:left->normal,name:branch when{rule==ruleUnaryNot=>"not",rule==ruleBinaryAnd=>"and",else=>"or"}});
+ },selected<0=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"operator cannot be selected from unknown operand structures"));},else=>unit};
+ let shape:Type=try lookup<Type>(store->types,selected);let integer:Bool=shape->kind==intKind||shape->kind==fixedKind;
+ let equality:Bool=rule==ruleBinaryEq||rule==ruleBinaryNe;
+ let comparison:Bool=equality||rule==ruleBinaryLt||rule==ruleBinaryLe||rule==ruleBinaryGt||rule==ruleBinaryGe;
+ let equalType:Bool=integer||shape->kind==boolKind||shape->kind==stringKind||shape->kind==unitKind||shape->kind==bitsKind||shape->kind==bytesKind||shape->kind==identityKind;
+ let allowed:Bool=branch when{equality=>equalType,comparison=>integer,rule==ruleBinaryAdd=>integer||shape->kind==stringKind,else=>integer};
+ branch when{!allowed=>{return Result<Operation,Diagnostic>::Err(problem("type",span,"operator is not defined for this type structure"));},else=>unit};
+ let name:String=branch when{rule==ruleUnaryNeg=>"neg",rule==ruleBinaryAdd=>"add",rule==ruleBinarySub=>"sub",rule==ruleBinaryMul=>"mul",rule==ruleBinaryDiv=>"div",rule==ruleBinaryRem=>"rem",
+ rule==ruleBinaryLt=>"lt",rule==ruleBinaryLe=>"le",rule==ruleBinaryGt=>"gt",rule==ruleBinaryGe=>"ge",rule==ruleBinaryEq=>"eq",rule==ruleBinaryNe=>"ne",else=>"invalid"};
+ branch when{name=="invalid"=>{return Result<Operation,Diagnostic>::Err(problem("internal",span,"unknown operator production"));},else=>unit};
+ Result<Operation,Diagnostic>::Ok(Operation{valueType:branch when{comparison=>2,else=>selected},normal:left->normal&&right->normal,name:name})
+};

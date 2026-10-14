@@ -15,7 +15,7 @@ public let genericGuards:Function(SyntaxForest):Result<List<Int>,Diagnostic>=fun
 };
 type Visit=product{id:Int;block:Int;};
 type Pending=product{id:Int;parent:Int;};
-let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,rejected:List<Int>):Result<SyntaxForest,Diagnostic>{
+public let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,rejected:List<Int>):Result<SyntaxForest,Diagnostic>{
  var memo:Paged<Int>=empty<Int>();var index:Int=0;loop while(index<tree->nodes->count){memo=push<Int>(memo,-2);index=index+1;};
  var nodes:NodeStore=emptyNodes();var stack:Paged<Pending>=push<Pending>(empty<Pending>(),Pending{id:root,parent:-1});var active:Int=0;
  // Memoized postorder over the shared DAG; a dead child invalidates its parent family,

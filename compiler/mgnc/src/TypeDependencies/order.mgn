@@ -1,0 +1,56 @@
+namespace Mgnc\TypeDependencies;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{text};
+use Mgnc\TypeNames\{declaration,parameter};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Grammar\{ntType,ruleTypeName,ruleTypeApply};
+type Edge=product{owner:Int;target:Int;};
+public let order:Function(Headers):Result<List<Int>,Diagnostic>=function(headers:Headers):Result<List<Int>,Diagnostic>{
+ var edges:List<Edge>=List<Edge>[];var pending:List<Int>=List<Int>[];var id:Int=0;
+ loop while(id<headers->declarations->count){
+  let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+  branch when{declared->kind<3=>{
+   pending=pending->append(id);let module:Module=try lookup<Module>(headers->modules,declared->file);
+   var seen:Paged<Bool>=empty<Bool>();var index:Int=0;loop while(index<module->tree->nodes->count){seen=push<Bool>(seen,false);index=index+1;};
+   var work:Paged<Int>=push<Int>(empty<Int>(),declared->annotation);
+   loop over(declared->parameters as param:Parameter){branch when{param->kind==1=>{work=push<Int>(work,param->node);},else=>unit};};
+   index=0;
+   loop while(index<work->count){
+    let current:Int=try lookup<Int>(work,index);index=index+1;branch when{try lookup<Bool>(seen,current)=>{continue;},else=>unit};
+    seen=try replaceItem<Bool>(seen,current,true);let node:ForestNode=try getNode(module->tree->nodes,current);
+    branch when{node->symbol==ntType&&(node->rule==ruleTypeName||node->rule==ruleTypeApply)=>{
+     let name:String=try text(module->tree,current);let generic:Parent=try parameter(headers,Parent::Some(id),name);
+     branch on generic{Parent::Some(ordinal:Int)=>unit,Parent::None=>{
+      let found:Parent=try declaration(headers,declared->file,name);
+      branch on found{Parent::None=>unit,Parent::Some(target:Int)=>{
+       let definition:Declaration=try lookup<Declaration>(headers->declarations,target);
+       branch when{definition->kind<3=>{edges=edges->append(Edge{owner:id,target:target});},else=>unit};
+      }};
+     }};
+    },else=>unit};
+    loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{work=push<Int>(work,child);},else=>unit};};
+   };
+  },else=>unit};id=id+1;
+ };
+ var complete:Paged<Bool>=empty<Bool>();id=0;loop while(id<headers->declarations->count){complete=push<Bool>(complete,false);id=id+1;};
+ var result:List<Int>=List<Int>[];
+ loop while(result->length()<pending->length()){
+  var progress:Bool=false;
+  loop over(pending as current:Int){
+   branch when{try lookup<Bool>(complete,current)=>{continue;},else=>unit};var blocked:Bool=false;
+   loop over(edges as edge:Edge){branch when{edge->owner==current&&!(try lookup<Bool>(complete,edge->target))=>{blocked=true;break;},else=>unit};};
+   branch when{!blocked=>{complete=try replaceItem<Bool>(complete,current,true);result=result->append(current);progress=true;},else=>unit};
+  };
+  branch when{!progress=>{
+   loop over(pending as current:Int){branch when{!(try lookup<Bool>(complete,current))=>{
+    let declared:Declaration=try lookup<Declaration>(headers->declarations,current);
+    return Result<List<Int>,Diagnostic>::Err(problem("semantic",declared->span,"cyclic named type definition"));
+   },else=>unit};};
+  },else=>unit};
+ };
+ Result<List<Int>,Diagnostic>::Ok(result)
+};

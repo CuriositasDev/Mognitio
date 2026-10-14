@@ -1,0 +1,86 @@
+namespace Mgnc\Expressions;
+use Mgnc\Grammar\{ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Data\{Span,Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,text,site,concrete,failure};
+use Mgnc\BridgeLists\{leftList,expressions,conditions,reverse};
+use Mgnc\HeaderRead\{rightList};
+public type Label=product{name:String;span:Span;};
+public type Pattern=product{typeSyntax:Int;variant:Label;binder:List<Label>;annotation:List<Int>;};
+public type Expression=product{syntax:Int;rule:Int;span:Span;children:List<Int>;annotations:List<Int>;labels:List<Label>;patterns:List<Pattern>;flag:Bool;text:String;};
+public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=function(tree:SyntaxForest,root:Int):Result<Expression,Diagnostic>{
+ let id:Int=try concrete(tree,root);let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
+ var children:List<Int>=List<Int>[];var annotations:List<Int>=List<Int>[];var labels:List<Label>=List<Label>[];var patterns:List<Pattern>=List<Pattern>[];var flag:Bool=false;
+ let rule:Int=node->rule;let spelling:String=try text(tree,id);
+ branch when{
+ rule==ruleInteger||rule==ruleString||rule==ruleTrue||rule==ruleFalse||rule==ruleUnit||rule==ruleName=>unit,
+ rule==ruleGenericApply=>{annotations=annotations->append(try item(fields,1));},
+ rule==ruleGroup=>{children=children->append(try item(fields,1));},
+ rule==ruleUnaryNeg||rule==ruleUnaryNot||rule==ruleUnaryTry||rule==ruleStatementReturn||rule==ruleStatementDiscard||rule==ruleStatementBreakValue=>{
+  children=children->append(try item(fields,1));
+ },
+ rule==ruleStatementBreak||rule==ruleStatementContinue=>unit,
+ rule==ruleStatementExpression=>{children=children->append(try item(fields,0));},
+ rule==ruleStatementAssign||(rule>=ruleBinaryLt&&rule<=ruleBinaryNe)||rule==ruleBinaryOr||rule==ruleBinaryAnd||rule==ruleBinaryAdd||rule==ruleBinarySub||rule==ruleBinaryMul||rule==ruleBinaryDiv||rule==ruleBinaryRem=>{
+  children=children->append(try item(fields,0))->append(try item(fields,2));
+ },
+ rule==ruleBlock=>{
+  children=try leftList(tree,try item(fields,1));let tail:List<Int>=try parts(tree,try item(fields,2));
+  branch when{tail->length()>0=>{children=children->append(try item(tail,0));flag=true;},else=>unit};
+ },
+ rule==ruleLetBinding||rule==ruleVarBinding=>{
+  let name:Int=try item(fields,1);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});
+  annotations=annotations->append(try item(fields,3));children=children->append(try item(fields,5));flag=rule==ruleVarBinding;
+ },
+ rule==ruleFunction=>{children=children->append(try item(fields,6));},
+ rule==ruleCall=>{children=children->append(try item(fields,0));loop over((try expressions(tree,try item(fields,2))) as child:Int){children=children->append(child);};},
+ rule==ruleField||rule==ruleMethod||rule==ruleGenericMethod=>{
+  children=children->append(try item(fields,0));let name:Int=try item(fields,2);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});
+  branch when{rule==ruleMethod||rule==ruleGenericMethod=>{
+   loop over((try expressions(tree,try item(fields,branch when{rule==ruleMethod=>4,else=>5}))) as child:Int){children=children->append(child);};
+   branch when{rule==ruleGenericMethod=>{annotations=annotations->append(try item(fields,3));},else=>unit};
+  },else=>unit};
+ },
+ rule==ruleProduct=>{
+  annotations=annotations->append(try item(fields,0));let optional:List<Int>=try parts(tree,try item(fields,2));
+  branch when{optional->length()>0=>{
+   var current:Int=try item(optional,0);var reversed:List<Int>=List<Int>[];
+   loop while(true){let values:List<Int>=try parts(tree,current);branch when{values->length()==1=>{reversed=reversed->append(try item(values,0));break;},else=>unit};reversed=reversed->append(try item(values,2));current=try item(values,0);};
+   loop over((try reverse(reversed)) as entry:Int){let value:List<Int>=try parts(tree,entry);let name:Int=try item(value,0);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});children=children->append(try item(value,2));};
+  },else=>unit};
+ },
+ rule==ruleList=>{
+  annotations=annotations->append(try item(fields,0));children=try expressions(tree,try item(fields,2));
+ },
+ rule==ruleScalarLiteral=>{
+  annotations=annotations->append(try item(fields,0))->append(try item(fields,2));
+ },
+ rule==ruleVariant||rule==ruleVariantPayload=>{
+  annotations=annotations->append(try item(fields,0));let name:Int=try item(fields,2);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});
+  branch when{rule==ruleVariantPayload=>{children=children->append(try item(fields,4));},else=>unit};
+ },
+ rule==ruleLoopForever||rule==rulePanic=>{children=children->append(try item(fields,1));},
+ rule==ruleLoopWhile=>{children=children->append(try item(fields,3))->append(try item(fields,5));},
+ rule==ruleLoopOver=>{
+  children=children->append(try item(fields,3))->append(try item(fields,7));let param:List<Int>=try parts(tree,try item(fields,5));let name:Int=try item(param,0);
+  labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});annotations=annotations->append(try item(param,2));
+ },
+ rule==ruleBranchWhen=>{children=try conditions(tree,try item(fields,3));children=children->append(try item(fields,6));},
+ rule==ruleBranchOn=>{
+  children=children->append(try item(fields,2));
+  loop over((try rightList(tree,try item(fields,4))) as arm:Int){
+   let values:List<Int>=try parts(tree,arm);let pattern:List<Int>=try parts(tree,try item(values,0));let name:Int=try item(pattern,2);
+   var binder:List<Label>=List<Label>[];var annotation:List<Int>=List<Int>[];
+   branch when{pattern->length()>3=>{
+    let param:List<Int>=try parts(tree,try item(pattern,4));let binding:Int=try item(param,0);
+    binder=binder->append(Label{name:try text(tree,binding),span:try site(tree,binding)});annotation=annotation->append(try item(param,2));
+   },else=>unit};
+   patterns=patterns->append(Pattern{typeSyntax:try item(pattern,0),variant:Label{name:try text(tree,name),span:try site(tree,name)},binder:binder,annotation:annotation});
+   children=children->append(try item(values,2));
+  };
+ },
+ else=>{return Result<Expression,Diagnostic>::Err(try failure(tree,id,"internal","unhandled classified expression production"));}};
+ Result<Expression,Diagnostic>::Ok(Expression{syntax:id,rule:rule,span:try site(tree,id),children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
+};

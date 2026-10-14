@@ -1,0 +1,62 @@
+namespace Mgnc\ValueSupport;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Structure,Obligation};
+use Mgnc\SemanticValues\{Node,Symbol,FunctionInfo,Loop,BodyState,State,Environment,Checked};
+use Mgnc\SemanticData\{Module,Declaration,Introduction};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\Tables\{replaceItem};
+public let known:Function(Structure,Span):Result<Int,Diagnostic>=function(structure:Structure,span:Span):Result<Int,Diagnostic>{
+ branch on structure{Structure::Known(value:Int)=>Result<Int,Diagnostic>::Ok(value),Structure::Unknown=>Result<Int,Diagnostic>::Err(problem("type",span,"operation requires a known type structure"))}
+};
+public let structureEqual:Function(Structure,Structure):Bool=function(a:Structure,b:Structure):Bool{
+ branch on a{Structure::Unknown=>branch on b{Structure::Unknown=>true,Structure::Known(value:Int)=>false},
+ Structure::Known(left:Int)=>branch on b{Structure::Unknown=>false,Structure::Known(right:Int)=>left==right}}
+};
+public let expect:Function(Node,Int):Result<Unit,Diagnostic>=function(node:Node,valueType:Int):Result<Unit,Diagnostic>{
+ branch when{node->normal=>{
+  let actual:Int=try known(node->structure,node->span);
+  branch when{actual!=valueType=>{return Result<Unit,Diagnostic>::Err(problem("type",node->span,"expression type does not match required type"));},else=>unit};
+ },else=>unit};Result<Unit,Diagnostic>::Ok(unit)
+};
+public let initialize:Function(Store):Result<State,Diagnostic>=function(types:Store):Result<State,Diagnostic>{
+ var bodies:Paged<BodyState>=empty<BodyState>();var index:Int=0;
+ loop while(index<types->headers->declarations->count){
+  let declared:Declaration=try lookup<Declaration>(types->headers->declarations,index);let module:Module=try lookup<Module>(types->headers->modules,declared->file);
+  bodies=push<BodyState>(bodies,branch when{declared->kind<3||module->standard=>BodyState::NotRequired,else=>BodyState::Pending});index=index+1;
+ };
+ var symbols:Paged<Symbol>=empty<Symbol>();var globals:Paged<Parent>=empty<Parent>();index=0;
+ loop while(index<types->headers->names->count){
+  let introduction:Introduction=try lookup<Introduction>(types->headers->names,index);let declared:Declaration=try lookup<Declaration>(types->headers->declarations,introduction->declaration);
+  branch when{declared->kind>=4=>{
+   let valueType:Int=branch on try lookup<Parent>(types->declarations,introduction->declaration){Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",introduction->span,"runtime signature is incomplete"));}};
+   globals=push<Parent>(globals,Parent::Some(symbols->count));symbols=push<Symbol>(symbols,Symbol{file:introduction->file,name:introduction->name,valueType:valueType,mutable:declared->kind==5,functionOwner:Parent::None,declaration:Parent::Some(introduction->declaration),span:introduction->span});
+  },else=>{globals=push<Parent>(globals,Parent::None);}};index=index+1;
+ };
+ Result<State,Diagnostic>::Ok(State{types:types,nodes:empty<Node>(),symbols:symbols,globals:globals,functions:empty<FunctionInfo>(),loops:empty<Loop>(),obligations:List<Obligation>[],bodies:bodies})
+};
+public let emit:Function(State,Node):Checked=function(state:State,node:Node):Checked{
+ Checked{state:State{types:state->types,nodes:push<Node>(state->nodes,node),symbols:state->symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:state->obligations,bodies:state->bodies},root:state->nodes->count}
+};
+public let withTypes:Function(State,Store,List<Obligation>):State=function(state:State,types:Store,added:List<Obligation>):State{
+ var obligations:List<Obligation>=state->obligations;loop over(added as requirement:Obligation){obligations=obligations->append(requirement);};
+ State{types:types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:obligations,bodies:state->bodies}
+};
+public let withSymbols:Function(State,Paged<Symbol>):State=function(state:State,symbols:Paged<Symbol>):State{
+ State{types:state->types,nodes:state->nodes,symbols:symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:state->obligations,bodies:state->bodies}
+};
+public let withFunctions:Function(State,Paged<FunctionInfo>):State=function(state:State,functions:Paged<FunctionInfo>):State{
+ State{types:state->types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:functions,loops:state->loops,obligations:state->obligations,bodies:state->bodies}
+};
+public let withLoops:Function(State,Paged<Loop>):State=function(state:State,loops:Paged<Loop>):State{
+ State{types:state->types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:state->functions,loops:loops,obligations:state->obligations,bodies:state->bodies}
+};
+public let reachable:Function(Environment,Bool):Environment=function(environment:Environment,canReach:Bool):Environment{
+ Environment{file:environment->file,symbols:environment->symbols,reserved:environment->reserved,functionOwner:environment->functionOwner,loopTarget:environment->loopTarget,returnType:environment->returnType,templateOwner:environment->templateOwner,arguments:environment->arguments,reachable:canReach}
+};
+public let reserve:Function(Environment,String):Environment=function(environment:Environment,name:String):Environment{
+ Environment{file:environment->file,symbols:environment->symbols,reserved:environment->reserved->append(name),functionOwner:environment->functionOwner,loopTarget:environment->loopTarget,returnType:environment->returnType,templateOwner:environment->templateOwner,arguments:environment->arguments,reachable:environment->reachable}
+};
+public let introduce:Function(Environment,Int):Environment=function(environment:Environment,symbol:Int):Environment{
+ Environment{file:environment->file,symbols:environment->symbols->append(symbol),reserved:environment->reserved,functionOwner:environment->functionOwner,loopTarget:environment->loopTarget,returnType:environment->returnType,templateOwner:environment->templateOwner,arguments:environment->arguments,reachable:environment->reachable}
+};

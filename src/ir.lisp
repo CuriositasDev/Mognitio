@@ -8,7 +8,7 @@
     ((:integer.convert :bits.left :bits.right :bits.at) '(:may-allocate :may-fail :call-barrier))
     ((:integer.to-bits :bits.integer :bits.length :bits.and :bits.or :bits.xor :bits.not) '(:call-barrier))
     ((:bytes.from-ints :bytes.from-bits :bytes.at :bytes.append :bytes.concat :bytes.slice :bytes.to-bits :bits.to-bytes) '(:may-allocate :may-fail :call-barrier))
-    ((:bytes.length :bytes.equal :bytes.not-equal) '(:call-barrier))
+    ((:bytes.length :file-identity.equal :file-identity.not-equal :bytes.equal :bytes.not-equal) '(:call-barrier))
     ((:io.call :binary.publish) '(:external-effect :may-allocate :may-fail :call-barrier))
     ((:call :call.value :call.interface :closure.call :closure.make :list.append :list.at :list.buffer :text.scalars :text.join :text.slice.result :struct.make :enum.make :interface.pack :text.concat :text.slice) '(:may-allocate :may-fail :call-barrier))
     (:test.stage '(:may-fail :call-barrier))

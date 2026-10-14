@@ -76,6 +76,8 @@
     (:load-frame :rcx -152) (:add-reg :rax :rcx) (:store-frame -152 :rax) (:jmp :write)))
 
 (defun io-operation-unit (instruction context)
+  (when (eq (mognitio.ir:instruction-value instruction) :inspect-path)
+    (return-from io-operation-unit (path-inspection-unit instruction context)))
   (when (member (mognitio.ir:instruction-value instruction) '(:join-path :read-directory :create-directory))
     (return-from io-operation-unit (directory-operation-unit instruction context)))
   (let* ((operation (mognitio.ir:instruction-value instruction))

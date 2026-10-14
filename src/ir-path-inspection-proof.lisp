@@ -1,0 +1,31 @@
+(in-package #:mognitio.ir)
+
+(defun verify-path-inspection-instruction (instruction types context caller functions)
+  ;; Reconstruct the public shapes independently of the catalog/signature builder.
+  (let* ((result (instruction-type instruction))
+         (args (mognitio.semantic::canonical-result-arguments context result))
+         (function (gethash caller functions)))
+    (labels ((sum-shape (type name variants)
+               (and (nominal-type-p type :enum)
+                    (let ((info (context-type context type)))
+                      (and (equal name (type-info-name info))
+                           (equal variants (mapcar #'variant-info-name (type-info-variants info)))
+                           (every (lambda (v) (null (variant-info-types v))) (type-info-variants info))))))
+             (fields (type name names)
+               (when (nominal-type-p type :struct)
+                 (let ((info (context-type context type)))
+                   (when (and (equal name (type-info-name info))
+                              (equal names (mapcar #'car (type-info-fields info))))
+                     (mapcar #'cdr (type-info-fields info)))))))
+      (let ((success (fields (first args) "standard:Std\\Io#PathInfo" '("kind" "identity")))
+            (error (fields (second args) "standard:Std\\Io#PathInfoError" '("kind" "subject"))))
+        (and function (plusp caller) (null (ir-function-method function))
+             (null (ir-function-capture-types function)) (equal types '(:string))
+             (equal result (ir-function-result-type function))
+             (equal types (rest (ir-function-parameter-types function)))
+             (= (length args) 2) success error
+             (eq (second success) :file-identity) (eq (second error) :string)
+             (sum-shape (first success) "standard:Std\\Io#DirectoryEntryKind" '("File" "Directory" "Symlink" "Other"))
+             (sum-shape (first error) "standard:Std\\Io#IoErrorKind"
+                        '("InvalidPath" "InvalidEncoding" "NotFound" "PermissionDenied"
+                          "UnsupportedTarget" "BrokenPipe" "ResourceExhausted" "Other")))))))

@@ -108,7 +108,7 @@
                                                    :initial-contents (value-context-types source))) context))
 
 (defun concrete-type-key (context type)
-  (cond ((null type) nil) ((integer-argument-p type) type) ((member type '(:int :bool :void :string :bytes)) type)
+  (cond ((null type) nil) ((integer-argument-p type) type) ((member type '(:int :bool :void :string :bytes :file-identity)) type)
         ((or (compile-time-parameter-p type) (application-type-p type)) (internal-error "Unresolved runtime type parameter"))
         ((numeric-scalar-p type)
          (cons (first type) (cons (concrete-type-key context (second type)) (cddr type))))

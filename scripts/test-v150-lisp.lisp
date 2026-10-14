@@ -1,0 +1,6 @@
+(require :asdf)
+(asdf:load-asd (truename (merge-pathnames "../mognitio.asd" *load-truename*)))
+(asdf:load-system "mognitio/tests")
+(in-package #:mognitio.tests)
+(let ((*tests* (remove-if-not (lambda (name) (search "V150-" (symbol-name name))) *tests*)))
+  (run-tests))

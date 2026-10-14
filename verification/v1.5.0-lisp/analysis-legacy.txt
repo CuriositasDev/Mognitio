@@ -1,0 +1,1 @@
+PASS analysis-only entry/test/panic, recovery, Function parameter precedence, intrinsic method; examples=19

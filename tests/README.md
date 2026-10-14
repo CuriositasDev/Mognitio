@@ -15,6 +15,7 @@ cases to executable fixtures. Host/process audit details are recorded
 
 | Files | Independent observations |
 |---|---|
+| v150-path-inspection.lisp, v150-path-failures.lisp, v150-path-proofs.lisp, v150-inspection.py | Host/native path identity, opaque storage, static rejection, OS errors, cleanup, GC, full 64-bit words, independent proof mutations, real path bytes, rename/deletion, cross-filesystem identity and CLI/test execution |
 | v11-workloads.py, fixtures/v11-checks.mgn | Ordinary scanner/symbol workloads, independent full-field oracle, UTF-8, snapshots, standalone execution, and output-corruption controls |
 | v11-heap-snapshot.lisp, v11-heap-check.py, v11-heap-run.py | Actual free-head/partition snapshots in both profiles, split/unlink/coalesce boundaries, runtime head faults, malformed records, and writer failures |
 | v11-allocation.lisp, v11-index-check.py, v11-map-check.py | Independent allocated-start index oracle, queue bounds, workspace failure classification, cycle reachability, and real mmap/munmap lifetimes |
@@ -73,6 +74,7 @@ Historical validation records preserve their original counts and results.
 
 | Earlier expectation | Current test replacement |
 |---|---|
+| v150-path-inspection.lisp, v150-path-failures.lisp, v150-path-proofs.lisp, v150-inspection.py | Host/native path identity, opaque storage, static rejection, OS errors, cleanup, GC, full 64-bit words, independent proof mutations, real path bytes, rename/deletion, cross-filesystem identity and CLI/test execution |
 | Lowercase builtin types and lowercase function type | Explicit Int/Bool/String/Unit/Function, reserved-name and user-alias tests |
 | `struct` / `enum` / `interface`, implicit packaging, `this` | Product/sum/contract, explicit evidence, typed Self receiver |
 | Binding-only generic signatures | Top-level templates and first-class explicit specialization |

@@ -1,5 +1,8 @@
 # Verification
 
+The unreleased [1.5 Lisp capability](v1.5.0-lisp.md) adds path inspection before
+any seed freeze or dependent compiler implementation.
+
 The current [1.4.0 acceptance](v1.4.0.md) records complete-source parsing, shared
 frontend native continuity, [54 new conditions](v1.4.0-conformance.md), 55 inherited
 conditions and [all formal resource samples](v1.4.0-performance.md). Run

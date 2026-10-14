@@ -31,6 +31,16 @@ is versioned independently. Use a client version whose compatibility table
 explicitly includes the 1.4.0 server;
 a compatible extension update is a separate project.
 
+## Development source
+
+The unreleased Lisp capability for 1.5 adds explicit
+`Std\Io\{inspectPath,FileIdentity,PathInfo,PathInfoError}` imports.
+`inspectPath` returns a path kind and an opaque identity without following the
+final symlink. Identities support same-type equality and ordinary value storage.
+The existing I/O enums and error records retain their shapes.
+See the [Lisp implementation record](verification/v1.5.0-lisp.md).
+This increment does not implement the 1.5 `mgnc` semantic checker or freeze its seed.
+
 ## Start here
 
 - [Examples](examples/): executable projects, including [multiple modules](examples/modules/).

@@ -1,0 +1,12 @@
+PASS reject empty summary
+PASS reject missing identity
+PASS reject duplicate identity
+PASS reject failed individual test
+PASS reject missing M execution
+PASS reject missing external case
+PASS reject missing measurement execution
+PASS reject missing measurement artifact
+PASS reject failed measurement assertion
+PASS reject empty compiler suite
+PASS reject missing-one compiler suite
+PASS negative controls (11)

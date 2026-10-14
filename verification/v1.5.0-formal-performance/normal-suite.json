@@ -1,0 +1,45 @@
+{
+  "revision": "53ba9adfdac417260b2677f6643c2fba5cd71c8b",
+  "results": [
+    {
+      "name": "budget-harness",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-budget-harness.py"
+      ],
+      "exit": 0,
+      "seconds": 1.227346420288086
+    },
+    {
+      "name": "measure-harness",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-measure-harness.py"
+      ],
+      "exit": 0,
+      "seconds": 0.4779975414276123
+    },
+    {
+      "name": "lisp",
+      "command": [
+        "bash",
+        "-lc",
+        ". <toolchain-environment> && sbcl --noinform --script scripts/test.lisp"
+      ],
+      "exit": 0,
+      "seconds": 544.0595805644989
+    },
+    {
+      "name": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD^",
+        "HEAD"
+      ],
+      "exit": 0,
+      "seconds": 0.0019326210021972656
+    }
+  ]
+}

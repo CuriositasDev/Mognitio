@@ -1,0 +1,9 @@
+{
+  "archive_sha256": "027b9bfba76708ac252c559011761d5e6157d2a6d9b8600ba06d13383e5c07bc",
+  "archive_bytes": 676101,
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "source_revision": "9937649804183f357aca30029a3f7b1d1e869285",
+  "measurement_revision": "53ba9adfdac417260b2677f6643c2fba5cd71c8b",
+  "budget_sha256": "49f2ce1d984122ec7aa81c66b234e3b6c62abcd68a2dbffe799666519b4e043f",
+  "stage": "formal"
+}

@@ -1,0 +1,20 @@
+{
+  "revision": "53ba9adfdac417260b2677f6643c2fba5cd71c8b",
+  "budget_sha256": "49f2ce1d984122ec7aa81c66b234e3b6c62abcd68a2dbffe799666519b4e043f",
+  "started_at": "2026-10-14T22:52:47.591509+00:00",
+  "command": [
+    "python3",
+    "tests/mgnc/v150-measure.py",
+    "--compiler",
+    "<candidate-A>",
+    "--fixtures",
+    "<formal-evidence>/fixtures",
+    "--output",
+    "<formal-evidence>/results",
+    "--formal-budget",
+    "<formal-evidence>/budget.json"
+  ],
+  "exit": 0,
+  "seconds": 1685.044192322006,
+  "finished_at": "2026-10-14T23:20:52.635776+00:00"
+}

@@ -71,6 +71,22 @@ let malformed:Function(Projected,Int):Result<Projected,Diagnostic>=function(orig
  },
  mutation==8=>{
   let value:Value=try lookup<Value>(values,0);values=try replaceItem<Value>(values,0,Value{valueType:value->valueType,normal:!value->normal,symbol:value->symbol,target:value->target,integer:value->integer,minimum:value->minimum});
+ },
+ mutation==9=>{
+  let node:SyntaxNode=try lookup<SyntaxNode>(nodes,0);nodes=try replaceItem<SyntaxNode>(nodes,0,SyntaxNode{kind:node->kind,text:node->text,children:node->children,span:node->span,annotation:node->annotation,flag:!node->flag});
+ },
+ mutation==10=>{
+  let value:Value=try lookup<Value>(values,0);values=try replaceItem<Value>(values,0,Value{valueType:value->valueType,normal:value->normal,symbol:value->symbol,target:value->target,integer:value->integer+1,minimum:value->minimum});
+ },
+ mutation==11=>{
+  loop while(index<nodes->count){let node:SyntaxNode=try lookup<SyntaxNode>(nodes,index);let value:Value=try lookup<Value>(values,index);
+   branch when{node->kind==2=>{
+    values=try replaceItem<Value>(values,index,Value{valueType:value->valueType,normal:value->normal,symbol:Parent::None,target:value->target,integer:value->integer,minimum:value->minimum});break;
+   },else=>unit};index=index+1;
+  };
+ },
+ mutation==12=>{
+  let value:Value=try lookup<Value>(values,0);values=try replaceItem<Value>(values,0,Value{valueType:value->valueType,normal:value->normal,symbol:value->symbol,target:Parent::Some(0),integer:value->integer,minimum:value->minimum});
  },else=>unit};
  Result<Projected,Diagnostic>::Ok(Projected{program:CheckedProgram{syntax:Program{nodes:nodes,declarations:declarations,moduleName:program->syntax->moduleName,end:program->syntax->end},values:values,symbols:symbols,functions:functions},origins:origins,symbolOrigins:original->symbolOrigins,owners:original->owners,declarations:original->declarations})
 };
@@ -79,12 +95,12 @@ let test:Function():Result<Int,Diagnostic>=function():Result<Int,Diagnostic>{
  let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Int,Diagnostic>::Err(error->diagnostic);}};
  let valid:Projected=try project(semantic);try validate(semantic,valid);try verify(try lower(valid->program));
  let reordered:SemanticProject=try renumber(semantic);let converted:Projected=try project(reordered);try validate(reordered,converted);try verify(try lower(converted->program));
- var index:Int=0;loop while(index<9){
+ var index:Int=0;loop while(index<13){
   let mutated:Projected=try malformed(valid,index);
   branch on validate(semantic,mutated){Result<Unit,Diagnostic>::Ok(value:Unit)=>{return Result<Int,Diagnostic>::Ok(1);},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{branch when{error->phase!="internal"=>{return Result<Int,Diagnostic>::Ok(2);},else=>unit};}};
   index=index+1;
  };
- discard writeStdout("V150_LAYOUT_OK valid=2 mutations=9\n");Result<Int,Diagnostic>::Ok(0)
+ discard writeStdout("V150_LAYOUT_OK valid=2 mutations=13\n");Result<Int,Diagnostic>::Ok(0)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{
  branch on test(){Result<Int,Diagnostic>::Ok(value:Int)=>value,Result<Int,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");3}}

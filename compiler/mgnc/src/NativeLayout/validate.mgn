@@ -37,12 +37,16 @@ public let validate:Function(SemanticProject,Projected):Result<Unit,Diagnostic>=
   index=functionInfo->firstSymbol;loop while(index<functionInfo->endSymbol){
    let symbol:NativeSymbol=try lookup<NativeSymbol>(program->symbols,index);let original:Symbol=try lookup<Symbol>(state->symbols,try lookup<Int>(projection->symbolOrigins,index));
    try require(symbol->functionId==ordinal&&parentEqual(original->functionOwner,Parent::Some(owner)),original->span,"symbol ownership");
-   try require(symbol->valueType==(try code(state,Structure::Known(original->valueType),original->span))&&symbol->mutable==original->mutable,original->span,"symbol value mapping");
+   try require(symbol->valueType==(try code(state,Structure::Known(original->valueType),original->span))&&symbol->mutable==original->mutable&&symbol->name==original->name&&symbol->visible,original->span,"symbol value mapping");
    try require(parentEqual(symbol->parent,Parent::None),original->span,"unexpected legacy environment link");index=index+1;
   };
   index=firstNode;loop while(index<=declared->body){
    let node:SyntaxNode=try lookup<SyntaxNode>(program->syntax->nodes,index);let value:Value=try lookup<Value>(program->values,index);let original:Node=try lookup<Node>(state->nodes,try lookup<Int>(projection->origins,index));
    try require(node->span->start==original->span->start&&node->span->end==original->span->end&&value->normal==original->normal&&value->valueType==(try code(state,original->structure,node->span)),node->span,"node semantic mapping");
+   try require(node->span->line==original->span->line&&node->span->column==original->span->column&&node->flag==original->flag,node->span,"source position and flags");
+   try require(value->minimum==original->minimum&&value->integer==branch when{original->minimum=> -9223372036854775808,else=>original->integer},node->span,"literal value mapping");
+   try require(!parentEqual(value->symbol,Parent::None)==(node->kind==2||node->kind==7||node->kind==9||node->kind==10),node->span,"binding presence");
+   try require(!parentEqual(value->target,Parent::None)==(node->kind==6||node->kind==12||node->kind==13),node->span,"control target presence");
    let offset:Int=branch when{node->kind==10=>1,else=>0};
    try require(node->children->length()==original->children->length()-offset,node->span,"child count mapping");var childIndex:Int=offset;
    loop over(node->children as child:Int){

@@ -11,5 +11,5 @@ with tempfile.TemporaryDirectory(prefix="v150-layout-") as temp:
  assert result.returncode==0,result.stderr.decode()
  result=subprocess.run([binary],capture_output=True,timeout=120)
  assert result.returncode==0,(result.returncode,result.stdout,result.stderr)
- assert result.stdout==b"V150_LAYOUT_OK valid=2 mutations=9\n",result.stdout
+ assert result.stdout==b"V150_LAYOUT_OK valid=2 mutations=13\n",result.stdout
  print(result.stdout.decode(),end="")

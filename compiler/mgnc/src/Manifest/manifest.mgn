@@ -1,7 +1,7 @@
 namespace Mgnc\Manifest;
-use Mgnc\Data\{Diagnostic,problem};
+use Mgnc\Data\{Diagnostic,Span,problem};
 use Mgnc\TextUtil\{at,code,scalar,letter,digit,position,projectName,nameSpace};
-public type Manifest=product{name:String;root:String;};
+public type Manifest=product{name:String;root:String;nameSpan:Span;};
 type TextRead=product{value:String;next:Int;};
 type KeyRead=product{parts:List<String>;next:Int;};
 let bad:Function(List<String>,Int):Diagnostic=function(chars:List<String>,index:Int):Diagnostic{problem("manifest",position(chars,index),"invalid project manifest")};
@@ -83,7 +83,7 @@ let keyPath:Function(List<String>,Int):Result<KeyRead,Diagnostic>=function(chars
 public let parse:Function(String):Result<Manifest,Diagnostic>=function(text:String):Result<Manifest,Diagnostic>{
  let chars:List<String>=text->scalars();var index:Int=try lines(chars,0);
  var table:Bool=false;var dotted:Bool=false;var inlineTable:Bool=false;var inside:Bool=false;
- var name:String="";var root:String="";var nameSeen:Bool=false;var rootSeen:Bool=false;
+ var name:String="";var nameSpan:Span=position(chars,0);var root:String="";var nameSeen:Bool=false;var rootSeen:Bool=false;
  loop while(index<chars->length()){
   branch when{at(chars,index)=="["=>{
    branch when{table||dotted||inlineTable=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
@@ -107,8 +107,8 @@ public let parse:Function(String):Result<Manifest,Diagnostic>=function(text:Stri
      dotted=true;field=at(key->parts,1);
     }};
     branch when{(field!="name"&&field!="root_namespace")||(field=="name"&&nameSeen)||(field=="root_namespace"&&rootSeen)=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
-    let value:TextRead=try quoted(chars,index,false);index=value->next;
-    branch when{field=="name"=>{name=value->value;nameSeen=true;},else=>{root=value->value;rootSeen=true;}};
+    let valueStart:Int=index;let value:TextRead=try quoted(chars,index,false);index=value->next;
+    branch when{field=="name"=>{name=value->value;nameSeen=true;let start:Span=position(chars,valueStart);nameSpan=Span{start:start->start,end:(position(chars,index))->start,line:start->line,column:start->column};},else=>{root=value->value;rootSeen=true;}};
     branch when{inside=>{
      index=space(chars,index);
      branch when{at(chars,index)==","=>{index=space(chars,index+1);branch when{at(chars,index)=="}"=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};continue;},
@@ -122,5 +122,5 @@ public let parse:Function(String):Result<Manifest,Diagnostic>=function(text:Stri
   index=try lines(chars,index);
  };
  branch when{inside||!nameSeen||!rootSeen||!projectName(name)||!nameSpace(root)=>{return Result<Manifest,Diagnostic>::Err(bad(chars,index));},else=>unit};
- Result<Manifest,Diagnostic>::Ok(Manifest{name:name,root:root})
+ Result<Manifest,Diagnostic>::Ok(Manifest{name:name,root:root,nameSpan:nameSpan})
 };

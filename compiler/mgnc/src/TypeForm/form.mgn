@@ -4,8 +4,9 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
 use Mgnc\TypeSyntax\{Child,Request,request,argumentNode,value};
-use Mgnc\TypeOps\{intern,substitute,substituteObligations,argumentAt,fixedKind,bitsKind,signedKind,unsignedKind};
+use Mgnc\TypeOps\{intern,substitute,substituteObligationsAt,argumentAt,fixedKind,bitsKind,signedKind,unsignedKind};
 use Mgnc\Tables\{replaceItem};
+use Mgnc\Projection\{site};
 type Frame=product{request:Request;next:Int;arguments:List<Argument>;parent:Int;};
 public let widthRequirements:Function(Store,Int,List<Argument>,Span):Result<List<Obligation>,Diagnostic>=function(store:Store,kind:Int,arguments:List<Argument>,span:Span):Result<List<Obligation>,Diagnostic>{
  var result:List<Obligation>=List<Obligation>[];
@@ -23,13 +24,13 @@ public let widthRequirements:Function(Store,Int,List<Argument>,Span):Result<List
  },else=>unit};
  Result<List<Obligation>,Diagnostic>::Ok(result)
 };
-let complete:Function(Store,Request,List<Argument>):Result<Formed,Diagnostic>=function(store:Store,requested:Request,arguments:List<Argument>):Result<Formed,Diagnostic>{
+let complete:Function(Store,Request,List<Argument>,List<Span>):Result<Formed,Diagnostic>=function(store:Store,requested:Request,arguments:List<Argument>,spans:List<Span>):Result<Formed,Diagnostic>{
  branch on requested->immediate{Parent::None=>unit,Parent::Some(known:Int)=>{
   return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:known,obligations:List<Obligation>[]});
  }};
  branch on requested->declaration{Parent::None=>unit,Parent::Some(id:Int)=>{
   let canonical:Int=branch on try lookup<Parent>(store->declarations,id){Parent::Some(known:Int)=>known,Parent::None=>{return Result<Formed,Diagnostic>::Err(problem("internal",requested->span,"type dependency is not completed"));}};
-  let obligations:List<Obligation>=try substituteObligations(try lookup<List<Obligation>>(store->constraints,id),id,arguments,requested->span);
+  let obligations:List<Obligation>=try substituteObligationsAt(try lookup<List<Obligation>>(store->constraints,id),id,arguments,spans,requested->span);
   let formed:Formed=try substitute(store,canonical,id,arguments,requested->span);
   return Result<Formed,Diagnostic>::Ok(Formed{store:formed->store,value:formed->value,obligations:obligations});
  }};
@@ -56,7 +57,8 @@ public let form:Function(Store,Int,SyntaxForest,Int,Parent,List<Argument>):Resul
     stack=push<Frame>(stack,Frame{request:requested,next:0,arguments:List<Argument>[],parent:active});active=stack->count-1;
    }};continue;
   },else=>unit};
-  let formed:Formed=try complete(store,frame->request,frame->arguments);store=formed->store;
+  var spans:List<Span>=List<Span>[];loop over(frame->request->children as child:Child){spans=spans->append(try site(tree,child->node));};
+  let formed:Formed=try complete(store,frame->request,frame->arguments,spans);store=formed->store;
   loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
   branch when{frame->parent<0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:formed->value,obligations:obligations});},else=>unit};
   active=frame->parent;let parent:Frame=try lookup<Frame>(stack,active);

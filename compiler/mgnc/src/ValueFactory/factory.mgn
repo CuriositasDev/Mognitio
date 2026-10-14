@@ -1,0 +1,17 @@
+namespace Mgnc\ValueFactory;
+use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{Integer};
+use Mgnc\TypeData\{Structure,Argument};
+use Mgnc\SemanticValues\{Node,Frame,Environment};
+public let node:Function(Frame,Structure,Bool,String,Parent,Int,Bool):Node=function(frame:Frame,structure:Structure,normal:Bool,operation:String,binding:Parent,integer:Int,minimum:Bool):Node{
+ Node{file:frame->environment->file,cursor:frame->expression->cursor,rule:frame->expression->rule,flag:frame->expression->flag,structure:structure,normal:normal,operation:operation,binding:binding,target:frame->target,children:frame->children,span:frame->expression->span,integer:integer,minimum:minimum,literal:List<Integer>[],mapping:frame->mapping,arguments:frame->arguments}
+};
+public let withMapping:Function(Frame,List<Int>):Frame=function(frame:Frame,mapping:List<Int>):Frame{
+ Frame{expression:frame->expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed}
+};
+public let withArguments:Function(Frame,List<Argument>):Frame=function(frame:Frame,arguments:List<Argument>):Frame{
+ Frame{expression:frame->expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,arguments:arguments,children:frame->children,mapping:frame->mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed}
+};
+public let withTarget:Function(Frame,Parent):Frame=function(frame:Frame,target:Parent):Frame{
+ Frame{expression:frame->expression,environment:frame->environment,annotation:frame->annotation,target:target,loopTarget:frame->loopTarget,binder:frame->binder,arguments:frame->arguments,children:frame->children,mapping:frame->mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed}
+};

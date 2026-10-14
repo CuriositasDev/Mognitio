@@ -1,0 +1,72 @@
+namespace Mgnc\ValueStart;
+use Mgnc\Data\{Diagnostic,lookup,push,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{item};
+use Mgnc\Expressions\{Expression,Label,read};
+use Mgnc\SemanticValues\{State,Environment,Symbol,FunctionInfo,Loop,Frame,Started};
+use Mgnc\TypeData\{Argument,Obligation,Formed};
+use Mgnc\SemanticData\{Declaration,Parameter};
+use Mgnc\TypeForm\{form};
+use Mgnc\TypeNames\{declaration};
+use Mgnc\TypeOps\{substitute,substituteObligationsAt};
+use Mgnc\GenericApplication\{Applied,arguments as applyArguments};
+use Mgnc\Signatures\{Formal,FunctionType,functionType};
+use Mgnc\ValueNames\{available};
+use Mgnc\ValueSupport\{withTypes,withSymbols,withFunctions,withLoops,introduce};
+use Mgnc\Grammar\{ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleLoopWhile,ruleLoopForever,ruleFunction,ruleProduct,ruleList,ruleVariant,ruleVariantPayload,ruleScalarLiteral,ruleGenericApply,ruleStatementReturn,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue};
+public let start:Function(State,SyntaxForest,Int,Environment,Int,Bool):Result<Started,Diagnostic>=function(initial:State,tree:SyntaxForest,node:Int,environment:Environment,parent:Int,minimumAllowed:Bool):Result<Started,Diagnostic>{
+ var state:State=initial;let expression:Expression=try read(tree,node);let rule:Int=expression->rule;let cursor:Int=(try getNode(tree->nodes,expression->syntax))->start;
+ var annotation:Parent=Parent::None;var target:Parent=Parent::None;var loopTarget:Parent=Parent::None;var binder:Parent=Parent::None;
+ var arguments:List<Argument>=List<Argument>[];
+ branch when{rule==ruleLetBinding||rule==ruleVarBinding||rule==ruleLoopOver=>{
+  let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Started,Diagnostic>::Err(problem("internal",expression->span,"binding label invariant"));}};
+  try available(state,environment,label->name,label->span,cursor);
+  let formed:Formed=try form(state->types,environment->file,tree,try item(expression->annotations,0),environment->templateOwner,environment->arguments);
+  state=withTypes(state,formed->store,formed->obligations);annotation=Parent::Some(formed->value);
+  branch when{rule==ruleLoopOver=>{
+   binder=Parent::Some(state->symbols->count);
+   state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:label->name,valueType:formed->value,mutable:false,functionOwner:environment->functionOwner,declaration:Parent::None,span:label->span}));
+  },else=>unit};
+ },rule==ruleProduct||rule==ruleList||rule==ruleVariant||rule==ruleVariantPayload||rule==ruleScalarLiteral=>{
+  let formed:Formed=try form(state->types,environment->file,tree,try item(expression->annotations,0),environment->templateOwner,environment->arguments);
+  state=withTypes(state,formed->store,formed->obligations);annotation=Parent::Some(formed->value);
+ },rule==ruleFunction=>{
+  let signature:FunctionType=try functionType(state->types,environment->file,tree,expression->syntax,environment->templateOwner,environment->arguments);
+  state=withTypes(state,signature->store,signature->obligations);annotation=Parent::Some(signature->value);
+  let owner:Int=state->functions->count;target=Parent::Some(owner);
+  var scope:Environment=Environment{file:environment->file,symbols:environment->symbols,reserved:environment->reserved,functionOwner:target,loopTarget:Parent::None,returnType:Parent::Some(signature->result),templateOwner:environment->templateOwner,arguments:environment->arguments,reachable:true};
+  var parameters:List<Int>=List<Int>[];
+  loop over(signature->parameters as param:Formal){
+   try available(state,scope,param->name,param->span,cursor);
+   let id:Int=state->symbols->count;
+   state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:param->name,valueType:param->valueType,mutable:false,functionOwner:target,declaration:Parent::None,span:param->span}));
+   scope=introduce(scope,id);parameters=parameters->append(id);
+  };
+  state=withFunctions(state,push<FunctionInfo>(state->functions,FunctionInfo{file:environment->file,cursor:expression->cursor,valueType:signature->value,parameters:parameters,body:Parent::None,captures:List<Int>[],templateOwner:environment->templateOwner}));
+ },rule==ruleGenericApply=>{
+  let declared:Int=branch on try declaration(state->types->headers,environment->file,expression->text){Parent::Some(id:Int)=>id,Parent::None=>{return Result<Started,Diagnostic>::Err(problem("semantic",expression->span,"template name is not visible"));}};
+  let definition:Declaration=try lookup<Declaration>(state->types->headers->declarations,declared);
+  branch when{definition->kind!=3=>{return Result<Started,Diagnostic>::Err(problem("type",expression->span,"generic value application requires a template"));},else=>unit};
+  var kinds:List<Int>=List<Int>[];loop over(definition->parameters as param:Parameter){kinds=kinds->append(param->kind);};
+  let applied:Applied=try applyArguments(state->types,environment->file,tree,Parent::Some(try item(expression->annotations,0)),kinds,environment->templateOwner,environment->arguments,expression->span);
+  state=withTypes(state,applied->store,applied->obligations);arguments=applied->arguments;
+  let canonical:Int=branch on try lookup<Parent>(state->types->declarations,declared){Parent::Some(value:Int)=>value,Parent::None=>{return Result<Started,Diagnostic>::Err(problem("internal",expression->span,"template signature is incomplete"));}};
+  let requirements:List<Obligation>=try substituteObligationsAt(try lookup<List<Obligation>>(state->types->constraints,declared),declared,arguments,applied->spans,expression->span);
+  let formed:Formed=try substitute(state->types,canonical,declared,arguments,expression->span);state=withTypes(state,formed->store,requirements);
+  annotation=Parent::Some(formed->value);target=Parent::Some(declared);
+ },rule==ruleStatementReturn=>{
+  branch on environment->functionOwner{Parent::None=>{return Result<Started,Diagnostic>::Err(problem("semantic",expression->span,"return has no enclosing function"));},Parent::Some(owner:Int)=>{target=environment->functionOwner;}};
+ },rule==ruleStatementBreak||rule==ruleStatementBreakValue||rule==ruleStatementContinue=>{
+  let id:Int=branch on environment->loopTarget{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Started,Diagnostic>::Err(problem("semantic",expression->span,"control transfer has no enclosing loop"));}};
+  let loopInfo:Loop=try lookup<Loop>(state->loops,id);
+  branch when{(rule==ruleStatementBreak&&loopInfo->kind==ruleLoopForever)||(rule==ruleStatementBreakValue&&loopInfo->kind!=ruleLoopForever)=>{
+   return Result<Started,Diagnostic>::Err(problem("semantic",expression->span,"break form does not match the target loop"));
+  },else=>unit};target=Parent::Some(id);
+ },else=>unit};
+ branch when{rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever=>{
+  loopTarget=Parent::Some(state->loops->count);state=withLoops(state,push<Loop>(state->loops,Loop{kind:rule,breaks:List<Int>[]}));
+ },else=>unit};
+ Result<Started,Diagnostic>::Ok(Started{state:state,frame:Frame{expression:expression,environment:environment,annotation:annotation,target:target,loopTarget:loopTarget,binder:binder,arguments:arguments,children:List<Int>[],mapping:List<Int>[],parent:parent,next:0,minimumAllowed:minimumAllowed}})
+};

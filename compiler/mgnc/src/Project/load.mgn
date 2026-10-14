@@ -95,6 +95,6 @@ public let project:Function(String):Result<ProjectInput,InputError>=function(pat
    sources=sources->append(SourceUnit{path:current->path,displayPath:"src/"+current->relative,relativePath:current->relative,expectedNamespace:current->nameSpace,text:source});
   },else=>unit};
  };
- branch when{entry<0=>{return Result<ProjectInput,InputError>::Err(failure(2,path,"manifest","entry source is missing"));},else=>unit};
+ branch when{entry<0=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:Diagnostic{phase:"manifest",span:manifest->nameSpan,message:"entry source is missing"},positionKnown:true,operation:"",kind:"",ioPhase:""});},else=>unit};
  Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:path,manifestText:manifestText,rootNamespace:manifest->root,entry:entry,sources:sources})
 };

@@ -1,0 +1,23 @@
+namespace Mgnc\VariantSupport;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm};
+use Mgnc\TypeOps\{argumentAt,resultKind,sumKind};
+public let memberType:Function(List<Argument>,Int,Span):Result<Int,Diagnostic>=function(arguments:List<Argument>,index:Int,span:Span):Result<Int,Diagnostic>{
+ branch on try argumentAt(arguments,index,span){Argument::Type(value:Int)=>Result<Int,Diagnostic>::Ok(value),Argument::Value(value:ValueTerm)=>Result<Int,Diagnostic>::Err(problem("internal",span,"structural type argument invariant"))}
+};
+public let variants:Function(Store,Int,Span):Result<List<Member>,Diagnostic>=function(store:Store,id:Int,span:Span):Result<List<Member>,Diagnostic>{
+ let shape:Type=try lookup<Type>(store->types,id);
+ branch when{shape->kind==sumKind=>Result<List<Member>,Diagnostic>::Ok(shape->members),
+ shape->kind==resultKind=>Result<List<Member>,Diagnostic>::Ok(List<Member>[
+  Member{name:"Ok",value:Parent::Some(try memberType(shape->arguments,0,span)),span:span},
+  Member{name:"Err",value:Parent::Some(try memberType(shape->arguments,1,span)),span:span}]),
+ else=>Result<List<Member>,Diagnostic>::Err(problem("type",span,"operation requires a Sum identity"))}
+};
+public let ordinal:Function(List<Member>,String,Span):Result<Int,Diagnostic>=function(members:List<Member>,name:String,span:Span):Result<Int,Diagnostic>{
+ var index:Int=0;loop over(members as member:Member){branch when{member->name==name=>{return Result<Int,Diagnostic>::Ok(index);},else=>unit};index=index+1;};
+ Result<Int,Diagnostic>::Err(problem("semantic",span,"unknown field or variant"))
+};
+public let at:Function(List<Member>,Int,Span):Result<Member,Diagnostic>=function(members:List<Member>,index:Int,span:Span):Result<Member,Diagnostic>{
+ branch on members->at(index){Result<Member,IndexError>::Ok(value:Member)=>Result<Member,Diagnostic>::Ok(value),Result<Member,IndexError>::Err(error:IndexError)=>Result<Member,Diagnostic>::Err(problem("internal",span,"member index invariant"))}
+};

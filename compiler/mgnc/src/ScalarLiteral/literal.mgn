@@ -1,0 +1,37 @@
+namespace Mgnc\ScalarLiteral;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,text,site};
+use Mgnc\TypeData\{Store,Type,Argument,ValueTerm,Obligation};
+use Mgnc\TypeOps\{fixedKind,bitsKind,signedKind,argumentAt};
+use Mgnc\MathValue\{Integer,normalize,fits,minimumWidth};
+use Mgnc\Grammar\{ruleScalarNegative,ruleScalarGroup,rulePositiveGroup};
+public type Literal=product{integer:Integer;obligations:List<Obligation>;};
+public let check:Function(Store,SyntaxForest,Int,Int):Result<Literal,Diagnostic>=function(store:Store,tree:SyntaxForest,root:Int,valueType:Int):Result<Literal,Diagnostic>{
+ let shape:Type=try lookup<Type>(store->types,valueType);
+ branch when{shape->kind!=fixedKind&&shape->kind!=bitsKind=>{return Result<Literal,Diagnostic>::Err(problem("type",try site(tree,root),"typed scalar literal requires fixed-width Int or Bits"));},else=>unit};
+ var current:Int=root;var negative:Bool=false;
+ loop while(true){
+  let node:ForestNode=try getNode(tree->nodes,current);let fields:List<Int>=try parts(tree,current);
+  branch when{node->rule==ruleScalarGroup||node->rule==rulePositiveGroup=>{current=try item(fields,1);},
+   node->rule==ruleScalarNegative=>{negative=true;current=try item(fields,1);},else=>{break;}};
+ };
+ let mathematical:Integer=normalize(negative,try text(tree,current));var signed:Bool=false;
+ branch when{shape->kind==fixedKind=>{
+  let sign:Int=branch on try argumentAt(shape->arguments,1,try site(tree,root)){Argument::Type(value:Int)=>value,Argument::Value(value:ValueTerm)=>{return Result<Literal,Diagnostic>::Err(problem("internal",try site(tree,root),"signedness argument invariant"));}};
+  signed=(try lookup<Type>(store->types,sign))->kind==signedKind;
+ },else=>unit};
+ let width:ValueTerm=branch on try argumentAt(shape->arguments,0,try site(tree,root)){Argument::Value(value:ValueTerm)=>value,Argument::Type(value:Int)=>{return Result<Literal,Diagnostic>::Err(problem("internal",try site(tree,root),"width argument invariant"));}};
+ var obligations:List<Obligation>=List<Obligation>[];
+ branch on width->parameter{
+ Parent::None=>{branch when{!fits(mathematical,width->value,signed)=>{return Result<Literal,Diagnostic>::Err(problem("type",try site(tree,root),"typed literal is outside the selected integer range"));},else=>unit};},
+ Parent::Some(ordinal:Int)=>{
+  let minimum:Int=minimumWidth(mathematical,signed);
+  branch when{minimum==0=>{return Result<Literal,Diagnostic>::Err(problem("type",try site(tree,root),"typed literal fits no allowed width"));},else=>unit};
+  obligations=obligations->append(Obligation{owner:width->owner,parameter:ordinal,minimum:minimum,maximum:64,span:try site(tree,root)});
+ }};
+ Result<Literal,Diagnostic>::Ok(Literal{integer:mathematical,obligations:obligations})
+};

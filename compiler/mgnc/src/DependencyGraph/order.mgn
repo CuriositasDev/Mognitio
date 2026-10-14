@@ -1,0 +1,31 @@
+namespace Mgnc\DependencyGraph;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Tables\{replaceItem};
+public type Edge=product{owner:Int;target:Int;file:Int;span:Span;};
+public type Graph=product{vertices:List<Int>;edges:List<Edge>;size:Int;};
+public type Order=product{values:List<Int>;cycle:List<Edge>;};
+public let sort:Function(Graph):Result<Order,Diagnostic>=function(graph:Graph):Result<Order,Diagnostic>{
+ var complete:Paged<Bool>=empty<Bool>();var index:Int=0;loop while(index<graph->size){complete=push<Bool>(complete,false);index=index+1;};
+ var result:List<Int>=List<Int>[];
+ loop while(result->length()<graph->vertices->length()){
+  var progress:Bool=false;
+  loop over(graph->vertices as current:Int){
+   branch when{try lookup<Bool>(complete,current)=>{continue;},else=>unit};var blocked:Bool=false;
+   loop over(graph->edges as edge:Edge){branch when{edge->owner==current&&!(try lookup<Bool>(complete,edge->target))=>{blocked=true;break;},else=>unit};};
+   branch when{!blocked=>{complete=try replaceItem<Bool>(complete,current,true);result=result->append(current);progress=true;},else=>unit};
+  };
+  branch when{!progress=>{
+   var current:Int=0;loop over(graph->vertices as id:Int){branch when{!(try lookup<Bool>(complete,id))=>{current=id;break;},else=>unit};};
+   var path:List<Int>=List<Int>[current];
+   loop while(true){
+    var advanced:Bool=false;
+    loop over(graph->edges as edge:Edge){branch when{edge->owner==current&&!(try lookup<Bool>(complete,edge->target))=>{
+     loop over(path as previous:Int){branch when{previous==edge->target=>{return Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[edge]});},else=>unit};};
+     current=edge->target;path=path->append(current);advanced=true;break;
+    },else=>unit};};
+    branch when{!advanced=>{return Result<Order,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"incomplete dependency graph without an edge"));},else=>unit};
+   };
+  },else=>unit};
+ };
+ Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[]})
+};

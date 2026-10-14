@@ -9,21 +9,21 @@ use Mgnc\TypeSyntax\{Child,argumentNode,value};
 use Mgnc\TypeForm\{form};
 use Mgnc\TypeOps\{intern,substitute,substituteObligations};
 use Mgnc\SemanticData\{Module,Declaration};
-public type Applied=product{store:Store;arguments:List<Argument>;obligations:List<Obligation>;};
+public type Applied=product{store:Store;arguments:List<Argument>;spans:List<Span>;obligations:List<Obligation>;};
 public let arguments:Function(Store,Int,SyntaxForest,Parent,List<Int>,Parent,List<Argument>,Span):Result<Applied,Diagnostic>=function(initial:Store,file:Int,tree:SyntaxForest,syntax:Parent,kinds:List<Int>,owner:Parent,environment:List<Argument>,span:Span):Result<Applied,Diagnostic>{
  var store:Store=initial;var nodes:List<Int>=List<Int>[];
  branch on syntax{Parent::None=>unit,Parent::Some(id:Int)=>{let fields:List<Int>=try parts(tree,id);nodes=try rightList(tree,try item(fields,1));}};
  branch when{nodes->length()!=kinds->length()=>{return Result<Applied,Diagnostic>::Err(problem("type",span,"all generic arguments must be supplied with matching arity"));},else=>unit};
- var result:List<Argument>=List<Argument>[];var obligations:List<Obligation>=List<Obligation>[];var index:Int=0;
+ var result:List<Argument>=List<Argument>[];var spans:List<Span>=List<Span>[];var obligations:List<Obligation>=List<Obligation>[];var index:Int=0;
  loop over(kinds as kind:Int){
-  let node:Int=try argumentNode(tree,Child{node:try item(nodes,index),kind:kind,argument:true});
+  let node:Int=try argumentNode(tree,Child{node:try item(nodes,index),kind:kind,argument:true});spans=spans->append(try site(tree,node));
   branch when{kind==0=>{
    let formed:Formed=try form(store,file,tree,node,owner,environment);store=formed->store;result=result->append(Argument::Type(formed->value));
    loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
   },else=>{result=result->append(Argument::Value(try value(store,tree,node,owner,environment)));}};
   index=index+1;
  };
- Result<Applied,Diagnostic>::Ok(Applied{store:store,arguments:result,obligations:obligations})
+ Result<Applied,Diagnostic>::Ok(Applied{store:store,arguments:result,spans:spans,obligations:obligations})
 };
 public let standard:Function(Store,String,String,List<Argument>,Span):Result<Formed,Diagnostic>=function(store:Store,nameSpace:String,name:String,actual:List<Argument>,span:Span):Result<Formed,Diagnostic>{
  var index:Int=0;

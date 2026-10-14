@@ -60,3 +60,6 @@ public let reserve:Function(Environment,String):Environment=function(environment
 public let introduce:Function(Environment,Int):Environment=function(environment:Environment,symbol:Int):Environment{
  Environment{file:environment->file,symbols:environment->symbols->append(symbol),reserved:environment->reserved,functionOwner:environment->functionOwner,loopTarget:environment->loopTarget,returnType:environment->returnType,templateOwner:environment->templateOwner,arguments:environment->arguments,reachable:environment->reachable}
 };
+public let withBodies:Function(State,Paged<BodyState>):State=function(state:State,bodies:Paged<BodyState>):State{
+ State{types:state->types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:state->obligations,bodies:bodies}
+};

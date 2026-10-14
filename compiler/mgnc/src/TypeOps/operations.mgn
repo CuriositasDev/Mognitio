@@ -81,6 +81,7 @@ let mapped:Function(Paged<Parent>,Int,Span):Result<Int,Diagnostic>=function(memo
  branch on try lookup<Parent>(memo,id){Parent::Some(value:Int)=>Result<Int,Diagnostic>::Ok(value),Parent::None=>Result<Int,Diagnostic>::Err(problem("internal",span,"incomplete type substitution"))}
 };
 public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,Diagnostic>=function(initial:Store,root:Int,owner:Int,arguments:List<Argument>,span:Span):Result<Formed,Diagnostic>{
+ branch when{arguments->length()==0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:root,obligations:List<Obligation>[]});},else=>unit};
  var store:Store=initial;var memo:Paged<Parent>=empty<Parent>();var index:Int=0;
  loop while(index<initial->types->count){memo=push<Parent>(memo,Parent::None);index=index+1;};
  var stack:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,parent:-1});var active:Int=0;
@@ -108,14 +109,17 @@ public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,
  };
  Result<Formed,Diagnostic>::Ok(Formed{store:store,value:try mapped(memo,root,span),obligations:List<Obligation>[]})
 };
-public let substituteObligations:Function(List<Obligation>,Int,List<Argument>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,span:Span):Result<List<Obligation>,Diagnostic>{
+public let substituteObligationsAt:Function(List<Obligation>,Int,List<Argument>,List<Span>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,spans:List<Span>,span:Span):Result<List<Obligation>,Diagnostic>{
  var result:List<Obligation>=List<Obligation>[];
  loop over(obligations as obligation:Obligation){
   let symbolic:ValueTerm=ValueTerm{parameter:Parent::Some(obligation->parameter),owner:obligation->owner,value:0};
   let value:ValueTerm=try substituteValue(symbolic,owner,arguments,span);
   branch on value->parameter{
-   Parent::None=>{branch when{value->value<obligation->minimum||value->value>obligation->maximum=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"generic width or literal range requirement is not satisfied"));},else=>unit};},
+   Parent::None=>{branch when{value->value<obligation->minimum||value->value>obligation->maximum=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",branch on spans->at(obligation->parameter){Result<Span,IndexError>::Ok(location:Span)=>location,Result<Span,IndexError>::Err(error:IndexError)=>span},"generic width or literal range requirement is not satisfied"));},else=>unit};},
    Parent::Some(ordinal:Int)=>{result=result->append(Obligation{owner:value->owner,parameter:ordinal,minimum:obligation->minimum,maximum:obligation->maximum,span:obligation->span});}
   };
  };Result<List<Obligation>,Diagnostic>::Ok(result)
+};
+public let substituteObligations:Function(List<Obligation>,Int,List<Argument>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,span:Span):Result<List<Obligation>,Diagnostic>{
+ substituteObligationsAt(obligations,owner,arguments,List<Span>[],span)
 };

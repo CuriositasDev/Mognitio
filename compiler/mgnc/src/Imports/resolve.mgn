@@ -4,7 +4,7 @@ use Mgnc\InputData\{InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Import,Introduction,Parameter as MgncParameter};
 use Mgnc\Headers\{sourceError};
 use Mgnc\Tables\{replaceItem};
-type Edge=product{from:Int;target:Int;imported:Import;};
+use Mgnc\DependencyGraph\{Graph,Edge,Order,sort};
 public let reserved:Function(String):Bool=function(name:String):Bool{
  var result:Bool=false;
  loop over(List<String>["Int","Bool","Unit","String","List","Result","Function","IndexError","SliceError","Self"] as word:String){branch when{word==name=>{result=true;break;},else=>unit};};result
@@ -65,36 +65,20 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
     },else=>unit};index=index+1;
    };
    names=push<Introduction>(names,Introduction{file:file,name:imported->local,declaration:target,imported:true,span:imported->span});
-   edges=edges->append(Edge{from:file,target:declaration->file,imported:imported});
+   edges=edges->append(Edge{owner:file,target:declaration->file,file:file,span:imported->span});
   };
   file=file+1;
  };
- var complete:Paged<Bool>=empty<Bool>();file=0;loop while(file<headers->modules->count){complete=push<Bool>(complete,false);file=file+1;};
- var order:List<Int>=List<Int>[];
- loop while(order->length()<headers->modules->count){
-  var progress:Bool=false;file=0;
-  loop while(file<headers->modules->count){
-   let done:Bool=branch on lookup<Bool>(complete,file){Result<Bool,Diagnostic>::Ok(value:Bool)=>value,Result<Bool,Diagnostic>::Err(error:Diagnostic)=>panic{"graph arena invariant"}};
-   branch when{!done=>{
-    var blocked:Bool=false;
-    loop over(edges as edge:Edge){branch when{edge->from==file=>{
-     let ready:Bool=branch on lookup<Bool>(complete,edge->target){Result<Bool,Diagnostic>::Ok(value:Bool)=>value,Result<Bool,Diagnostic>::Err(error:Diagnostic)=>panic{"graph arena invariant"}};
-     branch when{!ready=>{blocked=true;break;},else=>unit};
-    },else=>unit};};
-    branch when{!blocked=>{order=order->append(file);progress=true;
-     complete=branch on replaceItem<Bool>(complete,file,true){Result<Paged<Bool>,Diagnostic>::Ok(value:Paged<Bool>)=>value,Result<Paged<Bool>,Diagnostic>::Err(error:Diagnostic)=>panic{"graph arena invariant"}};
-    },else=>unit};
-   },else=>unit};file=file+1;
-  };
-  branch when{!progress=>{
-   loop over(edges as edge:Edge){
-    let done:Bool=branch on lookup<Bool>(complete,edge->from){Result<Bool,Diagnostic>::Ok(value:Bool)=>value,Result<Bool,Diagnostic>::Err(error:Diagnostic)=>panic{"graph arena invariant"}};
-    branch when{!done=>{
-     let module:Module=branch on lookup<Module>(headers->modules,edge->from){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
-     return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->imported->span,"cyclic source imports")));
-    },else=>unit};
-   };panic{"incomplete graph without an edge"}
-  },else=>unit};
+ var vertices:List<Int>=List<Int>[];file=0;loop while(file<headers->modules->count){vertices=vertices->append(file);file=file+1;};
+ let ordered:Order=branch on sort(Graph{vertices:vertices,edges:edges,size:headers->modules->count}){
+  Result<Order,Diagnostic>::Ok(value:Order)=>value,
+  Result<Order,Diagnostic>::Err(error:Diagnostic)=>panic{"import graph invariant"}
  };
+ loop over(ordered->cycle as edge:Edge){
+  let module:Module=branch on lookup<Module>(headers->modules,edge->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+  let target:Module=branch on lookup<Module>(headers->modules,edge->target){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+  return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->span,"cyclic source imports through "+target->source->displayPath)));
+ };
+ let order:List<Int>=ordered->values;
  Result<Headers,InputError>::Ok(Headers{input:headers->input,modules:headers->modules,declarations:headers->declarations,names:names,order:order})
 };

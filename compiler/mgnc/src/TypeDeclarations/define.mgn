@@ -58,6 +58,7 @@ public let define:Function(Store,Int):Result<Store,Diagnostic>=function(initial:
    },else=>unit};
    members=members->append(Member{name:spelling,value:memberType,span:try site(module->tree,name)});
   };
+  branch when{declared->kind==1&&members->length()==0=>{return Result<Store,Diagnostic>::Err(problem("semantic",declared->span,"Sum requires at least one variant"));},else=>unit};
   var kind:Int=branch when{declared->kind==0=>productKind,else=>sumKind};
   branch when{module->standard=>{
    branch when{module->nameSpace=="Std\\Numeric"=>{branch when{declared->name=="Signed"=>{kind=signedKind;},declared->name=="Unsigned"=>{kind=unsignedKind;},declared->name=="Bits"=>{kind=bitsKind;},else=>unit};},

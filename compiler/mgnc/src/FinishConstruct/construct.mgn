@@ -1,0 +1,98 @@
+namespace Mgnc\FinishConstruct;
+use Mgnc\Grammar\{ruleCall,ruleField,ruleList,ruleProduct,ruleScalarLiteral,ruleVariant,ruleVariantPayload};
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\Projection\{item};
+use Mgnc\Expressions\{Expression,Label};
+use Mgnc\SemanticValues\{State,Environment,Node,Frame,Evaluated};
+use Mgnc\TypeData\{Type,Structure,Member,Argument};
+use Mgnc\TypeOps\{productKind,indexKind,sliceKind,signedKind,unsignedKind,listKind,functionKind};
+use Mgnc\ValueSupport\{known,expect,withTypes};
+use Mgnc\ValueFactory\{node as makeNode,withMapping,withArguments};
+use Mgnc\VariantSupport\{memberType,variants,ordinal,at as memberAt};
+use Mgnc\GenericApplication\{Applied,arguments as applyArguments};
+use Mgnc\Methods\{Signature,genericKinds,resolve as methodSignature};
+use Mgnc\ScalarLiteral\{Literal,check as checkLiteral};
+use Mgnc\MathValue\{Integer};
+let isProduct:Function(Type):Bool=function(shape:Type):Bool{
+ shape->kind==productKind||shape->kind==indexKind||shape->kind==sliceKind||shape->kind==signedKind||shape->kind==unsignedKind
+};
+public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic>=function(initial:State,tree:SyntaxForest,original:Frame):Result<Evaluated,Diagnostic>{
+ var state:State=initial;var frame:Frame=original;let expression:Expression=frame->expression;let rule:Int=expression->rule;let environment:Environment=frame->environment;
+ var valueType:Int=0;var normal:Bool=true;var operation:String="";var literal:List<Integer>=List<Integer>[];
+ loop over(frame->children as id:Int){normal=normal&&(try lookup<Node>(state->nodes,id))->normal;};
+ branch when{rule==ruleProduct||rule==ruleList||rule==ruleVariant||rule==ruleVariantPayload||rule==ruleScalarLiteral=>{
+  valueType=branch on frame->annotation{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"constructor type invariant"));}};
+  let shape:Type=try lookup<Type>(state->types->types,valueType);
+  branch when{rule==ruleProduct=>{
+   branch when{!isProduct(shape)=>{return Result<Evaluated,Diagnostic>::Err(problem("type",expression->span,"type does not support Product construction"));},else=>unit};
+   var mapping:List<Int>=List<Int>[];var index:Int=0;
+   loop over(expression->labels as label:Label){
+    let selected:Int=try ordinal(shape->members,label->name,label->span);
+    loop over(mapping as previous:Int){branch when{previous==selected=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",label->span,"duplicate constructor field"));},else=>unit};};
+    let member:Member=try memberAt(shape->members,selected,label->span);
+    let required:Int=branch on member->value{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",label->span,"Product field type invariant"));}};
+    try expect(try lookup<Node>(state->nodes,try item(frame->children,index)),required);mapping=mapping->append(selected);index=index+1;
+   };
+   branch when{mapping->length()!=shape->members->length()=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"missing constructor field"));},else=>unit};
+   frame=withMapping(frame,mapping);operation="product";
+  },rule==ruleList=>{
+   branch when{shape->kind!=listKind=>{return Result<Evaluated,Diagnostic>::Err(problem("type",expression->span,"list construction requires List<T>"));},else=>unit};
+   let element:Int=try memberType(shape->arguments,0,expression->span);
+   loop over(frame->children as id:Int){try expect(try lookup<Node>(state->nodes,id),element);};operation="list";
+  },rule==ruleScalarLiteral=>{
+   let checked:Literal=try checkLiteral(state->types,tree,try item(expression->annotations,1),valueType);state=withTypes(state,state->types,checked->obligations);
+   literal=literal->append(checked->integer);operation="typed-integer";
+  },else=>{
+   let members:List<Member>=try variants(state->types,valueType,expression->span);
+   let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"variant label invariant"));}};
+   let selected:Int=try ordinal(members,label->name,label->span);let member:Member=try memberAt(members,selected,label->span);
+   branch on member->value{
+    Parent::None=>{branch when{frame->children->length()!=0=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"variant has no payload"));},else=>unit};},
+    Parent::Some(payload:Int)=>{
+     branch when{frame->children->length()!=1=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"variant requires one payload"));},else=>unit};
+     try expect(try lookup<Node>(state->nodes,try item(frame->children,0)),payload);
+    }
+   };frame=withMapping(frame,List<Int>[selected]);operation="variant";
+  }};
+ },else=>{
+  let receiver:Node=try lookup<Node>(state->nodes,try item(frame->children,0));let receiverType:Int=try known(receiver->structure,receiver->span);
+  let shape:Type=try lookup<Type>(state->types->types,receiverType);
+  branch when{rule==ruleCall=>{
+   branch when{shape->kind!=functionKind=>{return Result<Evaluated,Diagnostic>::Err(problem("type",receiver->span,"callee is not a Function"));},
+    frame->children->length()!=shape->arguments->length()=>{return Result<Evaluated,Diagnostic>::Err(problem("type",expression->span,"call argument arity mismatch"));},else=>unit};
+   var index:Int=1;loop while(index<frame->children->length()){
+    try expect(try lookup<Node>(state->nodes,try item(frame->children,index)),try memberType(shape->arguments,index-1,expression->span));index=index+1;
+   };valueType=try memberType(shape->arguments,shape->arguments->length()-1,expression->span);operation="call";
+  },else=>{
+   let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"member label invariant"));}};
+   branch when{rule==ruleField=>{
+    branch when{!isProduct(shape)=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",label->span,"receiver has no accessible Product fields"));},else=>unit};
+    let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);
+    valueType=branch on member->value{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",label->span,"field type invariant"));}};
+    frame=withMapping(frame,List<Int>[selected]);operation="field";
+   },isProduct(shape)=>{
+    branch when{expression->annotations->length()>0=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"Function field does not take generic arguments"));},else=>unit};
+    let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);
+    let fieldType:Int=branch on member->value{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",label->span,"field call type invariant"));}};
+    let callable:Type=try lookup<Type>(state->types->types,fieldType);
+    branch when{callable->kind!=functionKind=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"field call requires Function type"));},
+     frame->children->length()!=callable->arguments->length()=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"field call arity mismatch"));},else=>unit};
+    var index:Int=1;loop while(index<frame->children->length()){try expect(try lookup<Node>(state->nodes,try item(frame->children,index)),try memberType(callable->arguments,index-1,label->span));index=index+1;};
+    valueType=try memberType(callable->arguments,callable->arguments->length()-1,label->span);frame=withMapping(frame,List<Int>[selected]);operation="field-call";
+   },else=>{
+    let syntax:Parent=branch when{expression->annotations->length()>0=>Parent::Some(try item(expression->annotations,0)),else=>Parent::None};
+    let applied:Applied=try applyArguments(state->types,environment->file,tree,syntax,genericKinds(shape->kind,label->name),environment->templateOwner,environment->arguments,label->span);
+    state=withTypes(state,applied->store,applied->obligations);frame=withArguments(frame,applied->arguments);
+    let signature:Signature=try methodSignature(state->types,receiverType,label->name,applied->arguments,label->span);state=withTypes(state,signature->store,signature->obligations);
+    branch when{frame->children->length()!=signature->parameters->length()+1=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"method argument arity mismatch"));},else=>unit};
+    var index:Int=1;loop over(signature->parameters as expected:Int){try expect(try lookup<Node>(state->nodes,try item(frame->children,index)),expected);index=index+1;};
+    valueType=signature->result;operation="method:"+label->name;
+   }};
+  }};
+ }};
+ let base:Node=makeNode(frame,Structure::Known(valueType),normal,operation,Parent::None,0,false);
+ let value:Node=Node{file:base->file,cursor:base->cursor,rule:base->rule,flag:base->flag,structure:base->structure,normal:base->normal,operation:base->operation,binding:base->binding,target:base->target,children:base->children,span:base->span,integer:base->integer,minimum:base->minimum,literal:literal,mapping:base->mapping,arguments:base->arguments};
+ Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:value,environment:environment})
+};

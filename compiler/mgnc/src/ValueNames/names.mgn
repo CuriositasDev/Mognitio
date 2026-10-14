@@ -60,7 +60,7 @@ public let capture:Function(State,Environment,Int):Result<State,Diagnostic>=func
    loop over(current->captures as previous:Int){branch when{previous==id=>{found=true;break;},else=>unit};};
    branch when{!found=>{
     return Result<State,Diagnostic>::Ok(withFunctions(state,try replaceItem<FunctionInfo>(state->functions,owner,
-     FunctionInfo{file:current->file,syntax:current->syntax,valueType:current->valueType,parameters:current->parameters,body:current->body,captures:current->captures->append(id),templateOwner:current->templateOwner})));
+     FunctionInfo{file:current->file,cursor:current->cursor,valueType:current->valueType,parameters:current->parameters,body:current->body,captures:current->captures->append(id),templateOwner:current->templateOwner})));
    },else=>unit};
   },else=>unit};
  }};Result<State,Diagnostic>::Ok(state)

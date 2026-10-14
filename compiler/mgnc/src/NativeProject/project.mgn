@@ -1,0 +1,128 @@
+namespace Mgnc\NativeProject;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Syntax\{Parent,Node as SyntaxNode,Program,Parameter,Declaration as NativeDeclaration};
+use Mgnc\Checked\{CheckedProgram,CheckedFunction,Value,Symbol as NativeSymbol};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
+use Mgnc\TypeData\{Structure,Type};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\NativeProfile\{Selected,select,identity,code,direct};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Projection\{item};
+use Mgnc\Tables\{replaceItem};
+public type Projected=product{program:CheckedProgram;origins:Paged<Int>;symbolOrigins:Paged<Int>;owners:List<Int>;declarations:List<Int>;};
+type Frame=product{source:Int;context:Int;next:Int;children:List<Int>;parent:Parent;};
+let blanks:Function(Int):Paged<Parent>=function(count:Int):Paged<Parent>{
+ var result:Paged<Parent>=empty<Parent>();var index:Int=0;loop while(index<count){result=push<Parent>(result,Parent::None);index=index+1;};result
+};
+let mapped:Function(Paged<Parent>,Int,Span):Result<Int,Diagnostic>=function(table:Paged<Parent>,id:Int,span:Span):Result<Int,Diagnostic>{identity(try lookup<Parent>(table,id),span)};
+let operatorText:Function(String):String=function(operation:String):String{
+ branch when{operation=="add"=>"+",operation=="sub"||operation=="neg"=>"-",operation=="mul"=>"*",operation=="div"=>"/",operation=="rem"=>"%",
+ operation=="eq"=>"==",operation=="ne"=>"!=",operation=="lt"=>"<",operation=="le"=>"<=",operation=="gt"=>">",operation=="ge"=>">=",operation=="not"=>"!",operation=="and"=>"&&",operation=="or"=>"||",else=>""}
+};
+public let project:Function(SemanticProject):Result<Projected,Diagnostic>=function(semantic:SemanticProject):Result<Projected,Diagnostic>{
+ let state:State=semantic->state;let selected:List<Selected>=try select(semantic);
+ let module:Module=try lookup<Module>(state->types->headers->modules,state->types->headers->input->entry);
+ var declarationMap:Paged<Parent>=blanks(state->types->headers->declarations->count);
+ var symbolMap:Paged<Parent>=blanks(state->symbols->count);var loopMap:Paged<Parent>=blanks(state->loops->count);
+ var symbols:Paged<NativeSymbol>=empty<NativeSymbol>();var symbolOrigins:Paged<Int>=empty<Int>();var owners:List<Int>=List<Int>[];var originalDeclarations:List<Int>=List<Int>[];
+ var ordinal:Int=0;
+ loop over(selected as chosen:Selected){declarationMap=try replaceItem<Parent>(declarationMap,chosen->declaration,Parent::Some(ordinal));owners=owners->append(chosen->owner);originalDeclarations=originalDeclarations->append(chosen->declaration);ordinal=ordinal+1;};
+ var index:Int=0;
+ loop while(index<state->symbols->count){
+  let symbol:Symbol=try lookup<Symbol>(state->symbols,index);
+  branch on symbol->declaration{Parent::None=>unit,Parent::Some(id:Int)=>{
+   branch on try lookup<Parent>(declarationMap,id){Parent::None=>unit,Parent::Some(functionId:Int)=>{
+    symbolMap=try replaceItem<Parent>(symbolMap,index,Parent::Some(symbols->count));symbolOrigins=push<Int>(symbolOrigins,index);
+    symbols=push<NativeSymbol>(symbols,NativeSymbol{parent:Parent::None,name:symbol->name,valueType:5,mutable:false,visible:true,functionId:functionId});
+   }};
+  }};index=index+1;
+ };
+ var nodes:Paged<SyntaxNode>=empty<SyntaxNode>();var values:Paged<Value>=empty<Value>();var origins:Paged<Int>=empty<Int>();
+ var functions:List<CheckedFunction>=List<CheckedFunction>[];var declarations:List<NativeDeclaration>=List<NativeDeclaration>[];ordinal=0;
+ loop over(selected as chosen:Selected){
+  let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,chosen->declaration);
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,chosen->owner);let firstSymbol:Int=symbols->count;
+  index=0;
+  loop while(index<state->symbols->count){
+   let symbol:Symbol=try lookup<Symbol>(state->symbols,index);
+   branch when{parentEqual(symbol->functionOwner,Parent::Some(chosen->owner))=>{
+    let valueType:Int=try code(state,Structure::Known(symbol->valueType),symbol->span);
+    branch when{valueType==5=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",symbol->span,"Function storage is outside the native profile"));},else=>unit};
+    branch when{valueType==4=>{
+     var parameter:Bool=false;loop over(info->parameters as id:Int){branch when{id==index=>{parameter=true;},else=>unit};};
+     branch when{chosen->declaration!=semantic->entry||!parameter=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",symbol->span,"List storage is outside the native profile"));},else=>unit};
+    },else=>unit};
+    symbolMap=try replaceItem<Parent>(symbolMap,index,Parent::Some(symbols->count));symbolOrigins=push<Int>(symbolOrigins,index);
+    symbols=push<NativeSymbol>(symbols,NativeSymbol{parent:Parent::None,name:symbol->name,valueType:valueType,mutable:symbol->mutable,visible:true,functionId:ordinal});
+   },else=>unit};index=index+1;
+  };
+  let endSymbol:Int=symbols->count;var parameters:List<Int>=List<Int>[];var parameterSyntax:List<Parameter>=List<Parameter>[];var parameterTypes:List<Int>=List<Int>[];
+  loop over(info->parameters as id:Int){
+   let symbol:Symbol=try lookup<Symbol>(state->symbols,id);let valueType:Int=try code(state,Structure::Known(symbol->valueType),symbol->span);
+   parameters=parameters->append(try mapped(symbolMap,id,symbol->span));parameterTypes=parameterTypes->append(valueType);parameterSyntax=parameterSyntax->append(Parameter{name:symbol->name,valueType:valueType,span:symbol->span});
+  };
+  var frames:Paged<Frame>=empty<Frame>();var frame:Frame=Frame{source:chosen->body,context:0,next:0,children:List<Int>[],parent:Parent::None};var root:Int= -1;
+  loop while(true){
+   let original:Node=try lookup<Node>(state->nodes,frame->source);let operation:String=original->operation;
+   let offset:Int=branch when{operation=="assign"=>1,else=>0};let childCount:Int=original->children->length()-offset;
+   branch when{frame->next<childCount=>{
+    let child:Int=try item(original->children,frame->next+offset);let context:Int=branch when{operation=="group"=>frame->context,operation=="call"&&frame->next==0=>1,operation=="method:length"&&frame->next==0=>2,else=>0};
+    let parent:Int=frames->count;frames=push<Frame>(frames,Frame{source:frame->source,context:frame->context,next:frame->next+1,children:frame->children,parent:frame->parent});
+    frame=Frame{source:child,context:context,next:0,children:List<Int>[],parent:Parent::Some(parent)};continue;
+   },else=>unit};
+   let valueType:Int=try code(state,original->structure,original->span);
+   branch when{valueType>=4&&!(frame->context==1&&valueType==5)&&!(frame->context==2&&valueType==4)=>{
+    return Result<Projected,Diagnostic>::Err(problem("unsupported",original->span,"value use is outside the native profile"));
+   },else=>unit};
+   var kind:Int=0;var spelling:String=operatorText(operation);var binding:Parent=Parent::None;var target:Parent=Parent::None;var annotation:Int=0;
+   branch when{operation=="integer"||operation=="boolean"||operation=="unit"=>{kind=1;},
+    operation=="binding"=>{kind=2;binding=Parent::Some(try mapped(symbolMap,try identity(original->binding,original->span),original->span));},
+    operation=="group"=>{kind=3;},
+    operation=="neg"||operation=="not"=>{kind=4;},
+    spelling!=""=>{kind=5;},
+    operation=="call"=>{
+     kind=6;let receiver:Node=try direct(state,try item(original->children,0));
+     branch when{receiver->operation!="binding"=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",receiver->span,"native call requires a direct helper name"));},else=>unit};
+     let symbol:Symbol=try lookup<Symbol>(state->symbols,try identity(receiver->binding,receiver->span));
+     let declaredId:Int=try identity(symbol->declaration,receiver->span);
+     branch when{declaredId==semantic->entry=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",receiver->span,"entry call is outside the native profile"));},else=>unit};
+     target=Parent::Some(try mapped(declarationMap,declaredId,receiver->span));
+    },
+    operation=="method:length"=>{
+     kind=7;let receiver:Node=try direct(state,try item(original->children,0));
+     branch when{receiver->operation!="binding"||chosen->declaration!=semantic->entry=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",receiver->span,"native length requires the entry parameter"));},else=>unit};
+     let receiverSymbol:Int=try identity(receiver->binding,receiver->span);var found:Bool=false;loop over(info->parameters as id:Int){branch when{id==receiverSymbol=>{found=true;},else=>unit};};
+     branch when{!found=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",receiver->span,"native length requires the entry parameter"));},else=>unit};
+     binding=Parent::Some(try mapped(symbolMap,receiverSymbol,receiver->span));
+    },
+    operation=="block"=>{kind=8;},
+    operation=="declare"||operation=="assign"=>{
+     kind=branch when{operation=="declare"=>9,else=>10};let sourceSymbol:Int=try identity(original->binding,original->span);binding=Parent::Some(try mapped(symbolMap,sourceSymbol,original->span));
+     let symbol:Symbol=try lookup<Symbol>(state->symbols,sourceSymbol);annotation=try code(state,Structure::Known(symbol->valueType),symbol->span);spelling=symbol->name;
+    },
+    operation=="return"=>{kind=11;},operation=="break"=>{kind=12;},operation=="continue"=>{kind=13;},operation=="discard"=>{kind=14;},operation=="statement"=>{kind=15;},operation=="when"=>{kind=16;},
+    operation=="while"=>{kind=17;loopMap=try replaceItem<Parent>(loopMap,try identity(original->target,original->span),Parent::Some(nodes->count));},
+    else=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",original->span,"expression is outside the native profile"));}
+   };
+   branch when{frame->context!=0&&operation!="binding"&&operation!="group"=>{return Result<Projected,Diagnostic>::Err(problem("unsupported",original->span,"native receiver must be a grouped direct name"));},else=>unit};
+   root=nodes->count;nodes=push<SyntaxNode>(nodes,SyntaxNode{kind:kind,text:spelling,children:frame->children,span:original->span,annotation:annotation,flag:original->flag});
+   values=push<Value>(values,Value{valueType:valueType,normal:original->normal,symbol:binding,target:target,integer:branch when{original->minimum=> -9223372036854775808,else=>original->integer},minimum:original->minimum});origins=push<Int>(origins,frame->source);
+   branch on frame->parent{Parent::None=>{break;},Parent::Some(id:Int)=>{
+    let parent:Frame=try lookup<Frame>(frames,id);frame=Frame{source:parent->source,context:parent->context,next:parent->next,children:parent->children->append(root),parent:parent->parent};
+   }};
+  };
+  let shape:Type=try lookup<Type>(state->types->types,info->valueType);let result:Int=try code(state,Structure::Known(try memberType(shape->arguments,shape->arguments->length()-1,declared->span)),declared->span);
+  declarations=declarations->append(NativeDeclaration{name:declared->name,parameters:parameterSyntax,declaredParameters:parameterTypes,result:result,declaredResult:result,body:root,span:declared->span,mutable:false});
+  functions=functions->append(CheckedFunction{declaration:ordinal,parameters:parameters,firstSymbol:firstSymbol,endSymbol:endSymbol});ordinal=ordinal+1;
+ };
+ index=0;loop while(index<nodes->count){
+  let node:SyntaxNode=try lookup<SyntaxNode>(nodes,index);let original:Node=try lookup<Node>(state->nodes,try lookup<Int>(origins,index));
+  branch when{node->kind==12||node->kind==13=>{
+   let value:Value=try lookup<Value>(values,index);let target:Int=try mapped(loopMap,try identity(original->target,original->span),original->span);
+   values=try replaceItem<Value>(values,index,Value{valueType:value->valueType,normal:value->normal,symbol:value->symbol,target:Parent::Some(target),integer:value->integer,minimum:value->minimum});
+  },else=>unit};index=index+1;
+ };
+ Result<Projected,Diagnostic>::Ok(Projected{program:CheckedProgram{syntax:Program{nodes:nodes,declarations:declarations,moduleName:module->nameSpace,end:module->tree->source->end->span},values:values,symbols:symbols,functions:functions},origins:origins,symbolOrigins:symbolOrigins,owners:owners,declarations:originalDeclarations})
+};

@@ -9,7 +9,7 @@ use Mgnc\BridgeLists\{leftList,expressions,conditions,reverse};
 use Mgnc\HeaderRead\{rightList};
 public type Label=product{name:String;span:Span;};
 public type Pattern=product{typeSyntax:Int;variant:Label;binder:List<Label>;annotation:List<Int>;};
-public type Expression=product{syntax:Int;rule:Int;span:Span;children:List<Int>;annotations:List<Int>;labels:List<Label>;patterns:List<Pattern>;flag:Bool;text:String;};
+public type Expression=product{syntax:Int;cursor:Int;rule:Int;span:Span;children:List<Int>;annotations:List<Int>;labels:List<Label>;patterns:List<Pattern>;flag:Bool;text:String;};
 public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=function(tree:SyntaxForest,root:Int):Result<Expression,Diagnostic>{
  let id:Int=try concrete(tree,root);let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
  var children:List<Int>=List<Int>[];var annotations:List<Int>=List<Int>[];var labels:List<Label>=List<Label>[];var patterns:List<Pattern>=List<Pattern>[];var flag:Bool=false;
@@ -82,5 +82,5 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
   };
  },
  else=>{return Result<Expression,Diagnostic>::Err(try failure(tree,id,"internal","unhandled classified expression production"));}};
- Result<Expression,Diagnostic>::Ok(Expression{syntax:id,rule:rule,span:try site(tree,id),children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
+ Result<Expression,Diagnostic>::Ok(Expression{syntax:id,cursor:node->start,rule:rule,span:try site(tree,id),children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
 };

@@ -165,3 +165,14 @@ under their original identity when correcting a harness or changing a candidate.
 The inherited native and parse resource gates above remain separate and unchanged.
 The v1.4 acceptance ledger remains historical; do not rewrite its pinned identities
 to make it claim v1.5 acceptance.
+
+Once all observations are exported, verify their bindings and complete matrices:
+
+~~~sh
+python3 tests/mgnc/v150-implementation-evidence.py --evidence verification/v1.5.0-compiler --compiler A
+~~~
+
+This checks source/seed/artifact identities, input manifests, required results,
+isolation, sample counts, existing budgets, and exact preliminary stream bytes.
+It rejects incomplete preliminary data. Passing it records implementation
+verification; formal v1.5 performance-budget adoption remains a separate decision.

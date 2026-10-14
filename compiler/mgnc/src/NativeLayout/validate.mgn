@@ -1,0 +1,93 @@
+namespace Mgnc\NativeLayout;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Syntax\{Parent,Node as SyntaxNode,Declaration as NativeDeclaration};
+use Mgnc\Checked\{CheckedProgram,CheckedFunction,Value,Symbol as NativeSymbol};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
+use Mgnc\TypeData\{Structure};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\NativeProject\{Projected};
+use Mgnc\NativeProfile\{identity,code,direct};
+use Mgnc\Projection\{item};
+use Mgnc\Tables\{replaceItem};
+let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(condition:Bool,span:Span,message:String):Result<Unit,Diagnostic>{
+ branch when{condition=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",span,"native layout: "+message))}
+};
+public let validate:Function(SemanticProject,Projected):Result<Unit,Diagnostic>=function(semantic:SemanticProject,projection:Projected):Result<Unit,Diagnostic>{
+ let program:CheckedProgram=projection->program;let state:State=semantic->state;let span:Span=program->syntax->end;
+ try require(program->syntax->nodes->count==program->values->count&&program->values->count==projection->origins->count,span,"node/value/source lengths");
+ try require(program->symbols->count==projection->symbolOrigins->count,span,"symbol/source lengths");
+ try require(program->functions->length()==program->syntax->declarations->length()&&program->functions->length()==projection->owners->length()&&program->functions->length()==projection->declarations->length(),span,"declaration order lengths");
+ var parentMap:Paged<Parent>=empty<Parent>();var index:Int=0;
+ loop while(index<program->syntax->nodes->count){parentMap=push<Parent>(parentMap,Parent::None);index=index+1;};
+ var firstNode:Int=0;var previousSymbolEnd:Int=0;var ordinal:Int=0;var entries:Int=0;
+ loop over(program->functions as functionInfo:CheckedFunction){
+  try require(functionInfo->declaration==ordinal,span,"function/declaration identity");
+  let declared:NativeDeclaration=branch on program->syntax->declarations->at(ordinal){Result<NativeDeclaration,IndexError>::Ok(value:NativeDeclaration)=>value,Result<NativeDeclaration,IndexError>::Err(error:IndexError)=>{return Result<Unit,Diagnostic>::Err(problem("internal",span,"native declaration missing"));}};
+  let owner:Int=try item(projection->owners,ordinal);let originalInfo:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);
+  try require(declared->body>=firstNode&&declared->body<program->syntax->nodes->count,declared->span,"body bounds");
+  try require((try lookup<Int>(projection->origins,declared->body))==(try identity(originalInfo->body,declared->span)),declared->span,"body source mapping");
+  try require(functionInfo->firstSymbol>=previousSymbolEnd&&functionInfo->endSymbol>=functionInfo->firstSymbol&&functionInfo->endSymbol<=program->symbols->count,declared->span,"symbol intervals");
+  try require(functionInfo->parameters->length()==originalInfo->parameters->length(),declared->span,"parameter length");
+  var parameterIndex:Int=0;
+  loop over(functionInfo->parameters as id:Int){
+   try require(id>=functionInfo->firstSymbol&&id<functionInfo->endSymbol,declared->span,"parameter slot bounds");
+   try require((try lookup<Int>(projection->symbolOrigins,id))==(try item(originalInfo->parameters,parameterIndex)),declared->span,"parameter source order");parameterIndex=parameterIndex+1;
+  };
+  index=functionInfo->firstSymbol;loop while(index<functionInfo->endSymbol){
+   let symbol:NativeSymbol=try lookup<NativeSymbol>(program->symbols,index);let original:Symbol=try lookup<Symbol>(state->symbols,try lookup<Int>(projection->symbolOrigins,index));
+   try require(symbol->functionId==ordinal&&parentEqual(original->functionOwner,Parent::Some(owner)),original->span,"symbol ownership");
+   try require(symbol->valueType==(try code(state,Structure::Known(original->valueType),original->span))&&symbol->mutable==original->mutable&&symbol->name==original->name&&symbol->visible,original->span,"symbol value mapping");
+   try require(parentEqual(symbol->parent,Parent::None),original->span,"unexpected legacy environment link");index=index+1;
+  };
+  index=firstNode;loop while(index<=declared->body){
+   let node:SyntaxNode=try lookup<SyntaxNode>(program->syntax->nodes,index);let value:Value=try lookup<Value>(program->values,index);let original:Node=try lookup<Node>(state->nodes,try lookup<Int>(projection->origins,index));
+   try require(node->span->start==original->span->start&&node->span->end==original->span->end&&value->normal==original->normal&&value->valueType==(try code(state,original->structure,node->span)),node->span,"node semantic mapping");
+   try require(node->span->line==original->span->line&&node->span->column==original->span->column&&node->flag==original->flag,node->span,"source position and flags");
+   try require(value->minimum==original->minimum&&value->integer==branch when{original->minimum=> -9223372036854775808,else=>original->integer},node->span,"literal value mapping");
+   try require(!parentEqual(value->symbol,Parent::None)==(node->kind==2||node->kind==7||node->kind==9||node->kind==10),node->span,"binding presence");
+   try require(!parentEqual(value->target,Parent::None)==(node->kind==6||node->kind==12||node->kind==13),node->span,"control target presence");
+   let offset:Int=branch when{node->kind==10=>1,else=>0};
+   try require(node->children->length()==original->children->length()-offset,node->span,"child count mapping");var childIndex:Int=offset;
+   loop over(node->children as child:Int){
+    try require(child>=firstNode&&child<index,node->span,"owned postorder child");
+    try require(parentEqual(try lookup<Parent>(parentMap,child),Parent::None),node->span,"shared output tree child");
+    try require((try lookup<Int>(projection->origins,child))==(try item(original->children,childIndex)),node->span,"source evaluation order");
+    parentMap=try replaceItem<Parent>(parentMap,child,Parent::Some(index));childIndex=childIndex+1;
+   };
+   branch on value->symbol{Parent::None=>unit,Parent::Some(id:Int)=>{
+    let mapped:NativeSymbol=try lookup<NativeSymbol>(program->symbols,id);
+    branch when{mapped->valueType!=5=>{try require(id>=functionInfo->firstSymbol&&id<functionInfo->endSymbol,node->span,"local slot ownership");},else=>{try require(id<functionInfo->firstSymbol,node->span,"global/local distinction");}};
+    let binding:Parent=branch when{node->kind==7=>(try direct(state,try item(original->children,0)))->binding,else=>original->binding};
+    try require((try lookup<Int>(projection->symbolOrigins,id))==(try identity(binding,node->span)),node->span,"resolved symbol mapping");
+   }};
+   branch when{node->kind==6=>{
+    let target:Int=try identity(value->target,node->span);let receiver:Node=try direct(state,try item(original->children,0));let symbol:Symbol=try lookup<Symbol>(state->symbols,try identity(receiver->binding,node->span));
+    try require(target>=0&&target<program->functions->length(),node->span,"call target domain");
+    try require((try item(projection->declarations,target))==(try identity(symbol->declaration,node->span)),node->span,"resolved call mapping");
+   },else=>unit};index=index+1;
+  };
+  index=firstNode;loop while(index<declared->body){try require(!parentEqual(try lookup<Parent>(parentMap,index),Parent::None),declared->span,"orphan node");index=index+1;};
+  try require(parentEqual(try lookup<Parent>(parentMap,declared->body),Parent::None),declared->span,"body must be tree root");
+  index=firstNode;loop while(index<=declared->body){
+   let node:SyntaxNode=try lookup<SyntaxNode>(program->syntax->nodes,index);
+   branch when{node->kind==12||node->kind==13=>{
+    let value:Value=try lookup<Value>(program->values,index);let target:Int=try identity(value->target,node->span);
+    try require(target>=firstNode&&target<=declared->body,node->span,"loop target owner");
+    let loopNode:SyntaxNode=try lookup<SyntaxNode>(program->syntax->nodes,target);try require(loopNode->kind==17,node->span,"loop target kind");
+    let original:Node=try lookup<Node>(state->nodes,try lookup<Int>(projection->origins,index));let originalLoop:Node=try lookup<Node>(state->nodes,try lookup<Int>(projection->origins,target));
+    try require(parentEqual(original->target,originalLoop->target),node->span,"resolved loop mapping");
+    var current:Int=index;var inside:Bool=false;
+    loop while(current!=declared->body){
+     let parent:Int=try identity(try lookup<Parent>(parentMap,current),node->span);
+     branch when{parent==target=>{inside=current==(try item(loopNode->children,1));break;},else=>unit};current=parent;
+    };
+    try require(inside,node->span,"loop target is not an enclosing body");
+   },else=>unit};index=index+1;
+  };
+  branch when{declared->name=="main"=>{entries=entries+1;try require((try item(projection->declarations,ordinal))==semantic->entry,declared->span,"entry mapping");},else=>unit};
+  firstNode=declared->body+1;previousSymbolEnd=functionInfo->endSymbol;ordinal=ordinal+1;
+ };
+ try require(firstNode==program->syntax->nodes->count&&entries==1,span,"complete node and entry coverage");
+ Result<Unit,Diagnostic>::Ok(unit)
+};

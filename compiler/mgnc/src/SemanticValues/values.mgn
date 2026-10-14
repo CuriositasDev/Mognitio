@@ -1,0 +1,21 @@
+namespace Mgnc\SemanticValues;
+use Mgnc\NameIndex\{Index};
+use Mgnc\Data\{Paged,Span};
+use Mgnc\MathValue\{Integer};
+use Mgnc\Expressions\{Expression};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Structure,Argument,Obligation};
+public type Symbol=product{file:Int;name:String;valueType:Int;mutable:Bool;functionOwner:Parent;declaration:Parent;span:Span;};
+public type Node=product{file:Int;cursor:Int;rule:Int;flag:Bool;structure:Structure;normal:Bool;operation:String;binding:Parent;target:Parent;children:List<Int>;span:Span;integer:Int;minimum:Bool;literal:List<Integer>;mapping:List<Int>;arguments:List<Argument>;};
+public type FunctionInfo=product{file:Int;cursor:Int;valueType:Int;parameters:List<Int>;body:Parent;captures:List<Int>;templateOwner:Parent;};
+public type Loop=product{kind:Int;breaks:List<Int>;};
+public type BodyState=sum{NotRequired;Pending;Checking;Complete(Int);};
+public type State=product{types:Store;nodes:Paged<Node>;symbols:Paged<Symbol>;globals:Paged<Parent>;functions:Paged<FunctionInfo>;loops:Paged<Loop>;obligations:List<Obligation>;bodies:Paged<BodyState>;};
+public type Environment=product{file:Int;symbols:Index;reserved:List<String>;functionOwner:Parent;loopTarget:Parent;returnType:Parent;templateOwner:Parent;arguments:List<Argument>;reachable:Bool;};
+public type Checked=product{state:State;root:Int;};
+
+public type Frame=product{expression:Expression;environment:Environment;annotation:Parent;target:Parent;loopTarget:Parent;binder:Parent;arguments:List<Argument>;children:List<Int>;mapping:List<Int>;parent:Int;next:Int;minimumAllowed:Bool;};
+public type Started=product{state:State;frame:Frame;};
+public type ChildEnvironment=product{state:State;frame:Frame;environment:Environment;};
+public type Finished=product{state:State;root:Int;environment:Environment;};
+public type Evaluated=product{state:State;value:Node;environment:Environment;};

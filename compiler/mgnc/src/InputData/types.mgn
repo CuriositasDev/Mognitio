@@ -1,0 +1,29 @@
+namespace Mgnc\InputData;
+use Mgnc\Data\{Span,Diagnostic,problem};
+use Std\Io\{IoError,IoOperation,IoErrorKind,IoErrorPhase,PathInfoError};
+public type InputError=product{status:Int;path:String;diagnostic:Diagnostic;positionKnown:Bool;operation:String;kind:String;ioPhase:String;};
+public type SourceUnit=product{path:String;displayPath:String;relativePath:String;expectedNamespace:String;text:String;};
+public type ProjectInput=product{manifestPath:String;manifestText:String;rootNamespace:String;entry:Int;sources:List<SourceUnit>;};
+public let failure:Function(Int,String,String,String):InputError=function(status:Int,path:String,phase:String,message:String):InputError{
+ InputError{status:status,path:path,diagnostic:problem(phase,Span{start:0,end:0,line:1,column:1},message),
+ positionKnown:false,operation:"",kind:"",ioPhase:""}
+};
+public let kindName:Function(IoErrorKind):String=function(kind:IoErrorKind):String{
+ branch on kind{
+ IoErrorKind::InvalidPath=>"InvalidPath",IoErrorKind::InvalidEncoding=>"InvalidEncoding",IoErrorKind::NotFound=>"NotFound",
+ IoErrorKind::PermissionDenied=>"PermissionDenied",IoErrorKind::UnsupportedTarget=>"UnsupportedTarget",
+ IoErrorKind::BrokenPipe=>"BrokenPipe",IoErrorKind::ResourceExhausted=>"ResourceExhausted",IoErrorKind::Other=>"Other"}
+};
+public let fromIo:Function(IoError):InputError=function(error:IoError):InputError{
+ let operation:String=branch on error->operation{
+ IoOperation::ReadTextFile=>"readTextFile",IoOperation::WriteTextFile=>"writeTextFile",IoOperation::ReadStdin=>"readStdin",
+ IoOperation::WriteStdout=>"writeStdout",IoOperation::WriteStderr=>"writeStderr",IoOperation::JoinPath=>"joinPath",
+ IoOperation::ReadDirectory=>"readDirectory",IoOperation::CreateDirectory=>"createDirectory"};
+ let phase:String=branch on error->phase{IoErrorPhase::Input=>"Input",IoErrorPhase::Target=>"Target",IoErrorPhase::Body=>"Body",IoErrorPhase::Cleanup=>"Cleanup"};
+ InputError{status:2,path:error->subject,diagnostic:problem("io",Span{start:0,end:0,line:1,column:1},kindName(error->kind)),
+ positionKnown:false,operation:operation,kind:kindName(error->kind),ioPhase:phase}
+};
+public let fromInspection:Function(PathInfoError):InputError=function(error:PathInfoError):InputError{
+ InputError{status:2,path:error->subject,diagnostic:problem("io",Span{start:0,end:0,line:1,column:1},kindName(error->kind)),
+ positionKnown:false,operation:"inspectPath",kind:kindName(error->kind),ioPhase:""}
+};

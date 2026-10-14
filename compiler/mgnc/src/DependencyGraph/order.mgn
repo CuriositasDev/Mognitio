@@ -1,0 +1,37 @@
+namespace Mgnc\DependencyGraph;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Tables\{replaceItem};
+public type Edge=product{owner:Int;target:Int;file:Int;span:Span;};
+public type Graph=product{vertices:List<Int>;edges:List<Edge>;size:Int;};
+public type Order=product{values:List<Int>;cycle:List<Edge>;};
+type Frame=product{vertex:Int;next:Int;parent:Int;};
+public let sort:Function(Graph):Result<Order,Diagnostic>=function(graph:Graph):Result<Order,Diagnostic>{
+ var adjacent:Paged<List<Edge>>=empty<List<Edge>>();var colors:Paged<Int>=empty<Int>();var index:Int=0;
+ loop while(index<graph->size){adjacent=push<List<Edge>>(adjacent,List<Edge>[]);colors=push<Int>(colors,0);index=index+1;};
+ loop over(graph->edges as edge:Edge){
+  let bucket:List<Edge>=try lookup<List<Edge>>(adjacent,edge->owner);
+  adjacent=try replaceItem<List<Edge>>(adjacent,edge->owner,bucket->append(edge));
+ };
+ var result:List<Int>=List<Int>[];
+ // Explicit depth-first frames retain the next edge and produce dependency-first
+ // postorder. Gray targets identify an actual cycle edge, without rescanning all edges.
+ loop over(graph->vertices as vertex:Int){
+  branch when{(try lookup<Int>(colors,vertex))==2=>{continue;},else=>unit};
+  var frames:Paged<Frame>=push<Frame>(empty<Frame>(),Frame{vertex:vertex,next:0,parent:-1});var active:Int=0;
+  colors=try replaceItem<Int>(colors,vertex,1);
+  loop while(active>=0){
+   let frame:Frame=try lookup<Frame>(frames,active);let edges:List<Edge>=try lookup<List<Edge>>(adjacent,frame->vertex);
+   branch when{frame->next>=edges->length()=>{
+    colors=try replaceItem<Int>(colors,frame->vertex,2);result=result->append(frame->vertex);active=frame->parent;
+   },else=>{
+    let edge:Edge=branch on edges->at(frame->next){Result<Edge,IndexError>::Ok(value:Edge)=>value,Result<Edge,IndexError>::Err(error:IndexError)=>{return Result<Order,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid dependency cursor"));}};
+    frames=try replaceItem<Frame>(frames,active,Frame{vertex:frame->vertex,next:frame->next+1,parent:frame->parent});
+    let color:Int=try lookup<Int>(colors,edge->target);
+    branch when{color==1=>{return Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[edge]});},color==0=>{
+     colors=try replaceItem<Int>(colors,edge->target,1);frames=push<Frame>(frames,Frame{vertex:edge->target,next:0,parent:active});active=frames->count-1;
+    },else=>unit};
+   }};
+  };
+ };
+ Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[]})
+};

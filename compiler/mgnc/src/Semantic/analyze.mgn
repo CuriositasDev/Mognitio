@@ -1,0 +1,134 @@
+namespace Mgnc\Semantic;
+use Mgnc\NameIndex\{create as createIndex};
+use Mgnc\InputDiagnostics\{escapePath};
+use Mgnc\Data\{Diagnostic,lookup,problem,Span,Paged,empty,push};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
+use Mgnc\SemanticData\{Headers,Module,Declaration};
+use Mgnc\Headers\{collect,sourceError};
+use Mgnc\Catalog\{attach};
+use Mgnc\Imports\{resolve};
+use Mgnc\DependencyGraph\{Graph,Edge,Order,sort};
+use Mgnc\TypeDependencies\{graph as typeGraph};
+use Mgnc\TemplateDependencies\{graph as templateGraph};
+use Mgnc\TypeData\{Store,Type,Argument,Obligation};
+use Mgnc\TypeOps\{initialize as initializeTypes,functionKind,listKind};
+use Mgnc\TypeDeclarations\{define,Parameters,parameters};
+use Mgnc\Signatures\{declaration as signature,publicSignature};
+use Mgnc\SemanticValues\{State,Environment,Node,FunctionInfo,BodyState,Checked};
+use Mgnc\ValueSupport\{initialize as initializeValues,withTypes,withBodies,expect};
+use Mgnc\SemanticClassification\{BindingIndex,prepare,classifyPrepared};
+use Mgnc\BodyCheck\{check};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Tables\{replaceItem};
+public type SemanticProject=product{state:State;entry:Int;};
+let internal:Function(Diagnostic):InputError=function(error:Diagnostic):InputError{
+ InputError{status:3,path:"compiler",diagnostic:Diagnostic{phase:"internal",span:error->span,message:error->message},positionKnown:false,operation:"",kind:"",ioPhase:""}
+};
+let atDeclaration:Function(Headers,Int,Diagnostic):InputError=function(headers:Headers,id:Int,error:Diagnostic):InputError{
+ let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(failure:Diagnostic)=>{return internal(failure);}};
+ let module:Module=branch on lookup<Module>(headers->modules,declared->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(failure:Diagnostic)=>{return internal(failure);}};
+ sourceError(module->source,error)
+};
+let ordered:Function(Headers,Graph,String):Result<List<Int>,InputError>=function(headers:Headers,graph:Graph,kind:String):Result<List<Int>,InputError>{
+ let result:Order=branch on sort(graph){Result<Order,Diagnostic>::Ok(value:Order)=>value,Result<Order,Diagnostic>::Err(error:Diagnostic)=>{return Result<List<Int>,InputError>::Err(internal(error));}};
+ loop over(result->cycle as edge:Edge){
+  let target:Declaration=branch on lookup<Declaration>(headers->declarations,edge->target){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<List<Int>,InputError>::Err(internal(error));}};
+  let module:Module=branch on lookup<Module>(headers->modules,target->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<List<Int>,InputError>::Err(internal(error));}};
+  return Result<List<Int>,InputError>::Err(atDeclaration(headers,edge->owner,problem("semantic",edge->span,"cyclic "+kind+" dependency through "+escapePath(module->source->displayPath)+" / "+target->name)));
+ };
+ Result<List<Int>,InputError>::Ok(result->values)
+};
+let body:Function(State,Int,BindingIndex):Result<State,Diagnostic>=function(initial:State,id:Int,bindings:BindingIndex):Result<State,Diagnostic>{
+ var state:State=initial;let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,id);
+ let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);
+ state=withBodies(state,try replaceItem<BodyState>(state->bodies,id,BodyState::Checking));
+ let generic:Bool=declared->kind==3;var arguments:List<Argument>=List<Argument>[];
+ branch when{generic=>{let params:Parameters=try parameters(state->types,id);state=withTypes(state,params->store,params->obligations);arguments=params->arguments;},else=>unit};
+ let owner:Parent=branch when{generic=>Parent::Some(id),else=>Parent::None};
+ let tree:SyntaxForest=try classifyPrepared(state->types->headers,declared->file,declared->body,owner,bindings);
+ let environment:Environment=Environment{file:declared->file,symbols:createIndex(),reserved:branch when{generic=>List<String>[],else=>List<String>[declared->name]},functionOwner:Parent::None,loopTarget:Parent::None,returnType:Parent::None,templateOwner:owner,arguments:arguments,reachable:true};
+ let before:Int=state->obligations->length();
+ let checked:Checked=try check(state,tree,tree->root,environment);state=checked->state;
+ let expected:Int=branch on try lookup<Parent>(state->types->declarations,id){Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",declared->span,"declaration signature is incomplete"));}};
+ try expect(try lookup<Node>(state->nodes,checked->root),expected);
+ branch when{generic=>{
+  var constraints:List<Obligation>=try lookup<List<Obligation>>(state->types->constraints,id);var index:Int=0;
+  loop over(state->obligations as requirement:Obligation){branch when{index>=before=>{constraints=constraints->append(requirement);},else=>unit};index=index+1;};
+  let types:Store=Store{headers:state->types->headers,types:state->types->types,buckets:state->types->buckets,declarations:state->types->declarations,constraints:try replaceItem<List<Obligation>>(state->types->constraints,id,constraints)};
+  state=withTypes(state,types,List<Obligation>[]);
+ },else=>unit};
+ Result<State,Diagnostic>::Ok(State{types:state->types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:state->obligations,bodies:try replaceItem<BodyState>(state->bodies,id,BodyState::Complete(checked->root))})
+};
+let entryType:Function(Store,Type,Span):Result<Bool,Diagnostic>=function(store:Store,shape:Type,span:Span):Result<Bool,Diagnostic>{
+ branch when{shape->kind!=functionKind||shape->arguments->length()!=2=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ let parameter:Int=try memberType(shape->arguments,0,span);let result:Int=try memberType(shape->arguments,1,span);
+ let input:Type=try lookup<Type>(store->types,parameter);
+ Result<Bool,Diagnostic>::Ok(result==1&&input->kind==listKind&&input->arguments->length()==1&&(try memberType(input->arguments,0,span))==3)
+};
+let entry:Function(State):Result<Int,InputError>=function(state:State):Result<Int,InputError>{
+ let headers:Headers=state->types->headers;let module:Module=branch on lookup<Module>(headers->modules,headers->input->entry){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,InputError>::Err(internal(error));}};
+ loop over(module->declarations as id:Int){
+  let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,InputError>::Err(internal(error));}};
+  branch when{declared->name=="main"=>{
+   branch when{declared->kind!=4=>{return Result<Int,InputError>::Err(sourceError(module->source,problem("semantic",declared->span,"entry must be a top-level let main")));},else=>unit};
+   let valueType:Int=branch on branch on lookup<Parent>(state->types->declarations,id){Result<Parent,Diagnostic>::Ok(value:Parent)=>value,Result<Parent,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,InputError>::Err(internal(error));}}{
+    Parent::Some(value:Int)=>value,Parent::None=>{return Result<Int,InputError>::Err(internal(problem("internal",declared->span,"entry signature is incomplete")));}};
+   let shape:Type=branch on lookup<Type>(state->types->types,valueType){Result<Type,Diagnostic>::Ok(value:Type)=>value,Result<Type,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,InputError>::Err(internal(error));}};
+   let valid:Result<Bool,Diagnostic>=entryType(state->types,shape,declared->span);
+   branch on valid{Result<Bool,Diagnostic>::Ok(value:Bool)=>{branch when{!value=>{return Result<Int,InputError>::Err(sourceError(module->source,problem("type",declared->span,"main must have type Function(List<String>): Int")));},else=>unit};},Result<Bool,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,InputError>::Err(internal(error));}};
+   return Result<Int,InputError>::Ok(id);
+  },else=>unit};
+ };
+ Result<Int,InputError>::Err(sourceError(module->source,problem("semantic",module->tree->source->end->span,"entry file has no main declaration")))
+};
+public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=function(input:ProjectInput):Result<SemanticProject,InputError>{
+ let collected:Headers=try collect(input);
+ let catalog:Headers=branch on attach(collected){Result<Headers,Diagnostic>::Ok(value:Headers)=>value,Result<Headers,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+ let headers:Headers=try resolve(catalog);
+ let typesGraph:Graph=branch on typeGraph(headers){Result<Graph,Diagnostic>::Ok(value:Graph)=>value,Result<Graph,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+ let typeOrder:List<Int>=try ordered(headers,typesGraph,"named type");var types:Store=initializeTypes(headers);
+ loop over(typeOrder as id:Int){types=branch on define(types,id){Result<Store,Diagnostic>::Ok(value:Store)=>value,Result<Store,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};};
+ var index:Int=0;
+ loop while(index<headers->declarations->count){
+  types=branch on signature(types,index){Result<Store,Diagnostic>::Ok(value:Store)=>value,Result<Store,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
+  index=index+1;
+ };
+ index=0;loop while(index<headers->declarations->count){
+  branch on publicSignature(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};index=index+1;
+ };
+ var state:State=branch on initializeValues(types){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+ let templatesGraph:Graph=branch on templateGraph(headers){Result<Graph,Diagnostic>::Ok(value:Graph)=>value,Result<Graph,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+ let templateOrder:List<Int>=try ordered(headers,templatesGraph,"template");
+ var contexts:Paged<BindingIndex>=empty<BindingIndex>();var templateContexts:Paged<BindingIndex>=empty<BindingIndex>();index=0;
+ loop while(index<input->sources->length()){
+  let normal:BindingIndex=branch on prepare(headers,index,false){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  let isolated:BindingIndex=branch on prepare(headers,index,true){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  contexts=push<BindingIndex>(contexts,normal);templateContexts=push<BindingIndex>(templateContexts,isolated);index=index+1;
+ };
+
+ loop over(templateOrder as id:Int){
+  let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  let bindings:BindingIndex=branch on lookup<BindingIndex>(templateContexts,declared->file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};};
+ loop over(headers->order as file:Int){
+  let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  branch when{module->standard=>{continue;},else=>unit};
+  let bindings:BindingIndex=branch on lookup<BindingIndex>(contexts,file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  loop over(module->declarations as id:Int){
+   let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+   branch when{declared->kind>=4=>{state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};},else=>unit};
+  };
+ };
+ index=0;
+ loop while(index<state->bodies->count){
+  let complete:Bool=branch on branch on lookup<BodyState>(state->bodies,index){Result<BodyState,Diagnostic>::Ok(value:BodyState)=>value,Result<BodyState,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}}{
+   BodyState::NotRequired=>true,BodyState::Complete(root:Int)=>true,BodyState::Pending=>false,BodyState::Checking=>false
+  };
+  branch when{!complete=>{return Result<SemanticProject,InputError>::Err(internal(problem("internal",Span{start:0,end:0,line:1,column:1},"incomplete body")));},else=>unit};
+  index=index+1;
+ };
+ let selected:Int=try entry(state);
+ Result<SemanticProject,InputError>::Ok(SemanticProject{state:state,entry:selected})
+};

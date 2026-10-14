@@ -1,0 +1,3 @@
+INCOMPLETE_EVIDENCE_REJECTED exit=1 reason=preliminary_profile_incomplete
+snapshot_sha256=3c1e2ba6e3ebb2c6f5913b04e97376b8145d8a9111e2d3fc581d767cc9063aa2
+The exported incomplete profile was supplied to v150-implementation-evidence.py with the fixed A. All preceding identity, functional and inherited-resource checks passed before the intended incomplete-profile rejection.

@@ -1,0 +1,68 @@
+namespace Mgnc\ValueNames;
+use Mgnc\NameIndex\{Index,candidates};
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Environment,Symbol,FunctionInfo};
+use Mgnc\SemanticData\{Introduction,Declaration,Module};
+use Mgnc\TypeData\{Argument,ValueTerm};
+use Mgnc\TypeNames\{parameter};
+use Mgnc\TypeOps\{argumentAt,parentEqual};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Imports\{reserved};
+use Mgnc\ValueSupport\{withFunctions};
+use Mgnc\Tables\{replaceItem};
+public type Reference=sum{Symbol(Int);ValueParameter(ValueTerm);};
+public let introduction:Function(State,Environment,String,Int):Result<Parent,Diagnostic>=function(state:State,environment:Environment,name:String,cursor:Int):Result<Parent,Diagnostic>{
+ let isolated:Bool=branch on environment->templateOwner{Parent::None=>false,Parent::Some(owner:Int)=>true};
+ loop over((try candidates(try lookup<Index>(state->types->headers->nameBuckets,environment->file),name)) as index:Int){
+  let entry:Introduction=try lookup<Introduction>(state->types->headers->names,index);
+  branch when{entry->file==environment->file&&entry->name==name=>{
+   let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,entry->declaration);
+   branch when{declared->kind<4=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},
+    isolated=>{return Result<Parent,Diagnostic>::Ok(Parent::None);},
+    entry->imported=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
+   let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);
+   branch when{(try getNode(module->tree->nodes,declared->node))->end<=cursor=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
+   return Result<Parent,Diagnostic>::Ok(Parent::None);
+  },else=>unit};
+ };
+ Result<Parent,Diagnostic>::Ok(Parent::None)
+};
+public let available:Function(State,Environment,String,Span,Int):Result<Unit,Diagnostic>=function(state:State,environment:Environment,name:String,span:Span,cursor:Int):Result<Unit,Diagnostic>{
+ var conflict:Bool=reserved(name);
+ loop over(environment->reserved as previous:String){branch when{previous==name=>{conflict=true;},else=>unit};};
+ loop over((try candidates(environment->symbols,name)) as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{conflict=true;},else=>unit};};
+ branch on try parameter(state->types->headers,environment->templateOwner,name){Parent::None=>unit,Parent::Some(ordinal:Int)=>{conflict=true;}};
+ branch on try introduction(state,environment,name,cursor){Parent::None=>unit,Parent::Some(id:Int)=>{conflict=true;}};
+ branch when{conflict=>Result<Unit,Diagnostic>::Err(problem("semantic",span,"binding shadows a visible or reserved name")),else=>Result<Unit,Diagnostic>::Ok(unit)}
+};
+public let resolve:Function(State,Environment,String,Span,Int):Result<Reference,Diagnostic>=function(state:State,environment:Environment,name:String,span:Span,cursor:Int):Result<Reference,Diagnostic>{
+ loop over((try candidates(environment->symbols,name)) as id:Int){let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch when{symbol->name==name=>{return Result<Reference,Diagnostic>::Ok(Reference::Symbol(id));},else=>unit};};
+ branch on try parameter(state->types->headers,environment->templateOwner,name){
+ Parent::None=>unit,Parent::Some(ordinal:Int)=>{
+  return branch on try argumentAt(environment->arguments,ordinal,span){
+   Argument::Value(value:ValueTerm)=>Result<Reference,Diagnostic>::Ok(Reference::ValueParameter(value)),
+   Argument::Type(value:Int)=>Result<Reference,Diagnostic>::Err(problem("semantic",span,"type parameter is not a runtime value"))};
+ }};
+ branch on try introduction(state,environment,name,cursor){
+ Parent::None=>unit,Parent::Some(index:Int)=>{
+  branch on try lookup<Parent>(state->globals,index){
+   Parent::Some(symbol:Int)=>{return Result<Reference,Diagnostic>::Ok(Reference::Symbol(symbol));},
+   Parent::None=>{return Result<Reference,Diagnostic>::Err(problem("semantic",span,"compile-time declaration requires its declared application form"));}
+  };
+ }};
+ Result<Reference,Diagnostic>::Err(problem("semantic",span,"runtime name is not visible"))
+};
+public let capture:Function(State,Environment,Int):Result<State,Diagnostic>=function(state:State,environment:Environment,id:Int):Result<State,Diagnostic>{
+ let symbol:Symbol=try lookup<Symbol>(state->symbols,id);
+ branch on environment->functionOwner{Parent::None=>unit,Parent::Some(owner:Int)=>{
+  branch when{!parentEqual(symbol->functionOwner,environment->functionOwner)=>{
+   let current:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);var found:Bool=false;
+   loop over(current->captures as previous:Int){branch when{previous==id=>{found=true;break;},else=>unit};};
+   branch when{!found=>{
+    return Result<State,Diagnostic>::Ok(withFunctions(state,try replaceItem<FunctionInfo>(state->functions,owner,
+     FunctionInfo{file:current->file,cursor:current->cursor,valueType:current->valueType,parameters:current->parameters,body:current->body,captures:current->captures->append(id),templateOwner:current->templateOwner})));
+   },else=>unit};
+  },else=>unit};
+ }};Result<State,Diagnostic>::Ok(state)
+};

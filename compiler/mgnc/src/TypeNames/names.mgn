@@ -1,0 +1,27 @@
+namespace Mgnc\TypeNames;
+use Mgnc\NameIndex\{Index,candidates};
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Headers,Introduction,Declaration,Parameter};
+use Mgnc\TypeData\{Argument,ValueTerm};
+use Mgnc\TypeOps\{argumentAt};
+public let declaration:Function(Headers,Int,String):Result<Parent,Diagnostic>=function(headers:Headers,file:Int,name:String):Result<Parent,Diagnostic>{
+ loop over((try candidates(try lookup<Index>(headers->nameBuckets,file),name)) as index:Int){let entry:Introduction=try lookup<Introduction>(headers->names,index);
+  branch when{entry->file==file&&entry->name==name=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(entry->declaration));},else=>unit};};
+ Result<Parent,Diagnostic>::Ok(Parent::None)
+};
+public let parameter:Function(Headers,Parent,String):Result<Parent,Diagnostic>=function(headers:Headers,owner:Parent,name:String):Result<Parent,Diagnostic>{
+ branch on owner{Parent::None=>unit,Parent::Some(id:Int)=>{
+  let declared:Declaration=try lookup<Declaration>(headers->declarations,id);var index:Int=0;
+  loop over(declared->parameters as generic:Parameter){branch when{generic->name==name=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};index=index+1;};
+ }};Result<Parent,Diagnostic>::Ok(Parent::None)
+};
+public let valueParameter:Function(Headers,Parent,List<Argument>,String,Span):Result<ValueTerm,Diagnostic>=function(headers:Headers,owner:Parent,arguments:List<Argument>,name:String,span:Span):Result<ValueTerm,Diagnostic>{
+ let found:Parent=try parameter(headers,owner,name);
+ branch on found{
+ Parent::None=>Result<ValueTerm,Diagnostic>::Err(problem("semantic",span,"value parameter is not visible")),
+ Parent::Some(ordinal:Int)=>branch on try argumentAt(arguments,ordinal,span){
+  Argument::Value(value:ValueTerm)=>Result<ValueTerm,Diagnostic>::Ok(value),
+  Argument::Type(value:Int)=>Result<ValueTerm,Diagnostic>::Err(problem("type",span,"type parameter cannot be a value argument"))
+ }}
+};

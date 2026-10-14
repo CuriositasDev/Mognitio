@@ -1,0 +1,72 @@
+namespace Mgnc\TypeSyntax;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,text,site,selected};
+use Mgnc\HeaderRead\{rightList};
+use Mgnc\SemanticData\{Headers,Declaration,Parameter};
+use Mgnc\TypeData\{Store,Argument,ValueTerm};
+use Mgnc\TypeNames\{declaration,parameter,valueParameter};
+use Mgnc\TypeOps\{argumentAt,concreteValue,intKind,unitKind,boolKind,stringKind,indexKind,sliceKind,listKind,resultKind,functionKind,fixedKind};
+use Mgnc\MathValue\{normalize,ordinary};
+use Mgnc\Grammar\{ruleTypeFunction,ruleArgumentType,ruleArgumentValue,ruleValueReference,ruleValueNegative,ruleScalarNegative,ruleValueGroup,ruleScalarGroup,rulePositiveGroup};
+public type Child=product{node:Int;kind:Int;argument:Bool;};
+public type Request=product{kind:Int;declaration:Parent;immediate:Parent;children:List<Child>;span:Span;};
+public let value:Function(Store,SyntaxForest,Int,Parent,List<Argument>):Result<ValueTerm,Diagnostic>=function(store:Store,tree:SyntaxForest,node:Int,owner:Parent,arguments:List<Argument>):Result<ValueTerm,Diagnostic>{
+ var current:Int=node;var negative:Bool=false;
+ loop while(true){
+  let shape:ForestNode=try getNode(tree->nodes,current);let children:List<Int>=try parts(tree,current);
+  branch when{shape->rule==ruleValueGroup||shape->rule==ruleScalarGroup||shape->rule==rulePositiveGroup=>{current=try item(children,1);},
+   shape->rule==ruleValueNegative||shape->rule==ruleScalarNegative=>{negative=true;current=try item(children,1);},
+   shape->rule==ruleValueReference=>{return valueParameter(store->headers,owner,arguments,try text(tree,current),try site(tree,current));},
+   else=>{return Result<ValueTerm,Diagnostic>::Ok(concreteValue(try ordinary(normalize(negative,try text(tree,current)),try site(tree,current))));}
+  };
+ };panic{"value argument traversal invariant"}
+};
+public let argumentNode:Function(SyntaxForest,Child):Result<Int,Diagnostic>=function(tree:SyntaxForest,child:Child):Result<Int,Diagnostic>{
+ branch when{!child->argument=>{return Result<Int,Diagnostic>::Ok(child->node);},else=>unit};
+ let children:List<Int>=branch on selected(tree,child->node,branch when{child->kind==0=>ruleArgumentType,else=>ruleArgumentValue}){
+  Result<List<Int>,Diagnostic>::Ok(found:List<Int>)=>found,
+  Result<List<Int>,Diagnostic>::Err(error:Diagnostic)=>{return Result<Int,Diagnostic>::Err(branch when{error->phase=="internal"=>error,else=>problem("type",try site(tree,child->node),"generic argument kind mismatch")});}
+ };
+ Result<Int,Diagnostic>::Ok(try item(children,0))
+};
+public let request:Function(Store,Int,SyntaxForest,Int,Parent,List<Argument>):Result<Request,Diagnostic>=function(store:Store,file:Int,tree:SyntaxForest,id:Int,owner:Parent,arguments:List<Argument>):Result<Request,Diagnostic>{
+ let node:ForestNode=try getNode(tree->nodes,id);let span:Span=try site(tree,id);let fields:List<Int>=try parts(tree,id);
+ var children:List<Child>=List<Child>[];
+ branch when{node->rule==ruleTypeFunction=>{
+  let params:List<Int>=try rightList(tree,try item(fields,2));
+  loop over(params as param:Int){children=children->append(Child{node:param,kind:0,argument:false});};
+  children=children->append(Child{node:try item(fields,5),kind:0,argument:false});
+  return Result<Request,Diagnostic>::Ok(Request{kind:functionKind,declaration:Parent::None,immediate:Parent::None,children:children,span:span});
+ },else=>unit};
+ let name:String=try text(tree,try item(fields,0));
+ var argumentNodes:List<Int>=List<Int>[];
+ branch when{fields->length()>1=>{let applied:List<Int>=try parts(tree,try item(fields,1));argumentNodes=try rightList(tree,try item(applied,1));},else=>unit};
+ let generic:Parent=try parameter(store->headers,owner,name);
+ branch on generic{Parent::None=>unit,Parent::Some(ordinal:Int)=>{
+  branch when{argumentNodes->length()!=0=>{return Result<Request,Diagnostic>::Err(problem("type",span,"generic parameter cannot take arguments"));},else=>unit};
+  let known:Int=branch on try argumentAt(arguments,ordinal,span){Argument::Type(actual:Int)=>actual,Argument::Value(actual:ValueTerm)=>{return Result<Request,Diagnostic>::Err(problem("type",span,"value parameter cannot be a type"));}};
+  return Result<Request,Diagnostic>::Ok(Request{kind:0,declaration:Parent::None,immediate:Parent::Some(known),children:children,span:span});
+ }};
+ var kinds:List<Int>=List<Int>[];var kind:Int=0;var declared:Parent=Parent::None;
+ branch when{name=="Unit"=>{kind=unitKind;},name=="Int"=>{kind=intKind;branch when{argumentNodes->length()>0=>{kind=fixedKind;kinds=List<Int>[1,0];},else=>unit};},
+ name=="Bool"=>{kind=boolKind;},name=="String"=>{kind=stringKind;},name=="IndexError"=>{kind=indexKind;},name=="SliceError"=>{kind=sliceKind;},
+ name=="List"=>{kind=listKind;kinds=List<Int>[0];},name=="Result"=>{kind=resultKind;kinds=List<Int>[0,0];},
+ else=>{
+  declared=try declaration(store->headers,file,name);
+  branch on declared{Parent::None=>{return Result<Request,Diagnostic>::Err(problem("semantic",span,"type name is not visible"));},Parent::Some(target:Int)=>{
+   let definition:Declaration=try lookup<Declaration>(store->headers->declarations,target);
+   branch when{definition->kind>=3=>{return Result<Request,Diagnostic>::Err(problem("type",span,"declaration is not a type"));},else=>unit};
+   loop over(definition->parameters as param:Parameter){kinds=kinds->append(param->kind);};
+  }};
+ }};
+ branch when{kinds->length()!=argumentNodes->length()=>{return Result<Request,Diagnostic>::Err(problem("type",span,"generic argument arity mismatch"));},else=>unit};
+ var index:Int=0;
+ loop over(kinds as expected:Int){
+  children=children->append(Child{node:try item(argumentNodes,index),kind:expected,argument:true});index=index+1;
+ };
+ Result<Request,Diagnostic>::Ok(Request{kind:kind,declaration:declared,immediate:Parent::None,children:children,span:span})
+};

@@ -1,26 +1,20 @@
 namespace Mgnc\Pipeline;
 use Std\Binary\{Bytes};
 use Mgnc\Data\{Diagnostic};
+use Mgnc\Semantic\{SemanticProject};
 use Mgnc\Checked\{CheckedProgram};
+use Mgnc\NativeProject\{Projected,project};
+use Mgnc\NativeLayout\{validate};
 use Mgnc\IR\{ModuleIR};
-use Mgnc\Machine\{Code};
-use Mgnc\Structural\{analyzeSyntax};
-use Mgnc\NativeBridge\{bridge};
-use Mgnc\Check\{check};
 use Mgnc\Lower\{lower};
 use Mgnc\Verify\{verify};
 use Mgnc\Native\{generate};
 use Mgnc\Encode\{encode};
-let checkedIR:Function(String):Result<ModuleIR,Diagnostic>=function(source:String):Result<ModuleIR,Diagnostic>{
- lower(try check(try bridge(try analyzeSyntax(source))))
+public let prepare:Function(SemanticProject):Result<CheckedProgram,Diagnostic>=function(semantic:SemanticProject):Result<CheckedProgram,Diagnostic>{
+ let projected:Projected=try project(semantic);try validate(semantic,projected);
+ Result<CheckedProgram,Diagnostic>::Ok(projected->program)
 };
-let verifiedIR:Function(String):Result<ModuleIR,Diagnostic>=function(source:String):Result<ModuleIR,Diagnostic>{
- let module:ModuleIR=try checkedIR(source);try verify(module);
- Result<ModuleIR,Diagnostic>::Ok(module)
-};
-let machineCode:Function(String):Result<Code,Diagnostic>=function(source:String):Result<Code,Diagnostic>{
- generate(try verifiedIR(source))
-};
-public let compile:Function(String):Result<Bytes,Diagnostic>=function(source:String):Result<Bytes,Diagnostic>{
- encode(try machineCode(source))
+public let compile:Function(CheckedProgram):Result<Bytes,Diagnostic>=function(program:CheckedProgram):Result<Bytes,Diagnostic>{
+ let module:ModuleIR=try lower(program);try verify(module);
+ encode(try generate(module))
 };

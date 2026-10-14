@@ -1,0 +1,49 @@
+namespace Mgnc\NativeProfile;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticData\{Headers as MgncHeaders,Declaration,Module};
+use Mgnc\SemanticValues\{State,Node,FunctionInfo,BodyState,Symbol};
+use Mgnc\TypeData\{Structure,Type};
+use Mgnc\TypeOps\{listKind,functionKind};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Projection\{item};
+public type Selected=product{declaration:Int;owner:Int;body:Int;};
+public let identity:Function(Parent,Span):Result<Int,Diagnostic>=function(value:Parent,span:Span):Result<Int,Diagnostic>{
+ branch on value{Parent::Some(id:Int)=>Result<Int,Diagnostic>::Ok(id),Parent::None=>Result<Int,Diagnostic>::Err(problem("internal",span,"missing resolved identity"))}
+};
+public let code:Function(State,Structure,Span):Result<Int,Diagnostic>=function(state:State,structure:Structure,span:Span):Result<Int,Diagnostic>{
+ let value:Int=branch on structure{Structure::Known(id:Int)=>id,Structure::Unknown=>{return Result<Int,Diagnostic>::Ok(0);}};
+ branch when{value==0=>{return Result<Int,Diagnostic>::Ok(3);},value==1||value==2=>{return Result<Int,Diagnostic>::Ok(value);},else=>unit};
+ let shape:Type=try lookup<Type>(state->types->types,value);
+ branch when{shape->kind==functionKind=>{return Result<Int,Diagnostic>::Ok(5);},shape->kind==listKind&&(try memberType(shape->arguments,0,span))==3=>{return Result<Int,Diagnostic>::Ok(4);},else=>unit};
+ Result<Int,Diagnostic>::Err(problem("unsupported",span,"type is outside the native profile"))
+};
+public let direct:Function(State,Int):Result<Node,Diagnostic>=function(state:State,root:Int):Result<Node,Diagnostic>{
+ var current:Int=root;loop while(true){let node:Node=try lookup<Node>(state->nodes,current);branch when{node->operation!="group"=>{return Result<Node,Diagnostic>::Ok(node);},else=>unit};current=try item(node->children,0);};panic{"unreachable"}
+};
+public let select:Function(SemanticProject):Result<List<Selected>,Diagnostic>=function(project:SemanticProject):Result<List<Selected>,Diagnostic>{
+ let state:State=project->state;let headers:MgncHeaders=state->types->headers;
+ let module:Module=try lookup<Module>(headers->modules,headers->input->entry);
+ branch when{headers->input->manifestPath!=""||headers->input->sources->length()!=1||module->imports->length()!=0=>{
+  return Result<List<Selected>,Diagnostic>::Err(problem("unsupported",module->tree->source->end->span,"native build requires one source without imports"));
+ },else=>unit};
+ var result:List<Selected>=List<Selected>[];
+ loop over(module->declarations as id:Int){
+  let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+  branch when{declared->kind!=4||declared->exported=>{return Result<List<Selected>,Diagnostic>::Err(problem("unsupported",declared->span,"top-level declaration is outside the native profile"));},else=>unit};
+  let root:Int=branch on try lookup<BodyState>(state->bodies,id){BodyState::Complete(value:Int)=>value,BodyState::Pending=>{return Result<List<Selected>,Diagnostic>::Err(problem("internal",declared->span,"pending native declaration"));},BodyState::Checking=>{return Result<List<Selected>,Diagnostic>::Err(problem("internal",declared->span,"checking native declaration"));},BodyState::NotRequired=>{return Result<List<Selected>,Diagnostic>::Err(problem("internal",declared->span,"missing native declaration"));}};
+  let value:Node=try lookup<Node>(state->nodes,root);
+  branch when{value->operation!="function"=>{return Result<List<Selected>,Diagnostic>::Err(problem("unsupported",value->span,"top-level initializer requires a direct function"));},else=>unit};
+  let owner:Int=try identity(value->target,value->span);let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);
+  let shape:Type=try lookup<Type>(state->types->types,info->valueType);
+  let returnCode:Int=try code(state,Structure::Known(try memberType(shape->arguments,shape->arguments->length()-1,value->span)),value->span);
+  branch when{returnCode<1||returnCode>3=>{return Result<List<Selected>,Diagnostic>::Err(problem("unsupported",value->span,"native function result must be primitive"));},else=>unit};
+  loop over(info->parameters as symbolId:Int){
+   let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);let parameterCode:Int=try code(state,Structure::Known(symbol->valueType),symbol->span);
+   branch when{(id!=project->entry&&(parameterCode<1||parameterCode>3))||(id==project->entry&&parameterCode!=4)=>{return Result<List<Selected>,Diagnostic>::Err(problem("unsupported",symbol->span,"parameter is outside the native profile"));},else=>unit};
+  };
+  result=result->append(Selected{declaration:id,owner:owner,body:try identity(info->body,value->span)});
+ };
+ Result<List<Selected>,Diagnostic>::Ok(result)
+};

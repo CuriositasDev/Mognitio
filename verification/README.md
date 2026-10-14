@@ -1,12 +1,15 @@
 # Verification
 
-The unreleased [1.5 Lisp capability](v1.5.0-lisp.md) adds path inspection before
-any seed freeze or dependent compiler implementation.
+The unreleased [1.5 Lisp capability](v1.5.0-lisp.md) supplies path inspection.
+The accepted [replacement seed](v1.5.0-seed2.md) bootstraps the
+[1.5 compiler implementation](v1.5.0-compiler.md); source and artifact identities
+remain separate from final compiler acceptance.
 
-The current [1.4.0 acceptance](v1.4.0.md) records complete-source parsing, shared
+The retained [1.4.0 acceptance](v1.4.0.md) records complete-source parsing, shared
 frontend native continuity, [54 new conditions](v1.4.0-conformance.md), 55 inherited
-conditions and [all formal resource samples](v1.4.0-performance.md). Run
-`python3 tests/mgnc/acceptance.py` to check evidence and final source identities.
+conditions and [all formal resource samples](v1.4.0-performance.md). Its
+`python3 tests/mgnc/acceptance.py` command checks the pinned 1.4 evidence and
+source identities from that historical checkout; it is not the 1.5 completion gate.
 Implementation acceptance does not authorize release publication.
 
 The retained [1.3.0 review corrections](v1.3.0-review.md) record all 55 conditions,
@@ -97,3 +100,6 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [1.4.0 review correction](v1.4.0-review.md): native argument classification, exact combined depth and fresh acceptance evidence.
 
 - [v1.5 internal seed](v1.5.0-seed.md): accepted Lisp source, frozen bundle identity and isolated restoration.
+
+- [v1.5 replacement seed](v1.5.0-seed2.md): accepted GC repair with a new immutable seed identity.
+- [v1.5 compiler implementation](v1.5.0-compiler.md): shared semantics and fixed-candidate verification.

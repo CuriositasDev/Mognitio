@@ -1,0 +1,86 @@
+namespace Mgnc\FinishControl;
+use Mgnc\Grammar\{ruleBranchOn,ruleBranchWhen,ruleLoopForever,ruleLoopOver,ruleLoopWhile,rulePanic,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementReturn,ruleUnaryTry};
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Expressions\{Expression};
+use Mgnc\SemanticValues\{State,Environment,Node,Loop,Frame,Evaluated};
+use Mgnc\TypeData\{Type,Structure,Member,Formed};
+use Mgnc\TypeOps\{resultKind,listKind};
+use Mgnc\ValueSupport\{known,expect,structureEqual,withLoops,withTypes};
+use Mgnc\ValueFactory\{node as makeNode,withTarget};
+use Mgnc\VariantSupport\{memberType,variants};
+use Mgnc\GenericApplication\{structural};
+use Mgnc\Projection\{item};
+use Mgnc\Tables\{replaceItem};
+public let join:Function(List<Node>,Span):Result<Structure,Diagnostic>=function(arms:List<Node>,span:Span):Result<Structure,Diagnostic>{
+ var normalType:Parent=Parent::None;var common:Structure=Structure::Unknown;var first:Bool=true;var same:Bool=true;
+ loop over(arms as arm:Node){
+  branch when{first=>{common=arm->structure;first=false;},!structureEqual(common,arm->structure)=>{same=false;},else=>unit};
+  branch when{arm->normal=>{
+   let actual:Int=try known(arm->structure,arm->span);
+   branch on normalType{Parent::None=>{normalType=Parent::Some(actual);},Parent::Some(previous:Int)=>{
+    branch when{previous!=actual=>{return Result<Structure,Diagnostic>::Err(problem("type",arm->span,"normally completing arms have different types"));},else=>unit};
+   }};
+  },else=>unit};
+ };
+ branch on normalType{Parent::Some(value:Int)=>Result<Structure,Diagnostic>::Ok(Structure::Known(value)),
+ Parent::None=>Result<Structure,Diagnostic>::Ok(branch when{same&&!first=>common,else=>Structure::Unknown})}
+};
+public let finish:Function(State,Frame):Result<Evaluated,Diagnostic>=function(initial:State,original:Frame):Result<Evaluated,Diagnostic>{
+ var state:State=initial;var frame:Frame=original;let expression:Expression=frame->expression;let rule:Int=expression->rule;
+ let environment:Environment=frame->environment;var structure:Structure=Structure::Unknown;var normal:Bool=false;var operation:String="";
+ branch when{rule==rulePanic=>{
+  let message:Node=try lookup<Node>(state->nodes,try item(frame->children,0));try expect(message,3);operation="panic";
+ },rule==ruleStatementReturn=>{
+  let value:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
+  let expected:Int=branch on environment->returnType{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"return type invariant"));}};
+  try expect(value,expected);operation="return";
+ },rule==ruleStatementBreak||rule==ruleStatementBreakValue||rule==ruleStatementContinue=>{
+  let id:Int=branch on frame->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"loop control target invariant"));}};
+  let loopInfo:Loop=try lookup<Loop>(state->loops,id);
+  let arriving:Bool=environment->reachable&&branch when{rule==ruleStatementBreak=>true,rule==ruleStatementBreakValue=>(try lookup<Node>(state->nodes,try item(frame->children,0)))->normal,else=>false};
+  branch when{arriving=>{state=withLoops(state,try replaceItem<Loop>(state->loops,id,Loop{kind:loopInfo->kind,breaks:loopInfo->breaks->append(state->nodes->count)}));},else=>unit};
+  operation=branch when{rule==ruleStatementContinue=>"continue",else=>"break"};
+ },rule==ruleUnaryTry=>{
+  let operand:Node=try lookup<Node>(state->nodes,try item(frame->children,0));let valueType:Int=try known(operand->structure,operand->span);
+  let shape:Type=try lookup<Type>(state->types->types,valueType);
+  let returned:Int=branch on environment->returnType{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"try has no enclosing function"));}};
+  let returnShape:Type=try lookup<Type>(state->types->types,returned);
+  branch when{shape->kind!=resultKind||returnShape->kind!=resultKind=>{return Result<Evaluated,Diagnostic>::Err(problem("type",expression->span,"try requires Result operand and function return types"));},else=>unit};
+  branch when{(try memberType(shape->arguments,1,expression->span))!=(try memberType(returnShape->arguments,1,expression->span))=>{return Result<Evaluated,Diagnostic>::Err(problem("type",expression->span,"try error type does not match enclosing Result"));},else=>unit};
+  structure=Structure::Known(try memberType(shape->arguments,0,expression->span));normal=operand->normal;operation="try";frame=withTarget(frame,environment->functionOwner);
+ },rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever=>{
+  let bodyIndex:Int=branch when{rule==ruleLoopForever=>0,else=>1};
+  let body:Node=try lookup<Node>(state->nodes,try item(frame->children,bodyIndex));try expect(body,0);
+  branch when{rule==ruleLoopForever=>{
+   let id:Int=branch on frame->loopTarget{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"loop owner invariant"));}};
+   let loopInfo:Loop=try lookup<Loop>(state->loops,id);var values:List<Node>=List<Node>[];
+   loop over(loopInfo->breaks as breakId:Int){
+    let transfer:Node=try lookup<Node>(state->nodes,breakId);values=values->append(try lookup<Node>(state->nodes,try item(transfer->children,0)));
+   };
+   structure=try join(values,expression->span);normal=values->length()>0;operation="loop";
+  },else=>{
+   let target:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
+   branch when{rule==ruleLoopWhile=>{try expect(target,2);operation="while";},else=>{
+    let element:Int=branch on frame->annotation{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"loop element type invariant"));}};
+    let formed:Formed=try structural(state->types,listKind,List<Int>[element]);state=withTypes(state,formed->store,formed->obligations);try expect(target,formed->value);operation="over";
+   }};structure=Structure::Known(0);normal=target->normal;
+  }};
+  frame=withTarget(frame,frame->loopTarget);
+ },rule==ruleBranchWhen=>{
+  var arms:List<Node>=List<Node>[];var prefix:Bool=true;var index:Int=0;
+  loop while(index+1<frame->children->length()){
+   let condition:Node=try lookup<Node>(state->nodes,try item(frame->children,index));try expect(condition,2);prefix=prefix&&condition->normal;
+   let arm:Node=try lookup<Node>(state->nodes,try item(frame->children,index+1));arms=arms->append(arm);normal=normal||(prefix&&arm->normal);index=index+2;
+  };
+  let last:Node=try lookup<Node>(state->nodes,try item(frame->children,index));arms=arms->append(last);normal=normal||(prefix&&last->normal);
+  structure=try join(arms,expression->span);operation="when";
+ },rule==ruleBranchOn=>{
+  let target:Node=try lookup<Node>(state->nodes,try item(frame->children,0));let members:List<Member>=try variants(state->types,try known(target->structure,target->span),target->span);
+  branch when{members->length()!=frame->mapping->length()=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"branch does not cover every variant"));},else=>unit};
+  var arms:List<Node>=List<Node>[];var index:Int=1;
+  loop while(index<frame->children->length()){let arm:Node=try lookup<Node>(state->nodes,try item(frame->children,index));arms=arms->append(arm);normal=normal||arm->normal;index=index+1;};
+  structure=try join(arms,expression->span);normal=normal&&target->normal;operation="on";
+ },else=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"unknown control production"));}};
+ Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:makeNode(frame,structure,normal,operation,Parent::None,0,false),environment:environment})
+};

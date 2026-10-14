@@ -1,0 +1,68 @@
+namespace Mgnc\TypeForm;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
+use Mgnc\TypeSyntax\{Child,Request,request,argumentNode,value};
+use Mgnc\TypeOps\{intern,substitute,substituteObligationsAt,argumentAt,fixedKind,bitsKind,signedKind,unsignedKind};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Projection\{site};
+type Frame=product{request:Request;next:Int;arguments:List<Argument>;parent:Int;};
+public let widthRequirements:Function(Store,Int,List<Argument>,Span):Result<List<Obligation>,Diagnostic>=function(store:Store,kind:Int,arguments:List<Argument>,span:Span):Result<List<Obligation>,Diagnostic>{
+ var result:List<Obligation>=List<Obligation>[];
+ branch when{kind!=fixedKind&&kind!=bitsKind=>{return Result<List<Obligation>,Diagnostic>::Ok(result);},else=>unit};
+ let width:ValueTerm=branch on try argumentAt(arguments,0,span){Argument::Value(actual:ValueTerm)=>actual,
+ Argument::Type(actual:Int)=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"width requires an Int value"));}};
+ branch on width->parameter{
+ Parent::None=>{branch when{width->value<1||width->value>64=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"width must be in 1..64"));},else=>unit};},
+ Parent::Some(ordinal:Int)=>{result=result->append(Obligation{owner:width->owner,parameter:ordinal,minimum:1,maximum:64,span:span});}
+ };
+ branch when{kind==fixedKind=>{
+  let sign:Int=branch on try argumentAt(arguments,1,span){Argument::Type(actual:Int)=>actual,Argument::Value(actual:ValueTerm)=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"signedness requires a type"));}};
+  let shape:Type=try lookup<Type>(store->types,sign);
+  branch when{shape->kind!=signedKind&&shape->kind!=unsignedKind=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"signedness must be Signed or Unsigned"));},else=>unit};
+ },else=>unit};
+ Result<List<Obligation>,Diagnostic>::Ok(result)
+};
+let complete:Function(Store,Request,List<Argument>,List<Span>):Result<Formed,Diagnostic>=function(store:Store,requested:Request,arguments:List<Argument>,spans:List<Span>):Result<Formed,Diagnostic>{
+ branch on requested->immediate{Parent::None=>unit,Parent::Some(known:Int)=>{
+  return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:known,obligations:List<Obligation>[]});
+ }};
+ branch on requested->declaration{Parent::None=>unit,Parent::Some(id:Int)=>{
+  let canonical:Int=branch on try lookup<Parent>(store->declarations,id){Parent::Some(known:Int)=>known,Parent::None=>{return Result<Formed,Diagnostic>::Err(problem("internal",requested->span,"type dependency is not completed"));}};
+  let obligations:List<Obligation>=try substituteObligationsAt(try lookup<List<Obligation>>(store->constraints,id),id,arguments,spans,requested->span);
+  let formed:Formed=try substitute(store,canonical,id,arguments,requested->span);
+  return Result<Formed,Diagnostic>::Ok(Formed{store:formed->store,value:formed->value,obligations:obligations});
+ }};
+ let obligations:List<Obligation>=try widthRequirements(store,requested->kind,arguments,requested->span);
+ let formed:Formed=try intern(store,Type{kind:requested->kind,owner:Parent::None,arguments:arguments,members:List<Member>[]});
+ Result<Formed,Diagnostic>::Ok(Formed{store:formed->store,value:formed->value,obligations:obligations})
+};
+public let form:Function(Store,Int,SyntaxForest,Int,Parent,List<Argument>):Result<Formed,Diagnostic>=function(initial:Store,file:Int,tree:SyntaxForest,node:Int,owner:Parent,arguments:List<Argument>):Result<Formed,Diagnostic>{
+ var store:Store=initial;var obligations:List<Obligation>=List<Obligation>[];
+ let first:Request=try request(store,file,tree,node,owner,arguments);
+ var stack:Paged<Frame>=push<Frame>(empty<Frame>(),Frame{request:first,next:0,arguments:List<Argument>[],parent:-1});
+ var active:Int=0;
+ loop while(active>=0){
+  let frame:Frame=try lookup<Frame>(stack,active);
+  branch when{frame->next<frame->request->children->length()=>{
+   let child:Child=branch on frame->request->children->at(frame->next){Result<Child,IndexError>::Ok(actual:Child)=>actual,
+    Result<Child,IndexError>::Err(error:IndexError)=>{return Result<Formed,Diagnostic>::Err(problem("internal",frame->request->span,"type child index"));}};
+   let id:Int=try argumentNode(tree,child);
+   branch when{child->kind==1=>{
+    let actual:ValueTerm=try value(store,tree,id,owner,arguments);
+    stack=try replaceItem<Frame>(stack,active,Frame{request:frame->request,next:frame->next+1,arguments:frame->arguments->append(Argument::Value(actual)),parent:frame->parent});
+   },else=>{
+    let requested:Request=try request(store,file,tree,id,owner,arguments);
+    stack=push<Frame>(stack,Frame{request:requested,next:0,arguments:List<Argument>[],parent:active});active=stack->count-1;
+   }};continue;
+  },else=>unit};
+  var spans:List<Span>=List<Span>[];loop over(frame->request->children as child:Child){spans=spans->append(try site(tree,child->node));};
+  let formed:Formed=try complete(store,frame->request,frame->arguments,spans);store=formed->store;
+  loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
+  branch when{frame->parent<0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:formed->value,obligations:obligations});},else=>unit};
+  active=frame->parent;let parent:Frame=try lookup<Frame>(stack,active);
+  stack=try replaceItem<Frame>(stack,active,Frame{request:parent->request,next:parent->next+1,arguments:parent->arguments->append(Argument::Type(formed->value)),parent:parent->parent});
+ };
+ Result<Formed,Diagnostic>::Err(problem("internal",first->span,"type traversal did not return a result"))
+};

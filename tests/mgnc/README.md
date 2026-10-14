@@ -123,3 +123,56 @@ checks five intentional compiler faults against the unmodified baseline.
 Acceptance.py checks the published v1.4 evidence ledger, source identity, case
 coverage, complete sample matrices, isolation and compatibility input hashes.
 Run python3 tests/mgnc/acceptance.py after generating all completion records.
+
+## Version 1.5 project semantics
+
+Build the candidate with the verified [replacement seed](../../verification/v1.5.0-seed2.md).
+Keep that artifact fixed while recording its SHA-256, the complete C1 source
+inventory, and the seed receipt. The compiler is experimental; these checks do
+not switch the normal toolchain to mgnc.
+
+- v150-input.py, v150-headers.py, v150-types.py, v150-graph.py, v150-int-map.py,
+  v150-text.py, v150-layout.py and driver-internal.py take --seed SEED. They check
+  internal input, resolution, type, dependency, storage, projection and driver
+  invariants independently of public diagnostic formatting.
+- v150-conformance.py, v150-boundaries.py, v150-catalog.py, v150-inherited.py,
+  v150-review.py and v150-project-faults.py take --compiler A --evidence FILE.
+  The versioned adapters retain explicit reasons for changed diagnostic phases.
+- v150-semantics.py --compiler A checks complete bodies and non-evaluation.
+- classification_order.py --seed SEED --force-full-classification --evidence FILE
+  reverses grammar prediction and forces the full classification path.
+- v150-coverage.py --seed SEED --corpus C0 --evidence FILE compares all modules,
+  declarations and completed bodies against an independent source scanner.
+  Repeat for C1. Its instrumented binary is not the production candidate.
+- v150-corpus.py --compiler A --corpus C0 --evidence FILE freezes source inventory
+  and performs one bounded production check. Repeat for C1.
+
+Generate the 118 preliminary cells with v150-scale-fixtures.py --output DIRECTORY.
+The complete C0/C1 inventories are separate cells. Use that directory with
+v150-corpus-mutations.py --compiler A --fixtures DIRECTORY --evidence FILE and
+v150-isolated.py --compiler A --fixtures DIRECTORY --userland ROOTFS --evidence FILE.
+Isolation checks whole-project analysis and separate native generation/execution.
+
+Run v150-measure-harness.py before v150-measure.py --compiler A --fixtures DIRECTORY
+--output NEW_DIRECTORY. The latter serializes one warm-up and three recorded
+fresh processes per cell. It retains raw streams, wait4 RSS, sampled RSS, timeouts,
+signals and failures. An exit race has a bounded 100-ms RSS grace; an ongoing
+unobservable process is a harness failure, never a zero-RSS success.
+The 600-second and observed 4096-MiB cutoffs are preliminary observation
+conditions, not adopted formal performance budgets. Preserve failed observations
+under their original identity when correcting a harness or changing a candidate.
+
+The inherited native and parse resource gates above remain separate and unchanged.
+The v1.4 acceptance ledger remains historical; do not rewrite its pinned identities
+to make it claim v1.5 acceptance.
+
+Once all observations are exported, verify their bindings and complete matrices:
+
+~~~sh
+python3 tests/mgnc/v150-implementation-evidence.py --evidence verification/v1.5.0-compiler --compiler A
+~~~
+
+This checks source/seed/artifact identities, input manifests, required results,
+isolation, sample counts, existing budgets, and exact preliminary stream bytes.
+It rejects incomplete preliminary data. Passing it records implementation
+verification; formal v1.5 performance-budget adoption remains a separate decision.

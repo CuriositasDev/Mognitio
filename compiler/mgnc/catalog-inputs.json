@@ -1,0 +1,21 @@
+{
+  "command": "python3 tests/mgnc/generate-catalog.py",
+  "inputs": [
+    {
+      "path": "src/standard-catalog.lisp",
+      "sha256": "2510b15b12df26103df354eaacd05b20fe202bc9239d48651c46e5e905b4e71a",
+      "catalog_sha256": "e7661f303f8213a0694e02c0c0dfcf98e86441eb09a15aba0bca4e9c2d6f6fce"
+    },
+    {
+      "path": "src/numeric-catalog.lisp",
+      "sha256": "08f2b8c5383e20b6c0f29a482bcb030903a4fe5f4ded4a6265fadce94785b1f4",
+      "catalog_sha256": "6f7aae9dce296d505a1761c78a8e05aaea41acddd1648ca2b09c4fc71fdf5f7c"
+    },
+    {
+      "path": "src/binary-catalog.lisp",
+      "sha256": "19b49019cd8ac435e859b30a88a75688c3e0e1c9363639de09679b7ca557f554",
+      "catalog_sha256": "84573a321eded82d64854fcd7f54f1ff9f7d048f76f419c2637ae9a66057f937"
+    }
+  ],
+  "generated_sha256": "384a4edd05c0294b246f62ec6b90df70e5fad15e3dcea059bf3ce0169b55fe57"
+}

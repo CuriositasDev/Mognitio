@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "archive": "verification.tar.gz",
+  "archive_sha256": "69752044df72fe407b46b15163ef9bb3ec9734f1f59ff5523e58570ca257c787",
+  "bytes": 1317330,
+  "contents": "Original external/internal/isolation observations, fixtures, traces, streams, logs and orchestration. Internal retention; not a release artifact."
+}

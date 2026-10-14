@@ -1,0 +1,58 @@
+namespace Mgnc\Headers;
+use Mgnc\NameIndex\{Index,create as createIndex,insert,candidates};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction};
+use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,text,site,concrete};
+use Mgnc\BridgeLists\{leftList};
+use Mgnc\HeaderRead\{path,parameters,imports};
+use Mgnc\TextUtil\{starts};
+use Mgnc\Grammar\{rulePublicCompile,rulePublicLet,ruleTypeProduct,ruleTypeSum,ruleAlias,ruleTemplate,ruleLetBinding};
+public let sourceError:Function(SourceUnit,Diagnostic):InputError=function(source:SourceUnit,error:Diagnostic):InputError{
+ InputError{status:branch when{error->phase=="internal"=>3,else=>1},path:source->displayPath,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""}
+};
+public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Introduction>,SourceUnit,SyntaxForest,Bool):Result<Headers,Diagnostic>=function(input:ProjectInput,previousModules:Paged<Module>,previousDeclarations:Paged<Declaration>,previousNames:Paged<Introduction>,source:SourceUnit,tree:SyntaxForest,standard:Bool):Result<Headers,Diagnostic>{
+ let children:List<Int>=try parts(tree,tree->root);let ns:List<Int>=try parts(tree,try item(children,0));
+ let nameSpace:String=try path(tree,try item(ns,1));
+ branch when{!standard&&(nameSpace=="Std"||starts(nameSpace,"Std\\"))=>{return Result<Headers,Diagnostic>::Err(problem("semantic",try site(tree,try item(ns,1)),"reserved namespace"));},
+ source->expectedNamespace!=""&&source->expectedNamespace!=nameSpace=>{return Result<Headers,Diagnostic>::Err(problem("semantic",try site(tree,try item(ns,1)),"namespace does not match source directory"));},else=>unit};
+ let uses:List<Int>=try leftList(tree,try item(children,1));var imported:List<Import>=List<Import>[];
+ loop over(uses as useNode:Int){loop over((try imports(tree,useNode)) as entry:Import){imported=imported->append(entry);};};
+ let tops:List<Int>=try leftList(tree,try item(children,2));var owned:List<Int>=List<Int>[];var declaredNames:Index=createIndex();
+ var declarations:Paged<Declaration>=previousDeclarations;var names:Paged<Introduction>=previousNames;
+ loop over(tops as top:Int){
+  let wrapper:ForestNode=try getNode(tree->nodes,top);
+  let exported:Bool=wrapper->rule==rulePublicCompile||wrapper->rule==rulePublicLet;
+  let topFields:List<Int>=try parts(tree,top);
+  let id:Int=try concrete(tree,try item(topFields,branch when{exported=>1,else=>0}));
+  let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
+  let nameNode:Int=try item(fields,1);let name:String=try text(tree,nameNode);
+  let kind:Int=branch when{node->rule==ruleTypeProduct=>0,node->rule==ruleTypeSum=>1,node->rule==ruleAlias=>2,node->rule==ruleTemplate=>3,node->rule==ruleLetBinding=>4,else=>5};
+  let generic:List<Parameter>=branch when{kind<4=>try parameters(tree,try item(fields,2),kind!=3),else=>List<Parameter>[]};
+  let annotation:Int=branch when{kind<2=>try item(fields,6),kind==2=>try item(fields,4),kind==3=>try item(fields,4),else=>try item(fields,3)};
+  let body:Int=branch when{kind==3=>annotation,kind>=4=>try item(fields,5),else=>annotation};
+  let declaration:Declaration=Declaration{file:previousModules->count,ordinal:owned->length(),kind:kind,name:name,exported:exported,node:id,annotation:annotation,body:body,parameters:generic,span:try site(tree,nameNode)};
+  loop over((try candidates(declaredNames,name)) as earlier:Int){let previous:Declaration=try lookup<Declaration>(declarations,earlier);
+   branch when{previous->name==name=>{return Result<Headers,Diagnostic>::Err(problem("semantic",declaration->span,"duplicate declaration name"));},else=>unit};};
+  names=push<Introduction>(names,Introduction{file:previousModules->count,name:name,declaration:declarations->count,imported:false,span:declaration->span});
+  declaredNames=try insert(declaredNames,name,declarations->count);
+  owned=owned->append(declarations->count);declarations=push<Declaration>(declarations,declaration);
+ };
+ let modules:Paged<Module>=push<Module>(previousModules,Module{source:source,tree:tree,nameSpace:nameSpace,declarations:owned,imports:imported,standard:standard});
+ Result<Headers,Diagnostic>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),nameBuckets:empty<Index>(),order:List<Int>[]})
+};
+public let collect:Function(ProjectInput):Result<Headers,InputError>=function(input:ProjectInput):Result<Headers,InputError>{
+ var modules:Paged<Module>=empty<Module>();var declarations:Paged<Declaration>=empty<Declaration>();var names:Paged<Introduction>=empty<Introduction>();
+ loop over(input->sources as source:SourceUnit){
+  let parsed:SyntaxForest=branch on analyzeSyntax(source->text){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
+  let tree:SyntaxForest=parsed;
+  let scanned:Result<Headers,Diagnostic>=scan(input,modules,declarations,names,source,tree,false);
+  branch on scanned{Result<Headers,Diagnostic>::Ok(value:Headers)=>{modules=value->modules;declarations=value->declarations;names=value->names;},
+   Result<Headers,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
+ };
+ Result<Headers,InputError>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),nameBuckets:empty<Index>(),order:List<Int>[]})
+};

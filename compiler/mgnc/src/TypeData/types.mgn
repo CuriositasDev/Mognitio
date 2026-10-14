@@ -1,0 +1,12 @@
+namespace Mgnc\TypeData;
+use Mgnc\Data\{Paged,Span};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Headers};
+public type ValueTerm=product{parameter:Parent;owner:Int;value:Int;};
+public type Argument=sum{Type(Int);Value(ValueTerm);};
+public type Member=product{name:String;value:Parent;span:Span;};
+public type Type=product{kind:Int;owner:Parent;arguments:List<Argument>;members:List<Member>;};
+public type Obligation=product{owner:Int;parameter:Int;minimum:Int;maximum:Int;span:Span;};
+public type Store=product{headers:Headers;types:Paged<Type>;buckets:Paged<List<Int>>;declarations:Paged<Parent>;constraints:Paged<List<Obligation>>;};
+public type Formed=product{store:Store;value:Int;obligations:List<Obligation>;};
+public type Structure=sum{Known(Int);Unknown;};

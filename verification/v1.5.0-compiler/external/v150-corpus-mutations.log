@@ -1,0 +1,12 @@
+C150-F01-type True
+C150-F01-width False
+C150-F01-import True
+C150-F01-after-large True
+C150-G11-unknown-API True
+SC150-C06-signature True
+SC150-C06-identity True
+Traceback (most recent call last):
+  File "<repository>/tests/mgnc/v150-corpus-mutations.py", line 33, in <module>
+    run("C1","SC150-C06-identity","Project/load.mgn",project.replace("seen==current->info->identity","seen<current->info->identity",1),"type")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [{'corpus': 'C0', 'case': 'C150-F01-width', 'path': 'mgnc.mgn', 'mutation_sha256': '89979e35ce397fe102cc8a215f119d4b8a7d813fc572861d54b2e1bd5288d549', 'exit': 1, 'stderr': 'mgnc: type: src/mgnc.mgn:6:22 [165,166): generic width or literal range requirement is not satisfied\n', 'primary': [153, 154], 'passed': False}]

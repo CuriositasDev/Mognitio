@@ -1,0 +1,12 @@
+{
+  "command": "sbcl --noinform --script scripts/test.lisp",
+  "exit": 0,
+  "lisp_groups": 232,
+  "assertions": 34098,
+  "processes": 1314,
+  "failures": 0,
+  "python_integration": "complete sequence passed; final v1.5 path checks=55 failures=0",
+  "tested_source_revision": "086fde9c23f7beba9e7594878c89ae129e0eefff",
+  "runtime_source_unchanged": true,
+  "runtime": "SBCL 2.6.0"
+}

@@ -1,0 +1,151 @@
+namespace Mgnc\TypeOps;
+use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Headers};
+use Mgnc\TypeData\{ValueTerm,Argument,Member,Type,Obligation,Store,Formed};
+use Mgnc\Tables\{replaceItem};
+public let unitKind:Int=0;
+public let intKind:Int=1;
+public let boolKind:Int=2;
+public let stringKind:Int=3;
+public let indexKind:Int=4;
+public let sliceKind:Int=5;
+public let listKind:Int=10;
+public let resultKind:Int=11;
+public let functionKind:Int=12;
+public let productKind:Int=20;
+public let sumKind:Int=21;
+public let parameterKind:Int=22;
+public let fixedKind:Int=23;
+public let bitsKind:Int=24;
+public let bytesKind:Int=25;
+public let identityKind:Int=26;
+public let signedKind:Int=27;
+public let unsignedKind:Int=28;
+public let parentEqual:Function(Parent,Parent):Bool=function(a:Parent,b:Parent):Bool{
+ branch on a{Parent::None=>branch on b{Parent::None=>true,Parent::Some(value:Int)=>false},
+ Parent::Some(left:Int)=>branch on b{Parent::None=>false,Parent::Some(right:Int)=>left==right}}
+};
+public let valueEqual:Function(ValueTerm,ValueTerm):Bool=function(a:ValueTerm,b:ValueTerm):Bool{
+ parentEqual(a->parameter,b->parameter)&&branch on a->parameter{Parent::None=>a->value==b->value,Parent::Some(ordinal:Int)=>a->owner==b->owner}
+};
+public let argumentEqual:Function(Argument,Argument):Bool=function(a:Argument,b:Argument):Bool{
+ branch on a{Argument::Type(left:Int)=>branch on b{Argument::Type(right:Int)=>left==right,Argument::Value(value:ValueTerm)=>false},
+ Argument::Value(left:ValueTerm)=>branch on b{Argument::Type(right:Int)=>false,Argument::Value(right:ValueTerm)=>valueEqual(left,right)}}
+};
+public let argumentsEqual:Function(List<Argument>,List<Argument>):Bool=function(a:List<Argument>,b:List<Argument>):Bool{
+ branch when{a->length()!=b->length()=>{return false;},else=>unit};var index:Int=0;
+ loop over(a as left:Argument){let right:Argument=branch on b->at(index){Result<Argument,IndexError>::Ok(value:Argument)=>value,Result<Argument,IndexError>::Err(error:IndexError)=>panic{"argument vector invariant"}};
+  branch when{!argumentEqual(left,right)=>{return false;},else=>unit};index=index+1;};true
+};
+let hash:Function(Type):Int=function(shape:Type):Int{
+ var value:Int=shape->kind;value=(value*131+branch on shape->owner{Parent::None=>0,Parent::Some(owner:Int)=>owner%4093+1})%4093;
+ loop over(shape->arguments as argument:Argument){
+  branch on argument{
+   Argument::Type(id:Int)=>{value=(value*131+id%4093+1)%4093;},
+   Argument::Value(term:ValueTerm)=>{
+    value=(value*131+7)%4093;
+    branch on term->parameter{Parent::None=>{let reduced:Int=term->value%4093;value=(value*131+reduced+4093)%4093;},
+     Parent::Some(ordinal:Int)=>{value=(value*131+term->owner%4093+1)%4093;value=(value*131+ordinal%4093+1)%4093;}};
+   }
+  };
+ };value
+};
+let cached:Function(Store,Type):Result<Parent,Diagnostic>=function(store:Store,shape:Type):Result<Parent,Diagnostic>{
+ let bucket:List<Int>=try lookup<List<Int>>(store->buckets,hash(shape));
+ loop over(bucket as index:Int){
+  let candidate:Type=try lookup<Type>(store->types,index);
+  branch when{candidate->kind==shape->kind&&parentEqual(candidate->owner,shape->owner)&&argumentsEqual(candidate->arguments,shape->arguments)=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
+ };Result<Parent,Diagnostic>::Ok(Parent::None)
+};
+public let initialize:Function(Headers):Store=function(headers:Headers):Store{
+ var types:Paged<Type>=empty<Type>();var kind:Int=0;
+ loop while(kind<6){
+  var labels:List<String>=List<String>[];
+  branch when{kind==4=>{labels=List<String>["index","length"];},kind==5=>{labels=List<String>["start","end","length"];},else=>unit};
+  var members:List<Member>=List<Member>[];
+  loop over(labels as name:String){members=members->append(Member{name:name,value:Parent::Some(1),span:Span{start:0,end:0,line:1,column:1}});};
+  types=push<Type>(types,Type{kind:kind,owner:Parent::None,arguments:List<Argument>[],members:members});kind=kind+1;
+ };
+ var declarations:Paged<Parent>=empty<Parent>();var constraints:Paged<List<Obligation>>=empty<List<Obligation>>();
+ var index:Int=0;loop while(index<headers->declarations->count){declarations=push<Parent>(declarations,Parent::None);constraints=push<List<Obligation>>(constraints,List<Obligation>[]);index=index+1;};
+ var buckets:Paged<List<Int>>=empty<List<Int>>();index=0;loop while(index<4093){buckets=push<List<Int>>(buckets,List<Int>[]);index=index+1;};
+ index=0;loop while(index<types->count){
+  let shape:Type=branch on lookup<Type>(types,index){Result<Type,Diagnostic>::Ok(value:Type)=>value,Result<Type,Diagnostic>::Err(error:Diagnostic)=>panic{"primitive type invariant"}};
+  buckets=branch on replaceItem<List<Int>>(buckets,hash(shape),List<Int>[index]){Result<Paged<List<Int>>,Diagnostic>::Ok(value:Paged<List<Int>>)=>value,Result<Paged<List<Int>>,Diagnostic>::Err(error:Diagnostic)=>panic{"primitive bucket invariant"}};index=index+1;
+ };
+ Store{headers:headers,types:types,buckets:buckets,declarations:declarations,constraints:constraints}
+};
+public let intern:Function(Store,Type):Result<Formed,Diagnostic>=function(store:Store,shape:Type):Result<Formed,Diagnostic>{
+ branch on try cached(store,shape){Parent::Some(id:Int)=>{return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:id,obligations:List<Obligation>[]});},Parent::None=>unit};
+ let index:Int=store->types->count;let bucketId:Int=hash(shape);let bucket:List<Int>=try lookup<List<Int>>(store->buckets,bucketId);
+ let updated:Store=Store{headers:store->headers,types:push<Type>(store->types,shape),buckets:try replaceItem<List<Int>>(store->buckets,bucketId,bucket->append(index)),declarations:store->declarations,constraints:store->constraints};
+ Result<Formed,Diagnostic>::Ok(Formed{store:updated,value:index,obligations:List<Obligation>[]})
+};
+public let concreteValue:Function(Int):ValueTerm=function(value:Int):ValueTerm{ValueTerm{parameter:Parent::None,owner:0,value:value}};
+public let argumentAt:Function(List<Argument>,Int,Span):Result<Argument,Diagnostic>=function(arguments:List<Argument>,index:Int,span:Span):Result<Argument,Diagnostic>{
+ branch on arguments->at(index){Result<Argument,IndexError>::Ok(value:Argument)=>Result<Argument,Diagnostic>::Ok(value),
+ Result<Argument,IndexError>::Err(error:IndexError)=>Result<Argument,Diagnostic>::Err(problem("internal",span,"generic argument index"))}
+};
+public let substituteValue:Function(ValueTerm,Int,List<Argument>,Span):Result<ValueTerm,Diagnostic>=function(value:ValueTerm,owner:Int,arguments:List<Argument>,span:Span):Result<ValueTerm,Diagnostic>{
+ branch on value->parameter{Parent::None=>unit,Parent::Some(ordinal:Int)=>{
+  branch when{value->owner==owner=>{
+   return branch on try argumentAt(arguments,ordinal,span){Argument::Value(actual:ValueTerm)=>Result<ValueTerm,Diagnostic>::Ok(actual),Argument::Type(actual:Int)=>Result<ValueTerm,Diagnostic>::Err(problem("type",span,"expected value argument"))};
+  },else=>unit};
+ }};Result<ValueTerm,Diagnostic>::Ok(value)
+};
+type Visit=product{id:Int;parent:Int;};
+let mapped:Function(IntMap,Int,Span):Result<Int,Diagnostic>=function(memo:IntMap,id:Int,span:Span):Result<Int,Diagnostic>{
+ let value:Int=try mapGet(memo,id);branch when{value>=0=>Result<Int,Diagnostic>::Ok(value),else=>Result<Int,Diagnostic>::Err(problem("internal",span,"incomplete type substitution"))}
+};
+public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,Diagnostic>=function(initial:Store,root:Int,owner:Int,arguments:List<Argument>,span:Span):Result<Formed,Diagnostic>{
+ branch when{arguments->length()==0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:root,obligations:List<Obligation>[]});},else=>unit};
+ let rootShape:Type=try lookup<Type>(initial->types,root);
+ branch when{parentEqual(rootShape->owner,Parent::Some(owner))&&rootShape->kind!=parameterKind=>{
+  branch on try cached(initial,Type{kind:rootShape->kind,owner:rootShape->owner,arguments:arguments,members:List<Member>[]}){
+   Parent::Some(existing:Int)=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:existing,obligations:List<Obligation>[]});},Parent::None=>unit};
+ },else=>unit};
+ var store:Store=initial;var memo:IntMap=createMap();
+ var stack:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,parent:-1});var active:Int=0;
+ loop while(active>=0){
+  let visit:Visit=try lookup<Visit>(stack,active);let shape:Type=try lookup<Type>(initial->types,visit->id);
+  branch when{shape->kind==parameterKind&&parentEqual(shape->owner,Parent::Some(owner))=>{
+   let ordinal:ValueTerm=branch on try argumentAt(shape->arguments,0,span){Argument::Value(value:ValueTerm)=>value,Argument::Type(value:Int)=>{return Result<Formed,Diagnostic>::Err(problem("internal",span,"parameter ordinal shape"));}};
+   let value:Int=branch on try argumentAt(arguments,ordinal->value,span){Argument::Type(actual:Int)=>actual,Argument::Value(actual:ValueTerm)=>{return Result<Formed,Diagnostic>::Err(problem("type",span,"expected type argument"));}};
+   memo=try mapPut(memo,visit->id,value);active=visit->parent;continue;
+  },else=>unit};
+  branch when{shape->arguments->length()==0=>{
+   memo=try mapPut(memo,visit->id,visit->id);active=visit->parent;continue;
+  },else=>unit};
+  var children:List<Int>=List<Int>[];
+  loop over(shape->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{children=children->append(id);},Argument::Value(value:ValueTerm)=>unit};};
+  loop over(shape->members as member:Member){branch on member->value{Parent::Some(id:Int)=>{children=children->append(id);},Parent::None=>unit};};
+  var missing:Int= -1;
+  loop over(children as id:Int){branch when{(try mapGet(memo,id))== -2=>{missing=id;break;},else=>unit};};
+  branch when{missing>=0=>{stack=push<Visit>(stack,Visit{id:missing,parent:active});active=stack->count-1;continue;},else=>unit};
+  var replaced:List<Argument>=List<Argument>[];var members:List<Member>=List<Member>[];
+  loop over(shape->arguments as arg:Argument){replaced=replaced->append(branch on arg{
+   Argument::Type(id:Int)=>Argument::Type(try mapped(memo,id,span)),
+   Argument::Value(value:ValueTerm)=>Argument::Value(try substituteValue(value,owner,arguments,span))});};
+  loop over(shape->members as member:Member){members=members->append(Member{name:member->name,span:member->span,value:branch on member->value{
+   Parent::None=>Parent::None,Parent::Some(id:Int)=>Parent::Some(try mapped(memo,id,span))}});};
+  let formed:Formed=try intern(store,Type{kind:shape->kind,owner:shape->owner,arguments:replaced,members:members});store=formed->store;
+  memo=try mapPut(memo,visit->id,formed->value);active=visit->parent;
+ };
+ Result<Formed,Diagnostic>::Ok(Formed{store:store,value:try mapped(memo,root,span),obligations:List<Obligation>[]})
+};
+public let substituteObligationsAt:Function(List<Obligation>,Int,List<Argument>,List<Span>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,spans:List<Span>,span:Span):Result<List<Obligation>,Diagnostic>{
+ var result:List<Obligation>=List<Obligation>[];
+ loop over(obligations as obligation:Obligation){
+  let symbolic:ValueTerm=ValueTerm{parameter:Parent::Some(obligation->parameter),owner:obligation->owner,value:0};
+  let value:ValueTerm=try substituteValue(symbolic,owner,arguments,span);
+  branch on value->parameter{
+   Parent::None=>{branch when{value->value<obligation->minimum||value->value>obligation->maximum=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",branch on spans->at(obligation->parameter){Result<Span,IndexError>::Ok(location:Span)=>location,Result<Span,IndexError>::Err(error:IndexError)=>span},"generic width or literal range requirement is not satisfied"));},else=>unit};},
+   Parent::Some(ordinal:Int)=>{result=result->append(Obligation{owner:value->owner,parameter:ordinal,minimum:obligation->minimum,maximum:obligation->maximum,span:obligation->span});}
+  };
+ };Result<List<Obligation>,Diagnostic>::Ok(result)
+};
+public let substituteObligations:Function(List<Obligation>,Int,List<Argument>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,span:Span):Result<List<Obligation>,Diagnostic>{
+ substituteObligationsAt(obligations,owner,arguments,List<Span>[],span)
+};

@@ -2,7 +2,12 @@ namespace Mgnc\Driver;
 use Std\Io\{readTextFile,writeStderr,IoError,IoErrorKind,IoErrorPhase};
 use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError,BinaryOutputErrorKind,BinaryOutputPhase,BinaryPublicationState};
 use Mgnc\Data\{Diagnostic,describe,contains};
-use Mgnc\Pipeline\{compile};
+use Mgnc\Pipeline\{prepare,compile};
+use Mgnc\Checked\{CheckedProgram};
+use Mgnc\Project\{single,project};
+use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
+use Mgnc\InputDiagnostics\{message as inputMessage,escapePath};
+use Mgnc\Semantic\{SemanticProject,analyze};
 use Mgnc\Structural\{analyzeSyntax};
 use Mgnc\Forest\{SyntaxForest};
 public let report:Function(Int,String):Int=function(status:Int,message:String):Int{
@@ -46,37 +51,52 @@ let publicationState:Function(BinaryPublicationState):String=function(state:Bina
 public let publicationMessage:Function(BinaryOutputError):String=function(error:BinaryOutputError):String{
  "mgnc: publication: "+error->subject+": "+outputKind(error->kind)+" / "+outputPhase(error->phase)+" / "+publicationState(error->publication)+"\n"
 };
+// End the semantic ownership scope before allocating backend code and bytes.
+type Analyzed=sum{Checked;Native(CheckedProgram);};
+let front:Function(ProjectInput,Bool):Result<Analyzed,InputError>=function(input:ProjectInput,checking:Bool):Result<Analyzed,InputError>{
+ let semantic:SemanticProject=try analyze(input);
+ branch when{checking=>{return Result<Analyzed,InputError>::Ok(Analyzed::Checked);},else=>unit};
+ let program:CheckedProgram=branch on prepare(semantic){
+  Result<CheckedProgram,Diagnostic>::Ok(value:CheckedProgram)=>value,
+  Result<CheckedProgram,Diagnostic>::Err(error:Diagnostic)=>{
+   let source:SourceUnit=branch on input->sources->at(input->entry){Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,Result<SourceUnit,IndexError>::Err(failure:IndexError)=>{panic{"input entry invariant"};}};
+   return Result<Analyzed,InputError>::Err(InputError{status:branch when{error->phase=="internal"=>3,else=>1},path:source->displayPath,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""});
+  }
+ };
+ Result<Analyzed,InputError>::Ok(Analyzed::Native(program))
+};
 public let run:Function(List<String>):Int=function(args:List<String>):Int{
  let command:String=argument(args,0);let sourcePath:String=argument(args,1);
- let parsing:Bool=command=="parse";
+ let parsing:Bool=command=="parse";let checking:Bool=command=="check";
  let option:String=argument(args,2);let outputPath:String=argument(args,3);
- branch when{!((parsing&&args->length()==2)||(command=="build"&&args->length()==4&&option=="-o"))=>{
-  return report(2,"mgnc: cli: expected parse source.mgn or build source.mgn -o new-artifact\n");
+ branch when{!(((parsing||checking)&&args->length()==2)||(command=="build"&&args->length()==4&&option=="-o"))=>{
+  return report(2,"mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n");
  },else=>unit};
- branch when{sourcePath=="" || contains(sourcePath,"\0") || (!parsing&&(outputPath==""||contains(outputPath,"\0")))=>{
+ branch when{sourcePath=="" || contains(sourcePath,"\0") || (command=="build"&&(outputPath==""||contains(outputPath,"\0")))=>{
   return report(2,"mgnc: cli: InvalidPath: empty or NUL-containing path\n");
  },else=>unit};
- branch when{!endsWith(sourcePath,".mgn")=>{return report(2,"mgnc: cli: "+sourcePath+": source requires .mgn extension\n");},else=>unit};
- branch when{!parsing&&endsWith(outputPath,"/")=>{return report(2,"mgnc: cli: "+outputPath+": InvalidPath: trailing slash\n");},else=>unit};
- let source:String=branch on readTextFile(sourcePath){
-  Result<String,IoError>::Ok(text:String)=>text,
-  Result<String,IoError>::Err(error:IoError)=>{
-   branch when{
-    ioKind(error->kind)=="InvalidEncoding"=>{return report(1,"mgnc: source: "+sourcePath+": position unknown: InvalidEncoding\n");},
-    else=>{return report(2,"mgnc: io: "+error->subject+": "+ioKind(error->kind)+" / "+ioPhase(error->phase)+"\n");},
-   }
-  },
+ let manifest:Bool=sourcePath=="mognitio.toml"||endsWith(sourcePath,"/mognitio.toml");
+ branch when{!endsWith(sourcePath,".mgn")&&!(checking&&manifest)=>{return report(2,"mgnc: cli: "+sourcePath+": source requires .mgn extension\n");},else=>unit};
+ branch when{command=="build"&&endsWith(outputPath,"/")=>{return report(2,"mgnc: cli: "+outputPath+": InvalidPath: trailing slash\n");},else=>unit};
+ let input:ProjectInput=branch on branch when{manifest=>project(sourcePath),else=>single(sourcePath)}{
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
+  Result<ProjectInput,InputError>::Err(error:InputError)=>{return report(error->status,inputMessage(error));}
  };
+ let source:SourceUnit=branch on input->sources->at(input->entry){Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,Result<SourceUnit,IndexError>::Err(error:IndexError)=>{return report(3,"mgnc: internal: input entry missing\n");}};
  branch when{parsing=>{
-  return branch on analyzeSyntax(source){
+  return branch on analyzeSyntax(source->text){
    Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>0,
-   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>report(branch when{error->phase=="internal"=>3,else=>1},describe(sourcePath,error)),
+   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>report(branch when{error->phase=="internal"=>3,else=>1},describe(escapePath(sourcePath),error)),
   };
  },else=>unit};
- let bytes:Bytes=branch on compile(source){
+ let program:CheckedProgram=branch on branch on front(input,checking){
+  Result<Analyzed,InputError>::Ok(value:Analyzed)=>value,
+  Result<Analyzed,InputError>::Err(error:InputError)=>{return report(error->status,inputMessage(error));}
+ }{Analyzed::Checked=>{return 0;},Analyzed::Native(value:CheckedProgram)=>value};
+ let bytes:Bytes=branch on compile(program){
   Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,
   Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{
-   return report(branch when{error->phase=="internal"=>3,else=>1},describe(sourcePath,error));
+   return report(branch when{error->phase=="internal"=>3,else=>1},describe(escapePath(sourcePath),error));
   },
  };
  branch on publishFile(outputPath,bytes,BinaryFileMode::Executable){

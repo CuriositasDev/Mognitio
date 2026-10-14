@@ -1,0 +1,118 @@
+[
+  {
+    "name": "v150-input",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 23.280376195907593
+  },
+  {
+    "name": "v150-headers",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 167.0759916305542
+  },
+  {
+    "name": "v150-types",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 170.70120429992676
+  },
+  {
+    "name": "v150-graph",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 0.7981472015380859
+  },
+  {
+    "name": "v150-int-map",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 0.48093104362487793
+  },
+  {
+    "name": "v150-text",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 23.064772367477417
+  },
+  {
+    "name": "v150-layout",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 169.90120196342468
+  },
+  {
+    "name": "driver-internal",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn"
+    ],
+    "exit": 0,
+    "seconds": 169.65504097938538
+  },
+  {
+    "name": "classification_order",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn",
+      "--force-full-classification",
+      "--evidence",
+      "<internal-evidence>/classification-order.json"
+    ],
+    "exit": 0,
+    "seconds": 168.7763590812683
+  },
+  {
+    "name": "v150-coverage--C0",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn",
+      "--corpus",
+      "C0",
+      "--evidence",
+      "<internal-evidence>/coverage-C0.json"
+    ],
+    "exit": 0,
+    "seconds": 275.9762952327728
+  },
+  {
+    "name": "v150-coverage--C1",
+    "argv": [
+      "--seed",
+      "<seed-store>/lisp-860a7550cb610e3a60642e427db659df7447fcf5/bin/mgn",
+      "--corpus",
+      "C1",
+      "--evidence",
+      "<internal-evidence>/coverage-C1.json"
+    ],
+    "exit": 0,
+    "seconds": 442.2365403175354
+  },
+  {
+    "name": "v150-measure-harness",
+    "argv": [],
+    "exit": 0,
+    "seconds": 0.46207571029663086
+  }
+]

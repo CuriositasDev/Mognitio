@@ -1,0 +1,64 @@
+namespace Mgnc\IntMap;
+// Generated compact low-ID radix tree. Large Int64 keys remain exact.
+use Mgnc\Data\{Diagnostic,Span,problem};
+template replaceSlot<T>=function(values:List<T>,index:Int,value:T,blank:T):List<T>{
+ var result:List<T>=List<T>[];var cursor:Int=0;let count:Int=branch when{values->length()>index=>values->length(),else=>index+1};
+ loop while(cursor<count){result=result->append(branch when{cursor==index=>value,else=>branch on values->at(cursor){Result<T,IndexError>::Ok(found:T)=>found,Result<T,IndexError>::Err(error:IndexError)=>blank}});cursor=cursor+1;};result
+};
+public type Level9=product{children:List<Int>;};
+public type Level8=product{children:List<Level9>;};
+public type Level7=product{children:List<Level8>;};
+public type Level6=product{children:List<Level7>;};
+public type Level5=product{children:List<Level6>;};
+public type Level4=product{children:List<Level5>;};
+public type Level3=product{children:List<Level4>;};
+public type Level2=product{children:List<Level3>;};
+public type Level1=product{children:List<Level2>;};
+public type Level0=product{children:List<Level1>;};
+public type Entry=product{key:Int;value:Int;};
+public type Map=product{small:Level0;large:List<Entry>;};
+public let create:Function():Map=function():Map{Map{small:Level0{children:List<Level1>[]},large:List<Entry>[]}};
+public let get:Function(Map,Int):Result<Int,Diagnostic>=function(table:Map,key:Int):Result<Int,Diagnostic>{
+ branch when{key<0=>{return Result<Int,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"negative radix key"));},key>=1048576=>{
+  loop over(table->large as entry:Entry){branch when{entry->key==key=>{return Result<Int,Diagnostic>::Ok(entry->value);},else=>unit};};return Result<Int,Diagnostic>::Ok(-2);
+ },else=>unit};
+ let node0:Level0=table->small;
+ let node1:Level1=branch on node0->children->at(key/262144%4){Result<Level1,IndexError>::Ok(found:Level1)=>found,Result<Level1,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node2:Level2=branch on node1->children->at(key/65536%4){Result<Level2,IndexError>::Ok(found:Level2)=>found,Result<Level2,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node3:Level3=branch on node2->children->at(key/16384%4){Result<Level3,IndexError>::Ok(found:Level3)=>found,Result<Level3,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node4:Level4=branch on node3->children->at(key/4096%4){Result<Level4,IndexError>::Ok(found:Level4)=>found,Result<Level4,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node5:Level5=branch on node4->children->at(key/1024%4){Result<Level5,IndexError>::Ok(found:Level5)=>found,Result<Level5,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node6:Level6=branch on node5->children->at(key/256%4){Result<Level6,IndexError>::Ok(found:Level6)=>found,Result<Level6,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node7:Level7=branch on node6->children->at(key/64%4){Result<Level7,IndexError>::Ok(found:Level7)=>found,Result<Level7,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node8:Level8=branch on node7->children->at(key/16%4){Result<Level8,IndexError>::Ok(found:Level8)=>found,Result<Level8,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ let node9:Level9=branch on node8->children->at(key/4%4){Result<Level9,IndexError>::Ok(found:Level9)=>found,Result<Level9,IndexError>::Err(error:IndexError)=>{return Result<Int,Diagnostic>::Ok(-2);}};
+ branch on node9->children->at(key%4){Result<Int,IndexError>::Ok(found:Int)=>Result<Int,Diagnostic>::Ok(found),Result<Int,IndexError>::Err(error:IndexError)=>Result<Int,Diagnostic>::Ok(-2)}
+};
+public let put:Function(Map,Int,Int):Result<Map,Diagnostic>=function(table:Map,key:Int,value:Int):Result<Map,Diagnostic>{
+ branch when{key<0=>{return Result<Map,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"negative radix key"));},key>=1048576=>{
+  var large:List<Entry>=List<Entry>[];var found:Bool=false;
+  loop over(table->large as entry:Entry){branch when{entry->key==key=>{large=large->append(Entry{key:key,value:value});found=true;},else=>{large=large->append(entry);}};};
+  branch when{!found=>{large=large->append(Entry{key:key,value:value});},else=>unit};return Result<Map,Diagnostic>::Ok(Map{small:table->small,large:large});
+ },else=>unit};
+ let node0:Level0=table->small;
+ let node1:Level1=branch on node0->children->at(key/262144%4){Result<Level1,IndexError>::Ok(found:Level1)=>found,Result<Level1,IndexError>::Err(error:IndexError)=>Level1{children:List<Level2>[]}};
+ let node2:Level2=branch on node1->children->at(key/65536%4){Result<Level2,IndexError>::Ok(found:Level2)=>found,Result<Level2,IndexError>::Err(error:IndexError)=>Level2{children:List<Level3>[]}};
+ let node3:Level3=branch on node2->children->at(key/16384%4){Result<Level3,IndexError>::Ok(found:Level3)=>found,Result<Level3,IndexError>::Err(error:IndexError)=>Level3{children:List<Level4>[]}};
+ let node4:Level4=branch on node3->children->at(key/4096%4){Result<Level4,IndexError>::Ok(found:Level4)=>found,Result<Level4,IndexError>::Err(error:IndexError)=>Level4{children:List<Level5>[]}};
+ let node5:Level5=branch on node4->children->at(key/1024%4){Result<Level5,IndexError>::Ok(found:Level5)=>found,Result<Level5,IndexError>::Err(error:IndexError)=>Level5{children:List<Level6>[]}};
+ let node6:Level6=branch on node5->children->at(key/256%4){Result<Level6,IndexError>::Ok(found:Level6)=>found,Result<Level6,IndexError>::Err(error:IndexError)=>Level6{children:List<Level7>[]}};
+ let node7:Level7=branch on node6->children->at(key/64%4){Result<Level7,IndexError>::Ok(found:Level7)=>found,Result<Level7,IndexError>::Err(error:IndexError)=>Level7{children:List<Level8>[]}};
+ let node8:Level8=branch on node7->children->at(key/16%4){Result<Level8,IndexError>::Ok(found:Level8)=>found,Result<Level8,IndexError>::Err(error:IndexError)=>Level8{children:List<Level9>[]}};
+ let node9:Level9=branch on node8->children->at(key/4%4){Result<Level9,IndexError>::Ok(found:Level9)=>found,Result<Level9,IndexError>::Err(error:IndexError)=>Level9{children:List<Int>[]}};
+ let updated9:Level9=Level9{children:replaceSlot<Int>(node9->children,key%4,value,-2)};
+ let updated8:Level8=Level8{children:replaceSlot<Level9>(node8->children,key/4%4,updated9,Level9{children:List<Int>[]})};
+ let updated7:Level7=Level7{children:replaceSlot<Level8>(node7->children,key/16%4,updated8,Level8{children:List<Level9>[]})};
+ let updated6:Level6=Level6{children:replaceSlot<Level7>(node6->children,key/64%4,updated7,Level7{children:List<Level8>[]})};
+ let updated5:Level5=Level5{children:replaceSlot<Level6>(node5->children,key/256%4,updated6,Level6{children:List<Level7>[]})};
+ let updated4:Level4=Level4{children:replaceSlot<Level5>(node4->children,key/1024%4,updated5,Level5{children:List<Level6>[]})};
+ let updated3:Level3=Level3{children:replaceSlot<Level4>(node3->children,key/4096%4,updated4,Level4{children:List<Level5>[]})};
+ let updated2:Level2=Level2{children:replaceSlot<Level3>(node2->children,key/16384%4,updated3,Level3{children:List<Level4>[]})};
+ let updated1:Level1=Level1{children:replaceSlot<Level2>(node1->children,key/65536%4,updated2,Level2{children:List<Level3>[]})};
+ let updated0:Level0=Level0{children:replaceSlot<Level1>(node0->children,key/262144%4,updated1,Level1{children:List<Level2>[]})};
+ Result<Map,Diagnostic>::Ok(Map{small:updated0,large:table->large})
+};

@@ -1,0 +1,2 @@
+Command: python3 tests/mgnc/v150-measure.py --compiler /bin/false --fixtures FIXTURES --output NEW_DIRECTORY --only modules-chain-1
+PRELIMINARY_FAILURE_PROPAGATION_OK exit=1 failed_warmup_retained=true recorded_runs_skipped=3 aggregate_absent=true

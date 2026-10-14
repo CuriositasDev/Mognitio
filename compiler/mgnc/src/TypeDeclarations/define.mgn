@@ -1,0 +1,75 @@
+namespace Mgnc\TypeDeclarations;
+use Mgnc\Data\{Paged,lookup,Diagnostic,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Declaration,Parameter,Module};
+use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
+use Mgnc\TypeOps\{intern,concreteValue,parameterKind,productKind,sumKind,bitsKind,bytesKind,identityKind,signedKind,unsignedKind};
+use Mgnc\TypeForm\{form,widthRequirements};
+use Mgnc\Projection\{parts,item,text,site};
+use Mgnc\BridgeLists\{reverse};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\TypeNames\{declaration as lookupDeclaration};
+public type Parameters=product{store:Store;arguments:List<Argument>;obligations:List<Obligation>;};
+public let parameters:Function(Store,Int):Result<Parameters,Diagnostic>=function(initial:Store,id:Int):Result<Parameters,Diagnostic>{
+ var store:Store=initial;let declared:Declaration=try lookup<Declaration>(store->headers->declarations,id);
+ let module:Module=try lookup<Module>(store->headers->modules,declared->file);
+ var arguments:List<Argument>=List<Argument>[];var ordinal:Int=0;
+ loop over(declared->parameters as param:Parameter){
+  let visible:Parent=try lookupDeclaration(store->headers,declared->file,param->name);
+  branch on visible{Parent::None=>unit,Parent::Some(target:Int)=>{
+   let conflicting:Declaration=try lookup<Declaration>(store->headers->declarations,target);
+   branch when{conflicting->kind<4=>{return Result<Parameters,Diagnostic>::Err(problem("semantic",param->span,"generic parameter shadows a visible compile-time name"));},else=>unit};
+  }};
+  branch when{param->kind==0=>{
+   let formed:Formed=try intern(store,Type{kind:parameterKind,owner:Parent::Some(id),arguments:List<Argument>[Argument::Value(concreteValue(ordinal))],members:List<Member>[]});
+   store=formed->store;arguments=arguments->append(Argument::Type(formed->value));
+  },else=>{
+   let formed:Formed=try form(store,declared->file,module->tree,param->node,Parent::Some(id),arguments);store=formed->store;
+   branch when{formed->value!=1=>{return Result<Parameters,Diagnostic>::Err(problem("type",param->span,"value parameter domain must be Int"));},else=>unit};
+   arguments=arguments->append(Argument::Value(ValueTerm{parameter:Parent::Some(ordinal),owner:id,value:0}));
+  }};ordinal=ordinal+1;
+ };
+ Result<Parameters,Diagnostic>::Ok(Parameters{store:store,arguments:arguments,obligations:List<Obligation>[]})
+};
+public let define:Function(Store,Int):Result<Store,Diagnostic>=function(initial:Store,id:Int):Result<Store,Diagnostic>{
+ let declared:Declaration=try lookup<Declaration>(initial->headers->declarations,id);
+ let module:Module=try lookup<Module>(initial->headers->modules,declared->file);
+ let generic:Parameters=try parameters(initial,id);var store:Store=generic->store;
+ var obligations:List<Obligation>=generic->obligations;var value:Int=0;
+ branch when{declared->kind==2=>{
+  let formed:Formed=try form(store,declared->file,module->tree,declared->annotation,Parent::Some(id),generic->arguments);
+  store=formed->store;value=formed->value;
+  loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
+ },else=>{
+  var reversed:List<Int>=List<Int>[];var current:Int=declared->annotation;
+  loop while(true){let fields:List<Int>=try parts(module->tree,current);branch when{fields->length()==0=>{break;},else=>unit};
+   reversed=reversed->append(current);current=try item(fields,0);
+  };
+  let membersInOrder:List<Int>=try reverse(reversed);var members:List<Member>=List<Member>[];
+  loop over(membersInOrder as node:Int){
+   let fields:List<Int>=try parts(module->tree,node);let name:Int=try item(fields,1);let spelling:String=try text(module->tree,name);
+   loop over(members as previous:Member){branch when{previous->name==spelling=>{return Result<Store,Diagnostic>::Err(problem("semantic",try site(module->tree,name),"duplicate field or variant name"));},else=>unit};};
+   var memberType:Parent=Parent::None;
+   branch when{declared->kind==0||fields->length()>3=>{
+    let annotation:Int=try item(fields,3);
+    let formed:Formed=try form(store,declared->file,module->tree,annotation,Parent::Some(id),generic->arguments);
+    store=formed->store;memberType=Parent::Some(formed->value);
+    loop over(formed->obligations as requirement:Obligation){obligations=obligations->append(requirement);};
+   },else=>unit};
+   members=members->append(Member{name:spelling,value:memberType,span:try site(module->tree,name)});
+  };
+  branch when{declared->kind==1&&members->length()==0=>{return Result<Store,Diagnostic>::Err(problem("semantic",declared->span,"Sum requires at least one variant"));},else=>unit};
+  var kind:Int=branch when{declared->kind==0=>productKind,else=>sumKind};
+  branch when{module->standard=>{
+   branch when{module->nameSpace=="Std\\Numeric"=>{branch when{declared->name=="Signed"=>{kind=signedKind;},declared->name=="Unsigned"=>{kind=unsignedKind;},declared->name=="Bits"=>{kind=bitsKind;},else=>unit};},
+    module->nameSpace=="Std\\Io"&&declared->name=="FileIdentity"=>{kind=identityKind;},
+    module->nameSpace=="Std\\Binary"&&declared->name=="Bytes"=>{kind=bytesKind;},else=>unit};
+  },else=>unit};
+  loop over((try widthRequirements(store,kind,generic->arguments,declared->span)) as requirement:Obligation){obligations=obligations->append(requirement);};
+  let formed:Formed=try intern(store,Type{kind:kind,owner:Parent::Some(id),arguments:generic->arguments,members:members});
+  store=formed->store;value=formed->value;
+ }};
+ Result<Store,Diagnostic>::Ok(Store{headers:store->headers,types:store->types,buckets:store->buckets,
+ declarations:try replaceItem<Parent>(store->declarations,id,Parent::Some(value)),
+ constraints:try replaceItem<List<Obligation>>(store->constraints,id,obligations)})
+};

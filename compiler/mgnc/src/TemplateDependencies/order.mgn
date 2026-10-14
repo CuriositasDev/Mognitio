@@ -1,0 +1,41 @@
+namespace Mgnc\TemplateDependencies;
+use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{text,site};
+use Mgnc\TypeNames\{declaration,parameter};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Grammar\{ruleGenericApply};
+use Mgnc\DependencyGraph\{Edge,Graph,Order,sort};
+public let graph:Function(Headers):Result<Graph,Diagnostic>=function(headers:Headers):Result<Graph,Diagnostic>{
+ var edges:List<Edge>=List<Edge>[];var pending:List<Int>=List<Int>[];var id:Int=0;
+ loop while(id<headers->declarations->count){
+  let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+  branch when{declared->kind==3=>{
+   pending=pending->append(id);let module:Module=try lookup<Module>(headers->modules,declared->file);
+   var seen:IntMap=createMap();var index:Int=0;
+   var work:Paged<Int>=push<Int>(empty<Int>(),declared->body);
+   loop over(declared->parameters as param:Parameter){branch when{param->kind==1=>{work=push<Int>(work,param->node);},else=>unit};};
+   index=0;
+   loop while(index<work->count){
+    let current:Int=try lookup<Int>(work,index);index=index+1;branch when{(try mapGet(seen,current))==1=>{continue;},else=>unit};
+    seen=try mapPut(seen,current,1);let node:ForestNode=try getNode(module->tree->nodes,current);
+    branch when{node->symbol>0&&node->rule==ruleGenericApply=>{
+     let name:String=try text(module->tree,current);let generic:Parent=try parameter(headers,Parent::Some(id),name);
+     branch on generic{Parent::Some(ordinal:Int)=>unit,Parent::None=>{
+      let found:Parent=try declaration(headers,declared->file,name);
+      branch on found{Parent::None=>unit,Parent::Some(target:Int)=>{
+       let definition:Declaration=try lookup<Declaration>(headers->declarations,target);
+       branch when{definition->kind==3=>{edges=edges->append(Edge{owner:id,target:target,file:declared->file,span:try site(module->tree,current)});},else=>unit};
+      }};
+     }};
+    },else=>unit};
+    loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{work=push<Int>(work,child);},else=>unit};};
+   };
+  },else=>unit};id=id+1;
+ };
+ Result<Graph,Diagnostic>::Ok(Graph{vertices:pending,edges:edges,size:headers->declarations->count})
+};

@@ -1,0 +1,4798 @@
+{
+  "compiler_sha256": "31659b56c2824b936812e116ae919b0fa6ba7d8e6d9c52165dea4e68e6e42953",
+  "fixture_manifest_sha256": "a0cd19c899d7fdd43e2155adf68c59f24d3efb38779bcc7d970e20c251989182",
+  "kernel": "7.0.0-38-generic",
+  "uid_nonzero": true,
+  "warmups": 1,
+  "repeats": 5,
+  "cells": [
+    {
+      "fixture": {
+        "name": "bindings-10",
+        "family": "bindings",
+        "size": 10,
+        "bytes": 280,
+        "scalars": 280,
+        "sha256": "99537841a87bac41248a730871b3b05ea9d216f7bde912e8567bb5d67b78617b",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          10,
+          11,
+          13
+        ],
+        "tokens": 135,
+        "declared_bindings": 12,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.04123095399700105,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04093382298015058,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04097180801909417,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04086006304714829,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04097407800145447,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.040820983005687594,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "fdfae1402ae87543465dbe1ce0f53e73638320bd75abeb11ea31320aa4a4013a",
+          "artifact_bytes": 2033,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 10,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 13,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.04093382298015058,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "bindings-100",
+        "family": "bindings",
+        "size": 100,
+        "bytes": 1902,
+        "scalars": 1902,
+        "sha256": "ad50b65d0f55680747cb18d7925d46058e340882d700bf50725d35a1275705c8",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          100,
+          101,
+          103
+        ],
+        "tokens": 945,
+        "declared_bindings": 102,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.1987262109760195,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.19870328099932522,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.19866448902757838,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.2037283149547875,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.19877244299277663,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.19853921298636124,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7e6c477c16cb410df236a7ba129edcf7247290857167f9f54162d44a49dfcec8",
+          "artifact_bytes": 10313,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 100,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 101,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 103,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.19870328099932522,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "bindings-1000",
+        "family": "bindings",
+        "size": 1000,
+        "bytes": 19904,
+        "scalars": 19904,
+        "sha256": "acc7087e8f771a81b70721a3030631c6d73eef9e4a4479a19ae7fa64573c265f",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          247,
+          248,
+          250
+        ],
+        "tokens": 9045,
+        "declared_bindings": 1002,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 1.8266776220407337,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 1.8575157360173762,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 1.8486954740365036,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 1.8569335960200988,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 1.8252027619746514,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 1.8798043520073406,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "eb10246154dce1f45a392bebc14eb7e4716bc08797b4fdaa1d653f113db375b4",
+          "artifact_bytes": 93113,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 247,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 248,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 250,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 1.8569335960200988,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "helpers-10",
+        "family": "helpers",
+        "size": 10,
+        "bytes": 694,
+        "scalars": 694,
+        "sha256": "26885dc7c04ebed2b0017ff982beeb37824f281cc236200ecd092095e905a489",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          1,
+          2,
+          4
+        ],
+        "tokens": 279,
+        "declared_bindings": 11,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 1
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.04583072004606947,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04607012902852148,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04605955700390041,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.046057748957537115,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.045999500958714634,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04603768000379205,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.046057748957537115,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "helpers-100",
+        "family": "helpers",
+        "size": 100,
+        "bytes": 6095,
+        "scalars": 6095,
+        "sha256": "2fe1da242a2c6a2245c7e055854626459c327dd8337b4cd0e27ef610a695b99b",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          1,
+          2,
+          4
+        ],
+        "tokens": 2439,
+        "declared_bindings": 101,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 1
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.2140469949808903,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.21381894598016515,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.20375847403192893,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.20350835198769346,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.20388401596574113,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.20896531897597015,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.20388401596574113,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "helpers-1000",
+        "family": "helpers",
+        "size": 1000,
+        "bytes": 60996,
+        "scalars": 60996,
+        "sha256": "c60d48853baa94c5d3d8af4bb35ee069c5d2fc0c2ba373b63f1c4e56ec40ed4f",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          1,
+          2,
+          4
+        ],
+        "tokens": 24039,
+        "declared_bindings": 1001,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 1
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 5.43239812500542,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 5.260671918978915,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 5.311380398052279,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 5.414169260999188,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 5.444225487008225,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 5.319773950963281,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4c35de6be7e3757d6e3795907969ed7769927e39f82a7dda7e3684c7cd279f4",
+          "artifact_bytes": 1118,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 5.319773950963281,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "blocks-1",
+        "family": "blocks",
+        "size": 1,
+        "bytes": 102,
+        "scalars": 102,
+        "sha256": "45f0ea8ce0e723253cee31d774a00b7e0038ce51f94158cf12cddac62ad1a4a8",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          0,
+          1,
+          3
+        ],
+        "tokens": 38,
+        "declared_bindings": 1,
+        "block_extra_depth": 1,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.030865828972309828,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.030779682041611522,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.030810487980488688,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03055434999987483,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.030762453970964998,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.030579700018279254,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "af6dc9710baf6f56c90c1acdb3cc759cabc591a0cd02fb8f44890be84e5db69c",
+          "artifact_bytes": 991,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.030762453970964998,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "blocks-8",
+        "family": "blocks",
+        "size": 8,
+        "bytes": 116,
+        "scalars": 116,
+        "sha256": "53440915ede9e476e354d91a40f862c504958897ac47bdd94d9f7e4232a2b467",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          0,
+          1,
+          3
+        ],
+        "tokens": 52,
+        "declared_bindings": 1,
+        "block_extra_depth": 8,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.03568068100139499,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03589528700103983,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03580561198759824,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03578601701883599,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.035911941959057,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03579697501845658,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "b4531eefee0853a04b0b3009184ddb3862683e63e5b73d608de6b7fc9df75615",
+          "artifact_bytes": 1089,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.03580561198759824,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "blocks-32",
+        "family": "blocks",
+        "size": 32,
+        "bytes": 164,
+        "scalars": 164,
+        "sha256": "1dc8f72926160ff03d363b0731af62904bd9f2b41126aec37643eb3ffcc04522",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          0,
+          1,
+          3
+        ],
+        "tokens": 100,
+        "declared_bindings": 1,
+        "block_extra_depth": 32,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.040964785031974316,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04098044300917536,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04096799803664908,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.040909032977651805,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.0408351689693518,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04595473501831293,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "0d8d456c71655ca0a41abec539374b7c838ea869a3db37f366b2745066b8c891",
+          "artifact_bytes": 1425,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.04096799803664908,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "blocks-128",
+        "family": "blocks",
+        "size": 128,
+        "bytes": 356,
+        "scalars": 356,
+        "sha256": "26ce0821b4937e390bf16d58528a6134d9e09f02ac8217c7a3da251fa1e9b8f5",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          0,
+          1,
+          3
+        ],
+        "tokens": 292,
+        "declared_bindings": 1,
+        "block_extra_depth": 128,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.07148022903129458,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.07121835002908483,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.06638165400363505,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.07133225700818002,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.0664849280146882,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.0663160199765116,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "c729a5faa9ba4262258babef61bf396c062f16ec34afbabc3523ba0a4089d4ca",
+          "artifact_bytes": 2769,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 0,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 3,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.0664849280146882,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "branches-1",
+        "family": "branches",
+        "size": 1,
+        "bytes": 130,
+        "scalars": 130,
+        "sha256": "9e4f3557eedfd825d2b08757459a86d173258e9920bdc4c6d6b0555fec8021e0",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          7,
+          11,
+          11
+        ],
+        "tokens": 50,
+        "declared_bindings": 1,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 1,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.03058366000186652,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.030737123975995928,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03072628303198144,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03562394704204053,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.0307603080291301,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03583287697983906,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "8e932a141b66ef9658f63f703bb6f105a9ee802ca31c8ce6bc58fccd1cd63555",
+          "artifact_bytes": 1132,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.0307603080291301,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "branches-8",
+        "family": "branches",
+        "size": 8,
+        "bytes": 431,
+        "scalars": 431,
+        "sha256": "73a863e5f66a207e3d3b26f14b821bbe029b11b21b9be2262f7d39a7e9b49ee0",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          7,
+          11,
+          11
+        ],
+        "tokens": 176,
+        "declared_bindings": 1,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 8,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.04606040596263483,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.046070253010839224,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04588968999451026,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04601641796762124,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04585911496542394,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.0459362730034627,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "4af60369dfe423e676034153498192d7bd3dbceed6f34f5f81de069be5e3ad80",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.0459362730034627,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "branches-32",
+        "family": "branches",
+        "size": 32,
+        "bytes": 1463,
+        "scalars": 1463,
+        "sha256": "482f1f8b3af724898bb111541f664912558e658a4fa4e0c5444abb5c7d629a09",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          7,
+          11,
+          11
+        ],
+        "tokens": 608,
+        "declared_bindings": 1,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 32,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.09700282901758328,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09185503795742989,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09686976997181773,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09695683897007257,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09192490298300982,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09692990203620866,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "ef9558d51511392515ceeba4af2ec062e8c1ee188cc42b724ae01a197bf35728",
+          "artifact_bytes": 5844,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.09686976997181773,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "branches-128",
+        "family": "branches",
+        "size": 128,
+        "bytes": 5591,
+        "scalars": 5591,
+        "sha256": "5968258c8ee070c59a2ea977ab3b06aaba914fec3e4fbae3e099e584aafc85c3",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          7,
+          11,
+          11
+        ],
+        "tokens": 2336,
+        "declared_bindings": 1,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 128,
+        "call_chain_depth": 0
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.860213668027427,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.8813683489570394,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.8856117599643767,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.8714545189868659,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.8649050420499407,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.8714599700178951,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "1a4220983f9470c06b5e98dbf64f49a147be1d2697f3335c7311b2cc0ad8f086",
+          "artifact_bytes": 20436,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 7,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.8714599700178951,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "call-chain-1",
+        "family": "call-chain",
+        "size": 1,
+        "bytes": 167,
+        "scalars": 167,
+        "sha256": "2541309d6379bb6e2569f64a86961d7e205fffb406e3db8b34e357a46748ad13",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          1,
+          2,
+          4
+        ],
+        "tokens": 65,
+        "declared_bindings": 2,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 1
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.035673204984050244,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.035670200013555586,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03582029399694875,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.035644819028675556,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03577891702298075,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.03575003903824836,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "996794c21c211be60492dff02631ecd056eac5dc9448bd8cd28bd78a0a940a87",
+          "artifact_bytes": 1209,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 1,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 2,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 4,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.03575003903824836,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "call-chain-8",
+        "family": "call-chain",
+        "size": 8,
+        "bytes": 608,
+        "scalars": 608,
+        "sha256": "964e5b1f1c78cfdc2626af0bc824b69be60a769af9e7b52256cda052741fdc36",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          8,
+          9,
+          11
+        ],
+        "tokens": 254,
+        "declared_bindings": 9,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 8
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.04598249401897192,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.045916486997157335,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04591834201710299,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.045984687050804496,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04604711499996483,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.04607798799406737,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7ceda93c7df43a1e63e129d764d144c9e28ceaeaecd4b45290be5e313bf278de",
+          "artifact_bytes": 2196,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 8,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 9,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 11,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.045984687050804496,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "call-chain-32",
+        "family": "call-chain",
+        "size": 32,
+        "bytes": 2164,
+        "scalars": 2164,
+        "sha256": "6c12e16f19aa10f9a2b5f518fabf6109927ec839cc0cc15a3f8eb3ebb9dc81ee",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          32,
+          33,
+          35
+        ],
+        "tokens": 902,
+        "declared_bindings": 33,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 32
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.09696811705362052,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09684174496214837,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09685047500533983,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09678436600370333,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09669088904047385,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.09686101000988856,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "415eca141c72ef4aaffd879a102511c1388baad31c1f90da651d5cbcf31cfcc4",
+          "artifact_bytes": 5580,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 32,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 33,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 35,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.09684174496214837,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "call-chain-128",
+        "family": "call-chain",
+        "size": 128,
+        "bytes": 8460,
+        "scalars": 8460,
+        "sha256": "9a81299691e84751976af400917b252173be6bf0e690b507624e76767c688ef4",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          128,
+          129,
+          131
+        ],
+        "tokens": 3494,
+        "declared_bindings": 129,
+        "block_extra_depth": 0,
+        "branch_extra_depth": 0,
+        "call_chain_depth": 128
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 0.529268985032104,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.5243976470082998,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.519012707984075,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.5189396460191347,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.5239689419977367,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 0.5189713050494902,
+          "peak_rss_bytes": 29814784,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "7f7da9f2092376d40a29eeb317fd1e9ce8ec72d611660f5ca96f644e201ac57a",
+          "artifact_bytes": 19116,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 128,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 129,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 131,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 0.519012707984075,
+      "max_rss_bytes": 29814784,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "combined-1000",
+        "family": "combined",
+        "size": 1000,
+        "bytes": 87878,
+        "scalars": 87878,
+        "sha256": "bd967ab6275af5319fc7ea31cee5b76c42bb2d9ccde27945c0177d1e40f7d1cb",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          124,
+          125,
+          127
+        ],
+        "tokens": 35998,
+        "declared_bindings": 2003,
+        "block_extra_depth": 128,
+        "branch_extra_depth": 128,
+        "call_chain_depth": 128
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 14.168472180026583,
+          "peak_rss_bytes": 45768704,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 14.441713206004351,
+          "peak_rss_bytes": 45699072,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 14.390878001984674,
+          "peak_rss_bytes": 45772800,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 14.170189030002803,
+          "peak_rss_bytes": 45772800,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 14.384399083966855,
+          "peak_rss_bytes": 45772800,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 14.50703285401687,
+          "peak_rss_bytes": 45768704,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 14.390878001984674,
+      "max_rss_bytes": 45772800,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "combined-long-1000",
+        "family": "combined-long",
+        "size": 1000,
+        "bytes": 276116,
+        "scalars": 276116,
+        "sha256": "89237ceada33885e35371621fdce46da1f89b2b646c3feddf83e9e6336894b61",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          124,
+          125,
+          127
+        ],
+        "tokens": 35998,
+        "declared_bindings": 2003,
+        "block_extra_depth": 128,
+        "branch_extra_depth": 128,
+        "call_chain_depth": 128
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 17.51675608800724,
+          "peak_rss_bytes": 46837760,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 17.97632255399367,
+          "peak_rss_bytes": 46940160,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 17.513416125031654,
+          "peak_rss_bytes": 46985216,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 17.462216368003283,
+          "peak_rss_bytes": 46985216,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 18.004016065970063,
+          "peak_rss_bytes": 46936064,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 17.906440136022866,
+          "peak_rss_bytes": 46985216,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 17.906440136022866,
+      "max_rss_bytes": 46985216,
+      "pass": true
+    },
+    {
+      "fixture": {
+        "name": "combined-comment-1000",
+        "family": "combined-comment",
+        "size": 1000,
+        "bytes": 153422,
+        "scalars": 125333,
+        "sha256": "668ee91cb026250cf3d88bfd2ca3514c4ec791e5db7efd8cc24f5f500ebebbb7",
+        "argv_counts": [
+          0,
+          1,
+          3
+        ],
+        "expected": [
+          124,
+          125,
+          127
+        ],
+        "tokens": 35998,
+        "declared_bindings": 2003,
+        "block_extra_depth": 128,
+        "branch_extra_depth": 128,
+        "call_chain_depth": 128
+      },
+      "samples": [
+        {
+          "warmup": true,
+          "wall_seconds": 15.242291207017843,
+          "peak_rss_bytes": 45760512,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 15.452353902976029,
+          "peak_rss_bytes": 45928448,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 15.12335313699441,
+          "peak_rss_bytes": 45989888,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 15.468094009964261,
+          "peak_rss_bytes": 45993984,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 15.456292634014972,
+          "peak_rss_bytes": 45993984,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        },
+        {
+          "warmup": false,
+          "wall_seconds": 15.443660249991808,
+          "peak_rss_bytes": 45998080,
+          "exit": 0,
+          "timeout": false,
+          "stdout_hex": "",
+          "stderr_hex": "",
+          "artifact_sha256": "9e5c8193c0ccbf1a19dbaaddf5d08ea024e8f3688759bda6f0fae37e2ff6d198",
+          "artifact_bytes": 132084,
+          "mode": "0o755",
+          "runtime": [
+            {
+              "argv_count": 0,
+              "exit": 124,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 1,
+              "exit": 125,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            },
+            {
+              "argv_count": 3,
+              "exit": 127,
+              "stdout_hex": "",
+              "stderr_hex": ""
+            }
+          ],
+          "correct": true
+        }
+      ],
+      "median_seconds": 15.452353902976029,
+      "max_rss_bytes": 45998080,
+      "pass": true
+    }
+  ]
+}

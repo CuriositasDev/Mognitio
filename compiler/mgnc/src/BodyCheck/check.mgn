@@ -1,0 +1,37 @@
+namespace Mgnc\BodyCheck;
+use Mgnc\Grammar\{ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleField,ruleGenericMethod,ruleGroup,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementReturn,ruleUnaryNeg,ruleUnaryTry,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\SemanticValues\{State,Environment,Frame,Started,ChildEnvironment,Evaluated,Checked};
+use Mgnc\ValueStart\{start};
+use Mgnc\ValueChildren\{child};
+use Mgnc\ValueSupport\{emit};
+use Mgnc\FinishBasic\{finish as basic};
+use Mgnc\FinishControl\{finish as control};
+use Mgnc\FinishConstruct\{finish as construct};
+use Mgnc\Projection\{item};
+use Mgnc\Tables\{replaceItem};
+public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Diagnostic>=function(initial:State,tree:SyntaxForest,root:Int,environment:Environment):Result<Checked,Diagnostic>{
+ let first:Started=try start(initial,tree,root,environment,-1,false);var state:State=first->state;
+ var frames:Paged<Frame>=push<Frame>(empty<Frame>(),first->frame);var active:Int=0;
+ loop while(true){
+  let frame:Frame=try lookup<Frame>(frames,active);let rule:Int=frame->expression->rule;
+  branch when{frame->next<frame->expression->children->length()=>{
+   let prepared:ChildEnvironment=try child(state,tree,frame);state=prepared->state;frames=try replaceItem<Frame>(frames,active,prepared->frame);
+   let allowed:Bool=rule==ruleUnaryNeg||(rule==ruleGroup&&frame->minimumAllowed);
+   let entered:Started=try start(state,tree,try item(frame->expression->children,frame->next),prepared->environment,active,allowed);
+   state=entered->state;active=active+1;
+   frames=branch when{active<frames->count=>try replaceItem<Frame>(frames,active,entered->frame),else=>push<Frame>(frames,entered->frame)};continue;
+  },else=>unit};
+  let evaluated:Evaluated=branch when{
+   rule==rulePanic||rule==ruleStatementReturn||rule==ruleStatementBreak||rule==ruleStatementBreakValue||rule==ruleStatementContinue||rule==ruleUnaryTry||rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever||rule==ruleBranchWhen||rule==ruleBranchOn=>try control(state,frame),
+   rule==ruleProduct||rule==ruleList||rule==ruleVariant||rule==ruleVariantPayload||rule==ruleScalarLiteral||rule==ruleCall||rule==ruleField||rule==ruleMethod||rule==ruleGenericMethod=>try construct(state,tree,frame),
+   else=>try basic(state,tree,frame)};
+  let checked:Checked=emit(evaluated->state,evaluated->value);state=checked->state;
+  branch when{frame->parent<0=>{return Result<Checked,Diagnostic>::Ok(checked);},else=>unit};
+  active=frame->parent;let parent:Frame=try lookup<Frame>(frames,active);
+  let scope:Environment=branch when{parent->expression->rule==ruleBlock&&(rule==ruleLetBinding||rule==ruleVarBinding)=>evaluated->environment,else=>parent->environment};
+  frames=try replaceItem<Frame>(frames,active,Frame{expression:parent->expression,environment:scope,annotation:parent->annotation,target:parent->target,loopTarget:parent->loopTarget,binder:parent->binder,arguments:parent->arguments,children:parent->children->append(checked->root),mapping:parent->mapping,parent:parent->parent,next:parent->next+1,minimumAllowed:parent->minimumAllowed});
+ };
+ panic{"body worklist did not return a result"}
+};

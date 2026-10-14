@@ -1,0 +1,10 @@
+{
+  "corpus": "C0",
+  "harness_sha256": "ebf6fdc3bc139709b4145da7bd6c8e582791223ad3f17159b8b90a6aa58fa4ba",
+  "source_files": 57,
+  "declarations": 615,
+  "completed_bodies": 548,
+  "exit": 0,
+  "membership_matches": true,
+  "passed": true
+}

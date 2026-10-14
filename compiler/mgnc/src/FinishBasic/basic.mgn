@@ -1,0 +1,85 @@
+namespace Mgnc\FinishBasic;
+use Mgnc\Grammar\{ruleBlock,ruleFalse,ruleFunction,ruleGenericApply,ruleGroup,ruleInteger,ruleLetBinding,ruleName,ruleStatementAssign,ruleStatementDiscard,ruleStatementExpression,ruleString,ruleTrue,ruleUnaryNeg,ruleUnit,ruleVarBinding};
+use Mgnc\Data\{Diagnostic,lookup,push,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{item};
+use Mgnc\Expressions\{Expression,Label};
+use Mgnc\SemanticValues\{State,Environment,Node,Symbol,FunctionInfo,Frame,Evaluated};
+use Mgnc\TypeData\{Type,Structure,Argument,ValueTerm};
+use Mgnc\TypeOps\{parameterKind,parentEqual};
+use Mgnc\MathValue\{Integer,normalize,ordinary};
+use Mgnc\Operators\{Operation,resolve as resolveOperator};
+use Mgnc\ValueNames\{Reference,resolve as resolveName,capture};
+use Mgnc\ValueSupport\{known,expect,introduce,withSymbols,withFunctions};
+use Mgnc\ValueFactory\{node as makeNode,withArguments};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Tables\{replaceItem};
+public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic>=function(initial:State,tree:SyntaxForest,original:Frame):Result<Evaluated,Diagnostic>{
+ var state:State=initial;var frame:Frame=original;let expression:Expression=frame->expression;let rule:Int=expression->rule;var environment:Environment=frame->environment;
+ var structure:Structure=Structure::Unknown;var normal:Bool=true;var operation:String="";var binding:Parent=Parent::None;var integer:Int=0;var minimum:Bool=false;
+ var children:List<Node>=List<Node>[];
+ loop over(frame->children as id:Int){let child:Node=try lookup<Node>(state->nodes,id);branch when{rule!=ruleBlock=>{children=children->append(child);},else=>unit};normal=normal&&child->normal;};
+ branch when{rule==ruleInteger=>{
+  let value:Integer=normalize(false,expression->text);
+  branch when{frame->minimumAllowed&&value->digits=="9223372036854775808"=>{minimum=true;integer=0;},
+   else=>{integer=try ordinary(value,expression->span);}};structure=Structure::Known(1);operation="integer";
+ },rule==ruleString=>{structure=Structure::Known(3);operation="string";},
+ rule==ruleTrue||rule==ruleFalse=>{structure=Structure::Known(2);integer=branch when{rule==ruleTrue=>1,else=>0};operation="boolean";},
+ rule==ruleUnit=>{structure=Structure::Known(0);operation="unit";},
+ rule==ruleName=>{
+  let reference:Reference=try resolveName(state,environment,expression->text,expression->span,(try getNode(tree->nodes,expression->syntax))->start);
+  branch on reference{
+   Reference::Symbol(id:Int)=>{let symbol:Symbol=try lookup<Symbol>(state->symbols,id);state=try capture(state,environment,id);binding=Parent::Some(id);structure=Structure::Known(symbol->valueType);operation="binding";},
+   Reference::ValueParameter(value:ValueTerm)=>{structure=Structure::Known(1);operation="value-parameter";frame=withArguments(frame,List<Argument>[Argument::Value(value)]);}
+  };
+ },rule==ruleGenericApply=>{
+  let value:Int=branch on frame->annotation{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"template application type invariant"));}};
+  structure=Structure::Known(value);operation="template";
+ },rule==ruleGroup=>{
+  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));structure=child->structure;minimum=child->minimum;integer=child->integer;operation="group";
+ },rule==ruleBlock=>{
+  branch when{expression->flag=>{
+   let tail:Node=try lookup<Node>(state->nodes,try item(frame->children,frame->children->length()-1));structure=tail->structure;
+  },normal=>{structure=Structure::Known(0);},else=>unit};operation="block";
+ },rule==ruleLetBinding||rule==ruleVarBinding=>{
+  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
+  let valueType:Int=branch on frame->annotation{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"binding annotation invariant"));}};
+  try expect(child,valueType);
+  let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"binding label invariant"));}};
+  let id:Int=state->symbols->count;binding=Parent::Some(id);
+  state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:label->name,valueType:valueType,mutable:rule==ruleVarBinding,functionOwner:environment->functionOwner,declaration:Parent::None,span:label->span}));
+  environment=try introduce(environment,id,(try lookup<Symbol>(state->symbols,id))->name);structure=Structure::Known(0);operation="declare";
+ },rule==ruleStatementAssign=>{
+  let left:Node=try lookup<Node>(state->nodes,try item(frame->children,0));let right:Node=try lookup<Node>(state->nodes,try item(frame->children,1));
+  branch when{left->rule!=ruleName=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",left->span,"assignment requires a variable binding"));},else=>unit};
+  let id:Int=branch on left->binding{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",left->span,"assignment requires a variable binding"));}};
+  let symbol:Symbol=try lookup<Symbol>(state->symbols,id);
+  branch when{!symbol->mutable||!parentEqual(symbol->functionOwner,environment->functionOwner)=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",left->span,"cannot assign an immutable or captured binding"));},else=>unit};
+  try expect(right,symbol->valueType);binding=Parent::Some(id);structure=Structure::Known(0);operation="assign";
+ },rule==ruleStatementExpression||rule==ruleStatementDiscard=>{
+  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
+  branch when{rule==ruleStatementDiscard=>{
+   branch when{!child->normal=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",child->span,"discard requires a normal non-Unit result"));},else=>unit};
+   let valueType:Int=try known(child->structure,child->span);let shape:Type=try lookup<Type>(state->types->types,valueType);
+   branch when{valueType==0||shape->kind==parameterKind=>{return Result<Evaluated,Diagnostic>::Err(problem("type",child->span,"discard requires a result that remains non-Unit under substitution"));},else=>unit};
+   operation="discard";
+  },else=>{try expect(child,0);operation="statement";}};structure=Structure::Known(0);
+ },rule==ruleFunction=>{
+  let owner:Int=branch on frame->target{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"function owner invariant"));}};
+  let current:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);let shape:Type=try lookup<Type>(state->types->types,current->valueType);
+  let body:Int=try item(frame->children,0);let bodyNode:Node=try lookup<Node>(state->nodes,body);
+  try expect(bodyNode,try memberType(shape->arguments,shape->arguments->length()-1,expression->span));
+  state=withFunctions(state,try replaceItem<FunctionInfo>(state->functions,owner,FunctionInfo{file:current->file,cursor:current->cursor,valueType:current->valueType,parameters:current->parameters,body:Parent::Some(body),captures:current->captures,templateOwner:current->templateOwner}));
+  structure=Structure::Known(current->valueType);normal=true;operation="function";
+ },else=>{
+  let resolved:Operation=try resolveOperator(state->types,rule,children,expression->span);
+  structure=Structure::Known(resolved->valueType);normal=resolved->normal;operation=resolved->name;
+  branch when{rule==ruleUnaryNeg=>{
+   let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
+   branch when{child->minimum=>{integer= -9223372036854775808;},else=>unit};
+  },else=>unit};
+ }};
+ Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:makeNode(frame,structure,normal,operation,binding,integer,minimum),environment:environment})
+};

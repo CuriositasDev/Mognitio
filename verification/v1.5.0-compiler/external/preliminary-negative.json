@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "stage": "preliminary-only",
+  "formal_budget_adopted": false,
+  "compiler_sha256": "f84e76ea4da1e0c4e92254bd0d7dccdabe2c8b3098e734f27997dae3ee5d8e02",
+  "fixture_manifest_sha256": "a7c8caee8d26a210aeec37e6e12cdbf5e32a4885ff36d7109039af0737d9a1cd",
+  "environment": {
+    "cpu": "Intel(R) Core(TM) i9-10850K CPU @ 3.60GHz",
+    "meminfo": "MemTotal:       31445168 kB\nMemFree:        13817076 kB\nMemAvailable:   19591304 kB\nBuffers:          546440 kB\nCached:         11309988 kB\nSwapCached:            0 kB\nActive:         12312504 kB\nInactive:        3819888 kB\nActive(anon):   10308052 kB\nInactive(anon):        0 kB\nActive(file):    2004452 kB\nInactive(file):  3819888 kB\nUnevictable:         432 kB\nMlocked:             432 kB\nSwapTotal:       8388604 kB\nSwapFree:        8388604 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:              3088 kB\nWriteback:             0 kB\nAnonPages:       4276560 kB\nMapped:          1230300 kB\nShmem:           6032104 kB\nKReclaimable:     387444 kB\nSlab:             751032 kB\nSReclaimable:     324380 kB\nSUnreclaim:       426652 kB\nKernelStack:       29616 kB\nPageTables:        78788 kB\nSecPageTables:      3412 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    24111188 kB\nCommitted_AS:   38800480 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:      125560 kB\nVmallocChunk:          0 kB\nPercpu:            95040 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:    577536 kB\nFilePmdMapped:      2048 kB\nCmaTotal:              0 kB\nCmaFree:         5367808 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nGPUActive:             0 kB\nGPUReclaim:            0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:      719344 kB\nDirectMap2M:    10715136 kB\nDirectMap1G:    22020096 kB\n",
+    "os_release": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n",
+    "kernel": "7.0.0-38-generic",
+    "uid_nonroot": true,
+    "python": "3.14.4",
+    "governors": {
+      "cpu11/cpufreq/scaling_governor": "powersave",
+      "cpu9/cpufreq/scaling_governor": "powersave",
+      "cpu7/cpufreq/scaling_governor": "powersave",
+      "cpu18/cpufreq/scaling_governor": "powersave",
+      "cpu5/cpufreq/scaling_governor": "powersave",
+      "cpu16/cpufreq/scaling_governor": "powersave",
+      "cpu3/cpufreq/scaling_governor": "powersave",
+      "cpu14/cpufreq/scaling_governor": "powersave",
+      "cpu1/cpufreq/scaling_governor": "powersave",
+      "cpu12/cpufreq/scaling_governor": "powersave",
+      "cpu10/cpufreq/scaling_governor": "powersave",
+      "cpu8/cpufreq/scaling_governor": "powersave",
+      "cpu19/cpufreq/scaling_governor": "powersave",
+      "cpu6/cpufreq/scaling_governor": "powersave",
+      "cpu17/cpufreq/scaling_governor": "powersave",
+      "cpu4/cpufreq/scaling_governor": "powersave",
+      "cpu15/cpufreq/scaling_governor": "powersave",
+      "cpu2/cpufreq/scaling_governor": "powersave",
+      "cpu13/cpufreq/scaling_governor": "powersave",
+      "cpu0/cpufreq/scaling_governor": "powersave"
+    },
+    "cache": "Normal OS filesystem cache retained; fresh compiler process for every run.",
+    "initial_loadavg": "1.51 2.08 2.09 2/1837 665297"
+  },
+  "profile": {
+    "warmups": 1,
+    "recorded_runs": 3,
+    "wall_cutoff_seconds": 600,
+    "observed_rss_cutoff_bytes": 4294967296,
+    "sample_interval_seconds": 0.05,
+    "peak_source": "wait4 ru_maxrss KiB * 1024",
+    "aggregation": "median wall and maximum RSS only when all runs are correct"
+  },
+  "selection": [
+    "modules-chain-1"
+  ],
+  "cells": [
+    {
+      "name": "modules-chain-1",
+      "axis": "modules",
+      "size": 1,
+      "runs": [
+        {
+          "kind": "warmup",
+          "loadavg": "1.51 2.08 2.09 2/1837 665297",
+          "command": [
+            "A",
+            "check",
+            "modules-chain-1/mognitio.toml"
+          ],
+          "input_unchanged": true,
+          "input_failure": null,
+          "correct": false,
+          "seconds": 0.050725975015666336,
+          "peak_rss_raw": 35056,
+          "peak_rss_unit": "KiB",
+          "peak_rss_bytes": 35897344,
+          "exit": 1,
+          "signal": null,
+          "cutoff": null,
+          "harness_failure": null,
+          "sample_interval_seconds": 0.05,
+          "rss_exit_grace_seconds": 0.1,
+          "last_sample": {
+            "seconds": 0.0005224840133450925,
+            "rss_bytes": 946176
+          },
+          "sample_count": 1,
+          "streams": {
+            "stdout": {
+              "file": "stdout",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "stderr": {
+              "file": "stderr",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            }
+          }
+        }
+      ],
+      "completed": false,
+      "not_run": [
+        {
+          "kind": "run-1",
+          "reason": "Earlier run failed; no replacement or success-only aggregation."
+        },
+        {
+          "kind": "run-2",
+          "reason": "Earlier run failed; no replacement or success-only aggregation."
+        },
+        {
+          "kind": "run-3",
+          "reason": "Earlier run failed; no replacement or success-only aggregation."
+        }
+      ]
+    }
+  ],
+  "all_selected_completed": false,
+  "full_profile_selected": false
+}

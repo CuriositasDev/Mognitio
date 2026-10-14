@@ -1,0 +1,20 @@
+namespace Mgnc\InputDiagnostics;
+use Mgnc\Data\{describe};
+use Mgnc\InputData\{InputError};
+use Mgnc\TextUtil\{code,at};
+public let escapePath:Function(String):String=function(path:String):String{
+ var result:String="";let digits:List<String>="0123456789abcdef"->scalars();
+ loop over(path->scalars() as c:String){
+  let n:Int=code(c);
+  branch when{c=="\\"=>{result=result+"\\\\";},c=="\n"=>{result=result+"\\n";},c=="\r"=>{result=result+"\\r";},c=="\t"=>{result=result+"\\t";},
+  (n>=0&&n<32)||n==127=>{result=result+"\\u{"+at(digits,n/16)+at(digits,n%16)+"}";},else=>{result=result+c;}};
+ };result
+};
+public let message:Function(InputError):String=function(error:InputError):String{
+ let path:String=escapePath(error->path);
+ branch when{error->positionKnown=>describe(path,error->diagnostic),else=>{
+  "mgnc: "+error->diagnostic->phase+": "+path+": position unknown: "+
+  branch when{error->operation!=""=>error->operation+" / ",else=>""}+error->diagnostic->message+
+  branch when{error->ioPhase!=""=>" / "+error->ioPhase,else=>""}+"\n"
+ }}
+};

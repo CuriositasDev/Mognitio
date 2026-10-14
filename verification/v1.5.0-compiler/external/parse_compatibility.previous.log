@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<repository>/tests/mgnc/parse_compatibility.py", line 24, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "<repository>/tests/mgnc/parse_compatibility.py", line 17, in main
+    assert (normal.returncode,normal.stdout,normal.stderr)==(0,b'',b''),(name,normal)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('witness', CompletedProcess(args=[PosixPath('<repository>/bin/mgn'), 'run', PosixPath('<temporary>/witness/mognitio.toml')], returncode=3, stdout=b'', stderr=b'mgn: internal: SBCL is required\n'))

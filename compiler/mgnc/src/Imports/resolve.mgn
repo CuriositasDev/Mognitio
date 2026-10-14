@@ -1,0 +1,101 @@
+namespace Mgnc\Imports;
+use Mgnc\InputDiagnostics\{escapePath};
+use Mgnc\NameIndex\{Index,create as createIndex,insert};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\InputData\{InputError};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Import,Introduction,Parameter as MgncParameter};
+use Mgnc\Headers\{sourceError};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\DependencyGraph\{Graph,Edge,Order,sort};
+use Mgnc\NameHash\{hash};
+public let reserved:Function(String):Bool=function(name:String):Bool{
+ var result:Bool=false;
+ loop over(List<String>["Int","Bool","Unit","String","List","Result","Function","IndexError","SliceError","Self"] as word:String){branch when{word==name=>{result=true;break;},else=>unit};};result
+};
+public let resolve:Function(Headers):Result<Headers,InputError>=function(headers:Headers):Result<Headers,InputError>{
+ var names:Paged<Introduction>=headers->names;var edges:List<Edge>=List<Edge>[];
+ var exports:Paged<List<Int>>=empty<List<Int>>();var bucketIndex:Int=0;
+ loop while(bucketIndex<257){exports=push<List<Int>>(exports,List<Int>[]);bucketIndex=bucketIndex+1;};
+ var exportedIndex:Int=0;
+ loop while(exportedIndex<headers->declarations->count){
+  let current:Declaration=branch on lookup<Declaration>(headers->declarations,exportedIndex){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
+  branch when{current->exported=>{
+   let owner:Module=branch on lookup<Module>(headers->modules,current->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+   let key:Int=hash(owner->nameSpace,current->name);
+   let bucket:List<Int>=branch on lookup<List<Int>>(exports,key){Result<List<Int>,Diagnostic>::Ok(value:List<Int>)=>value,Result<List<Int>,Diagnostic>::Err(error:Diagnostic)=>panic{"export bucket invariant"}};
+   loop over(bucket as earlier:Int){
+    let previous:Declaration=branch on lookup<Declaration>(headers->declarations,earlier){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
+    branch when{previous->name==current->name=>{
+     let module:Module=branch on lookup<Module>(headers->modules,previous->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+     branch when{module->nameSpace==owner->nameSpace=>{return Result<Headers,InputError>::Err(sourceError(owner->source,problem("semantic",current->span,"duplicate public name")));},else=>unit};
+    },else=>unit};
+   };
+   exports=branch on replaceItem<List<Int>>(exports,key,bucket->append(exportedIndex)){Result<Paged<List<Int>>,Diagnostic>::Ok(value:Paged<List<Int>>)=>value,Result<Paged<List<Int>>,Diagnostic>::Err(error:Diagnostic)=>panic{"export bucket invariant"}};
+  },else=>unit};exportedIndex=exportedIndex+1;
+ };
+ var fileNames:Paged<List<Int>>=empty<List<Int>>();var nameBuckets:Paged<Index>=empty<Index>();
+ var file:Int=0;
+ loop while(file<headers->modules->count){
+  let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+  var visible:List<Int>=List<Int>[];
+  loop over(module->declarations as nameIndex:Int){
+   let introduction:Introduction=branch on lookup<Introduction>(headers->names,nameIndex){Result<Introduction,Diagnostic>::Ok(value:Introduction)=>value,Result<Introduction,Diagnostic>::Err(error:Diagnostic)=>panic{"name arena invariant"}};
+   branch when{introduction->file!=file||introduction->declaration!=nameIndex=>{panic{"direct introduction identity invariant"};},else=>unit};
+   visible=visible->append(nameIndex);
+  };
+  loop over(module->declarations as id:Int){
+   let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
+   branch when{reserved(declared->name)=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",declared->span,"reserved declaration name")));},else=>unit};
+   var parameterNames:List<String>=List<String>[];
+   loop over(declared->parameters as parameter:MgncParameter){
+    var duplicate:Bool=parameter->name==declared->name||reserved(parameter->name);
+    loop over(parameterNames as previous:String){branch when{previous==parameter->name=>{duplicate=true;},else=>unit};};
+    branch when{duplicate=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",parameter->span,"generic parameter name is already declared")));},else=>unit};
+    parameterNames=parameterNames->append(parameter->name);
+   };
+  };
+  loop over(module->imports as imported:Import){
+   var target:Int= -1;
+   let bucket:List<Int>=branch on lookup<List<Int>>(exports,hash(imported->nameSpace,imported->name)){Result<List<Int>,Diagnostic>::Ok(value:List<Int>)=>value,Result<List<Int>,Diagnostic>::Err(error:Diagnostic)=>panic{"export bucket invariant"}};
+   loop over(bucket as index:Int){
+    let declaration:Declaration=branch on lookup<Declaration>(headers->declarations,index){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
+    branch when{declaration->name==imported->name=>{
+     let owner:Module=branch on lookup<Module>(headers->modules,declaration->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+     branch when{owner->nameSpace==imported->nameSpace=>{target=index;break;},else=>unit};
+    },else=>unit};
+   };
+   branch when{target<0=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"public import is not defined")));},else=>unit};
+   let declaration:Declaration=branch on lookup<Declaration>(headers->declarations,target){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
+   branch when{declaration->file==file=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"cannot import from the same source file")));},
+    reserved(imported->local)=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"reserved import name")));},else=>unit};
+   loop over(visible as visibleId:Int){
+    let previous:Introduction=branch on lookup<Introduction>(names,visibleId){Result<Introduction,Diagnostic>::Ok(value:Introduction)=>value,Result<Introduction,Diagnostic>::Err(error:Diagnostic)=>panic{"name arena invariant"}};
+    branch when{previous->name==imported->local||previous->declaration==target=>{
+     return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"duplicate import name or original declaration")));
+    },else=>unit};
+   };
+   visible=visible->append(names->count);
+   names=push<Introduction>(names,Introduction{file:file,name:imported->local,declaration:target,imported:true,span:imported->span});
+   edges=edges->append(Edge{owner:file,target:declaration->file,file:file,span:imported->span});
+  };
+  var named:Index=createIndex();
+  loop over(visible as id:Int){
+   let entry:Introduction=branch on lookup<Introduction>(names,id){Result<Introduction,Diagnostic>::Ok(value:Introduction)=>value,Result<Introduction,Diagnostic>::Err(error:Diagnostic)=>panic{"name arena invariant"}};
+   named=branch on insert(named,entry->name,id){Result<Index,Diagnostic>::Ok(value:Index)=>value,Result<Index,Diagnostic>::Err(error:Diagnostic)=>panic{"name index invariant"}};
+  };
+  nameBuckets=push<Index>(nameBuckets,named);
+  fileNames=push<List<Int>>(fileNames,visible);file=file+1;
+ };
+ var vertices:List<Int>=List<Int>[];file=0;loop while(file<headers->modules->count){vertices=vertices->append(file);file=file+1;};
+ let ordered:Order=branch on sort(Graph{vertices:vertices,edges:edges,size:headers->modules->count}){
+  Result<Order,Diagnostic>::Ok(value:Order)=>value,
+  Result<Order,Diagnostic>::Err(error:Diagnostic)=>panic{"import graph invariant"}
+ };
+ loop over(ordered->cycle as edge:Edge){
+  let module:Module=branch on lookup<Module>(headers->modules,edge->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+  let target:Module=branch on lookup<Module>(headers->modules,edge->target){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
+  return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->span,"cyclic source imports through "+escapePath(target->source->displayPath))));
+ };
+ let order:List<Int>=ordered->values;
+ Result<Headers,InputError>::Ok(Headers{input:headers->input,modules:headers->modules,declarations:headers->declarations,names:names,fileNames:fileNames,nameBuckets:nameBuckets,order:order})
+};

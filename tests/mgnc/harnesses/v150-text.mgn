@@ -1,0 +1,12 @@
+namespace Mgnc;
+use Mgnc\TextUtil\{code,scalar,keyword};
+use Std\Io\{writeStdout};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ var i:Int=0;loop while(i<128){branch when{code(scalar(i))!=i=>{return 1;},else=>unit};i=i+1;};
+ loop over(List<String>["","aa","é","😀"] as value:String){branch when{code(value)!= -1=>{return 2;},else=>unit};};
+ loop over(List<String>["assert","alias","as","branch","break","continue","contract","discard","else","function","implements","let","loop","on","over","panic","product","return","sum","template","try","type","var","when","while","witness","true","false","unit","namespace","use","public"] as value:String){
+  branch when{!keyword(value)=>{return 3;},else=>unit};
+ };
+ loop over(List<String>["","Return","unknown","Assert","namespaceX","letx","xlet"] as value:String){branch when{keyword(value)=>{return 4;},else=>unit};};
+ discard writeStdout("TEXT_LOOKUP_OK ascii=128 keywords=32 invalid_ascii=4 invalid_keywords=7\n");0
+};

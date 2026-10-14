@@ -1,0 +1,47 @@
+namespace Mgnc\HeaderRead;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{parts,item,text,site};
+use Mgnc\BridgeLists\{reverse};
+use Mgnc\SemanticData\{Parameter,Import};
+use Mgnc\Grammar\{ruleValueParameter};
+public let path:Function(SyntaxForest,Int):Result<String,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<String,Diagnostic>{
+ var current:Int=id;var words:List<Int>=List<Int>[];
+ loop while(true){let children:List<Int>=try parts(tree,current);
+  branch when{children->length()==1=>{words=words->append(try item(children,0));break;},else=>unit};
+  words=words->append(try item(children,2));current=try item(children,0);
+ };
+ words=try reverse(words);var result:String="";
+ loop over(words as word:Int){result=result+branch when{result==""=>"",else=>"\\"}+(try text(tree,word));};
+ Result<String,Diagnostic>::Ok(result)
+};
+public let rightList:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{
+ let children:List<Int>=try parts(tree,id);var values:List<Int>=List<Int>[];
+ branch when{children->length()==0=>{return Result<List<Int>,Diagnostic>::Ok(values);},else=>unit};
+ values=values->append(try item(children,0));var rest:Int=try item(children,1);
+ loop while(true){let tail:List<Int>=try parts(tree,rest);branch when{tail->length()<3=>{break;},else=>unit};
+  values=values->append(try item(tail,1));rest=try item(tail,2);
+ };
+ Result<List<Int>,Diagnostic>::Ok(values)
+};
+public let parameters:Function(SyntaxForest,Int,Bool):Result<List<Parameter>,Diagnostic>=function(tree:SyntaxForest,id:Int,optional:Bool):Result<List<Parameter>,Diagnostic>{
+ var current:Int=id;var result:List<Parameter>=List<Parameter>[];
+ branch when{optional=>{let children:List<Int>=try parts(tree,id);branch when{children->length()==0=>{return Result<List<Parameter>,Diagnostic>::Ok(result);},else=>unit};current=try item(children,0);},else=>unit};
+ let children:List<Int>=try parts(tree,current);
+ let values:List<Int>=try rightList(tree,try item(children,1));
+ loop over(values as value:Int){
+  let node:ForestNode=try getNode(tree->nodes,value);let fields:List<Int>=try parts(tree,value);let name:Int=try item(fields,0);
+  result=result->append(Parameter{name:try text(tree,name),kind:branch when{node->rule==ruleValueParameter=>1,else=>0},node:branch when{node->rule==ruleValueParameter=>try item(fields,2),else=>name},span:try site(tree,name)});
+ };
+ Result<List<Parameter>,Diagnostic>::Ok(result)
+};
+public let imports:Function(SyntaxForest,Int):Result<List<Import>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Import>,Diagnostic>{
+ let children:List<Int>=try parts(tree,id);let nameSpace:String=try path(tree,try item(children,1));
+ let entries:List<Int>=try rightList(tree,try item(children,4));var result:List<Import>=List<Import>[];
+ loop over(entries as entry:Int){let fields:List<Int>=try parts(tree,entry);let name:Int=try item(fields,0);
+  let local:Int=branch when{fields->length()==3=>try item(fields,2),else=>name};
+  result=result->append(Import{nameSpace:nameSpace,name:try text(tree,name),local:try text(tree,local),span:try site(tree,name)});
+ };Result<List<Import>,Diagnostic>::Ok(result)
+};

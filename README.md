@@ -5,7 +5,7 @@ contracts and generic templates, and first-class functions with snapshot capture
 Version 1.4.0 extends the experimental [mgnc compiler](compiler/mgnc/README.md)
 with structural parsing of its complete source profile. Parse and native build
 share the same frontend; native generation retains the scalar 1.3 subset.
-The compiler is built explicitly from source with a fixed 1.2.0 seed. It is not
+That 1.4 compiler was built explicitly from source with a fixed 1.2.0 seed. It is not
 included in Debian packages, APT installations or offline bundles, and does not
 replace the normal backend. Parsing the compiler source is separate from
 self-compilation. The [1.4 acceptance record](verification/v1.4.0-review.md) covers
@@ -39,7 +39,13 @@ The unreleased Lisp capability for 1.5 adds explicit
 final symlink. Identities support same-type equality and ordinary value storage.
 The existing I/O enums and error records retain their shapes.
 See the [Lisp implementation record](verification/v1.5.0-lisp.md).
-This increment does not implement the 1.5 `mgnc` semantic checker or freeze its seed.
+The experimental 1.5 mgnc implementation adds complete project semantics shared
+by check and build, including nominal/generic types, captures, constraints and
+all required bodies. Build then selects the inherited native subset.
+Its [replacement seed](verification/v1.5.0-seed2.md) is frozen separately, with the
+original seed retained. See the [compiler implementation and validation record](verification/v1.5.0-compiler.md)
+for the fixed source/artifact identities and verification stage. Formal performance
+budget adoption, final compiler acceptance and release remain separate.
 
 ## Start here
 

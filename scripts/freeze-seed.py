@@ -21,6 +21,11 @@ def verify(root):
 def freeze(a):
     repo=a.repository.resolve()
     commit=subprocess.check_output(["git","rev-parse",a.commit+"^{commit}"],cwd=repo,text=True).strip()
+    evidence=a.acceptance_evidence or ["verification/v1.5.0-lisp.md","verification/v1.5.0-lisp/diagnostic-cumulative-ubuntu26.txt"]
+    for name in evidence:
+        path=Path(name)
+        if path.is_absolute() or ".." in path.parts: raise ValueError("Acceptance evidence must be repository-relative")
+        subprocess.check_call(["git","cat-file","-e",commit+":"+path.as_posix()],cwd=repo)
     a.output.mkdir(parents=True,exist_ok=True)
     destination=a.output.resolve()/("lisp-"+commit)
     if destination.exists(): raise ValueError("Immutable seed destination already exists")
@@ -73,7 +78,7 @@ mgn_launch() {
         shutil.copy2(__file__,root/"freeze-seed.py")
         dump(root/"acceptance.json",{"sourceCommit":commit,"acceptedDate":a.accepted_date,
              "authority":"Explicit user acceptance of the reviewed Lisp implementation",
-             "evidence":["source/verification/v1.5.0-lisp.md","source/verification/v1.5.0-lisp/diagnostic-cumulative-ubuntu26.txt"]})
+             "evidence":["source/"+Path(name).as_posix() for name in evidence]})
         packages=[]
         for block in (system/"var/lib/dpkg/status").read_text().split("\n\n"):
             values=dict(line.split(": ",1) for line in block.splitlines() if ": " in line and not line.startswith(" "))
@@ -100,6 +105,7 @@ mgn_launch() {
 if __name__=="__main__":
     p=argparse.ArgumentParser()
     p.add_argument("--verify",type=Path)
+    p.add_argument("--acceptance-evidence",action="append",help="Repository-relative accepted evidence; repeat for multiple records")
     for key in ("repository","runtime-root","system-root","output"): p.add_argument("--"+key,type=Path)
     for key in ("commit","docs-revision","accepted-date","image-digest"): p.add_argument("--"+key)
     args=p.parse_args()

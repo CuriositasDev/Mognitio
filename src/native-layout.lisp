@@ -43,10 +43,29 @@
                  thereis (or (some (lambda (p) (contains (cdr p))) (mognitio.semantic:type-info-fields info))
                              (some (lambda (v) (contains (mognitio.semantic:variant-info-types v)))
                                    (mognitio.semantic:type-info-variants info))))))))
+(defun runtime-file-identity-p ()
+  (labels ((contains (type) (or (eq type :file-identity) (and (consp type) (some #'contains type)))))
+    (and *runtime-module*
+         (or
+           (some (lambda (fn)
+                   (or (contains (mognitio.ir:ir-function-parameter-types fn))
+                       (contains (mognitio.ir:ir-function-result-type fn))
+                       (contains (mognitio.ir::ir-function-capture-types fn))
+                       (some (lambda (block)
+                               (or (some (lambda (p) (contains (cdr p))) (mognitio.ir:basic-block-parameters block))
+                                   (some (lambda (i) (contains (mognitio.ir:instruction-type i)))
+                                         (mognitio.ir:basic-block-instructions block))))
+                             (mognitio.ir:ir-function-blocks fn))))
+                 (mognitio.ir:module-functions *runtime-module*))
+           (loop for info across (mognitio.semantic:value-context-types (mognitio.ir:module-values *runtime-module*))
+                 thereis (or (some (lambda (p) (contains (cdr p))) (mognitio.semantic:type-info-fields info))
+                             (some (lambda (v) (contains (mognitio.semantic:variant-info-types v)))
+                                   (mognitio.semantic:type-info-variants info))))))))
 (defun descriptors (context)
   ;; Rows: symbol, kind, identity, variant, fixed word count, reference indices.
   ;; Buffer rows additionally carry their element reference classification.
   (append
+    (when (runtime-file-identity-p) (list (list (layout-name '(:file-identity)) 1 0 0 2 nil)))
     (when (runtime-bytes-p) (list (list (layout-name '(:bytes)) 7 0 0 1 nil)))
     (loop for info across (mognitio.semantic:value-context-types context) append
       (let ((id (mognitio.semantic:type-info-id info)))

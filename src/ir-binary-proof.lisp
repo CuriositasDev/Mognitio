@@ -45,6 +45,7 @@
               (error-is "standard:Std\\Binary#ByteValueError" '(("index" . :int) ("value" . :int)))))
         (:bytes.from-bits
          (and (null source) (equal types (list (list :buffer byte))) (eq result :bytes)))
+        ((:file-identity.equal :file-identity.not-equal) (and (null source) (equal types '(:file-identity :file-identity)) (eq result :bool)))
         ((:bytes.equal :bytes.not-equal) (and (null source) (equal types '(:bytes :bytes)) (eq result :bool)))
         (:bytes.length (and (eq source :bytes) (equal types '(:bytes)) (eq result :int)))
         (:bytes.append (and (eq source :bytes) (equal types (list :bytes byte)) (eq result :bytes)))

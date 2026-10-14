@@ -1,6 +1,8 @@
 (in-package #:mognitio.ir)
 
 (defun verify-io-instruction (instruction types context caller functions)
+  (when (eq (instruction-value instruction) :inspect-path)
+    (return-from verify-io-instruction (verify-path-inspection-instruction instruction types context caller functions)))
   (let* ((operation (instruction-value instruction)) (result (instruction-type instruction))
          (args (mognitio.semantic::canonical-result-arguments context result))
          (error-type (second args))

@@ -1,0 +1,16 @@
+(in-package #:mognitio.semantic)
+
+(defun path-identity-declaration-p (node)
+  (and (typep node 'data-declaration)
+       (eq (mognitio.source::source-origin (span-source (node-span node))) :standard)
+       (equal (token-text (data-declaration-name node)) "standard:Std\\Io#FileIdentity")))
+(defun declare-path-identity (context node)
+  (setf (gethash (token-text (data-declaration-name node)) (value-context-names context)) :file-identity
+        (gethash node (value-context-members context)) (make-member-info :kind :builtin-type))
+  :file-identity)
+(defun verify-path-identity (node type)
+  (v-check (and (eq type :file-identity) (path-identity-declaration-p node)
+                (eq :struct (data-declaration-kind node)) (null (data-declaration-target node))
+                (zerop (length (data-declaration-members node)))
+                (zerop (length (data-declaration-type-parameters node))))
+           "Invalid builtin FileIdentity identity"))

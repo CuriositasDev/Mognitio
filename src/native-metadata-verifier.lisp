@@ -2,7 +2,7 @@
 
 (defun verify-native-metadata (module bytes symbols)
   ;; Read encoded words, independently of the descriptor/metadata producer.
-  (let ((seen (make-hash-table :test #'equal)) (lists nil) (bytes-p nil)
+  (let ((seen (make-hash-table :test #'equal)) (lists nil) (bytes-p nil) (identity-p nil)
         (context (mognitio.ir:module-values module)))
     (labels ((ensure (ok) (unless ok (internal-error "Invalid encoded native metadata")))
              (offset (name)
@@ -17,12 +17,13 @@
                    (ensure (= word (loop for i below 8 sum (ash (aref bytes (+ at i)) (* i 8)))))))
                (setf (gethash name seen) t))
              (reference (type)
-               (or (member type '(:string :bytes)) (and (consp type) (member (car type) '(:function :list :buffer :struct :enum :interface)))))
+               (or (member type '(:string :bytes :file-identity)) (and (consp type) (member (car type) '(:function :list :buffer :struct :enum :interface)))))
              (row (name kind identity variant slots &optional buffer)
                (let ((refs (loop for type in slots for i from 0 when (reference type) collect i)))
                  (record name (append (list kind identity variant (length slots) (length refs)) refs buffer))))
              (note (type)
                (when (eq type :bytes) (setf bytes-p t))
+               (when (eq type :file-identity) (setf identity-p t))
                (when (consp type)
                  (case (first type)
                    (:list (pushnew type lists :test #'equal) (note (second type)))
@@ -85,6 +86,7 @@
               (unless captures
                 (record (list :static-object :closure id)
                         (list 40 69 (address descriptor) 0 (address (list :function id)))))))))
+      (when identity-p (record '(:layout (:file-identity)) '(1 0 0 2 0)))
       (when bytes-p
         (record '(:layout (:bytes)) '(7 0 0 1 0))
         (record '(:static-object :bytes 0) (list 40 117 (address '(:layout (:bytes))) 0 0)))

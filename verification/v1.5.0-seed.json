@@ -1,0 +1,8 @@
+{
+  "bundle": "lisp-f0e582da5f97467544e861d0ad3390b2cd9776b4.tar.gz",
+  "bytes": 26813210,
+  "manifestSha256": "53354237caeedaa6a07ca803500557436510b3a7a49e1e7dddc55cb74a25dde4",
+  "schema": 1,
+  "sha256": "7bd296dd10b2a09640d337f98777900c5d3d19c18159677a6e12233455d4c63b",
+  "sourceCommit": "f0e582da5f97467544e861d0ad3390b2cd9776b4"
+}

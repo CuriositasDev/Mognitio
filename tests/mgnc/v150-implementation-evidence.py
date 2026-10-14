@@ -10,6 +10,7 @@ identity=read("external/identity.json");artifact=sha(a.compiler.read_bytes())
 assert artifact==identity["compiler_sha256"]
 files=[{"path":x.relative_to(ROOT).as_posix(),"bytes":x.stat().st_size,"sha256":sha(x.read_bytes())} for x in sorted((ROOT/"compiler/mgnc/src").rglob("*.mgn"))]
 assert files==identity["inventory"]
+assert sha((ROOT/"compiler/mgnc/mognitio.toml").read_bytes())==identity["manifest_sha256"]
 assert sha("".join(x["sha256"]+"  "+x["path"]+"\n" for x in files).encode())==identity["inventory_sha256"]
 assert identity["seed_receipt"]==json.loads((ROOT/"verification/v1.5.0-seed2.json").read_text())
 export=read("export.json")
@@ -30,7 +31,8 @@ for name in ["corpus-C0-r2","corpus-C1"]:
  assert record["compiler_sha256"]==artifact and record["passed"] and record["exit"]==0
  assert record["cutoff"] is None and record["harness_failure"] is None
  assert all(s["bytes"]==0 for s in record["streams"].values())
- if name.endswith("C1"):assert record["inventory_sha256"]==identity["inventory_sha256"]
+ if name.endswith("C1"):
+  assert record["inventory_sha256"]==identity["inventory_sha256"] and record["manifest_sha256"]==identity["manifest_sha256"]
 mutations=read("external/mutations-final.json")
 assert mutations["compiler_sha256"]==artifact and mutations["passed"] and len(mutations["records"])==7
 assert all(row["passed"] for row in mutations["records"])
@@ -38,7 +40,15 @@ for corpus in ["C0","C1"]:
  record=read("internal/coverage-"+corpus+".json")
  assert record["passed"] and record["membership_matches"] and record["exit"]==0 and record["completed_bodies"]>0
  assert record["source_files"]==(57 if corpus=="C0" else len(files))
-for row in read("internal/runner.json"):assert row["exit"]==0,row
+internal=read("internal/runner.json")
+expected={"v150-input","v150-headers","v150-types","v150-graph","v150-int-map","v150-text","v150-layout","driver-internal","classification_order","v150-coverage--C0","v150-coverage--C1","v150-measure-harness"}
+assert len(internal)==len(expected) and {r["name"] for r in internal}==expected
+for row in internal:assert row["exit"]==0,row
+normal=read("external/normal-suite.json")
+assert normal["exit"]==normal["failures"]==0 and normal["lisp_groups"]==232 and normal["assertions"]==34098
+normal_log=(a.evidence/"v150-final40-lisp.log").read_text()
+assert "Tests=232 Assertions=34098 Processes=1314 Failures=0" in normal_log
+assert "v1.5 path inspection integration checks=55 failures=0" in normal_log
 order=read("internal/classification-order.json")
 assert order["reverse_prediction"] and order["force_full_classification"] and order["exit"]==0
 assert order["observations"]["passed"] and len(order["observations"]["records"])==20
@@ -59,6 +69,8 @@ parse=read("external/parse-measure.json");manifest=read("external/parse-fixtures
 assert parse["manifest_sha256"]==sha((a.evidence/"external/parse-fixtures.json").read_bytes())
 assert parse["compiler_sha256"]==artifact and parse["passed"] and not parse["preflight"]
 assert len(parse["records"])==6*len(manifest["cases"])
+assert {group:sum(c["group"]==group for c in manifest["cases"]) for group in ["C0","C1","scale"]}=={"C0":25,"C1":len(files),"scale":35}
+assert manifest["identities"]["C1"]["manifest_sha256"]==identity["manifest_sha256"]
 assert {r["name"]:r["sha256"] for r in manifest["cases"] if r["group"]=="C1"}=={r["path"]:r["sha256"] for r in files}
 for case in manifest["cases"]:
  rows=[r for r in parse["records"] if (r["group"],r["name"])==(case["group"],case["name"])]
@@ -73,7 +85,8 @@ assert profile["fixture_manifest_sha256"]==sha((a.evidence/"external/semantic-fi
 assert profile["compiler_sha256"]==artifact and profile["stage"]=="preliminary-only" and profile["formal_budget_adopted"] is False
 assert profile.get("all_selected_completed",False) and profile.get("full_profile_selected",False),"preliminary profile incomplete"
 assert len(profile["cells"])==len(fixtures["cells"])==118
-assert next(c for c in fixtures["cells"] if c["name"]=="C1")["inventory_sha256"]==identity["inventory_sha256"]
+c1=next(c for c in fixtures["cells"] if c["name"]=="C1")
+assert c1["inventory_sha256"]==identity["inventory_sha256"] and c1["manifest_sha256"]==identity["manifest_sha256"]
 assert {c["name"] for c in profile["cells"]}=={c["name"] for c in fixtures["cells"]}
 streams={row["path"]:row for row in read("external/preliminary/streams.json")["streams"]}
 assert len(streams)==118*4*2

@@ -38,8 +38,25 @@ public let argumentsEqual:Function(List<Argument>,List<Argument>):Bool=function(
  loop over(a as left:Argument){let right:Argument=branch on b->at(index){Result<Argument,IndexError>::Ok(value:Argument)=>value,Result<Argument,IndexError>::Err(error:IndexError)=>panic{"argument vector invariant"}};
   branch when{!argumentEqual(left,right)=>{return false;},else=>unit};index=index+1;};true
 };
-public let withTypes:Function(Store,Paged<Type>):Store=function(store:Store,types:Paged<Type>):Store{
- Store{headers:store->headers,types:types,declarations:store->declarations,constraints:store->constraints}
+let hash:Function(Type):Int=function(shape:Type):Int{
+ var value:Int=shape->kind;value=(value*131+branch on shape->owner{Parent::None=>0,Parent::Some(owner:Int)=>owner%4093+1})%4093;
+ loop over(shape->arguments as argument:Argument){
+  branch on argument{
+   Argument::Type(id:Int)=>{value=(value*131+id%4093+1)%4093;},
+   Argument::Value(term:ValueTerm)=>{
+    value=(value*131+7)%4093;
+    branch on term->parameter{Parent::None=>{let reduced:Int=term->value%4093;value=(value*131+reduced+4093)%4093;},
+     Parent::Some(ordinal:Int)=>{value=(value*131+term->owner%4093+1)%4093;value=(value*131+ordinal%4093+1)%4093;}};
+   }
+  };
+ };value
+};
+let cached:Function(Store,Type):Result<Parent,Diagnostic>=function(store:Store,shape:Type):Result<Parent,Diagnostic>{
+ let bucket:List<Int>=try lookup<List<Int>>(store->buckets,hash(shape));
+ loop over(bucket as index:Int){
+  let candidate:Type=try lookup<Type>(store->types,index);
+  branch when{candidate->kind==shape->kind&&parentEqual(candidate->owner,shape->owner)&&argumentsEqual(candidate->arguments,shape->arguments)=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
+ };Result<Parent,Diagnostic>::Ok(Parent::None)
 };
 public let initialize:Function(Headers):Store=function(headers:Headers):Store{
  var types:Paged<Type>=empty<Type>();var kind:Int=0;
@@ -52,17 +69,18 @@ public let initialize:Function(Headers):Store=function(headers:Headers):Store{
  };
  var declarations:Paged<Parent>=empty<Parent>();var constraints:Paged<List<Obligation>>=empty<List<Obligation>>();
  var index:Int=0;loop while(index<headers->declarations->count){declarations=push<Parent>(declarations,Parent::None);constraints=push<List<Obligation>>(constraints,List<Obligation>[]);index=index+1;};
- Store{headers:headers,types:types,declarations:declarations,constraints:constraints}
+ var buckets:Paged<List<Int>>=empty<List<Int>>();index=0;loop while(index<4093){buckets=push<List<Int>>(buckets,List<Int>[]);index=index+1;};
+ index=0;loop while(index<types->count){
+  let shape:Type=branch on lookup<Type>(types,index){Result<Type,Diagnostic>::Ok(value:Type)=>value,Result<Type,Diagnostic>::Err(error:Diagnostic)=>panic{"primitive type invariant"}};
+  buckets=branch on replaceItem<List<Int>>(buckets,hash(shape),List<Int>[index]){Result<Paged<List<Int>>,Diagnostic>::Ok(value:Paged<List<Int>>)=>value,Result<Paged<List<Int>>,Diagnostic>::Err(error:Diagnostic)=>panic{"primitive bucket invariant"}};index=index+1;
+ };
+ Store{headers:headers,types:types,buckets:buckets,declarations:declarations,constraints:constraints}
 };
 public let intern:Function(Store,Type):Result<Formed,Diagnostic>=function(store:Store,shape:Type):Result<Formed,Diagnostic>{
- var index:Int=0;
- loop while(index<store->types->count){
-  let candidate:Type=try lookup<Type>(store->types,index);
-  branch when{candidate->kind==shape->kind&&parentEqual(candidate->owner,shape->owner)&&argumentsEqual(candidate->arguments,shape->arguments)=>{
-   return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:index,obligations:List<Obligation>[]});
-  },else=>unit};index=index+1;
- };
- Result<Formed,Diagnostic>::Ok(Formed{store:withTypes(store,push<Type>(store->types,shape)),value:index,obligations:List<Obligation>[]})
+ branch on try cached(store,shape){Parent::Some(id:Int)=>{return Result<Formed,Diagnostic>::Ok(Formed{store:store,value:id,obligations:List<Obligation>[]});},Parent::None=>unit};
+ let index:Int=store->types->count;let bucketId:Int=hash(shape);let bucket:List<Int>=try lookup<List<Int>>(store->buckets,bucketId);
+ let updated:Store=Store{headers:store->headers,types:push<Type>(store->types,shape),buckets:try replaceItem<List<Int>>(store->buckets,bucketId,bucket->append(index)),declarations:store->declarations,constraints:store->constraints};
+ Result<Formed,Diagnostic>::Ok(Formed{store:updated,value:index,obligations:List<Obligation>[]})
 };
 public let concreteValue:Function(Int):ValueTerm=function(value:Int):ValueTerm{ValueTerm{parameter:Parent::None,owner:0,value:value}};
 public let argumentAt:Function(List<Argument>,Int,Span):Result<Argument,Diagnostic>=function(arguments:List<Argument>,index:Int,span:Span):Result<Argument,Diagnostic>{
@@ -82,6 +100,11 @@ let mapped:Function(Paged<Parent>,Int,Span):Result<Int,Diagnostic>=function(memo
 };
 public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,Diagnostic>=function(initial:Store,root:Int,owner:Int,arguments:List<Argument>,span:Span):Result<Formed,Diagnostic>{
  branch when{arguments->length()==0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:root,obligations:List<Obligation>[]});},else=>unit};
+ let rootShape:Type=try lookup<Type>(initial->types,root);
+ branch when{parentEqual(rootShape->owner,Parent::Some(owner))&&rootShape->kind!=parameterKind=>{
+  branch on try cached(initial,Type{kind:rootShape->kind,owner:rootShape->owner,arguments:arguments,members:List<Member>[]}){
+   Parent::Some(existing:Int)=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:existing,obligations:List<Obligation>[]});},Parent::None=>unit};
+ },else=>unit};
  var store:Store=initial;var memo:Paged<Parent>=empty<Parent>();var index:Int=0;
  loop while(index<initial->types->count){memo=push<Parent>(memo,Parent::None);index=index+1;};
  var stack:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,parent:-1});var active:Int=0;
@@ -91,6 +114,9 @@ public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,
    let ordinal:ValueTerm=branch on try argumentAt(shape->arguments,0,span){Argument::Value(value:ValueTerm)=>value,Argument::Type(value:Int)=>{return Result<Formed,Diagnostic>::Err(problem("internal",span,"parameter ordinal shape"));}};
    let value:Int=branch on try argumentAt(arguments,ordinal->value,span){Argument::Type(actual:Int)=>actual,Argument::Value(actual:ValueTerm)=>{return Result<Formed,Diagnostic>::Err(problem("type",span,"expected type argument"));}};
    memo=try replaceItem<Parent>(memo,visit->id,Parent::Some(value));active=visit->parent;continue;
+  },else=>unit};
+  branch when{shape->arguments->length()==0=>{
+   memo=try replaceItem<Parent>(memo,visit->id,Parent::Some(visit->id));active=visit->parent;continue;
   },else=>unit};
   var children:List<Int>=List<Int>[];
   loop over(shape->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{children=children->append(id);},Argument::Value(value:ValueTerm)=>unit};};

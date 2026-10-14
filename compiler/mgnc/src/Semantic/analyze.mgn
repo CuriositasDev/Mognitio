@@ -54,7 +54,7 @@ let body:Function(State,Int):Result<State,Diagnostic>=function(initial:State,id:
  branch when{generic=>{
   var constraints:List<Obligation>=try lookup<List<Obligation>>(state->types->constraints,id);var index:Int=0;
   loop over(state->obligations as requirement:Obligation){branch when{index>=before=>{constraints=constraints->append(requirement);},else=>unit};index=index+1;};
-  let types:Store=Store{headers:state->types->headers,types:state->types->types,declarations:state->types->declarations,constraints:try replaceItem<List<Obligation>>(state->types->constraints,id,constraints)};
+  let types:Store=Store{headers:state->types->headers,types:state->types->types,buckets:state->types->buckets,declarations:state->types->declarations,constraints:try replaceItem<List<Obligation>>(state->types->constraints,id,constraints)};
   state=withTypes(state,types,List<Obligation>[]);
  },else=>unit};
  Result<State,Diagnostic>::Ok(State{types:state->types,nodes:state->nodes,symbols:state->symbols,globals:state->globals,functions:state->functions,loops:state->loops,obligations:state->obligations,bodies:try replaceItem<BodyState>(state->bodies,id,BodyState::Complete(checked->root))})

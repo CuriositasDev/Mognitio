@@ -69,7 +69,7 @@ public let define:Function(Store,Int):Result<Store,Diagnostic>=function(initial:
   let formed:Formed=try intern(store,Type{kind:kind,owner:Parent::Some(id),arguments:generic->arguments,members:members});
   store=formed->store;value=formed->value;
  }};
- Result<Store,Diagnostic>::Ok(Store{headers:store->headers,types:store->types,
+ Result<Store,Diagnostic>::Ok(Store{headers:store->headers,types:store->types,buckets:store->buckets,
  declarations:try replaceItem<Parent>(store->declarations,id,Parent::Some(value)),
  constraints:try replaceItem<List<Obligation>>(store->constraints,id,obligations)})
 };

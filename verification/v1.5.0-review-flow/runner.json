@@ -1,0 +1,244 @@
+[
+  {
+    "name": "classification",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/classification.json"
+    ],
+    "exit": 0,
+    "seconds": 1.1939925629994832
+  },
+  {
+    "name": "v150-conformance",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-conformance.json"
+    ],
+    "exit": 0,
+    "seconds": 4.378041834977921
+  },
+  {
+    "name": "v150-boundaries",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-boundaries.json"
+    ],
+    "exit": 0,
+    "seconds": 1.1791113060317002
+  },
+  {
+    "name": "v150-catalog",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-catalog.json"
+    ],
+    "exit": 0,
+    "seconds": 2.60732149501564
+  },
+  {
+    "name": "native",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/native.json"
+    ],
+    "exit": 0,
+    "seconds": 1.852130446000956
+  },
+  {
+    "name": "v150-inherited",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-inherited.json"
+    ],
+    "exit": 0,
+    "seconds": 1.7262558929505758
+  },
+  {
+    "name": "v150-review",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-review.json"
+    ],
+    "exit": 0,
+    "seconds": 1.114357276004739
+  },
+  {
+    "name": "parse_cases",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/parse_cases.json",
+      "--parse-only"
+    ],
+    "exit": 0,
+    "seconds": 0.4591142840217799
+  },
+  {
+    "name": "parse_compatibility",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/parse_compatibility.json"
+    ],
+    "exit": 0,
+    "seconds": 1.235338717000559
+  },
+  {
+    "name": "parse_driver",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/parse_driver.json"
+    ],
+    "exit": 0,
+    "seconds": 0.08909020904684439
+  },
+  {
+    "name": "v150-project-faults",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--evidence",
+      "<review-evidence>/v150-project-faults.json"
+    ],
+    "exit": 0,
+    "seconds": 0.7761981819639914
+  },
+  {
+    "name": "v150-semantics",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>"
+    ],
+    "exit": 0,
+    "seconds": 1.947631774994079
+  },
+  {
+    "name": "faults",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>"
+    ],
+    "exit": 0,
+    "seconds": 0.6686363029875793
+  },
+  {
+    "name": "driver",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--bindfs",
+      "<bindfs>"
+    ],
+    "exit": 0,
+    "seconds": 1.2658251009997912
+  },
+  {
+    "name": "v150-scale-fixtures",
+    "arguments": [
+      "--output",
+      "<review-evidence>/fixtures"
+    ],
+    "exit": 0,
+    "seconds": 0.25946332700550556
+  },
+  {
+    "name": "v150-corpus--C0",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--corpus",
+      "C0",
+      "--evidence",
+      "<review-evidence>/corpus-C0.json"
+    ],
+    "exit": 0,
+    "seconds": 110.19532467401586
+  },
+  {
+    "name": "v150-corpus--C1",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--corpus",
+      "C1",
+      "--evidence",
+      "<review-evidence>/corpus-C1.json"
+    ],
+    "exit": 0,
+    "seconds": 298.72131521400297
+  },
+  {
+    "name": "v150-corpus-mutations",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<review-evidence>/fixtures",
+      "--evidence",
+      "<review-evidence>/mutations.json"
+    ],
+    "exit": 0,
+    "seconds": 919.4497098400025
+  },
+  {
+    "name": "v150-isolated--24.04.5",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<review-evidence>/fixtures",
+      "--userland",
+      "<userlands>/24.04.5",
+      "--evidence",
+      "<review-evidence>/isolation-24.04.5.json"
+    ],
+    "exit": 0,
+    "seconds": 421.5287419729866
+  },
+  {
+    "name": "v150-isolated--26.04.1",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<review-evidence>/fixtures",
+      "--userland",
+      "<userlands>/26.04.1",
+      "--evidence",
+      "<review-evidence>/isolation-26.04.1.json"
+    ],
+    "exit": 0,
+    "seconds": 413.0714525220101
+  },
+  {
+    "name": "measure",
+    "arguments": [
+      "--compiler",
+      "<candidate-A>",
+      "--fixtures",
+      "<native-fixtures>",
+      "--evidence",
+      "<review-evidence>/native-measure.json"
+    ],
+    "exit": 0,
+    "seconds": 331.4587074259762
+  }
+]

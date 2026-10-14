@@ -1,0 +1,8 @@
+C150-F01-type True
+C150-F01-width True
+C150-F01-import True
+C150-F01-after-large True
+C150-G11-unknown-API True
+SC150-C06-signature True
+SC150-C06-identity True
+V150_CORPUS_MUTATIONS_OK checks=7

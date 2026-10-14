@@ -139,6 +139,10 @@ not switch the normal toolchain to mgnc.
   v150-review.py and v150-project-faults.py take --compiler A --evidence FILE.
   The versioned adapters retain explicit reasons for changed diagnostic phases.
 - v150-semantics.py --compiler A checks complete bodies and non-evaluation.
+- v150-review-flow.py --compiler A --evidence FILE checks unique Unknown operator
+  selection, ambiguous alternatives, module initializer reachability, compile-time
+  declarations, ordinary-call locality, and unused modules. Native successes are
+  executed; rejected builds must preserve an existing output.
 - classification_order.py --seed SEED --force-full-classification --evidence FILE
   reverses grammar prediction and forces the full classification path.
 - v150-coverage.py --seed SEED --corpus C0 --evidence FILE compares all modules,
@@ -176,3 +180,11 @@ This checks source/seed/artifact identities, input manifests, required results,
 isolation, sample counts, existing budgets, and exact preliminary stream bytes.
 It rejects incomplete preliminary data. Passing it records implementation
 verification; formal v1.5 performance-budget adoption remains a separate decision.
+
+The implementation-evidence command above validates the original fixed C1/A;
+run it at pre-correction integration revision
+6edf149259a1a5680127618b46c7b6442f425f94 with the original A. That revision
+contains the checker and evidence while preserving the recorded source inventory.
+A source or artifact mismatch is intentional rejection, not permission to relabel old data.
+The [flow review correction](../../verification/v1.5.0-review-flow.md) records
+its replacement candidate and affected verification separately.

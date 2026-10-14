@@ -1,0 +1,93 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "records": [
+    {
+      "corpus": "C0",
+      "case": "C150-F01-type",
+      "path": "mgnc.mgn",
+      "mutation_sha256": "207ff255e49f7c3b2e89c1bad85f7f3f1339c8ededf51c7aac68467a85255bb3",
+      "exit": 1,
+      "stderr": "mgnc: type: src/mgnc.mgn:5:19 [138,142): expression type does not match required type\n",
+      "primary": [
+        138,
+        142
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C0",
+      "case": "C150-F01-width",
+      "path": "mgnc.mgn",
+      "mutation_sha256": "89979e35ce397fe102cc8a215f119d4b8a7d813fc572861d54b2e1bd5288d549",
+      "exit": 1,
+      "stderr": "mgnc: type: src/mgnc.mgn:6:22 [165,166): generic width or literal range requirement is not satisfied\n",
+      "primary": [
+        165,
+        166
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C0",
+      "case": "C150-F01-import",
+      "path": "mgnc.mgn",
+      "mutation_sha256": "6de3674b2cfcd04626277dc5b25c9c7f94b98650be61f81466f31c90f2d60056",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/mgnc.mgn:2:18 [33,47): public import is not defined\n",
+      "primary": [
+        33,
+        47
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C0",
+      "case": "C150-F01-after-large",
+      "path": "Width/width.mgn",
+      "mutation_sha256": "36944ad84ea15dfd165b0e3661401d495e592fffa129ed422e5031d80bb81ce9",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/Width/width.mgn:151:21 [512136,512157): runtime name is not visible\n",
+      "primary": [
+        512136,
+        512157
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C1",
+      "case": "C150-G11-unknown-API",
+      "path": "Project/load.mgn",
+      "mutation_sha256": "cb8302c8c15c81df95b50f1d951773e56ed94189fc72f0c403146a064e6c5b10",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/Project/load.mgn:2:40 [63,77): public import is not defined\n",
+      "primary": [
+        63,
+        77
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C1",
+      "case": "SC150-C06-signature",
+      "path": "Project/load.mgn",
+      "mutation_sha256": "da0e9b3539fb98a4a1f3668502886dda229526fe92f26b9d1f21f6e366259021",
+      "exit": 1,
+      "stderr": "mgnc: type: src/Project/load.mgn:9:24 [627,632): expression type does not match required type\n",
+      "primary": [
+        627,
+        632
+      ],
+      "passed": true
+    },
+    {
+      "corpus": "C1",
+      "case": "SC150-C06-identity",
+      "path": "Project/load.mgn",
+      "mutation_sha256": "4c5426379d0416486463ebf2170dd411d93cdbb880aadd0d5040b74d0898b5c3",
+      "exit": 1,
+      "stderr": "mgnc: type: src/Project/load.mgn:91:59 [7776,7780): operator is not defined for this type structure\n",
+      "primary": null,
+      "passed": true
+    }
+  ]
+}

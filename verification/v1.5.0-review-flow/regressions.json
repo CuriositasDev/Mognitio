@@ -1,0 +1,997 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "cases": 36,
+  "records": [
+    {
+      "case": "unknown-neg-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-neg-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-neg-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-neg-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-neg",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-sub-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-sub-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-sub-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-sub-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-sub",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-mul-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-mul-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-mul-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-mul-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-mul",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-div-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-div-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-div-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-div-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-div",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-rem-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-rem-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-rem-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-rem-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-rem",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-lt-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-lt-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-lt-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-lt-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-lt",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-le-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-le-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-le-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-le-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-le",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-gt-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-gt-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-gt-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-gt-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-gt",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-ge-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-ge-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-ge-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-ge-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-ge",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-add-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-add-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-add-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-add",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-eq-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-eq-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-eq-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-eq",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-ne-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-ne-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-ne-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:83 [82,83): operator cannot be selected from unknown operand structures\n",
+      "passed": true
+    },
+    {
+      "case": "ambiguous-ne",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-not-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-not-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-not-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-not-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-not",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-and-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-and-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-and-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-and-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-and",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unknown-or-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-or-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-or-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "unknown-or-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unknown-or",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-int-left-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-left-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-left-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "known-int-left-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-left",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-int-right-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-right-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-right-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "known-int-right-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-int-right",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-string-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-string-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:83 [82,85): type is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "known-string-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-string",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-bool-eq-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-bool-eq-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-bool-eq-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "known-bool-eq-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-bool-eq",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-unit-eq-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-unit-eq-single",
+      "command": "build",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-unit-eq-single",
+      "command": "execute",
+      "exit": 7,
+      "passed": true
+    },
+    {
+      "case": "known-unit-eq-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-unit-eq",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-mismatch-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "known-mismatch-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,83): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "known-mismatch-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:83 [82,83): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "known-mismatch",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-invalid-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,86): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "known-invalid-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:83 [82,86): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "known-invalid-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:83 [82,86): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "known-invalid",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-fixed-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-fixed-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:138 [137,137): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "known-fixed-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-fixed",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "fixed-does-not-mix-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:108 [107,110): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "fixed-does-not-mix-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:108 [107,110): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "fixed-does-not-mix-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:108 [107,110): operator operands have different type structures\n",
+      "passed": true
+    },
+    {
+      "case": "fixed-does-not-mix",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "known-bits-eq-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-bits-eq-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:131 [130,130): native build requires one source without imports\n",
+      "passed": true
+    },
+    {
+      "case": "known-bits-eq-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "known-bits-eq",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "bits-no-sub-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:106 [105,109): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "bits-no-sub-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: type: <fixture>/app.mgn:1:106 [105,109): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "bits-no-sub-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: type: src/app.mgn:1:106 [105,109): operator is not defined for this type structure\n",
+      "passed": true
+    },
+    {
+      "case": "bits-no-sub",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unreachable-main-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:49 [48,52): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-main-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:49 [48,52): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-main-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/app.mgn:1:49 [48,52): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-main",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unreachable-var-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:120 [119,124): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-var-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:120 [119,124): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-var-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/app.mgn:1:120 [119,124): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unreachable-var",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "compile-time-does-not-reset-single",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:124 [123,127): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "compile-time-does-not-reset-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: semantic: <fixture>/app.mgn:1:124 [123,127): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "compile-time-does-not-reset-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/app.mgn:1:124 [123,127): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "compile-time-does-not-reset",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "last-noncompleting-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "last-noncompleting-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:102 [101,106): top-level initializer requires a direct function\n",
+      "passed": true
+    },
+    {
+      "case": "last-noncompleting-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "last-noncompleting",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "compile-time-after-stop-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "compile-time-after-stop-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:102 [101,106): top-level initializer requires a direct function\n",
+      "passed": true
+    },
+    {
+      "case": "compile-time-after-stop-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "compile-time-after-stop",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "ordinary-call-local-flow-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "ordinary-call-local-flow-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:83 [82,86): top-level initializer requires a direct function\n",
+      "passed": true
+    },
+    {
+      "case": "ordinary-call-local-flow-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "ordinary-call-local-flow",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "function-creation-completes-single",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "function-creation-completes-single",
+      "command": "build",
+      "exit": 1,
+      "stderr": "mgnc: unsupported: <fixture>/app.mgn:1:60 [59,65): type is outside the native profile\n",
+      "passed": true
+    },
+    {
+      "case": "function-creation-completes-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "function-creation-completes",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unused-module-unreachable-project",
+      "command": "check",
+      "exit": 1,
+      "stderr": "mgnc: semantic: src/Other/other.mgn:1:55 [54,59): unreachable module declaration\n",
+      "passed": true
+    },
+    {
+      "case": "unused-module-unreachable",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "module-boundary-resets-flow-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "module-boundary-resets-flow",
+      "command": "inputs-unchanged",
+      "passed": true
+    },
+    {
+      "case": "unused-module-last-stop-project",
+      "command": "check",
+      "exit": 0,
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "unused-module-last-stop",
+      "command": "inputs-unchanged",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

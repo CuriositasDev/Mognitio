@@ -1,0 +1,526 @@
+{
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "records": [
+    {
+      "case": "readTextFile-signature",
+      "source_sha256": "60af8f4fa684e17a70025bc2c6fcb7ad754f71d68b13816df064c77243cea883",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "readTextFile-wrong-signature",
+      "source_sha256": "d44f4fdd3e222ed2d040a396f840523e67106de09a816411a52b6a1871657ef0",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,573): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "writeTextFile-signature",
+      "source_sha256": "44ca1753c06671c808499c7a638826614dfb15eeef275a1375e8878df7040e3e",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "writeTextFile-wrong-signature",
+      "source_sha256": "20a1d398844422ad3721af3e3a252a7d14e46f9599a2fbceee70994df71ef54a",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,574): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "readStdin-signature",
+      "source_sha256": "a95e50f3a95b0d7c848a3071a8c37eb8bbd37368dcce13a3cdf423906d5eb0da",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "readStdin-wrong-signature",
+      "source_sha256": "54c5d5c9a2bbd2fccc4332f5c83a0229f70351d07d63a484e8672a7af14ed2c4",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,570): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "writeStdout-signature",
+      "source_sha256": "54f21f8921fb7f18621b7e15c48e89f0b963f4ee1dba589acca8cbda7aa043f9",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "writeStdout-wrong-signature",
+      "source_sha256": "54b0b588e691aa55974c04db2ceb6193dcac096e9104cc04448066889ab94ad5",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,572): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "writeStderr-signature",
+      "source_sha256": "f5f3945761084b1c7e05dd8b0c4e8ac8ec1d737da30c6a3ac91d7d29cc069795",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "writeStderr-wrong-signature",
+      "source_sha256": "15c3e7497396a00f420f36eb6d692f466dc55db5bd69529c99defdd802cd1ca8",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,572): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "joinPath-signature",
+      "source_sha256": "59eaf681b1832604d790619fa2439489446d2be486c0eda59d346a2bc181bbaa",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "joinPath-wrong-signature",
+      "source_sha256": "2fc6bc49b57f6fef03cb557e50bea1390e1b4b23b25066a3f6920ca69aba5901",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,569): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "readDirectory-signature",
+      "source_sha256": "03f12eb0a6d5b445d0c11d4f21b7c19d3fd4e82133d67e1d0571b284ba2f02de",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "readDirectory-wrong-signature",
+      "source_sha256": "2ff19a834eb4cc5e3bb9a2331fbeb573665061c2d3d91736e4b7d1d4960df2ea",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,574): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "createDirectory-signature",
+      "source_sha256": "24f370749f89dda3e3d41a77e1719b3bb79d7adea375a706b917b170f577820f",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "createDirectory-wrong-signature",
+      "source_sha256": "f6e3d4d61705dfa957ce807753e1e61ade35758f3b6d03ae9cd82fc717dc1538",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,576): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "inspectPath-signature",
+      "source_sha256": "c024e19df2858111e82d1c69c7f825656d37a260ac3c0d15697b0d653260efb1",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "inspectPath-wrong-signature",
+      "source_sha256": "e5e462f274d82695e5e6386b1bf3f7612008bf30b75037a177e1f6eae189730e",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,572): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "bytesFromInts-signature",
+      "source_sha256": "a5135a7ef7e540efe5708f82e3ce5acadfc1743a8b05722d6a2db252f9449441",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "bytesFromInts-wrong-signature",
+      "source_sha256": "e1a2ef2af0e53faa0ad9cfa2d2420e3d11a2de0a9cdf3ada2c0468c53c296bdb",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,574): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "bytesFromBits-signature",
+      "source_sha256": "a176a729caa31983be7134dcbe709c2969d2e90e2b4c34cfd1f29eb23faa3b24",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "bytesFromBits-wrong-signature",
+      "source_sha256": "5dd6cba4160bb0c787b23cf3edeca75d0f8536bc506c8be589c0354cacf8e6c7",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,574): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "publishFile-signature",
+      "source_sha256": "df80ad0ad8acf6d34b7601ad445aa0a27b86e4c37aa5f2b84d35265beebf7814",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "publishFile-wrong-signature",
+      "source_sha256": "231bd4222372f7d185dc1ad9c4a8aded405159d6d1c76a36cc82b09b2a039e81",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:562 [561,572): expression type does not match required type\n",
+      "passed": true
+    },
+    {
+      "case": "IoOperation-closed-variants",
+      "source_sha256": "8b8aee784060d3dd4cc21b437dc75287053a6555bd3a79ed7eb358a72ccfec96",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "IoOperation-missing-variant",
+      "source_sha256": "374391467a4f71da410b33e6ec7d06de6531cb41bb4eb6a824e71f0be1817546",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:615 [614,620): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "IoErrorKind-closed-variants",
+      "source_sha256": "a366c847755d5713913ea7e326e5c126eb20bb684067963dec07b9970bac43a6",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "IoErrorKind-missing-variant",
+      "source_sha256": "4db6155114c7c3b3e111ba22b9b2119d842d0dd2c500ad84c9de0cfe5dc9298c",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:615 [614,620): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "DirectoryEntryKind-closed-variants",
+      "source_sha256": "c6ea2b6466870c0226082de842df6b095a54983482eedbc9c8c2acc7e72019ee",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "DirectoryEntryKind-missing-variant",
+      "source_sha256": "af18e323f88808c255dc232eeef56713336ad50d1a7af0d2a22c909dc4271c33",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:629 [628,634): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "IoErrorPhase-closed-variants",
+      "source_sha256": "d23fa6ebaf7d3585261c053340d51e1795ee547a7a72cbbaa7b871504285cb2b",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "IoErrorPhase-missing-variant",
+      "source_sha256": "bdc7002cc4253677ba54e5637fe7f2ead16de2d8e9a3995c43d43d584403f5e9",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:617 [616,622): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "ByteOrder-closed-variants",
+      "source_sha256": "9d114618fa69e0249c8dce3edc4b54ac3b4e8c328abcf9a75eb6194a0d8efd0e",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "ByteOrder-missing-variant",
+      "source_sha256": "11ab76f7518019112f7aa75ea07e04eaf81015102359cb0f25b9a45d4f2f62af",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:611 [610,616): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "BinaryFileMode-closed-variants",
+      "source_sha256": "db556eaac0da643ea4dada86a19c7db52ffc130217bf5b978d2340fcc4c59e1c",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryFileMode-missing-variant",
+      "source_sha256": "dc6f6a549e18c7663f340d15398026ff288233bcf59979b1a57afacbb37da2a0",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:621 [620,626): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputErrorKind-closed-variants",
+      "source_sha256": "f244590e311ac964a01ad17ac38e4ce5309ff3881c308d56b8ac78576ca5f611",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputErrorKind-missing-variant",
+      "source_sha256": "f22dbd4b326f3d190889b263ad46b305ef4d13dc7f29a7fb271772f9c01a30d1",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:635 [634,640): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputPhase-closed-variants",
+      "source_sha256": "4511ce6e771273e75a1a5dc60bfafa2cd2834895bc2409c705f34dd208f13937",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputPhase-missing-variant",
+      "source_sha256": "66405a5a45628d2031d9d2909febf20613a8684a793b323e947e12394c153a73",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:627 [626,632): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "BinaryPublicationState-closed-variants",
+      "source_sha256": "63a2748764ee47f4107f8aef6cc1c86dd7f37a4bc447ee84fabe55606462f40b",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryPublicationState-missing-variant",
+      "source_sha256": "4d7d247516c082f3eabf23e0eb7103e481b03801e08e953a6e70ee44ff2d60e2",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: semantic: <temporary>/case.mgn:1:637 [636,642): branch does not cover every variant\n",
+      "passed": true
+    },
+    {
+      "case": "IoError-closed-fields",
+      "source_sha256": "19be839e62b0453333bdc52576692d424c3df2e76d46aee4f83577664a68ac19",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "IoError-field-types",
+      "source_sha256": "50d6276c895fe208079da16462b5382849f967a9bd3d18a2094a24120a2ff8ca",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "DirectoryEntry-closed-fields",
+      "source_sha256": "730a5c3718c8ea647543917716de17d6a145ea10209bb41c02deda3921c9399d",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "DirectoryEntry-field-types",
+      "source_sha256": "2a49a49a3eade6d32ad4e565de81a460c114b24bb3ac88d95621a73ec5dd9038",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "PathInfo-closed-fields",
+      "source_sha256": "8b5b3a467879ada0772c6e128a10a7c2eecec7a21f23a3856a2791f243c1d8c5",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "PathInfo-field-types",
+      "source_sha256": "5a2b874f310cebed3e56a76caf0bb70e763ccda5e12054058482e0494eae65b2",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "PathInfoError-closed-fields",
+      "source_sha256": "c5cdb44236a2a3ad6c87e65596f659e63f8293c3a3d94bebc1fd4030feb0e6db",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "PathInfoError-field-types",
+      "source_sha256": "61ab0e9f714bb98e15bc5ec8cd4d251f87032c5f3b27b912e1fc45791773498b",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "Signed-closed-fields",
+      "source_sha256": "db483fef1d8eef7a6cdf57564832c65e56dd6cb062dc39cc15f6750700281380",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "Unsigned-closed-fields",
+      "source_sha256": "52921aaca35bfa10189f4fe466d3df628d3e19a27e32c9859d306a3d6ca46352",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "IntegerConversionError-closed-fields",
+      "source_sha256": "088277da03d83fe1715608121b87cdf4ba25ec424012170783253915f0ee1a95",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BitShiftError-closed-fields",
+      "source_sha256": "9c946206bc29a2d35f78d52f2e5d38c8fc43305ff2b21b46d8bdad58eeb56a7f",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BitShiftError-field-types",
+      "source_sha256": "66ad7c7c33b68a2b9868324b84957811b31713b66fd12b54b9927eafa8c1a9ef",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "ByteValueError-closed-fields",
+      "source_sha256": "7bf75372ea95b8ed80ecbba398e5fad818fcd21b890a8133311652a9dbb36606",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "ByteValueError-field-types",
+      "source_sha256": "8d719664cef44b9d8e084f89383c11d35ae8914d8eac1d58bd15d5f2fc1bbf7e",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BitWidthError-closed-fields",
+      "source_sha256": "dbd039ddb2627f7e8d15e96116d6ef9d4a472119cbdd43aab04bbe3e5a415c91",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BitWidthError-field-types",
+      "source_sha256": "3f82e4bc5aba32c80034dbd364ca9da25d5682a51dde2802b933581471476881",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryDecodeError-closed-fields",
+      "source_sha256": "cdc8d7075adcb983dec99a2568e179307525250a89e5dd9cfcabbdd3431cb046",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryDecodeError-field-types",
+      "source_sha256": "e07874f28de0895b0f66389b2d364c07d942c37c4f04e8f67fc21171e6b52863",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputError-closed-fields",
+      "source_sha256": "0494ffab317ca10670a9e7d2034e91cbf66f7812f6d56f7f69969a30ad06929f",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "BinaryOutputError-field-types",
+      "source_sha256": "71e06831b0aff9e4ecd9679fb674f76f54dd59a10e57417b3512d8b32629a217",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "case": "FileIdentity-opaque",
+      "source_sha256": "6d03ed4ac5a7b7cea3fe44ca7ea08d6749f7a4b68596da6b686f319754fb0ca9",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:570 [569,581): type does not support Product construction\n",
+      "passed": true
+    },
+    {
+      "case": "Bytes-opaque",
+      "source_sha256": "55565ac898d29b6d8934d31d76c20a21a20b39794318851ec1656f7dad260e94",
+      "exit": 1,
+      "stdout_hex": "",
+      "stderr": "mgnc: type: <temporary>/case.mgn:1:563 [562,567): type does not support Product construction\n",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

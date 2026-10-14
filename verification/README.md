@@ -103,3 +103,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 
 - [v1.5 replacement seed](v1.5.0-seed2.md): accepted GC repair with a new immutable seed identity.
 - [v1.5 compiler implementation](v1.5.0-compiler.md): shared semantics and fixed-candidate verification.
+
+- [v1.5 flow review correction](v1.5.0-review-flow.md): unique Unknown operators and module initializer reachability.

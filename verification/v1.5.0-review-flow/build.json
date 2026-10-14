@@ -1,0 +1,17 @@
+{
+  "command": [
+    "VERIFIED_S2/bin/mgn",
+    "build",
+    "compiler/mgnc/mognitio.toml",
+    "-o",
+    "NEW_ARTIFACT"
+  ],
+  "cwd": "repository",
+  "exit": 0,
+  "stdout_bytes": 0,
+  "stderr_bytes": 0,
+  "source_revision": "9937649804183f357aca30029a3f7b1d1e869285",
+  "inventory_sha256": "d01b7bacc62b585761b24cde0bcee94186e1343a7e425da26b9d42e9bb58bbee",
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "seed_bundle_sha256": "be4c0dc584c25fd1e1bf89897249e26f65051152e152bfdc96806c4e4e7a3e5c"
+}

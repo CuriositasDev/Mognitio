@@ -59,4 +59,6 @@ candidate; current v1.5 checks do not rewrite that evidence.
 The compiler uses only public seed language/library facilities, including
 inspectPath. No seed-private runtime symbol is called.
 
-Implementation evidence is recorded in [v1.5 compiler verification](../../verification/v1.5.0-compiler.md).
+Original implementation evidence is recorded in [v1.5 compiler verification](../../verification/v1.5.0-compiler.md).
+The [flow review correction](../../verification/v1.5.0-review-flow.md) records the
+updated source/artifact identity and regression results.

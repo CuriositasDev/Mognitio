@@ -2,14 +2,15 @@
 """Whole-corpus single-violation mutations, with original-path diagnostics."""
 import argparse,hashlib,json,shutil,subprocess,tempfile
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument("--compiler",required=True,type=Path);p.add_argument("--fixtures",required=True,type=Path);p.add_argument("--evidence",required=True,type=Path);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument("--compiler",required=True,type=Path);p.add_argument("--fixtures",required=True,type=Path);p.add_argument("--evidence",required=True,type=Path);p.add_argument("--only",action="append");a=p.parse_args()
 records=[]
 with tempfile.TemporaryDirectory(prefix="v150-corpus-mutations-") as temp:
  root=Path(temp)
  for label in ["C0","C1"]:shutil.copytree(a.fixtures/label,root/label)
- def run(label,name,path,text,phase,token=None):
+ def run(label,name,path,text,phase,token=None,last=False):
+  if a.only and name not in a.only:return
   source=root/label/"src"/path;original=source.read_bytes();source.write_text(text)
-  start=text.encode().index(token.encode()) if token else None
+  start=(text.encode().rindex(token.encode()) if last else text.encode().index(token.encode())) if token else None
   try:
    result=subprocess.run([a.compiler,"check",root/label/"mognitio.toml"],capture_output=True,timeout=600)
    good=result.returncode==1 and not result.stdout and ("mgnc: "+phase+": src/"+path+":").encode() in result.stderr
@@ -21,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix="v150-corpus-mutations-") as temp:
  main=(root/"C0/src/mgnc.mgn").read_text()
  run("C0","C150-F01-type","mgnc.mgn",main+"\nlet v150Wrong:Int=true;\n","type","true")
  namespace,remaining=main.split("\n",1)
- run("C0","C150-F01-width","mgnc.mgn",namespace+"\nuse Std\\Numeric\\{Bits};\n"+remaining+"\nalias V150Width=Bits<0>;\n","type","0")
+ run("C0","C150-F01-width","mgnc.mgn",namespace+"\nuse Std\\Numeric\\{Bits};\n"+remaining+"\nalias V150Width=Bits<0>;\n","type","0",last=True)
  run("C0","C150-F01-import","mgnc.mgn",main.replace("{run}","{v150MissingRun}",1),"semantic","v150MissingRun")
  width=(root/"C0/src/Width/width.mgn").read_text()
  assert len(width.encode())>500000
@@ -30,5 +31,6 @@ with tempfile.TemporaryDirectory(prefix="v150-corpus-mutations-") as temp:
  run("C1","C150-G11-unknown-API","Project/load.mgn",project.replace(",inspectPath,",",v150MissingAPI,",1),"semantic","v150MissingAPI")
  run("C1","SC150-C06-signature","Project/load.mgn",project.replace("inspectPath(path)","inspectPath(false)",1),"type","false")
  run("C1","SC150-C06-identity","Project/load.mgn",project.replace("seen==current->info->identity","seen<current->info->identity",1),"type")
+assert records and (not a.only or set(a.only)=={r["case"] for r in records}),"Unknown or empty mutation selection"
 assert all(r["passed"] for r in records),[r for r in records if not r["passed"]]
 print("V150_CORPUS_MUTATIONS_OK checks="+str(len(records)))

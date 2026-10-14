@@ -1,0 +1,59 @@
+{
+  "presentation": "Absolute paths in textual records are normalized. Stream hex preserves original bytes; the raw archive retains all fixtures, commands and observations.",
+  "files": [
+    {
+      "path": "identity.json",
+      "original_sha256": "4a4607519093a3273209050745d458f65561f8d80e5a5ea5855a7a9047d0cf94",
+      "published_sha256": "4a4607519093a3273209050745d458f65561f8d80e5a5ea5855a7a9047d0cf94",
+      "bytes": 18546
+    },
+    {
+      "path": "semantic-fixtures.json",
+      "original_sha256": "8e310e4d01a75deb988ce309ebef348bb693f1123c19f3c700d662c2fde4f9e8",
+      "published_sha256": "8e310e4d01a75deb988ce309ebef348bb693f1123c19f3c700d662c2fde4f9e8",
+      "bytes": 222071
+    },
+    {
+      "path": "parse-fixtures.json",
+      "original_sha256": "ffa1d1c5f3a4c5703e31687643c845bdbca80f576e7841250e572db5792df565",
+      "published_sha256": "ffa1d1c5f3a4c5703e31687643c845bdbca80f576e7841250e572db5792df565",
+      "bytes": 45737
+    },
+    {
+      "path": "preliminary.json",
+      "original_sha256": "3810e93545b46029933c2eb6f36b153f91e5ff2c4c4e812a606b62d4ab0824d4",
+      "published_sha256": "3810e93545b46029933c2eb6f36b153f91e5ff2c4c4e812a606b62d4ab0824d4",
+      "bytes": 605670
+    },
+    {
+      "path": "parse-measure.json",
+      "original_sha256": "c7179bcfc893fd941bdcd5a0189fe9d41312269777df1a1464fe79055fb27fd8",
+      "published_sha256": "b5dcadb5f70b3f8a6d779f2422d6ef9ed80143ffc391f6bb05ac72c30d2a3a63",
+      "bytes": 328553
+    },
+    {
+      "path": "runner.json",
+      "original_sha256": "8a3342b77e6931631d1e45913bc1b34eaba0dd80d619d8d1362f703d48502a6e",
+      "published_sha256": "eb0ad9a7e5aead9fe7e02febc85c9eab2d607b0bb8e57507edac63e99d997a63",
+      "bytes": 1343
+    },
+    {
+      "path": "summary.json",
+      "original_sha256": "d803d490908c162d9ee95ffc63eebf1a391bb04c2db40524ed371f629f8275eb",
+      "published_sha256": "d803d490908c162d9ee95ffc63eebf1a391bb04c2db40524ed371f629f8275eb",
+      "bytes": 941
+    },
+    {
+      "path": "preliminary.log",
+      "original_sha256": "fa76fe298eb44fce955b0f8763ff40257ec54693e795c3fc4396ceac1d26e3b9",
+      "published_sha256": "fa76fe298eb44fce955b0f8763ff40257ec54693e795c3fc4396ceac1d26e3b9",
+      "bytes": 26171
+    },
+    {
+      "path": "preliminary-streams.json",
+      "original_sha256": "711cde723b71f54d653162363553ae11d45c98fc5bf735c3587dd98145447dd6",
+      "published_sha256": "711cde723b71f54d653162363553ae11d45c98fc5bf735c3587dd98145447dd6",
+      "bytes": 216098
+    }
+  ]
+}

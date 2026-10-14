@@ -4,28 +4,34 @@ use Mgnc\Tables\{replaceItem};
 public type Edge=product{owner:Int;target:Int;file:Int;span:Span;};
 public type Graph=product{vertices:List<Int>;edges:List<Edge>;size:Int;};
 public type Order=product{values:List<Int>;cycle:List<Edge>;};
+type Frame=product{vertex:Int;next:Int;parent:Int;};
 public let sort:Function(Graph):Result<Order,Diagnostic>=function(graph:Graph):Result<Order,Diagnostic>{
- var complete:Paged<Bool>=empty<Bool>();var index:Int=0;loop while(index<graph->size){complete=push<Bool>(complete,false);index=index+1;};
+ var adjacent:Paged<List<Edge>>=empty<List<Edge>>();var colors:Paged<Int>=empty<Int>();var index:Int=0;
+ loop while(index<graph->size){adjacent=push<List<Edge>>(adjacent,List<Edge>[]);colors=push<Int>(colors,0);index=index+1;};
+ loop over(graph->edges as edge:Edge){
+  let bucket:List<Edge>=try lookup<List<Edge>>(adjacent,edge->owner);
+  adjacent=try replaceItem<List<Edge>>(adjacent,edge->owner,bucket->append(edge));
+ };
  var result:List<Int>=List<Int>[];
- loop while(result->length()<graph->vertices->length()){
-  var progress:Bool=false;
-  loop over(graph->vertices as current:Int){
-   branch when{try lookup<Bool>(complete,current)=>{continue;},else=>unit};var blocked:Bool=false;
-   loop over(graph->edges as edge:Edge){branch when{edge->owner==current&&!(try lookup<Bool>(complete,edge->target))=>{blocked=true;break;},else=>unit};};
-   branch when{!blocked=>{complete=try replaceItem<Bool>(complete,current,true);result=result->append(current);progress=true;},else=>unit};
+ // Explicit depth-first frames retain the next edge and produce dependency-first
+ // postorder. Gray targets identify an actual cycle edge, without rescanning all edges.
+ loop over(graph->vertices as vertex:Int){
+  branch when{(try lookup<Int>(colors,vertex))==2=>{continue;},else=>unit};
+  var frames:Paged<Frame>=push<Frame>(empty<Frame>(),Frame{vertex:vertex,next:0,parent:-1});var active:Int=0;
+  colors=try replaceItem<Int>(colors,vertex,1);
+  loop while(active>=0){
+   let frame:Frame=try lookup<Frame>(frames,active);let edges:List<Edge>=try lookup<List<Edge>>(adjacent,frame->vertex);
+   branch when{frame->next>=edges->length()=>{
+    colors=try replaceItem<Int>(colors,frame->vertex,2);result=result->append(frame->vertex);active=frame->parent;
+   },else=>{
+    let edge:Edge=branch on edges->at(frame->next){Result<Edge,IndexError>::Ok(value:Edge)=>value,Result<Edge,IndexError>::Err(error:IndexError)=>{return Result<Order,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid dependency cursor"));}};
+    frames=try replaceItem<Frame>(frames,active,Frame{vertex:frame->vertex,next:frame->next+1,parent:frame->parent});
+    let color:Int=try lookup<Int>(colors,edge->target);
+    branch when{color==1=>{return Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[edge]});},color==0=>{
+     colors=try replaceItem<Int>(colors,edge->target,1);frames=push<Frame>(frames,Frame{vertex:edge->target,next:0,parent:active});active=frames->count-1;
+    },else=>unit};
+   }};
   };
-  branch when{!progress=>{
-   var current:Int=0;loop over(graph->vertices as id:Int){branch when{!(try lookup<Bool>(complete,id))=>{current=id;break;},else=>unit};};
-   var path:List<Int>=List<Int>[current];
-   loop while(true){
-    var advanced:Bool=false;
-    loop over(graph->edges as edge:Edge){branch when{edge->owner==current&&!(try lookup<Bool>(complete,edge->target))=>{
-     loop over(path as previous:Int){branch when{previous==edge->target=>{return Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[edge]});},else=>unit};};
-     current=edge->target;path=path->append(current);advanced=true;break;
-    },else=>unit};};
-    branch when{!advanced=>{return Result<Order,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"incomplete dependency graph without an edge"));},else=>unit};
-   };
-  },else=>unit};
  };
  Result<Order,Diagnostic>::Ok(Order{values:result,cycle:List<Edge>[]})
 };

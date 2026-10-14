@@ -7,4 +7,4 @@ public type Declaration=product{file:Int;ordinal:Int;kind:Int;name:String;export
 public type Import=product{nameSpace:String;name:String;local:String;span:Span;};
 public type Module=product{source:SourceUnit;tree:SyntaxForest;nameSpace:String;declarations:List<Int>;imports:List<Import>;standard:Bool;};
 public type Introduction=product{file:Int;name:String;declaration:Int;imported:Bool;span:Span;};
-public type Headers=product{input:ProjectInput;modules:Paged<Module>;declarations:Paged<Declaration>;names:Paged<Introduction>;order:List<Int>;};
+public type Headers=product{input:ProjectInput;modules:Paged<Module>;declarations:Paged<Declaration>;names:Paged<Introduction>;fileNames:Paged<List<Int>>;order:List<Int>;};

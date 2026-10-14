@@ -1,4 +1,5 @@
 namespace Mgnc\TypeOps;
+use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticData\{Headers};
@@ -95,8 +96,8 @@ public let substituteValue:Function(ValueTerm,Int,List<Argument>,Span):Result<Va
  }};Result<ValueTerm,Diagnostic>::Ok(value)
 };
 type Visit=product{id:Int;parent:Int;};
-let mapped:Function(Paged<Parent>,Int,Span):Result<Int,Diagnostic>=function(memo:Paged<Parent>,id:Int,span:Span):Result<Int,Diagnostic>{
- branch on try lookup<Parent>(memo,id){Parent::Some(value:Int)=>Result<Int,Diagnostic>::Ok(value),Parent::None=>Result<Int,Diagnostic>::Err(problem("internal",span,"incomplete type substitution"))}
+let mapped:Function(IntMap,Int,Span):Result<Int,Diagnostic>=function(memo:IntMap,id:Int,span:Span):Result<Int,Diagnostic>{
+ let value:Int=try mapGet(memo,id);branch when{value>=0=>Result<Int,Diagnostic>::Ok(value),else=>Result<Int,Diagnostic>::Err(problem("internal",span,"incomplete type substitution"))}
 };
 public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,Diagnostic>=function(initial:Store,root:Int,owner:Int,arguments:List<Argument>,span:Span):Result<Formed,Diagnostic>{
  branch when{arguments->length()==0=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:root,obligations:List<Obligation>[]});},else=>unit};
@@ -105,24 +106,23 @@ public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,
   branch on try cached(initial,Type{kind:rootShape->kind,owner:rootShape->owner,arguments:arguments,members:List<Member>[]}){
    Parent::Some(existing:Int)=>{return Result<Formed,Diagnostic>::Ok(Formed{store:initial,value:existing,obligations:List<Obligation>[]});},Parent::None=>unit};
  },else=>unit};
- var store:Store=initial;var memo:Paged<Parent>=empty<Parent>();var index:Int=0;
- loop while(index<initial->types->count){memo=push<Parent>(memo,Parent::None);index=index+1;};
+ var store:Store=initial;var memo:IntMap=createMap();
  var stack:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,parent:-1});var active:Int=0;
  loop while(active>=0){
   let visit:Visit=try lookup<Visit>(stack,active);let shape:Type=try lookup<Type>(initial->types,visit->id);
   branch when{shape->kind==parameterKind&&parentEqual(shape->owner,Parent::Some(owner))=>{
    let ordinal:ValueTerm=branch on try argumentAt(shape->arguments,0,span){Argument::Value(value:ValueTerm)=>value,Argument::Type(value:Int)=>{return Result<Formed,Diagnostic>::Err(problem("internal",span,"parameter ordinal shape"));}};
    let value:Int=branch on try argumentAt(arguments,ordinal->value,span){Argument::Type(actual:Int)=>actual,Argument::Value(actual:ValueTerm)=>{return Result<Formed,Diagnostic>::Err(problem("type",span,"expected type argument"));}};
-   memo=try replaceItem<Parent>(memo,visit->id,Parent::Some(value));active=visit->parent;continue;
+   memo=try mapPut(memo,visit->id,value);active=visit->parent;continue;
   },else=>unit};
   branch when{shape->arguments->length()==0=>{
-   memo=try replaceItem<Parent>(memo,visit->id,Parent::Some(visit->id));active=visit->parent;continue;
+   memo=try mapPut(memo,visit->id,visit->id);active=visit->parent;continue;
   },else=>unit};
   var children:List<Int>=List<Int>[];
   loop over(shape->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{children=children->append(id);},Argument::Value(value:ValueTerm)=>unit};};
   loop over(shape->members as member:Member){branch on member->value{Parent::Some(id:Int)=>{children=children->append(id);},Parent::None=>unit};};
   var missing:Int= -1;
-  loop over(children as id:Int){branch on try lookup<Parent>(memo,id){Parent::None=>{missing=id;break;},Parent::Some(value:Int)=>unit};};
+  loop over(children as id:Int){branch when{(try mapGet(memo,id))== -2=>{missing=id;break;},else=>unit};};
   branch when{missing>=0=>{stack=push<Visit>(stack,Visit{id:missing,parent:active});active=stack->count-1;continue;},else=>unit};
   var replaced:List<Argument>=List<Argument>[];var members:List<Member>=List<Member>[];
   loop over(shape->arguments as arg:Argument){replaced=replaced->append(branch on arg{
@@ -131,7 +131,7 @@ public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,
   loop over(shape->members as member:Member){members=members->append(Member{name:member->name,span:member->span,value:branch on member->value{
    Parent::None=>Parent::None,Parent::Some(id:Int)=>Parent::Some(try mapped(memo,id,span))}});};
   let formed:Formed=try intern(store,Type{kind:shape->kind,owner:shape->owner,arguments:replaced,members:members});store=formed->store;
-  memo=try replaceItem<Parent>(memo,visit->id,Parent::Some(formed->value));active=visit->parent;
+  memo=try mapPut(memo,visit->id,formed->value);active=visit->parent;
  };
  Result<Formed,Diagnostic>::Ok(Formed{store:store,value:try mapped(memo,root,span),obligations:List<Obligation>[]})
 };

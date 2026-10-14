@@ -1,4 +1,5 @@
 namespace Mgnc\Semantic;
+use Mgnc\InputDiagnostics\{escapePath};
 use Mgnc\Data\{Diagnostic,lookup,problem,Span};
 use Mgnc\Syntax\{Parent};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
@@ -34,7 +35,7 @@ let ordered:Function(Headers,Graph,String):Result<List<Int>,InputError>=function
  loop over(result->cycle as edge:Edge){
   let target:Declaration=branch on lookup<Declaration>(headers->declarations,edge->target){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<List<Int>,InputError>::Err(internal(error));}};
   let module:Module=branch on lookup<Module>(headers->modules,target->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<List<Int>,InputError>::Err(internal(error));}};
-  return Result<List<Int>,InputError>::Err(atDeclaration(headers,edge->owner,problem("semantic",edge->span,"cyclic "+kind+" dependency through "+module->source->displayPath+" / "+target->name)));
+  return Result<List<Int>,InputError>::Err(atDeclaration(headers,edge->owner,problem("semantic",edge->span,"cyclic "+kind+" dependency through "+escapePath(module->source->displayPath)+" / "+target->name)));
  };
  Result<List<Int>,InputError>::Ok(result->values)
 };

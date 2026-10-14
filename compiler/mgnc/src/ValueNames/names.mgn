@@ -12,8 +12,8 @@ use Mgnc\ValueSupport\{withFunctions};
 use Mgnc\Tables\{replaceItem};
 public type Reference=sum{Symbol(Int);ValueParameter(ValueTerm);};
 public let introduction:Function(State,Environment,String,Int):Result<Parent,Diagnostic>=function(state:State,environment:Environment,name:String,cursor:Int):Result<Parent,Diagnostic>{
- var index:Int=0;let isolated:Bool=branch on environment->templateOwner{Parent::None=>false,Parent::Some(owner:Int)=>true};
- loop while(index<state->types->headers->names->count){
+ let isolated:Bool=branch on environment->templateOwner{Parent::None=>false,Parent::Some(owner:Int)=>true};
+ loop over((try lookup<List<Int>>(state->types->headers->fileNames,environment->file)) as index:Int){
   let entry:Introduction=try lookup<Introduction>(state->types->headers->names,index);
   branch when{entry->file==environment->file&&entry->name==name=>{
    let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,entry->declaration);
@@ -23,7 +23,7 @@ public let introduction:Function(State,Environment,String,Int):Result<Parent,Dia
    let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);
    branch when{(try getNode(module->tree->nodes,declared->node))->end<=cursor=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
    return Result<Parent,Diagnostic>::Ok(Parent::None);
-  },else=>unit};index=index+1;
+  },else=>unit};
  };
  Result<Parent,Diagnostic>::Ok(Parent::None)
 };

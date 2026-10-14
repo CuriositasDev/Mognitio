@@ -1,4 +1,5 @@
 namespace Mgnc\TypeDependencies;
+use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter};
@@ -15,13 +16,13 @@ public let graph:Function(Headers):Result<Graph,Diagnostic>=function(headers:Hea
   let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
   branch when{declared->kind<3=>{
    pending=pending->append(id);let module:Module=try lookup<Module>(headers->modules,declared->file);
-   var seen:Paged<Bool>=empty<Bool>();var index:Int=0;loop while(index<module->tree->nodes->count){seen=push<Bool>(seen,false);index=index+1;};
+   var seen:IntMap=createMap();var index:Int=0;
    var work:Paged<Int>=push<Int>(empty<Int>(),declared->annotation);
    loop over(declared->parameters as param:Parameter){branch when{param->kind==1=>{work=push<Int>(work,param->node);},else=>unit};};
    index=0;
    loop while(index<work->count){
-    let current:Int=try lookup<Int>(work,index);index=index+1;branch when{try lookup<Bool>(seen,current)=>{continue;},else=>unit};
-    seen=try replaceItem<Bool>(seen,current,true);let node:ForestNode=try getNode(module->tree->nodes,current);
+    let current:Int=try lookup<Int>(work,index);index=index+1;branch when{(try mapGet(seen,current))==1=>{continue;},else=>unit};
+    seen=try mapPut(seen,current,1);let node:ForestNode=try getNode(module->tree->nodes,current);
     branch when{node->symbol==ntType&&(node->rule==ruleTypeName||node->rule==ruleTypeApply)=>{
      let name:String=try text(module->tree,current);let generic:Parent=try parameter(headers,Parent::Some(id),name);
      branch on generic{Parent::Some(ordinal:Int)=>unit,Parent::None=>{

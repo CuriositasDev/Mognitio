@@ -1,0 +1,7 @@
+namespace Mgnc\NameHash;
+use Mgnc\TextUtil\{code};
+public let hash:Function(String,String):Int=function(nameSpace:String,name:String):Int{
+ var value:Int=0;
+ loop over((nameSpace+"\0"+name)->scalars() as scalar:String){value=(value*131+code(scalar)+1)%257;};
+ value
+};

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Freeze a complete source inventory and observe one bounded project check."""
-import argparse,hashlib,json,subprocess,tempfile,time,resource
+import argparse,hashlib,json,subprocess,tempfile
+from v150_measurelib import observe
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 C0="4908a1a91be61d64695b9e048b833637aee0aefc"
@@ -26,18 +27,10 @@ with tempfile.TemporaryDirectory(prefix="v150-corpus-") as temp:
  for path,data in files.items():
   target=root/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
  (project/"mognitio.toml").write_bytes(manifest)
- metrics=root/"metrics";command=[str(args.compiler.resolve()),"check",str(project/"mognitio.toml")]
- started=time.monotonic()
- try:
-  result=subprocess.run(["/usr/bin/time","-f","%e %M","-o",str(metrics),"timeout","600",*command],capture_output=True,timeout=605)
-  timedout=result.returncode==124
- except subprocess.TimeoutExpired as error:
-  result=subprocess.CompletedProcess(command,124,error.stdout or b"",error.stderr or b"");timedout=True
- elapsed=time.monotonic()-started
- measured=metrics.read_text().splitlines()[-1].split() if metrics.exists() and metrics.stat().st_size else []
- rss=int(measured[1])*1024 if len(measured)==2 else None
- record={"corpus":args.corpus,"revision":revision,"compiler_sha256":sha(args.compiler.read_bytes()),"inventory":inventory,"inventory_sha256":inventory_hash,"manifest_sha256":sha(manifest),"command":["A","check","CORPUS/compiler/mgnc/mognitio.toml"],"seconds":elapsed,"peak_rss_bytes":rss,"timeout":timedout,"exit":result.returncode,"stdout_hex":result.stdout.hex(),"stderr":result.stderr.decode(errors="replace")}
- record["passed"]=result.returncode==0 and result.stdout==result.stderr==b"" and not timedout and rss is not None and rss<=4096*2**20
+ command=[str(args.compiler.resolve()),"check",str(project/"mognitio.toml")]
+ observation=observe(command,args.evidence.with_suffix(".streams"))
+ record={"corpus":args.corpus,"revision":revision,"compiler_sha256":sha(args.compiler.read_bytes()),"inventory":inventory,"inventory_sha256":inventory_hash,"manifest_sha256":sha(manifest),"command":["A","check","CORPUS/compiler/mgnc/mognitio.toml"],**observation}
+ record["passed"]=record["exit"]==0 and all(stream["bytes"]==0 for stream in record["streams"].values()) and record["cutoff"] is None and record["harness_failure"] is None
  args.evidence.write_text(json.dumps(record,indent=2)+"\n")
  assert record["passed"],{k:v for k,v in record.items() if k!="inventory"}
  print(json.dumps({k:v for k,v in record.items() if k not in ("inventory","stderr")},sort_keys=True))

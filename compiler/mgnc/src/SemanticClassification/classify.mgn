@@ -1,4 +1,5 @@
 namespace Mgnc\SemanticClassification;
+use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Introduction,Parameter};
@@ -23,8 +24,8 @@ public let classify:Function(Headers,Int,Int,Parent):Result<SyntaxForest,Diagnos
  var bindings:List<Binding>=List<Binding>[];
  loop over(List<String>["Unit","Int","Bool","String","List","Result","IndexError","SliceError","Function"] as name:String){bindings=bindings->append(Binding{name:name,kind:0,after:0,until:boundary->end});};
  var index:Int=0;
- loop while(index<headers->names->count){
-  let introduction:Introduction=try lookup<Introduction>(headers->names,index);index=index+1;
+ loop over((try lookup<List<Int>>(headers->fileNames,file)) as nameIndex:Int){
+  let introduction:Introduction=try lookup<Introduction>(headers->names,nameIndex);
   branch when{introduction->file!=file=>{continue;},else=>unit};
   let declared:Declaration=try lookup<Declaration>(headers->declarations,introduction->declaration);
   branch when{isolated&&declared->kind>=4=>{continue;},else=>unit};
@@ -35,11 +36,11 @@ public let classify:Function(Headers,Int,Int,Parent):Result<SyntaxForest,Diagnos
   let declared:Declaration=try lookup<Declaration>(headers->declarations,owner);
   loop over(declared->parameters as parameter:Parameter){bindings=bindings->append(Binding{name:parameter->name,kind:branch when{parameter->kind==0=>0,else=>6},after:boundary->start,until:boundary->end});};
  }};
- var seen:Paged<Bool>=empty<Bool>();index=0;loop while(index<tree->nodes->count){seen=push<Bool>(seen,false);index=index+1;};
+ var seen:IntMap=createMap();
  var work:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:root,block:root});var candidates:List<Int>=List<Int>[];index=0;
  loop while(index<work->count){
   let visit:Visit=try lookup<Visit>(work,index);index=index+1;
-  branch when{try lookup<Bool>(seen,visit->id)=>{continue;},else=>unit};seen=try replaceItem<Bool>(seen,visit->id,true);
+  branch when{(try mapGet(seen,visit->id))==1=>{continue;},else=>unit};seen=try mapPut(seen,visit->id,1);
   let node:ForestNode=try getNode(tree->nodes,visit->id);
   let block:Int=branch when{node->symbol>0&&node->rule==ruleBlock=>visit->id,else=>visit->block};
   branch when{node->symbol>0=>{

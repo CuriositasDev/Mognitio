@@ -1,0 +1,21 @@
+namespace Mgnc;
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Data\{Diagnostic};
+use Std\Io\{writeStdout};
+let test:Function():Result<Int,Diagnostic>=function():Result<Int,Diagnostic>{
+ let blank:Map=create();var table:Map=blank;var count:Int=0;
+ loop over(List<Int>[0,1,15,16,255,256,257,65535,65536,1048575,1048576,1152921504606846976,9223372036854775807] as key:Int){
+  branch when{(try get(table,key))!= -2=>{return Result<Int,Diagnostic>::Ok(1);},else=>unit};
+  let previous:Map=table;table=try put(table,key,count);branch when{(try get(previous,key))!= -2||(try get(table,key))!=count=>{return Result<Int,Diagnostic>::Ok(2);},else=>unit};count=count+1;
+ };
+ count=0;loop over(List<Int>[0,1,15,16,255,256,257,65535,65536,1048575,1048576,1152921504606846976,9223372036854775807] as key:Int){
+  branch when{(try get(table,key))!=count||(try get(blank,key))!= -2=>{return Result<Int,Diagnostic>::Ok(3);},else=>unit};count=count+1;
+ };
+ let snapshot:Map=table;count=0;
+ loop while(count<2048){table=try put(table,count*257,count+99);count=count+1;};
+ count=0;loop while(count<2048){branch when{(try get(table,count*257))!=count+99=>{return Result<Int,Diagnostic>::Ok(4);},else=>unit};count=count+1;};
+ branch when{(try get(snapshot,0))!=0||(try get(snapshot,9223372036854775807))!=12=>{return Result<Int,Diagnostic>::Ok(5);},else=>unit};
+ branch on get(table,-1){Result<Int,Diagnostic>::Ok(value:Int)=>{return Result<Int,Diagnostic>::Ok(6);},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{branch when{error->phase!="internal"=>{return Result<Int,Diagnostic>::Ok(7);},else=>unit};}};
+ discard writeStdout("V150_INT_MAP_OK boundaries=13 updates=2048 snapshots=true\n");Result<Int,Diagnostic>::Ok(0)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Int,Diagnostic>::Ok(value:Int)=>value,Result<Int,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message);8}}};

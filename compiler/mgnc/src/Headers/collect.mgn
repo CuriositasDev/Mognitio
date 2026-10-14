@@ -3,6 +3,7 @@ use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction};
 use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\Classification\{prune};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{getNode};
@@ -41,15 +42,16 @@ public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Int
   owned=owned->append(declarations->count);declarations=push<Declaration>(declarations,declaration);
  };
  let modules:Paged<Module>=push<Module>(previousModules,Module{source:source,tree:tree,nameSpace:nameSpace,declarations:owned,imports:imported,standard:standard});
- Result<Headers,Diagnostic>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,order:List<Int>[]})
+ Result<Headers,Diagnostic>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),order:List<Int>[]})
 };
 public let collect:Function(ProjectInput):Result<Headers,InputError>=function(input:ProjectInput):Result<Headers,InputError>{
  var modules:Paged<Module>=empty<Module>();var declarations:Paged<Declaration>=empty<Declaration>();var names:Paged<Introduction>=empty<Introduction>();
  loop over(input->sources as source:SourceUnit){
-  let tree:SyntaxForest=branch on analyzeSyntax(source->text){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
+  let parsed:SyntaxForest=branch on analyzeSyntax(source->text){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
+  let tree:SyntaxForest=branch on prune(parsed,parsed->root,List<Int>[]){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
   let scanned:Result<Headers,Diagnostic>=scan(input,modules,declarations,names,source,tree,false);
   branch on scanned{Result<Headers,Diagnostic>::Ok(value:Headers)=>{modules=value->modules;declarations=value->declarations;names=value->names;},
    Result<Headers,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
  };
- Result<Headers,InputError>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,order:List<Int>[]})
+ Result<Headers,InputError>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),order:List<Int>[]})
 };

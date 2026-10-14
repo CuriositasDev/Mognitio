@@ -5,8 +5,8 @@ use Mgnc\SemanticData\{Headers,Introduction,Declaration,Parameter};
 use Mgnc\TypeData\{Argument,ValueTerm};
 use Mgnc\TypeOps\{argumentAt};
 public let declaration:Function(Headers,Int,String):Result<Parent,Diagnostic>=function(headers:Headers,file:Int,name:String):Result<Parent,Diagnostic>{
- var index:Int=0;loop while(index<headers->names->count){let entry:Introduction=try lookup<Introduction>(headers->names,index);
-  branch when{entry->file==file&&entry->name==name=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(entry->declaration));},else=>unit};index=index+1;};
+ loop over((try lookup<List<Int>>(headers->fileNames,file)) as index:Int){let entry:Introduction=try lookup<Introduction>(headers->names,index);
+  branch when{entry->file==file&&entry->name==name=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(entry->declaration));},else=>unit};};
  Result<Parent,Diagnostic>::Ok(Parent::None)
 };
 public let parameter:Function(Headers,Parent,String):Result<Parent,Diagnostic>=function(headers:Headers,owner:Parent,name:String):Result<Parent,Diagnostic>{

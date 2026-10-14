@@ -1,0 +1,77 @@
+{
+  "presentation": "Absolute paths in textual records are normalized. Stream hex preserves original bytes; the raw archive retains all fixtures, commands and observations.",
+  "files": [
+    {
+      "path": "identity.json",
+      "original_sha256": "4a4607519093a3273209050745d458f65561f8d80e5a5ea5855a7a9047d0cf94",
+      "published_sha256": "4a4607519093a3273209050745d458f65561f8d80e5a5ea5855a7a9047d0cf94",
+      "bytes": 18546
+    },
+    {
+      "path": "budget.json",
+      "original_sha256": "49f2ce1d984122ec7aa81c66b234e3b6c62abcd68a2dbffe799666519b4e043f",
+      "published_sha256": "49f2ce1d984122ec7aa81c66b234e3b6c62abcd68a2dbffe799666519b4e043f",
+      "bytes": 22028
+    },
+    {
+      "path": "semantic-fixtures.json",
+      "original_sha256": "8e310e4d01a75deb988ce309ebef348bb693f1123c19f3c700d662c2fde4f9e8",
+      "published_sha256": "8e310e4d01a75deb988ce309ebef348bb693f1123c19f3c700d662c2fde4f9e8",
+      "bytes": 222071
+    },
+    {
+      "path": "formal.json",
+      "original_sha256": "7a0af5d47733a47509d96590cd4834bb5ca1261fcdc402e946c8e314ce01f87f",
+      "published_sha256": "7a0af5d47733a47509d96590cd4834bb5ca1261fcdc402e946c8e314ce01f87f",
+      "bytes": 632045
+    },
+    {
+      "path": "runner.json",
+      "original_sha256": "a21c770327ab6747413390948688ae19178b6ab2f1f6d5ceaf0b9a493deb799d",
+      "published_sha256": "7ef94d3d5be8662f6df2cd169518faa582ade9b17d26b67955913228bafba0f0",
+      "bytes": 566
+    },
+    {
+      "path": "summary.json",
+      "original_sha256": "fca35de620f9f74f9958bea0af607901c0885ef012df1abd286d16d80c6e1229",
+      "published_sha256": "fca35de620f9f74f9958bea0af607901c0885ef012df1abd286d16d80c6e1229",
+      "bytes": 939
+    },
+    {
+      "path": "normal-suite.json",
+      "original_sha256": "4ece9ef411406bc04b5902a58d8195d313d3d71df9758df5c2c17400fd67256d",
+      "published_sha256": "5b3c2a89798298aa417122f880296ab7c97d25b40d2ddaac1c4b6ede8d5cc0b4",
+      "bytes": 894
+    },
+    {
+      "path": "lisp.log",
+      "original_sha256": "26f97c60dee23b4c40941562f5bc7df09cc63ce4bda6206a3161d39205310fa4",
+      "published_sha256": "26f97c60dee23b4c40941562f5bc7df09cc63ce4bda6206a3161d39205310fa4",
+      "bytes": 14469
+    },
+    {
+      "path": "budget-harness.log",
+      "original_sha256": "1f5449e0108324867486965e246e1db7e180aeb80f16a8e66105a4bc4e729a9e",
+      "published_sha256": "1f5449e0108324867486965e246e1db7e180aeb80f16a8e66105a4bc4e729a9e",
+      "bytes": 40
+    },
+    {
+      "path": "measure-harness.log",
+      "original_sha256": "0cb6a96c0603875fe0040d6f0398a7378bfbe7e49998a1d3c92528f972f416af",
+      "published_sha256": "0cb6a96c0603875fe0040d6f0398a7378bfbe7e49998a1d3c92528f972f416af",
+      "bytes": 113
+    },
+    {
+      "path": "measure.log",
+      "original_sha256": "0254f687783d5792f0a57006693953f1784f6766e159f81811c0a5f65d24de21",
+      "published_sha256": "0254f687783d5792f0a57006693953f1784f6766e159f81811c0a5f65d24de21",
+      "bytes": 26131
+    },
+    {
+      "path": "formal-streams.json",
+      "original_sha256": "711cde723b71f54d653162363553ae11d45c98fc5bf735c3587dd98145447dd6",
+      "published_sha256": "711cde723b71f54d653162363553ae11d45c98fc5bf735c3587dd98145447dd6",
+      "bytes": 216098
+    }
+  ]
+}

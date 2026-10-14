@@ -107,3 +107,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.5 flow review correction](v1.5.0-review-flow.md): unique Unknown operators and module initializer reachability.
 
 - [v1.5 corrected-candidate performance](v1.5.0-performance.md): complete preliminary and inherited parse reruns.
+
+- [v1.5 formal semantic performance](v1.5.0-formal-performance.md): adopted budgets, complete formal run and harness validation.

@@ -166,6 +166,15 @@ The 600-second and observed 4096-MiB cutoffs are preliminary observation
 conditions, not adopted formal performance budgets. Preserve failed observations
 under their original identity when correcting a harness or changing a candidate.
 
+For an adopted formal budget, run v150-budget-harness.py and add
+--formal-budget BUDGET_JSON to v150-measure.py. The frozen schema-1 record binds
+the compiler, seed archive, C1 inventory and fixture-manifest hashes and supplies
+wall-median, maximum-RSS and per-process cutoff limits for all 118 cells.
+The formal command rejects partial selections, retains every failed observation,
+and exits unsuccessfully when correctness, completeness or any budget fails.
+One warm-up and three recorded runs are required; the warm-up must succeed but
+is excluded from the wall median and maximum RSS.
+
 The inherited native and parse resource gates above remain separate and unchanged.
 The v1.4 acceptance ledger remains historical; do not rewrite its pinned identities
 to make it claim v1.5 acceptance.

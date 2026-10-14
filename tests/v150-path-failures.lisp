@@ -113,3 +113,17 @@
         (same 120 (count-if (lambda (line) (search "newfstatat(" line)) lines))
         (same 60 (count-if (lambda (line) (and (search "munmap(" line) (search ", 2)" line))) lines))
         (is (not (search "close(3)" trace)))))))
+
+(deftest v150-error-result-allocation-failures
+  (let* ((missing (namestring (fresh-path ".absent")))
+         (manifest (v150-manifest (format nil "discard inspectPath(~S);0" missing))))
+    (let ((mognitio.runtime::*allocation-hook*
+            (lambda (kind) (when (eq kind :data) (error 'storage-condition)))))
+      (multiple-value-bind (out err code) (v12-driver manifest)
+        (same "" out) (same 4 code) (is (search "allocation failure" err))))
+    (loop for allocation from 2 to 4 do
+      (multiple-value-bind (out err code trace)
+          (v12-trace (v12-native manifest (list :fail-allocation allocation)))
+        (same "" out) (same 4 code) (is (search "allocation failure" err))
+        (let ((release (search "munmap(" trace)) (diagnostic (search "write(2," trace)))
+          (is (and release diagnostic (< release diagnostic))))))))

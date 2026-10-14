@@ -127,3 +127,20 @@
         (same "" out) (same 4 code) (is (search "allocation failure" err))
         (let ((release (search "munmap(" trace)) (diagnostic (search "write(2," trace)))
           (is (and release diagnostic (< release diagnostic))))))))
+
+(deftest v150-file-identity-diagnostics
+  (dolist (case '(
+    ("let probe:Function(FileIdentity):Unit=function(id:FileIdentity):Unit{assert id;};" "assert requires Bool; actual FileIdentity")
+    ("let probe:Function(List<FileIdentity>):Unit=function(ids:List<FileIdentity>):Unit{assert ids;};" "assert requires Bool; actual List<FileIdentity>")
+    ("let probe:Function(Function():FileIdentity):Unit=function(get:Function():FileIdentity):Unit{assert get;};" "assert requires Bool; actual Function(): FileIdentity")
+    ("@test let probe:Function():List<FileIdentity>=function():List<FileIdentity>{panic{\"unreachable\"};};" "test must have type Function(): Unit; actual Function(): List<FileIdentity>")
+    ))
+    (let ((manifest (v150-manifest "0" (first case))))
+      (handler-case
+          (progn (project-checked manifest) (error "Expected type rejection"))
+        (source-failure (condition)
+          (same (second case) (diagnostic-message (failure-diagnostic condition)))))
+      (multiple-value-bind (out err code) (v12-driver manifest)
+        (same "" out) (same 1 code)
+        (is (search (second case) err))
+        (is (not (search "non-completing" err)))))))

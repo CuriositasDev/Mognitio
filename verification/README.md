@@ -1,9 +1,9 @@
 # Verification
 
-The unreleased [1.5 Lisp capability](v1.5.0-lisp.md) supplies path inspection.
+The accepted [1.5 Lisp capability](v1.5.0-lisp.md) supplies path inspection.
 The accepted [replacement seed](v1.5.0-seed2.md) bootstraps the
 [1.5 compiler implementation](v1.5.0-compiler.md); source and artifact identities
-remain separate from final compiler acceptance.
+are fixed by the [final acceptance and release record](v1.5.0-release.md).
 
 The retained [1.4.0 acceptance](v1.4.0.md) records complete-source parsing, shared
 frontend native continuity, [54 new conditions](v1.4.0-conformance.md), 55 inherited
@@ -37,7 +37,7 @@ The retained v0.11 [72-case ledger](v0.11.0-testing.md) and
 [process evidence](v0.11.0-process.md) describe the inherited runner.
 The [runner review fixes](v0.11.0-review.md) cover host storage recovery,
 helper frame-register preservation, and committed-result diagnostics.
-The current release validation procedure is [v1.3.0](v1.3.0-release.md).
+The current release validation procedure is [v1.5.0](v1.5.0-release.md).
 The retained stable release record is [v1.0.0](v1.0.0-release.md).
 The retained source release record is [v0.14.0](v0.14.0-release.md).
 Run checks from the repository root on a non-root Linux amd64 host with SBCL,

@@ -2,14 +2,15 @@
 
 Mognitio is a typed language with immutable data, persistent lists, explicit
 contracts and generic templates, and first-class functions with snapshot captures.
-Version 1.4.0 extends the experimental [mgnc compiler](compiler/mgnc/README.md)
-with structural parsing of its complete source profile. Parse and native build
-share the same frontend; native generation retains the scalar 1.3 subset.
-That 1.4 compiler was built explicitly from source with a fixed 1.2.0 seed. It is not
-included in Debian packages, APT installations or offline bundles, and does not
-replace the normal backend. Parsing the compiler source is separate from
-self-compilation. The [1.4 acceptance record](verification/v1.4.0-review.md) covers
-complete-source parsing and the inherited native contract.
+Version 1.5.0 adds complete project semantics to the experimental
+[mgnc compiler](compiler/mgnc/README.md). Check and build share one semantic
+result, covering declarations, nominal and generic types, constraints, captures,
+and every required body. Build selects the inherited scalar native subset.
+The compiler is built explicitly from source with the accepted, frozen 1.5 Lisp
+seed. Debian packages, APT installations and offline bundles contain the normal
+toolchain; mgnc remains source-built and does not replace its backend.
+The [1.5 acceptance and release record](verification/v1.5.0-release.md) links
+functional, independence and formal performance evidence.
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -28,12 +29,12 @@ for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runt
 a host SBCL installation is required only for source development.
 The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=mognitio.mognitio)
 is versioned independently. Use a client version whose compatibility table
-explicitly includes the 1.4.0 server;
+explicitly includes the 1.5.0 server;
 a compatible extension update is a separate project.
 
-## Development source
+## Version 1.5 capabilities
 
-The unreleased Lisp capability for 1.5 adds explicit
+The normal toolchain adds explicit
 `Std\Io\{inspectPath,FileIdentity,PathInfo,PathInfoError}` imports.
 `inspectPath` returns a path kind and an opaque identity without following the
 final symlink. Identities support same-type equality and ordinary value storage.
@@ -44,18 +45,18 @@ by check and build, including nominal/generic types, captures, constraints and
 all required bodies. Build then selects the inherited native subset.
 Its [replacement seed](verification/v1.5.0-seed2.md) is frozen separately, with the
 original seed retained. See the [compiler implementation and validation record](verification/v1.5.0-compiler.md)
-for the fixed source/artifact identities and verification stage. Formal performance
-budget adoption, final compiler acceptance and release remain separate.
+for the fixed source/artifact identities. The corrected compiler, adopted formal
+budgets and all version 1.5 implementation stages are accepted.
 
 ## Start here
 
 - [Examples](examples/): executable projects, including [multiple modules](examples/modules/).
 - [Test coverage](tests/README.md): current project cases and internal regression oracles.
-- [Previous release validation](verification/v1.3.0-release.md): frozen 1.3.0 release checks.
+- [Release validation](verification/v1.5.0-release.md): accepted 1.5.0 identities and distribution gates.
 - [Language tests](examples/testing/README.md): `@test`, `assert`, and `mgn test`.
 - [File converter](examples/file-converter/README.md): arguments and text I/O.
 - [Directory converter](examples/directory-converter/README.md): explicit tree traversal.
-- [Implementation verification](verification/v1.4.0-review.md): current evidence and limits.
+- [Implementation verification](verification/v1.5.0-review-flow.md): corrected compiler evidence and limits.
 - [Verification commands](verification/README.md): reproduce the checks.
 - [Toolchain distribution](packaging/README.md): pinned builds, APT staging, and offline installation.
 - [Compatibility policy](COMPATIBILITY.md): backward compatibility within a major version.

@@ -175,6 +175,15 @@ and exits unsuccessfully when correctness, completeness or any budget fails.
 One warm-up and three recorded runs are required; the warm-up must succeed but
 is excluded from the wall median and maximum RSS.
 
+Run v150-wall-cutoff.py to cover delayed reaping at both monitor exit paths.
+The observer preserves actual exit/streams and marks an elapsed deadline overrun
+as a wall cutoff even when the child already exited. The formal gate independently
+checks every run's finite, nonnegative wall time, including the warm-up, against
+its per-run cutoff before computing recorded-run aggregates.
+Run v150-formal-recheck.py to verify the frozen 118-cell formal record with the
+corrected gate, including all 472 run deadlines and 944 stream payloads. This
+rechecks saved observations; it does not collect new performance samples.
+
 The inherited native and parse resource gates above remain separate and unchanged.
 The v1.4 acceptance ledger remains historical; do not rewrite its pinned identities
 to make it claim v1.5 acceptance.

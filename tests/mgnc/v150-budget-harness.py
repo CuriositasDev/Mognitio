@@ -85,7 +85,7 @@ with tempfile.TemporaryDirectory() as directory:
                   fixture_manifest_sha256=sha(fixture_bytes),
                   seed_archive_sha256=json.loads((root/"verification/v1.5.0-seed2.json").read_text())["sha256"])
     policy=directory/"budget.json";policy.write_text(json.dumps(budget))
-    for scenario in ["pass","budget-failure","warmup-failure","partial","wrong-identity"]:
+    for scenario in ["pass","budget-failure","warmup-failure","warmup-late","recorded-late","partial","wrong-identity"]:
         output=directory/scenario;observed=[]
         def observe(command,destination,**options):
             observed.append(options)
@@ -93,7 +93,10 @@ with tempfile.TemporaryDirectory() as directory:
             (destination/"stdout").write_bytes(b"")
             (destination/"stderr").write_bytes(b"")
             fail=scenario=="warmup-failure"
-            return dict(exit=1 if fail else 0,signal=None,seconds=6 if scenario=="budget-failure" else 5,
+            seconds=6 if scenario=="budget-failure" else 5
+            if ((scenario=="warmup-late" and destination.name=="warmup")
+                    or (scenario=="recorded-late" and destination.name=="run-1")):seconds=11
+            return dict(exit=1 if fail else 0,signal=None,seconds=seconds,
                         peak_rss_bytes=limits["rss_max_bytes"],cutoff=None,harness_failure=None)
         candidate=copy.deepcopy(budget)
         if scenario=="wrong-identity":candidate["compiler_sha256"]="other"
@@ -117,6 +120,6 @@ with tempfile.TemporaryDirectory() as directory:
         check(all(x==dict(timeout=10,rss_limit=256*1024**2) for x in observed))
         if scenario=="warmup-failure":
             check(all(not c["completed"] and len(c["not_run"])==3 and "wall_median_seconds" not in c for c in result["cells"]))
-        elif scenario=="budget-failure":
+        elif scenario in ["budget-failure","warmup-late","recorded-late"]:
             check(result["all_selected_completed"] and not any(c["budget_passed"] for c in result["cells"]))
 print("V150_FORMAL_BUDGET_HARNESS_OK checks="+str(checks))

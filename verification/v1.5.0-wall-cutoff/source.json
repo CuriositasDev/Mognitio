@@ -1,0 +1,17 @@
+{
+  "previous_revision": "4b8902d246f5bbc97a54f6995a3987ed69e87506",
+  "corrected_revision": "93464b260366d0ee97a0be7c0ede4ac1aa26cc75",
+  "regression_sha256": "ae19458761ab3c5939643cc1c85c26d5a7b6b220be3d2d66e2111e470d2e53d6",
+  "compiler_sha256": "526948382f47d9d150c1438573b009ce62c3b52d40cad83ae60d2d26653c7f1c",
+  "new_performance_measurements": false,
+  "files": {
+    "tests/mgnc/v150_budget.py": {
+      "before_blob": "ee3d8bb93a20e61b7f4dffca8ed3bb4c55d46d4e",
+      "after_blob": "d5f41339a06963b9825b3f7e0de40932f14a894f"
+    },
+    "tests/mgnc/v150_measurelib.py": {
+      "before_blob": "57d267de4f487f1e0714e02a147a4404fbb5884d",
+      "after_blob": "37b5398c621ea26b1a3990115e3d7d559839965f"
+    }
+  }
+}

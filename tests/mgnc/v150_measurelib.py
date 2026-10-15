@@ -52,6 +52,9 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
         finally:
             child.returncode=os.waitstatus_to_exitcode(status) if status is not None else -signal.SIGKILL
     elapsed=time.monotonic()-started
+    # Reaping can precede the loop's deadline check after a delayed observation.
+    # Preserve the actual exit/signal and any earlier cutoff; no child remains to kill.
+    if reason is None and elapsed>timeout:reason="wall"
     streams={}
     for name,path in [("stdout",stdout),("stderr",stderr)]:
         data=path.read_bytes()

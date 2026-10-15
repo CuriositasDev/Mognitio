@@ -1,0 +1,16 @@
+FAIL over-seconds-0
+FAIL nan-seconds-0
+FAIL infinite-seconds-0
+FAIL negative-seconds-0
+FAIL bool-seconds-0
+FAIL missing-seconds-0
+FAIL over-seconds-1
+FAIL over-seconds-2
+FAIL over-seconds-3
+FAIL initial-reap-wall-cutoff
+FAIL initial-reap-unflagged-rejected-0
+FAIL initial-reap-unflagged-rejected-1
+FAIL rss-exit-reap-wall-cutoff
+FAIL rss-exit-reap-unflagged-rejected-0
+FAIL rss-exit-reap-unflagged-rejected-1
+V150_WALL_CUTOFF checks=45 failures=15

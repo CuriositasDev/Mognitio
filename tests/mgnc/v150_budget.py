@@ -47,6 +47,11 @@ def within_budget(runs, limits):
                        and run["cutoff"] is None and run["harness_failure"] is None
                        for run in runs)):
         return False
+    if not all(type(run["seconds"]) in (int, float)
+               and math.isfinite(run["seconds"])
+               and 0 <= run["seconds"] <= limits["wall_cutoff_seconds"]
+               for run in runs):
+        return False
     measured = runs[1:]
     values = [run["seconds"] for run in measured] + [
         run["peak_rss_bytes"] for run in measured]

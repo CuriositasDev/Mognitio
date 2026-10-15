@@ -1,0 +1,241 @@
+{
+  "checks": [
+    {
+      "name": "baseline",
+      "passed": true
+    },
+    {
+      "name": "inclusive-boundary-0",
+      "passed": true
+    },
+    {
+      "name": "over-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "nan-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "infinite-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "negative-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "bool-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "missing-seconds-0",
+      "passed": false
+    },
+    {
+      "name": "inclusive-boundary-1",
+      "passed": true
+    },
+    {
+      "name": "over-seconds-1",
+      "passed": false
+    },
+    {
+      "name": "nan-seconds-1",
+      "passed": true
+    },
+    {
+      "name": "infinite-seconds-1",
+      "passed": true
+    },
+    {
+      "name": "negative-seconds-1",
+      "passed": true
+    },
+    {
+      "name": "bool-seconds-1",
+      "passed": true
+    },
+    {
+      "name": "missing-seconds-1",
+      "passed": true
+    },
+    {
+      "name": "inclusive-boundary-2",
+      "passed": true
+    },
+    {
+      "name": "over-seconds-2",
+      "passed": false
+    },
+    {
+      "name": "nan-seconds-2",
+      "passed": true
+    },
+    {
+      "name": "infinite-seconds-2",
+      "passed": true
+    },
+    {
+      "name": "negative-seconds-2",
+      "passed": true
+    },
+    {
+      "name": "bool-seconds-2",
+      "passed": true
+    },
+    {
+      "name": "missing-seconds-2",
+      "passed": true
+    },
+    {
+      "name": "inclusive-boundary-3",
+      "passed": true
+    },
+    {
+      "name": "over-seconds-3",
+      "passed": false
+    },
+    {
+      "name": "nan-seconds-3",
+      "passed": true
+    },
+    {
+      "name": "infinite-seconds-3",
+      "passed": true
+    },
+    {
+      "name": "negative-seconds-3",
+      "passed": true
+    },
+    {
+      "name": "bool-seconds-3",
+      "passed": true
+    },
+    {
+      "name": "missing-seconds-3",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-exit-preserved",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-no-harness-failure",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-elapsed-preserved",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-wall-cutoff",
+      "passed": false
+    },
+    {
+      "name": "initial-reap-rss-preserved",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-streams-preserved",
+      "passed": true
+    },
+    {
+      "name": "initial-reap-unflagged-rejected-0",
+      "passed": false
+    },
+    {
+      "name": "initial-reap-unflagged-rejected-1",
+      "passed": false
+    },
+    {
+      "name": "rss-exit-reap-exit-preserved",
+      "passed": true
+    },
+    {
+      "name": "rss-exit-reap-no-harness-failure",
+      "passed": true
+    },
+    {
+      "name": "rss-exit-reap-elapsed-preserved",
+      "passed": true
+    },
+    {
+      "name": "rss-exit-reap-wall-cutoff",
+      "passed": false
+    },
+    {
+      "name": "rss-exit-reap-rss-preserved",
+      "passed": true
+    },
+    {
+      "name": "rss-exit-reap-streams-preserved",
+      "passed": true
+    },
+    {
+      "name": "rss-exit-reap-unflagged-rejected-0",
+      "passed": false
+    },
+    {
+      "name": "rss-exit-reap-unflagged-rejected-1",
+      "passed": false
+    }
+  ],
+  "observations": [
+    {
+      "route": "initial-reap",
+      "seconds": 0.28845320898108184,
+      "peak_rss_raw": 27320,
+      "peak_rss_unit": "KiB",
+      "peak_rss_bytes": 27975680,
+      "exit": 0,
+      "signal": null,
+      "cutoff": null,
+      "harness_failure": null,
+      "sample_interval_seconds": 0.05,
+      "rss_exit_grace_seconds": 0.1,
+      "last_sample": null,
+      "sample_count": 0,
+      "streams": {
+        "stdout": {
+          "file": "stdout",
+          "bytes": 5,
+          "sha256": "f152945b358aa26a9e72e25381deff94e254c547089bd690dccd218e9414d148"
+        },
+        "stderr": {
+          "file": "stderr",
+          "bytes": 11,
+          "sha256": "d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c"
+        }
+      }
+    },
+    {
+      "route": "rss-exit-reap",
+      "seconds": 0.2863359230104834,
+      "peak_rss_raw": 27688,
+      "peak_rss_unit": "KiB",
+      "peak_rss_bytes": 28352512,
+      "exit": 0,
+      "signal": null,
+      "cutoff": null,
+      "harness_failure": null,
+      "sample_interval_seconds": 0.05,
+      "rss_exit_grace_seconds": 0.1,
+      "last_sample": null,
+      "sample_count": 0,
+      "streams": {
+        "stdout": {
+          "file": "stdout",
+          "bytes": 5,
+          "sha256": "f152945b358aa26a9e72e25381deff94e254c547089bd690dccd218e9414d148"
+        },
+        "stderr": {
+          "file": "stderr",
+          "bytes": 11,
+          "sha256": "d8bcbfa307f670d5532559fc030ee82ff7be48160c1fff837950e0d7528d0a4c"
+        }
+      }
+    }
+  ],
+  "passed": false
+}

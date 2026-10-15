@@ -1,0 +1,67 @@
+{
+  "revision": "93464b260366d0ee97a0be7c0ede4ac1aa26cc75",
+  "results": [
+    {
+      "name": "wall",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-wall-cutoff.py",
+        "--evidence",
+        "<review-evidence>/after.json"
+      ],
+      "exit": 0,
+      "seconds": 0.6443614959716797
+    },
+    {
+      "name": "budget",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-budget-harness.py"
+      ],
+      "exit": 0,
+      "seconds": 2.236898183822632
+    },
+    {
+      "name": "measure",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-measure-harness.py"
+      ],
+      "exit": 0,
+      "seconds": 0.44254517555236816
+    },
+    {
+      "name": "recheck",
+      "command": [
+        "python3",
+        "tests/mgnc/v150-formal-recheck.py",
+        "--output",
+        "<review-evidence>/recheck.json"
+      ],
+      "exit": 0,
+      "seconds": 0.08760762214660645
+    },
+    {
+      "name": "normal",
+      "command": [
+        "bash",
+        "-lc",
+        ". <toolchain-environment> && sbcl --noinform --script scripts/test.lisp"
+      ],
+      "exit": 0,
+      "seconds": 542.032021522522
+    },
+    {
+      "name": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD^",
+        "HEAD"
+      ],
+      "exit": 0,
+      "seconds": 0.0019979476928710938
+    }
+  ]
+}

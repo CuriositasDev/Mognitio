@@ -109,3 +109,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.5 corrected-candidate performance](v1.5.0-performance.md): complete preliminary and inherited parse reruns.
 
 - [v1.5 formal semantic performance](v1.5.0-formal-performance.md): adopted budgets, complete formal run and harness validation.
+
+- [v1.5 wall-cutoff correction](v1.5.0-wall-cutoff.md): delayed-reap regression and saved formal-run revalidation.

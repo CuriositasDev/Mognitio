@@ -1,0 +1,71 @@
+{
+  "files": [
+    {
+      "path": "before.json",
+      "original_sha256": "bf53752e4ff67791e7b01fbf463db75a62e1d9c5846f94c9825f9d5589bd42e7",
+      "published_sha256": "bf53752e4ff67791e7b01fbf463db75a62e1d9c5846f94c9825f9d5589bd42e7",
+      "bytes": 4875
+    },
+    {
+      "path": "before.log",
+      "original_sha256": "44e3a464fd7717cbd7eaab967e4c19b5ad9de9d5230ad604a86f89bfda8fca4b",
+      "published_sha256": "44e3a464fd7717cbd7eaab967e4c19b5ad9de9d5230ad604a86f89bfda8fca4b",
+      "bytes": 448
+    },
+    {
+      "path": "after.json",
+      "original_sha256": "d1dfef17ca199cdec0885cf6f7caf2a32fe079c3550727e6cb7fe94d25460222",
+      "published_sha256": "d1dfef17ca199cdec0885cf6f7caf2a32fe079c3550727e6cb7fe94d25460222",
+      "bytes": 4864
+    },
+    {
+      "path": "wall.log",
+      "original_sha256": "0010ce0d4cae467784c3adeee5275fa1e332d50bfd9ed0bf213ab12fa0032cfd",
+      "published_sha256": "0010ce0d4cae467784c3adeee5275fa1e332d50bfd9ed0bf213ab12fa0032cfd",
+      "bytes": 38
+    },
+    {
+      "path": "budget.log",
+      "original_sha256": "1e217c8bd0dd37fcf5dfde15980273ef30e60a3616ad00721737ad4ae8cfd6c3",
+      "published_sha256": "1e217c8bd0dd37fcf5dfde15980273ef30e60a3616ad00721737ad4ae8cfd6c3",
+      "bytes": 40
+    },
+    {
+      "path": "measure.log",
+      "original_sha256": "0cb6a96c0603875fe0040d6f0398a7378bfbe7e49998a1d3c92528f972f416af",
+      "published_sha256": "0cb6a96c0603875fe0040d6f0398a7378bfbe7e49998a1d3c92528f972f416af",
+      "bytes": 113
+    },
+    {
+      "path": "recheck.json",
+      "original_sha256": "8454ac4c0e2369b87ebc300446c0fbde570f2c85ee294fa7e83d45df40804589",
+      "published_sha256": "8454ac4c0e2369b87ebc300446c0fbde570f2c85ee294fa7e83d45df40804589",
+      "bytes": 21508
+    },
+    {
+      "path": "recheck.log",
+      "original_sha256": "b360cd75e5451bb7609c385022fe513c469b4b52a9d2fdf00816b6aaa6ddb6de",
+      "published_sha256": "b360cd75e5451bb7609c385022fe513c469b4b52a9d2fdf00816b6aaa6ddb6de",
+      "bytes": 76
+    },
+    {
+      "path": "normal.log",
+      "original_sha256": "26f97c60dee23b4c40941562f5bc7df09cc63ce4bda6206a3161d39205310fa4",
+      "published_sha256": "26f97c60dee23b4c40941562f5bc7df09cc63ce4bda6206a3161d39205310fa4",
+      "bytes": 14469
+    },
+    {
+      "path": "validation.json",
+      "original_sha256": "4bf6a0b782820611b89e6883f6fd63b983fba389f028b0fc4c89867e4db0040e",
+      "published_sha256": "46201fa010309d32c04b563dc2a3ecd2c59fbd330e8ff4ee49c35f211df23fc9",
+      "bytes": 1363
+    },
+    {
+      "path": "source.json",
+      "original_sha256": "80ed9f0bb93be872598f88efe91d8330399c6a958ffe99224e72bbb9de6f27d4",
+      "published_sha256": "80ed9f0bb93be872598f88efe91d8330399c6a958ffe99224e72bbb9de6f27d4",
+      "bytes": 720
+    }
+  ],
+  "presentation": "Only absolute command paths and log trailing whitespace are normalized."
+}

@@ -2,8 +2,9 @@
 
 This source project implements the Mognitio 1.5 compiler, mgnc.
 It remains experimental and is not included in the regular Debian package,
-APT repository, or installer bundle. Implementation, final acceptance,
-performance-budget adoption, and release are separate stages.
+APT repository, or installer bundle. The corrected implementation and formal
+performance results are accepted for 1.5.0; see the
+[acceptance and release record](../../verification/v1.5.0-release.md).
 
 ## Build
 

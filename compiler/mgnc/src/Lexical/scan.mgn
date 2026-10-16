@@ -28,6 +28,23 @@ let hexDigit:Function(String):Int=function(scalar:String):Int{
 let pairKind:Function(String):Bool=function(pair:String):Bool{
  pair=="->"||pair=="=>"||pair=="=="||pair=="!="||pair=="<="||pair==">="||pair=="&&"||pair=="||"||pair=="::"
 };
+// Repeated slices at increasing offsets rescan every earlier UTF-8 scalar.
+// Balanced splitting bounds each scan to its current fragment while preserving
+// source order and a small scalar-list working set.
+let chunkSource:Function(String):Result<List<String>,Diagnostic>=function(source:String):Result<List<String>,Diagnostic>{
+ var chunks:List<String>=List<String>[source];var changed:Bool=true;
+ loop while(changed){
+  changed=false;var next:List<String>=List<String>[];
+  loop over(chunks as chunk:String){
+   branch when{chunk->length()<=1024=>{next=next->append(chunk);},else=>{
+    let middle:Int=chunk->length()/2;
+    let left:String=branch on chunk->slice(0,middle){Result<String,SliceError>::Ok(value:String)=>value,Result<String,SliceError>::Err(error:SliceError)=>{return Result<List<String>,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"source split bounds"));}};
+    let right:String=branch on chunk->slice(middle,chunk->length()){Result<String,SliceError>::Ok(value:String)=>value,Result<String,SliceError>::Err(error:SliceError)=>{return Result<List<String>,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"source split bounds"));}};
+    next=next->append(left)->append(right);changed=true;
+   }};
+  };chunks=next;
+ };Result<List<String>,Diagnostic>::Ok(chunks)
+};
 public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(source:String):Result<Snapshot,Diagnostic>{
  var tokens:TokenStore=emptyTokens();
  var cache:List<WidthEntry>=List<WidthEntry>[];
@@ -38,14 +55,7 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
  var offset:Int=0;var line:Int=1;var column:Int=1;var scalarIndex:Int=0;
  var previousCR:Bool=false;var leadingZero:Bool=false;
  var hexValue:Int=0;var hexCount:Int=0;
- var sourceCursor:Int=0;
- loop while(sourceCursor<source->length()){
-  let sourceEnd:Int=branch when{source->length()-sourceCursor>1024=>sourceCursor+1024,else=>source->length()};
-  let chunk:String=branch on source->slice(sourceCursor,sourceEnd){
-   Result<String,SliceError>::Ok(value:String)=>value,
-   Result<String,SliceError>::Err(error:SliceError)=>{return Result<Snapshot,Diagnostic>::Err(problem("internal",Span{start:offset,end:offset,line:line,column:column},"source cursor bounds"));},
-  };
-  sourceCursor=sourceEnd;
+ loop over(try chunkSource(source) as chunk:String){
   loop over(chunk->scalars() as scalar:String){
    var width:Int=0;
    loop over(cache as cached:WidthEntry){branch when{cached->scalar==scalar=>{width=cached->width;break;},else=>unit};};

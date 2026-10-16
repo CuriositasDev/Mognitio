@@ -6,7 +6,7 @@ PREFIX = 'namespace Mgnc\\WholeUnicode;\n// Generated scalar enumeration; see te
 SUFFIX = '\n\npublic let number:Function(String):Int=function(scalar:String):Int{\n let ordinary:Int=ascii(scalar);branch when{ordinary>=0=>{return ordinary;},else=>unit};var value:Int=0;loop over(pages as page:String){loop over(page->scalars() as candidate:String){branch when{candidate==scalar=>{return value;},else=>unit};value=value+1;branch when{value==55296=>{value=57344;},else=>unit};};};-1\n};\n'
 def generate():
     def escaped(value):
-        if value < 32 or value == 127:
+        if value < 32 or value >= 127:
             return "\\u{"+format(value,"x")+"}"
         if value in (34,92):
             return "\\"+chr(value)

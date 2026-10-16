@@ -157,9 +157,11 @@
     "revision": "84b59d4fdb81b6032671b2f1f731b08d75e2522d",
     "files": 102,
     "bytes": 1076892,
-    "inventory_sha256": "c8f31160edc9f058a382c076cec0000d71f9a2a327f3a490b60dc3dd98303903",
+    "inventory_sha256": "d01b7bacc62b585761b24cde0bcee94186e1343a7e425da26b9d42e9bb58bbee",
     "compiler_sha256": "48532de12677d86b9392ac0ef2ba3ab1189af252e125c8b168c44c72e4d2eae8",
-    "compiler_bytes": 6519024
+    "compiler_bytes": 6519024,
+    "audit_inventory_json_sha256": "c8f31160edc9f058a382c076cec0000d71f9a2a327f3a490b60dc3dd98303903",
+    "manifest_sha256": "aa004c27dd46461893d674154416d45aabbb4c73502b4b91d1a12fa46e303ba2"
   },
   "cumulative_lisp": {
     "groups": 238,

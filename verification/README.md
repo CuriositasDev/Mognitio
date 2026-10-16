@@ -123,3 +123,6 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.6 whole-project lowering](v1.6.0-whole-ir.md): complete-source IR, independent verifier and corpus evidence.
 
 - [v1.6 native planning](v1.6.0-native-planning.md): concrete instances, closure environments and independent mutation checks.
+
+The [1.6 generated runtime components](v1.6.0-runtime-components.md) record
+independent root/layout checks, physical-heap execution and ABI probes.

@@ -117,3 +117,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.6 replacement bootstrap seed](v1.6.0-seed3.md): immutable replacement identity and capability evidence.
 
 - [v1.6 large-live-heap arena growth](v1.6.0-arena-growth.md): reserve policy and independent collection-count regression.
+
+- [v1.6 adaptive-growth bootstrap seed](v1.6.0-seed4.md): current immutable bootstrap and capability evidence.

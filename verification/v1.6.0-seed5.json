@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "stage": "replacement-bootstrap-accepted",
+  "accepted_at": "2026-10-17",
+  "seed": {
+    "bundle": "lisp-1f18f89fc793c4dc79b23af9e948cc3cc29719f3.tar.gz",
+    "bytes": 27579846,
+    "manifestSha256": "a75f83d780c5da0b4d0b7adba01143b3dc3f94f02ce6d6ae6b85750c5cc68ab5",
+    "schema": 1,
+    "sha256": "1539e536c14502e06cce6a3a9de23b316e0eb6686c13d3ebc19c63885cb440c0",
+    "sourceCommit": "1f18f89fc793c4dc79b23af9e948cc3cc29719f3"
+  },
+  "seed_components": 1060,
+  "replaces_seed_source": "e7c9c60425b6721d8ce3d5cf4f69b2e505747c4b",
+  "reason": "The host Lisp default 1 GiB dynamic space cannot generate the expanded native compiler. Freeze explicit 4096 MiB dynamic-space and 64 MiB control-stack capacities in the seed launcher and manifest.",
+  "capability_runner_revision": "1f18f89fc793c4dc79b23af9e948cc3cc29719f3",
+  "capability_fixture_sha256": "d8c72eb32a3f21fcac31633cf82dd43ac0fe06acdd9f4a0cd5bdb3fec2920be4",
+  "capability_results": [
+    {
+      "name": "module-snapshots-run",
+      "exit": 12,
+      "seconds": 0.02132690604776144,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-build",
+      "exit": 0,
+      "seconds": 0.06424237601459026,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-native",
+      "exit": 12,
+      "seconds": 0.00028030306566506624,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-run",
+      "exit": 1,
+      "seconds": 0.020583817036822438,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-build",
+      "exit": 0,
+      "seconds": 0.060808337992057204,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-native",
+      "exit": 1,
+      "seconds": 0.0002884790301322937,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-run",
+      "exit": 0,
+      "seconds": 0.020049141952767968,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-build",
+      "exit": 0,
+      "seconds": 0.06490539200603962,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-native",
+      "exit": 0,
+      "seconds": 0.0002670179819688201,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-run",
+      "exit": 0,
+      "seconds": 0.021304000983946025,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-build",
+      "exit": 0,
+      "seconds": 0.065333844977431,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-native",
+      "exit": 0,
+      "seconds": 0.0003192999865859747,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-run",
+      "exit": 0,
+      "seconds": 0.02557180100120604,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-build",
+      "exit": 0,
+      "seconds": 0.06424770504236221,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-native",
+      "exit": 0,
+      "seconds": 0.001834872062318027,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-build",
+      "exit": 0,
+      "seconds": 170.8042889769422,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-check",
+      "exit": 0,
+      "seconds": 151.00724935298786,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    }
+  ],
+  "corpus": {
+    "revision": "84b59d4fdb81b6032671b2f1f731b08d75e2522d",
+    "files": 102,
+    "bytes": 1076892,
+    "inventory_sha256": "d01b7bacc62b585761b24cde0bcee94186e1343a7e425da26b9d42e9bb58bbee",
+    "compiler_sha256": "9fb59e25776c0d878e932fafda470b74594bd1b6c4b94b06ec6a386a8d50c4d3",
+    "compiler_bytes": 6518784
+  },
+  "cumulative_lisp": {
+    "groups": 236,
+    "assertions": 605733,
+    "processes": 1316,
+    "failures": 0
+  },
+  "cumulative_python": "Complete ASDF integration sequence passed, ending with 55 path-inspection checks.",
+  "restored_seed": "1060 components verified; mutation rejected; isolated run/build and independent ELF passed.",
+  "implementation_complete": false,
+  "runtime_acceptance_complete": false,
+  "release_performed": false,
+  "execution_capacity": {
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64,
+    "scope": "host Lisp seed process"
+  }
+}

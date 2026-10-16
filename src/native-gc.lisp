@@ -46,6 +46,11 @@
 (defun collect-unit (&optional context)
   (runtime-unit :collect
     (append (helper-frame 32) (bump +collections+)
+      ;; Sweep can coalesce every cached link location; start each search afresh.
+      '((:imm-rax 0))
+      (loop for offset from (context-field-offset :fit-cursors (test-image-p))
+            below (+ (context-field-offset :fit-cursors (test-image-p)) 128) by 8
+            collect (list :store-word :r15 offset :rax))
       '((:call (:runtime :gc.workspace)) (:store-frame -168 :rax))
       `((:load-word :rax :r15 ,+root-head+) (:store-frame -8 :rax)
         (:label :frame) (:load-frame :rax -8) (:test) (:jz :trace-pass)

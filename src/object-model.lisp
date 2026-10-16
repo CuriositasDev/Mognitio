@@ -10,7 +10,7 @@
 
 (defun symbol-kind (name)
   (cond
-    ((equal name '(:runtime-context 7)) :metadata)
+    ((equal name '(:runtime-context 8)) :metadata)
     ((keywordp name) :code)
     ((and (listp name) (= (length name) 2) (eq (first name) :assertion-site)
           (typep (second name) '(integer 0 *))) :metadata)

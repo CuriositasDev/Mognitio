@@ -93,6 +93,6 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   }};
  }};
  let base:Node=makeNode(frame,Structure::Known(valueType),normal,operation,Parent::None,0,false);
- let value:Node=Node{file:base->file,cursor:base->cursor,rule:base->rule,flag:base->flag,structure:base->structure,normal:base->normal,operation:base->operation,binding:base->binding,target:base->target,children:base->children,span:base->span,integer:base->integer,minimum:base->minimum,literal:literal,mapping:base->mapping,arguments:base->arguments};
+ let value:Node=Node{file:base->file,cursor:base->cursor,rule:base->rule,flag:base->flag,structure:base->structure,normal:base->normal,operation:base->operation,binding:base->binding,target:base->target,children:base->children,span:base->span,integer:base->integer,minimum:base->minimum,literal:literal,text:base->text,binder:base->binder,binders:base->binders,functionOwner:base->functionOwner,mapping:base->mapping,arguments:base->arguments};
  Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:value,environment:environment})
 };

@@ -1,0 +1,39 @@
+namespace Mgnc;
+use Mgnc\Data\{Diagnostic,lookup,problem,Span};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\SemanticValues\{Node,Symbol,FunctionInfo};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\Tables\{atList};
+use Std\Io\{writeStdout};
+let require:Function(Bool,String):Result<Unit,Diagnostic>=function(condition:Bool,message:String):Result<Unit,Diagnostic>{
+ branch when{condition=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},message))}
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let source:SourceUnit=SourceUnit{path:"probe.mgn",displayPath:"probe.mgn",relativePath:"probe.mgn",expectedNamespace:"",text:"namespace App;type Choice=sum{Empty;Text(String);};let main:Function(List<String>):Int=function(args:List<String>):Int{let literal:String=\"a\\0\\u{1f600}終\";let outer:Function():Function():String=function():Function():String{function():String{literal}};loop over(args as argument:String){discard argument;};branch on Choice::Text(literal){Choice::Empty=>0,Choice::Text(content:String)=>content->length()}};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ var literals:Int=0;var loops:Int=0;var patterns:Int=0;var nested:Int=0;
+ loop over(semantic->state->nodes->pages->append(semantic->state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
+  branch when{node->operation=="string"=>{
+   try require(node->text=="\"a\\0\\u{1f600}終\"","literal spelling was lost");literals=literals+1;
+  },node->operation=="over"=>{
+   let id:Int=branch on node->binder{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Unit,Diagnostic>::Err(problem("internal",node->span,"loop binder missing"));}};
+   let symbol:Symbol=try lookup<Symbol>(semantic->state->symbols,id);try require(symbol->name=="argument"&&symbol->valueType==3&&parentEqual(symbol->functionOwner,node->functionOwner),"loop binder identity");loops=loops+1;
+  },node->operation=="on"=>{
+   try require(node->binders->length()==2,"pattern binder arity");
+   try require(parentEqual(try atList<Parent>(node->binders,0),Parent::None),"payloadless arm binder");
+   let id:Int=branch on try atList<Parent>(node->binders,1){Parent::Some(value:Int)=>value,Parent::None=>{return Result<Unit,Diagnostic>::Err(problem("internal",node->span,"pattern binder missing"));}};
+   let symbol:Symbol=try lookup<Symbol>(semantic->state->symbols,id);try require(symbol->name=="content"&&symbol->valueType==3&&parentEqual(symbol->functionOwner,node->functionOwner),"pattern binder identity");patterns=patterns+1;
+  },node->operation=="function"=>{
+   let id:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Unit,Diagnostic>::Err(problem("internal",node->span,"function target missing"));}};
+   let info:FunctionInfo=try lookup<FunctionInfo>(semantic->state->functions,id);try require(parentEqual(info->parent,node->functionOwner),"lexical function parent");
+   branch on info->parent{Parent::None=>unit,Parent::Some(parent:Int)=>{nested=nested+1;}};
+  },else=>unit};
+ };};
+ try require(literals==1&&loops==1&&patterns==1&&nested==2,"metadata coverage");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_METADATA_OK literals=1 loops=1 patterns=1 nested=2\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}
+};

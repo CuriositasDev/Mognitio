@@ -71,7 +71,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   let current:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);let shape:Type=try lookup<Type>(state->types->types,current->valueType);
   let body:Int=try item(frame->children,0);let bodyNode:Node=try lookup<Node>(state->nodes,body);
   try expect(bodyNode,try memberType(shape->arguments,shape->arguments->length()-1,expression->span));
-  state=withFunctions(state,try replaceItem<FunctionInfo>(state->functions,owner,FunctionInfo{file:current->file,cursor:current->cursor,valueType:current->valueType,parameters:current->parameters,body:Parent::Some(body),captures:current->captures,templateOwner:current->templateOwner}));
+  state=withFunctions(state,try replaceItem<FunctionInfo>(state->functions,owner,FunctionInfo{file:current->file,cursor:current->cursor,valueType:current->valueType,parameters:current->parameters,body:Parent::Some(body),captures:current->captures,parent:current->parent,templateOwner:current->templateOwner}));
   structure=Structure::Known(current->valueType);normal=true;operation="function";
  },else=>{
   let resolved:Operation=try resolveOperator(state->types,rule,children,expression->span);

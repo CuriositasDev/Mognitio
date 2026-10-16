@@ -44,7 +44,7 @@ public let start:Function(State,SyntaxForest,Int,Environment,Int,Bool):Result<St
    state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:environment->file,name:param->name,valueType:param->valueType,mutable:false,functionOwner:target,declaration:Parent::None,span:param->span}));
    scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);parameters=parameters->append(id);
   };
-  state=withFunctions(state,push<FunctionInfo>(state->functions,FunctionInfo{file:environment->file,cursor:expression->cursor,valueType:signature->value,parameters:parameters,body:Parent::None,captures:List<Int>[],templateOwner:environment->templateOwner}));
+  state=withFunctions(state,push<FunctionInfo>(state->functions,FunctionInfo{file:environment->file,cursor:expression->cursor,valueType:signature->value,parameters:parameters,body:Parent::None,captures:List<Int>[],parent:environment->functionOwner,templateOwner:environment->templateOwner}));
  },rule==ruleGenericApply=>{
   let declared:Int=branch on try declaration(state->types->headers,environment->file,expression->text){Parent::Some(id:Int)=>id,Parent::None=>{return Result<Started,Diagnostic>::Err(problem("semantic",expression->span,"template name is not visible"));}};
   let definition:Declaration=try lookup<Declaration>(state->types->headers->declarations,declared);
@@ -68,5 +68,5 @@ public let start:Function(State,SyntaxForest,Int,Environment,Int,Bool):Result<St
  branch when{rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever=>{
   loopTarget=Parent::Some(state->loops->count);state=withLoops(state,push<Loop>(state->loops,Loop{kind:rule,breaks:List<Int>[]}));
  },else=>unit};
- Result<Started,Diagnostic>::Ok(Started{state:state,frame:Frame{expression:expression,environment:environment,annotation:annotation,target:target,loopTarget:loopTarget,binder:binder,arguments:arguments,children:List<Int>[],mapping:List<Int>[],parent:parent,next:0,minimumAllowed:minimumAllowed}})
+ Result<Started,Diagnostic>::Ok(Started{state:state,frame:Frame{expression:expression,environment:environment,annotation:annotation,target:target,loopTarget:loopTarget,binder:binder,binders:List<Parent>[],arguments:arguments,children:List<Int>[],mapping:List<Int>[],parent:parent,next:0,minimumAllowed:minimumAllowed}})
 };

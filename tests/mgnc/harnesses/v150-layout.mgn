@@ -15,17 +15,18 @@ use Mgnc\Verify\{verify};
 use Std\Io\{writeStdout};
 let reverseIds:Function(List<Int>,Int):List<Int>=function(ids:List<Int>,count:Int):List<Int>{var result:List<Int>=List<Int>[];loop over(ids as id:Int){result=result->append(count-1-id);};result};
 let reverseParent:Function(Parent,Int):Parent=function(parent:Parent,count:Int):Parent{branch on parent{Parent::None=>Parent::None,Parent::Some(id:Int)=>Parent::Some(count-1-id)}};
+let reverseParents:Function(List<Parent>,Int):List<Parent>=function(values:List<Parent>,count:Int):List<Parent>{var result:List<Parent>=List<Parent>[];loop over(values as value:Parent){result=result->append(reverseParent(value,count));};result};
 let renumber:Function(SemanticProject):Result<SemanticProject,Diagnostic>=function(original:SemanticProject):Result<SemanticProject,Diagnostic>{
  let state:State=original->state;var nodes:Paged<Node>=empty<Node>();var symbols:Paged<Symbol>=empty<Symbol>();var index:Int=state->nodes->count-1;
  loop while(index>=0){
   let node:Node=try lookup<Node>(state->nodes,index);
-  nodes=push<Node>(nodes,Node{file:node->file,cursor:node->cursor,rule:node->rule,flag:node->flag,structure:node->structure,normal:node->normal,operation:node->operation,binding:reverseParent(node->binding,state->symbols->count),target:node->target,children:reverseIds(node->children,state->nodes->count),span:node->span,integer:node->integer,minimum:node->minimum,literal:node->literal,mapping:node->mapping,arguments:node->arguments});index=index-1;
+  nodes=push<Node>(nodes,Node{file:node->file,cursor:node->cursor,rule:node->rule,flag:node->flag,structure:node->structure,normal:node->normal,operation:node->operation,binding:reverseParent(node->binding,state->symbols->count),target:node->target,children:reverseIds(node->children,state->nodes->count),span:node->span,integer:node->integer,minimum:node->minimum,literal:node->literal,text:node->text,binder:reverseParent(node->binder,state->symbols->count),binders:reverseParents(node->binders,state->symbols->count),functionOwner:node->functionOwner,mapping:node->mapping,arguments:node->arguments});index=index-1;
  };
  index=state->symbols->count-1;loop while(index>=0){symbols=push<Symbol>(symbols,try lookup<Symbol>(state->symbols,index));index=index-1;};
  var globals:Paged<Parent>=empty<Parent>();index=0;loop while(index<state->globals->count){globals=push<Parent>(globals,reverseParent(try lookup<Parent>(state->globals,index),state->symbols->count));index=index+1;};
  var functions:Paged<FunctionInfo>=empty<FunctionInfo>();index=0;loop while(index<state->functions->count){
   let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,index);
-  functions=push<FunctionInfo>(functions,FunctionInfo{file:info->file,cursor:info->cursor,valueType:info->valueType,parameters:reverseIds(info->parameters,state->symbols->count),body:reverseParent(info->body,state->nodes->count),captures:reverseIds(info->captures,state->symbols->count),templateOwner:info->templateOwner});index=index+1;
+  functions=push<FunctionInfo>(functions,FunctionInfo{file:info->file,cursor:info->cursor,valueType:info->valueType,parameters:reverseIds(info->parameters,state->symbols->count),body:reverseParent(info->body,state->nodes->count),captures:reverseIds(info->captures,state->symbols->count),parent:info->parent,templateOwner:info->templateOwner});index=index+1;
  };
  var bodies:Paged<BodyState>=empty<BodyState>();index=0;loop while(index<state->bodies->count){
   let body:BodyState=try lookup<BodyState>(state->bodies,index);bodies=push<BodyState>(bodies,branch on body{BodyState::Complete(root:Int)=>BodyState::Complete(state->nodes->count-1-root),BodyState::NotRequired=>BodyState::NotRequired,BodyState::Pending=>BodyState::Pending,BodyState::Checking=>BodyState::Checking});index=index+1;

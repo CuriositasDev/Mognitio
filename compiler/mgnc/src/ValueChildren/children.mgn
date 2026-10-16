@@ -14,7 +14,7 @@ use Mgnc\ValueNames\{available};
 use Mgnc\Grammar\{ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleLoopWhile,ruleLoopForever,ruleBranchWhen,ruleBranchOn};
 public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diagnostic>=function(initial:State,tree:SyntaxForest,frame:Frame):Result<ChildEnvironment,Diagnostic>{
  var state:State=initial;let expression:Expression=frame->expression;let rule:Int=expression->rule;let next:Int=frame->next;
- var scope:Environment=frame->environment;var canReach:Bool=scope->reachable;var mapping:List<Int>=frame->mapping;
+ var scope:Environment=frame->environment;var canReach:Bool=scope->reachable;var mapping:List<Int>=frame->mapping;var binders:List<Parent>=frame->binders;
  branch when{rule==ruleBlock&&next>0=>{
   let previous:Node=try lookup<Node>(state->nodes,try item(frame->children,next-1));
   branch when{!previous->normal=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("semantic",try site(tree,try item(expression->children,next)),"unreachable block element"));},else=>unit};
@@ -36,7 +36,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   branch when{annotated->value!=targetType=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("type",pattern->variant->span,"pattern belongs to a different Sum identity"));},else=>unit};
   let members:List<Member>=try variants(state->types,targetType,target->span);let selected:Int=try ordinal(members,pattern->variant->name,pattern->variant->span);
   loop over(mapping as previous:Int){branch when{previous==selected=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("semantic",pattern->variant->span,"duplicate branch variant"));},else=>unit};};
-  mapping=mapping->append(selected);
+  mapping=mapping->append(selected);var patternBinder:Parent=Parent::None;
   branch when{pattern->binder->length()>0=>{
    let label:Label=branch on pattern->binder->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"pattern binder invariant"));}};
    let member:Member=try memberAt(members,selected,pattern->variant->span);
@@ -44,8 +44,8 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
    let formed:Formed=try form(state->types,scope->file,tree,try item(pattern->annotation,0),scope->templateOwner,scope->arguments);state=withTypes(state,formed->store,formed->obligations);
    branch when{formed->value!=payload=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("type",label->span,"payload binder type mismatch"));},else=>unit};
    try available(state,scope,label->name,label->span,(try getNode(tree->nodes,try item(expression->children,next)))->start);
-   let id:Int=state->symbols->count;state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:scope->file,name:label->name,valueType:payload,mutable:false,functionOwner:scope->functionOwner,declaration:Parent::None,span:label->span}));scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);
-  },else=>unit};
+   let id:Int=state->symbols->count;patternBinder=Parent::Some(id);state=withSymbols(state,push<Symbol>(state->symbols,Symbol{file:scope->file,name:label->name,valueType:payload,mutable:false,functionOwner:scope->functionOwner,declaration:Parent::None,span:label->span}));scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);
+  },else=>unit};binders=binders->append(patternBinder);
  },rule==ruleBlock=>{
   // Entering every previous block element already proved normal completion.
   // The immediate predecessor was checked above; rescanning the prefix is redundant.
@@ -63,6 +63,6 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   scope=Environment{file:scope->file,symbols:scope->symbols,reserved:scope->reserved,functionOwner:scope->functionOwner,loopTarget:frame->loopTarget,returnType:scope->returnType,templateOwner:scope->templateOwner,arguments:scope->arguments,reachable:canReach};
   branch when{rule==ruleLoopOver=>{branch on frame->binder{Parent::Some(id:Int)=>{scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);},Parent::None=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"loop binder invariant"));}};},else=>unit};
  },else=>unit};
- let updated:Frame=Frame{expression:expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed};
+ let updated:Frame=Frame{expression:expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,binders:binders,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed};
  Result<ChildEnvironment,Diagnostic>::Ok(ChildEnvironment{state:state,frame:updated,environment:reachable(scope,canReach)})
 };

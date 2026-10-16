@@ -19,7 +19,7 @@ def main():
     records = []
     for size in (511, 512, 1023, 1024, 1025, 2047, 2048, 4097, 65536):
         padding = "x" * size
-        prefix = "//" + padding + "\r\n"
+        prefix = "namespace App;\n//" + padding + "\r\n"
         variants = {
             "value": (prefix + 'let main:Function(List<String>):Int=function(args:List<String>):Int{discard "' + padding + '日😀\\u{1f642}\\u{0}\\\"";0};\n', 0),
             "escape": (prefix + 'let value:String="' + padding + '日😀\\q";\n', 1),
@@ -41,7 +41,7 @@ def main():
             assert (commands[1][0] == 0) == (status == 0), (name, commands[1])
             assert not commands[1][1], (name, commands[1])
             if status:
-                assert b"[bytes " in commands[1][2], (name, commands[1])
+                assert b" [" in commands[1][2] and b"):" in commands[1][2], (name, commands[1])
             records.append({"case": name, "source_sha256": digest(data),
                             "status": commands[1][0], "stdout_sha256": digest(commands[1][1]),
                             "stderr_sha256": digest(commands[1][2])})

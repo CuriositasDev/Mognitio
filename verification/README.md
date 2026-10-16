@@ -126,3 +126,7 @@ Version-branch completion does not authorize main integration, a tag, or release
 
 The [1.6 generated runtime components](v1.6.0-runtime-components.md) record
 independent root/layout checks, physical-heap execution and ABI probes.
+
+The [1.6 scale preparation](v1.6.0-native-scale.md) records independent root
+reachability, bounded source splitting, Unicode equivalence and the remaining
+whole-project cutoff.

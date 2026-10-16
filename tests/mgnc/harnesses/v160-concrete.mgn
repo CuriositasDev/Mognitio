@@ -1,0 +1,95 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\TypeData\{Store,Type,Argument,ValueTerm,Member};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\WholeIR\{Project,Body,Slot,Block,Operation,TrySite};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeConcrete\{Plan,Key,Instance,Target,build};
+use Mgnc\WholeSubstitution\{Binding};
+use Mgnc\WholeConcreteCheck\{verify};
+use Mgnc\WholeClosures\{Closures,Creation,Capture,Field,build as convertClosures};
+use Mgnc\WholeClosureCheck\{verify as verifyClosures};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let withBodyslots:Function(Body,Paged<Slot>):Body=function(original:Body,value:Paged<Slot>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:value,blocks:original->blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:original->tries}};
+let withBodyblocks:Function(Body,Paged<Block>):Body=function(original:Body,value:Paged<Block>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:original->slots,blocks:value,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:original->tries}};
+let withBodytries:Function(Body,List<TrySite>):Body=function(original:Body,value:List<TrySite>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:original->slots,blocks:original->blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:value}};
+let withInstancebody:Function(Instance,Body):Instance=function(original:Instance,value:Body):Instance{Instance{key:original->key,body:value,targets:original->targets}};
+let withInstancekey:Function(Instance,Key):Instance=function(original:Instance,value:Key):Instance{Instance{key:value,body:original->body,targets:original->targets}};
+let withInstancetargets:Function(Instance,Paged<Target>):Instance=function(original:Instance,value:Paged<Target>):Instance{Instance{key:original->key,body:original->body,targets:value}};
+let withPlaninstances:Function(Plan,Paged<Instance>):Plan=function(original:Plan,value:Paged<Instance>):Plan{Plan{types:original->types,instances:value,initializers:original->initializers}};
+let withPlantypes:Function(Plan,Store):Plan=function(original:Plan,value:Store):Plan{Plan{types:value,instances:original->instances,initializers:original->initializers}};
+let withOperationmapping:Function(Operation,List<Int>):Operation=function(original:Operation,value:List<Int>):Operation{Operation{code:original->code,output:original->output,inputs:original->inputs,unavailable:original->unavailable,symbol:original->symbol,target:original->target,arguments:original->arguments,mapping:value,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+
+let reorder:Function(Plan):Result<Plan,Diagnostic>=function(original:Plan):Result<Plan,Diagnostic>{
+ var instances:Paged<Instance>=empty<Instance>();var cursor:Int=original->instances->count;
+ loop while(cursor>0){cursor=cursor-1;let item:Instance=try lookup<Instance>(original->instances,cursor);var targets:Paged<Target>=empty<Target>();
+  loop over(item->targets->pages->append(item->targets->tail) as page:List<Target>){loop over(page as target:Target){targets=push<Target>(targets,Target{node:target->node,instance:original->instances->count-1-target->instance});};};instances=push<Instance>(instances,withInstancetargets(item,targets));
+ };var initializers:List<Int>=List<Int>[];loop over(original->initializers as id:Int){initializers=initializers->append(original->instances->count-1-id);};Result<Plan,Diagnostic>::Ok(Plan{types:original->types,instances:instances,initializers:initializers})
+};
+let mutate:Function(Plan,Int):Result<Plan,Diagnostic>=function(original:Plan,mode:Int):Result<Plan,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ branch when{mode==0=>{return Result<Plan,Diagnostic>::Ok(withPlaninstances(original,empty<Instance>()));},mode==1=>{return Result<Plan,Diagnostic>::Ok(withPlaninstances(original,push<Instance>(original->instances,try lookup<Instance>(original->instances,0))));},mode==2=>{
+  let store:Store=original->types;let wrong:Type=Type{kind:1,owner:Parent::None,arguments:List<Argument>[],members:List<Member>[]};
+  return Result<Plan,Diagnostic>::Ok(withPlantypes(original,Store{headers:store->headers,types:try replaceItem<Type>(store->types,0,wrong),buckets:store->buckets,declarations:store->declarations,constraints:store->constraints}));
+ },else=>unit};
+ var id:Int=0;loop over(original->instances->pages->append(original->instances->tail) as page:List<Instance>){loop over(page as item:Instance){var changed:Bool=false;var updated:Instance=item;
+  branch when{mode==3&&item->key->bindings->length()>0=>{updated=withInstancekey(item,Key{body:item->key->body,bindings:List<Binding>[]});changed=true;},
+   mode==4&&item->targets->count>0=>{updated=withInstancetargets(item,empty<Target>());changed=true;},
+   mode==5&&item->targets->count>0=>{let target:Target=try lookup<Target>(item->targets,0);updated=withInstancetargets(item,try replaceItem<Target>(item->targets,0,Target{node:target->node,instance:id}));changed=true;},
+   mode==6&&item->key->bindings->length()>0=>{
+    let binding:Binding=try atList<Binding>(item->key->bindings,0);var arguments:List<Argument>=List<Argument>[];var replaced:Bool=false;
+    loop over(binding->arguments as argument:Argument){arguments=arguments->append(branch on argument{Argument::Type(typeId:Int)=>Argument::Type(typeId),Argument::Value(term:ValueTerm)=>{replaced=true;Argument::Value(ValueTerm{parameter:Parent::None,owner:0,value:term->value+1})}});};
+    branch when{replaced=>{updated=withInstancekey(item,Key{body:item->key->body,bindings:List<Binding>[Binding{owner:binding->owner,arguments:arguments}]});changed=true;},else=>unit};
+   },mode==7&&item->body->captures->length()>0=>{
+    let slotId:Int=try atList<Int>(item->body->captures,0);let slot:Slot=try lookup<Slot>(item->body->slots,slotId);updated=withInstancebody(item,withBodyslots(item->body,try replaceItem<Slot>(item->body->slots,slotId,Slot{valueType:branch when{slot->valueType==1=>3,else=>1},kind:slot->kind,symbol:slot->symbol})));changed=true;
+   },mode==8&&item->body->tries->length()>0=>{
+    let site:TrySite=try atList<TrySite>(item->body->tries,0);updated=withInstancebody(item,withBodytries(item->body,List<TrySite>[TrySite{node:site->node,owner:site->owner,operandType:site->operandType,returnType:1,errorType:site->errorType,dispatch:site->dispatch,ok:site->ok,err:site->err,payload:site->payload,returned:site->returned}]));changed=true;
+   },else=>unit};
+  branch when{mode==9=>{
+   var blockId:Int=0;loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+    branch when{!changed&&block->operations->length()>0=>{updated=withInstancebody(item,withBodyblocks(item->body,try replaceItem<Block>(item->body->blocks,blockId,Block{operations:List<Operation>[],terminator:block->terminator})));changed=true;},else=>unit};blockId=blockId+1;
+   };};
+  },else=>unit};
+  branch when{changed=>{return Result<Plan,Diagnostic>::Ok(withPlaninstances(original,try replaceItem<Instance>(original->instances,id,updated)));},else=>unit};id=id+1;
+ };};try require(false,span,"concrete mutation target missing");Result<Plan,Diagnostic>::Ok(original)
+};
+
+let closureTests:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let valid:Closures=try convertClosures(plan);try verifyClosures(plan,valid);let reversed:Plan=try reorder(plan);try verifyClosures(reversed,try convertClosures(reversed));
+ var mode:Int=0;loop while(mode<4){
+  var invalid:Closures=Closures{frames:empty<List<Field>>(),sites:valid->sites};
+  branch when{mode>0=>{
+   var changed:Bool=false;var instanceId:Int=0;loop over(valid->sites->pages->append(valid->sites->tail) as pages:List<Paged<Creation>>){loop over(pages as sites:Paged<Creation>){var siteId:Int=0;
+    loop over(sites->pages->append(sites->tail) as entries:List<Creation>){loop over(entries as site:Creation){
+     branch when{!changed&&site->captures->length()>0=>{
+      var captures:List<Capture>=List<Capture>[];var position:Int=0;loop over(site->captures as capture:Capture){captures=captures->append(Capture{field:capture->field,source:branch when{mode==3&&position==0=>capture->source+1,else=>capture->source}});position=position+1;};
+      let updated:Creation=Creation{node:site->node,target:branch when{mode==2=>instanceId,else=>site->target},captures:captures};
+      let replaced:Paged<Creation>=branch when{mode==1=>empty<Creation>(),else=>try replaceItem<Creation>(sites,siteId,updated)};
+      invalid=Closures{frames:valid->frames,sites:try replaceItem<Paged<Creation>>(valid->sites,instanceId,replaced)};changed=true;
+     },else=>unit};siteId=siteId+1;
+    };};instanceId=instanceId+1;
+   };};try require(changed,span,"closure mutation target missing");
+  },else=>unit};
+  branch on verifyClosures(plan,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted closure mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+   let expected:String=branch when{mode==0=>"closure plan membership",mode==1=>"closure missing creation",mode==2=>"closure target identity",else=>"closure capture source and field"};try require(error->phase=="internal"&&error->message=="whole IR: "+expected,span,"wrong closure mutation detector");discard writeStdout("V160_CLOSURE_MUTANT "+number(mode)+" "+error->message+"\n");
+  }};mode=mode+1;
+ };discard writeStdout("V160_CLOSURE_OK valid=2 rejected=4\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"generic.mgn",displayPath:"generic.mgn",relativePath:"generic.mgn",expectedNamespace:"",text:"namespace App;\ntemplate make0<T>=function(value:T):Function():T{function():T{value}};\nlet main0:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make0<Int>(7);let b:Function():String=make0<String>(\"kept\"+\" text\");let c:Function():Int=make0<Int>(9);\n branch when{!(a()==7&&b()==\"kept text\"&&c()==9)=>{return 1;},else=>unit};0\n};\ntemplate make1<T>=function():Function():Int{function():Int{let values:List<T>=List<T>[];values->length()}};\nlet main1:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make1<Int>();let b:Function():Int=make1<String>();let c:Function():Int=make1<Int>();\n branch when{!(a()==0&&b()==0&&c()==0)=>{return 1;},else=>unit};0\n};\ntype Tag2<N:Int>=product{};\ntemplate make2<N:Int>=function():Function():Int{function():Int{let tag:Tag2<N>=Tag2<N>{};discard tag;7}};\nlet main2:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make2<-1>();let b:Function():Int=make2<2>();let c:Function():Int=make2<-1>();\n branch when{!(a()+b()+c()==21)=>{return 1;},else=>unit};0\n};\ntemplate size3<T>=function():Int{let values:List<T>=List<T>[];values->length()};\ntemplate make3<T>=function():Function():Int{function():Int{size3<T>()}};\nlet main3:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make3<Int>();let b:Function():Int=make3<String>();branch when{!(a()==0&&b()==0)=>{return 1;},else=>unit};0\n};\ntemplate propagate4<T>=function(input:Result<T,String>):Result<Int,String>{\n let value:T=try input;Result<Int,String>::Ok(7)\n};\nlet main4:Function(List<String>):Int=function(args:List<String>):Int{\n let first:Result<Int,String>=propagate4<String>(Result<String,String>::Err(\"kept\"+\" error\"));\n let second:Result<Int,String>=propagate4<Bool>(Result<Bool,String>::Ok(true));\n branch when{!(branch on first{Result<Int,String>::Ok(value:Int)=>false,Result<Int,String>::Err(error:String)=>error==\"kept error\"})=>{return 1;},else=>unit};\n branch when{!(branch on second{Result<Int,String>::Ok(value:Int)=>value==7,Result<Int,String>::Err(error:String)=>false})=>{return 1;},else=>unit};0\n};\ntype Tag5<N:Int,T>=product{value:T;};\ntemplate make5<N:Int,T>=function(value:T):Function():Tag5<N,T>{function():Tag5<N,T>{Tag5<N,T>{value:value}}};\nlet main5:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Tag5<-1,Int>=make5<-1,Int>(7);let b:Function():Tag5<2,String>=make5<2,String>(\"kept\"+\" field\");\n let c:Function():Tag5<-1,Int>=make5<-1,Int>(9);\n branch when{!(a()->value==7&&b()->value==\"kept field\"&&c()->value==9)=>{return 1;},else=>unit};0\n};\nlet main:Function(List<String>):Int=function(args:List<String>):Int{main0(args)+main1(args)+main2(args)+main3(args)+main4(args)+main5(args)};\n"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let lowered:Project=try lower(semantic);let plan:Plan=try build(semantic,lowered);try verify(semantic,lowered,plan);try verify(semantic,lowered,try reorder(plan));try closureTests(plan);
+ var mode:Int=0;loop while(mode<10){
+  let invalid:Plan=try mutate(plan,mode);branch on verify(semantic,lowered,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted concrete mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+   let allowed:Bool=branch when{mode==0||mode==1=>error->message=="whole IR: concrete missing root"||error->message=="whole IR: concrete duplicate root",mode==2=>error->message=="whole IR: concrete source type prefix",mode==3||mode==5||mode==6=>error->message=="whole IR: concrete creation complete key",mode==4=>error->message=="whole IR: concrete missing creation target",mode==7=>error->message=="whole IR: concrete type substitution"||error->message=="whole IR: concrete type structure",mode==8=>error->message=="whole IR: concrete type structure",else=>error->message=="whole IR: concrete operation count"};
+   discard writeStdout("V160_CONCRETE_MUTANT "+number(mode)+" "+error->message+"\n");try require(error->phase=="internal"&&allowed,span,"wrong concrete mutation detector");
+  }};mode=mode+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_CONCRETE_OK valid=2 rejected=10\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

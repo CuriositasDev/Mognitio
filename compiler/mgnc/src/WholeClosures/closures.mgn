@@ -1,0 +1,27 @@
+namespace Mgnc\WholeClosures;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation};
+use Mgnc\WholeConcrete\{Plan,Instance,Target};
+use Mgnc\WholeChecks\{present,require};
+use Mgnc\Tables\{atList};
+public type Field=product{symbol:Int;slot:Int;valueType:Int;};
+public type Capture=product{field:Int;source:Int;};
+public type Creation=product{node:Int;target:Int;captures:List<Capture>;};
+public type Closures=product{frames:Paged<List<Field>>;sites:Paged<Paged<Creation>>;};
+public let build:Function(Plan):Result<Closures,Diagnostic>=function(plan:Plan):Result<Closures,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var frames:Paged<List<Field>>=empty<List<Field>>();var sites:Paged<Paged<Creation>>=empty<Paged<Creation>>();
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  var fields:List<Field>=List<Field>[];loop over(item->body->captures as slotId:Int){let slot:Slot=try lookup<Slot>(item->body->slots,slotId);fields=fields->append(Field{symbol:try present(slot->symbol,span,"closure field symbol"),slot:slotId,valueType:slot->valueType});};frames=push<List<Field>>(frames,fields);
+ };};
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  var created:Paged<Creation>=empty<Creation>();loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){
+   branch when{op->code=="function"=>{
+    var targetId:Int= -1;loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){branch when{target->node==op->origin->node=>{targetId=target->instance;},else=>unit};};};try require(targetId>=0,span,"closure creation target");
+    let fields:List<Field>=try lookup<List<Field>>(frames,targetId);var captures:List<Capture>=List<Capture>[];var position:Int=0;
+    loop over(op->mapping as symbol:Int){var fieldId:Int= -1;var cursor:Int=0;loop over(fields as field:Field){branch when{field->symbol==symbol=>{fieldId=cursor;},else=>unit};cursor=cursor+1;};try require(fieldId>=0,span,"closure source field");captures=captures->append(Capture{field:fieldId,source:try atList<Int>(op->inputs,position)});position=position+1;};
+    created=push<Creation>(created,Creation{node:op->origin->node,target:targetId,captures:captures});
+   },else=>unit};
+  };};};sites=push<Paged<Creation>>(sites,created);
+ };};Result<Closures,Diagnostic>::Ok(Closures{frames:frames,sites:sites})
+};

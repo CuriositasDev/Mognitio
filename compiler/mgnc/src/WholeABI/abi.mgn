@@ -1,0 +1,48 @@
+namespace Mgnc\WholeABI;
+use Mgnc\Machine\{Code,raw};
+use Mgnc\WholeX64\{mov,constant,push,pop};
+public let revision:Int=1;
+public let rootHead:Int=0;
+public let arenaHead:Int=8;
+public let freeHead:Int=16;
+public let mappedBytes:Int=24;
+public let allocations:Int=32;
+public let collections:Int=40;
+public let liveBytes:Int=48;
+public let threshold:Int=56;
+public let workPointer:Int=64;
+public let workCapacity:Int=72;
+public let workCount:Int=80;
+public let workCursor:Int=88;
+public let descriptorTable:Int=96;
+public let descriptorCount:Int=104;
+public let staticTable:Int=112;
+public let staticCount:Int=120;
+public let globalBase:Int=128;
+public let globalCount:Int=136;
+public let globalMask:Int=144;
+public let stress:Int=152;
+public let failOrdinal:Int=160;
+public let resources:Int=168;
+public let primary:Int=176;
+public let mappedCap:Int=184;
+public let sinceCollection:Int=192;
+public let contextSize:Int=256;
+public let allocateLabel:Int=10;
+public let collectLabel:Int=11;
+public let markLabel:Int=12;
+public let workGrowLabel:Int=13;
+public let arenaLabel:Int=14;
+public let sweepLabel:Int=15;
+public let startLabel:Int=19;
+public let allocationFailure:Int=1;
+public let internalFailure:Int=2;
+// Internal scalar-only runtime helper frames preserve the language callee-save set.
+// They take explicitly documented volatile register inputs; no managed GC occurs
+// in these frame prologues/epilogues. Source-call adapters use the stack ABI.
+public let enter:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=mov(push(initial,5),5,4);loop over(List<Int>[3,12,13,14,15] as reg:Int){code=push(code,reg);};constant(code,5,4,8)
+};
+public let leave:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=constant(initial,0,4,8);loop over(List<Int>[15,14,13,12,3,5] as reg:Int){code=pop(code,reg);};raw(code,List<Int>[195])
+};

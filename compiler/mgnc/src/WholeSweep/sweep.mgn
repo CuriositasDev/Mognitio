@@ -1,0 +1,23 @@
+namespace Mgnc\WholeSweep;
+use Mgnc\Machine\{Code,raw,label,jump,fresh};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,shift,shiftCl,byteLoad,byteStore};
+use Mgnc\WholeABI\{enter,leave,arenaHead,freeHead,liveBytes,sweepLabel,internalFailure};
+let indexed:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=mov(initial,8,13);code=load(code,0,12,16);code=alu(code,41,8,0);code=shift(code,5,8,3);code=mov(code,1,8);code=constant(code,4,1,7);code=shift(code,5,8,3);code=load(code,0,12,32);code=alu(code,1,8,0);code=immediate(code,0,1);code=shiftCl(code,4,0);code=byteLoad(code,9,8,0);code=alu(code,9,9,0);byteStore(code,8,0,9)
+};
+public let emit:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=enter(label(initial,sweepLabel));let arenas:Int=code->nextLabel;let blocks:Int=arenas+1;let live:Int=arenas+2;let merge:Int=arenas+3;let free:Int=arenas+4;let advance:Int=arenas+5;let next:Int=arenas+6;let done:Int=arenas+7;code=fresh(code,8);
+ code=immediate(code,0,0);code=store(code,15,liveBytes,0);code=address(code,3,15,freeHead);code=load(code,12,15,arenaHead);
+ code=label(code,arenas);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);
+ code=load(code,7,12,32);code=load(code,1,12,40);code=immediate(code,0,0);code=raw(code,List<Int>[243,170]);code=load(code,13,12,16);code=load(code,14,12,24);
+ code=label(code,blocks);code=alu(code,57,13,14);code=jump(code,List<Int>[15,132],next);code=jump(code,List<Int>[15,135],internalFailure);
+ code=mov(code,0,14);code=alu(code,41,0,13);code=constant(code,7,0,32);code=jump(code,List<Int>[15,130],internalFailure);code=load(code,2,13,0);code=constant(code,7,2,32);code=jump(code,List<Int>[15,130],internalFailure);code=mov(code,0,2);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);code=mov(code,8,13);code=alu(code,1,8,2);code=jump(code,List<Int>[15,130],internalFailure);code=alu(code,57,8,14);code=jump(code,List<Int>[15,135],internalFailure);
+ code=load(code,0,13,8);code=constant(code,7,0,3);code=jump(code,List<Int>[15,132],live);code=constant(code,7,0,1);code=jump(code,List<Int>[15,135],internalFailure);
+ code=label(code,merge);code=alu(code,57,8,14);code=jump(code,List<Int>[15,132],free);code=mov(code,0,14);code=alu(code,41,0,8);code=constant(code,7,0,32);code=jump(code,List<Int>[15,130],internalFailure);code=load(code,9,8,0);code=constant(code,7,9,32);code=jump(code,List<Int>[15,130],internalFailure);code=mov(code,0,9);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);code=mov(code,10,8);code=alu(code,1,10,9);code=jump(code,List<Int>[15,130],internalFailure);code=alu(code,57,10,14);code=jump(code,List<Int>[15,135],internalFailure);
+ code=load(code,0,8,8);code=constant(code,7,0,3);code=jump(code,List<Int>[15,132],free);code=constant(code,7,0,1);code=jump(code,List<Int>[15,135],internalFailure);code=alu(code,1,2,9);code=mov(code,8,10);code=jump(code,List<Int>[233],merge);
+ code=label(code,free);code=store(code,13,0,2);code=immediate(code,0,0);code=store(code,13,8,0);code=store(code,13,16,0);code=store(code,3,0,13);code=address(code,3,13,24);code=jump(code,List<Int>[233],advance);
+ code=label(code,live);code=immediate(code,0,1);code=store(code,13,8,0);code=load(code,0,15,liveBytes);code=alu(code,1,0,2);code=jump(code,List<Int>[15,128],internalFailure);code=store(code,15,liveBytes,0);
+ code=label(code,advance);code=indexed(code);code=alu(code,1,13,2);code=jump(code,List<Int>[233],blocks);
+ code=label(code,next);code=load(code,12,12,0);code=jump(code,List<Int>[233],arenas);
+ code=label(code,done);code=immediate(code,0,0);code=store(code,3,0,0);leave(code)
+};

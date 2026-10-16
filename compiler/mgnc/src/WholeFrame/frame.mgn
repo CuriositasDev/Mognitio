@@ -1,0 +1,24 @@
+namespace Mgnc\WholeFrame;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\Machine\{Code,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,constant,push,pop};
+use Mgnc\WholeFrameData\{Frame};
+use Mgnc\WholeABI\{rootHead};
+let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(valid:Bool,span:Span,message:String):Result<Unit,Diagnostic>{branch when{valid=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",span:span,message:message})}};
+public let offset:Function(Int):Int=function(slot:Int):Int{-72-slot*8};
+public let select:Function(Code,Int):Code=function(initial:Code,bitmap:Int):Code{store(symbol(initial,0,bitmap),5,-48,0)};
+public let begin:Function(Code,Frame,List<Int>,List<Int>,Int):Result<Code,Diagnostic>=function(initial:Code,frame:Frame,parameters:List<Int>,captures:List<Int>,bitmap:Int):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ try require(frame->slots>=0&&frame->slots<=268435440&&frame->outgoing>=8&&frame->outgoing<=268435440-frame->slots,span,"native frame bounds");
+ try require(frame->extent==((64+frame->slots*8+frame->outgoing*8+15)/16)*16,span,"native frame extent");
+ try require(parameters->length()<=frame->slots&&captures->length()<=frame->slots,span,"native frame incoming bounds");
+ var code:Code=mov(push(initial,5),5,4);loop over(List<Int>[3,12,13,14,15] as reg:Int){code=push(code,reg);};code=constant(code,5,4,frame->extent-40);
+ code=immediate(code,0,0);var slot:Int=0;loop while(slot<frame->slots){code=store(code,5,offset(slot),0);slot=slot+1;};
+ var index:Int=0;loop over(parameters as destination:Int){try require(destination>=0&&destination<frame->slots,span,"native parameter slot");code=load(code,0,5,24+index*8);code=store(code,5,offset(destination),0);index=index+1;};
+ branch when{captures->length()>0=>{code=load(code,2,5,16);index=0;loop over(captures as destination:Int){try require(destination>=0&&destination<frame->slots,span,"native capture slot");code=load(code,0,2,24+index*8);code=store(code,5,offset(destination),0);index=index+1;};},else=>unit};
+ code=load(code,0,15,rootHead);code=store(code,5,-64,0);code=store(code,5,-56,5);code=select(code,bitmap);code=address(code,0,5,-64);code=store(code,15,rootHead,0);Result<Code,Diagnostic>::Ok(code)
+};
+// RAX remains untouched throughout the nonallocating return handoff.
+public let end:Function(Code,Frame):Code=function(initial:Code,frame:Frame):Code{
+ var code:Code=load(initial,2,5,-64);code=store(code,15,rootHead,2);code=constant(code,0,4,frame->extent-40);loop over(List<Int>[15,14,13,12,3,5] as reg:Int){code=pop(code,reg);};raw(code,List<Int>[195])
+};

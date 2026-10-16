@@ -1,0 +1,598 @@
+{
+  "schema": 1,
+  "stage": "runtime-components",
+  "source_revision": "f037858994f5fc68a3bece6ce27bc181b396fc7f",
+  "seed_source": "e7c9c60425b6721d8ce3d5cf4f69b2e505747c4b",
+  "seed_manifest_sha256": "ba9239102424c10feb1ebd75d20248df82a3c78f84367b8f3ad89b25cae10f30",
+  "runtime_emitter_sha256": "df8dbeebe5c8e4924edff9baad22594d37e718069b338af413405c7baf7831ed",
+  "plan_probe_sha256": "4a0d6b20c8085679b9015eff3caa4330d271f7e6ba221e0099c426f534069d3c",
+  "instruction_emitter_sha256": "897c5ad40a2a62e05c2ca4336a18f5bec4dd9bdb2e1e5985532ab70ae768e543",
+  "runtime_cases": [
+    {
+      "case": "graph",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 2,
+          "mapped": 2138112,
+          "live": 2000016,
+          "objects": 50000,
+          "free_blocks": 1,
+          "collections": 69,
+          "scratch": 524288
+        },
+        {
+          "arenas": 2,
+          "mapped": 2138112,
+          "live": 0,
+          "objects": 0,
+          "free_blocks": 2,
+          "collections": 70,
+          "scratch": 524288
+        }
+      ],
+      "seconds": 0.102
+    },
+    {
+      "case": "stress",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 8000,
+          "objects": 200,
+          "free_blocks": 1,
+          "collections": 202,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.002
+    },
+    {
+      "case": "fragment",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 40000,
+          "objects": 1000,
+          "free_blocks": 1000,
+          "collections": 2,
+          "scratch": 8192
+        },
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 40000,
+          "objects": 1000,
+          "free_blocks": 1000,
+          "collections": 3,
+          "scratch": 8192
+        }
+      ],
+      "seconds": 0.005
+    },
+    {
+      "case": "static",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 0,
+          "mapped": 0,
+          "live": 0,
+          "objects": 0,
+          "free_blocks": 0,
+          "collections": 1,
+          "scratch": 0
+        }
+      ],
+      "seconds": 0.0
+    },
+    {
+      "case": "variant",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 72,
+          "objects": 2,
+          "free_blocks": 1,
+          "collections": 2,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "variant-scalar",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 40,
+          "objects": 1,
+          "free_blocks": 1,
+          "collections": 2,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "buffer",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 104,
+          "objects": 2,
+          "free_blocks": 1,
+          "collections": 2,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "empty",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 0,
+          "mapped": 0,
+          "live": 0,
+          "objects": 0,
+          "free_blocks": 0,
+          "collections": 1,
+          "scratch": 0
+        }
+      ],
+      "seconds": 0.0
+    },
+    {
+      "case": "interior",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "unaligned",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "foreign",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "freed",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "old-start",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "bad-flags",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "bad-descriptor",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "bad-size",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "bad-tag",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "bad-count",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "root-cycle",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "free-cycle",
+      "status": 72,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "ordinal",
+      "status": 71,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "cap",
+      "status": 71,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "overflow",
+      "status": 71,
+      "snapshots": [],
+      "seconds": 0.0
+    },
+    {
+      "case": "abi",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 32,
+          "objects": 1,
+          "free_blocks": 1,
+          "collections": 3,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "recursive",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 32,
+          "objects": 1,
+          "free_blocks": 1,
+          "collections": 1003,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.005
+    },
+    {
+      "case": "capture",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 32,
+          "objects": 1,
+          "free_blocks": 1,
+          "collections": 3,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "partial",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 104,
+          "objects": 3,
+          "free_blocks": 1,
+          "collections": 5,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "globals",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 32,
+          "objects": 1,
+          "free_blocks": 1,
+          "collections": 2,
+          "scratch": 4096
+        }
+      ],
+      "seconds": 0.001
+    },
+    {
+      "case": "full-live",
+      "status": 0,
+      "snapshots": [
+        {
+          "arenas": 1,
+          "mapped": 1069056,
+          "live": 1048576,
+          "objects": 32768,
+          "free_blocks": 0,
+          "collections": 2,
+          "scratch": 262144
+        },
+        {
+          "arenas": 2,
+          "mapped": 2138112,
+          "live": 1048608,
+          "objects": 32769,
+          "free_blocks": 1,
+          "collections": 4,
+          "scratch": 524288
+        }
+      ],
+      "seconds": 0.068
+    }
+  ],
+  "raw_syscall_faults": [
+    {
+      "syscall": 9,
+      "ordinal": 1,
+      "status": 71
+    },
+    {
+      "syscall": 9,
+      "ordinal": 2,
+      "status": 71
+    },
+    {
+      "syscall": 9,
+      "ordinal": 3,
+      "status": 71
+    },
+    {
+      "syscall": 25,
+      "ordinal": 1,
+      "status": 71
+    },
+    {
+      "syscall": 25,
+      "ordinal": 2,
+      "status": 71
+    }
+  ],
+  "instruction_vectors": 19,
+  "plan_instances": 52,
+  "plan_descriptors": 76,
+  "root_mutants_rejected": 9,
+  "layout_mutants_rejected": 8,
+  "normal_suite": {
+    "groups": 236,
+    "assertions": 605733,
+    "native_processes": 1316,
+    "failures": 0,
+    "all_following_python_integrations_passed": true
+  },
+  "public_cli_unchanged": true,
+  "complete_native_emission": false,
+  "public_runtime_diagnostics_accepted": false,
+  "io_cleanup_accepted": false,
+  "formal_performance_accepted": false,
+  "release_performed": false,
+  "source_files": [
+    {
+      "path": "compiler/mgnc/src/WholeABI/abi.mgn",
+      "sha256": "0e634d596cb5ce4e4e0e3838a11bb07bfb5b1a9ad67fb64ac313343324b4c182"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeArena/arena.mgn",
+      "sha256": "5ff6906e89e94ede455eb7adde84f47dece08ccc50bad7c09ba5bd433797137f"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeCollect/collect.mgn",
+      "sha256": "35fa9c3b068f9033f5fbff9b2c2c1569ccb7f511f200260651b137cbd2ad307c"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeEffects/effects.mgn",
+      "sha256": "5de5c1f4e06cf78915304946bec1f8835881ae342ff12a9463e4376d95bf2862"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeFrame/frame.mgn",
+      "sha256": "1c3c0c03aee7ee41cc96fd4004a727dc58ded5bc8a3aa65d770e0cc020b8593b"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeFrameData/frame-data.mgn",
+      "sha256": "eef32590497fda72a5cd702b96a88c77060d8b6f866b5e9b512ef5cac007b7c2"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeLayout/layout.mgn",
+      "sha256": "873033f25e67248a132068a67168e47a0d3b71506fbdbc1ebd964fcc40eed22e"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeLayoutCheck/verify.mgn",
+      "sha256": "b2c54ae5eb7e6226200107c9d5e7c9e8d63c6ac396f0df27fbacbee342518ea4"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeMark/mark.mgn",
+      "sha256": "a0f1ca06f01a547ddb2d2c2ca19658da73c1045951010a08459449dfa6f38bf7"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeRootCheck/verify.mgn",
+      "sha256": "fd0595de0a84ee88f20da0d379d0a7fe300aff7fccf73c529b0bafcb2092d4dd"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeRoots/roots.mgn",
+      "sha256": "0e83e3cb204262dab5816095f89fdef6430bde0912d8cf4974fd8d200acb514a"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeSweep/sweep.mgn",
+      "sha256": "7c25c218da0f54f28c34552cc5a9aa19ff0b69ae77ace691e8b1b59ea1e06d7e"
+    },
+    {
+      "path": "compiler/mgnc/src/WholeX64/instructions.mgn",
+      "sha256": "bf2c1696d808909662e0a2c78d78e821a6fcc9220a79cdae5c1f27304212844f"
+    },
+    {
+      "path": "tests/mgnc/README.md",
+      "sha256": "22659d19b3d534f4816c38a2bdaea43192c61b9b0dd7ecbeaff509e6a09917ab"
+    },
+    {
+      "path": "tests/mgnc/harnesses/v160-runtime-plans.mgn",
+      "sha256": "0e3477959079ba23ef62553f278bf82649acb1a93713bb206ac889e10adc0070"
+    },
+    {
+      "path": "tests/mgnc/harnesses/v160-runtime.mgn",
+      "sha256": "6e26d732f3150066cad1606db96c36c08a9bc9d92427f451a84ee45044485849"
+    },
+    {
+      "path": "tests/mgnc/harnesses/v160-x64.mgn",
+      "sha256": "00006bab17f8e549866bf3d00eb1af801cbd2c69f56d44cca2ba055bd659eb9e"
+    },
+    {
+      "path": "tests/mgnc/v160-runtime-plans.py",
+      "sha256": "8dcf3b2abee036186da5ba6dc6456af0d93e2893ab2a0054f2cb84bf672ce6e2"
+    },
+    {
+      "path": "tests/mgnc/v160-runtime.py",
+      "sha256": "1f5e187229f176b5b2782dc482355da490877563265a4812dd1e792d00a439c9"
+    },
+    {
+      "path": "tests/mgnc/v160-x64.py",
+      "sha256": "17eb3f878ca1bb3fcf7e7a5ffbea61d93572a9ae2662d45ba72da072f04ef1f1"
+    }
+  ],
+  "elf_files": [
+    {
+      "case": "graph",
+      "sha256": "cff1a25dabda8b6468c1f278f1e5cf97298f4934cd7511bcbad4cb51bacde27e"
+    },
+    {
+      "case": "stress",
+      "sha256": "4815c9bee21d73e60c554408b4eda2b7207ee19b364bd1c2cb3dbd0a65e34c2f"
+    },
+    {
+      "case": "fragment",
+      "sha256": "4b29ab1fa821356df170219dee1ff350d8f2700bc50e178769a8f785bbf28669"
+    },
+    {
+      "case": "static",
+      "sha256": "d10cf682b2ec03f5a55059341060aa018fa0ed59a1ec5807e58b6a37ad0af06e"
+    },
+    {
+      "case": "variant",
+      "sha256": "2759ccac16385f8d6e53d2761e83affb4c3f4001702d9f50778a859750674fbe"
+    },
+    {
+      "case": "variant-scalar",
+      "sha256": "d2ee98ef004cee1ee3adf2b11d2e231287cf0d0fe61652430d2f816905adae53"
+    },
+    {
+      "case": "buffer",
+      "sha256": "bd50f59553fd59c7d97211e915d78f696ed51d0cdead6fea448f79aa53e31052"
+    },
+    {
+      "case": "empty",
+      "sha256": "d2a017e609232ec5756984972d4ced7f287c5ca7f16d26eccc2ccdb6a41b0723"
+    },
+    {
+      "case": "interior",
+      "sha256": "ca4874caf3877185849a0d54e5e551bdad4aab30de869c271df22c9f6bd3773c"
+    },
+    {
+      "case": "unaligned",
+      "sha256": "522a4551f1ab3013c099114a55e1e5e8ee147d7a7b97875c40bdc0569a0d6f92"
+    },
+    {
+      "case": "foreign",
+      "sha256": "1b1f0b1d847081d4475d8d4bf7577134e346e1cef88b4089d2be05b0743a5a99"
+    },
+    {
+      "case": "freed",
+      "sha256": "dbaf833646ec0c228186c0b30d744db00819156b694607fe49295f66adc4f551"
+    },
+    {
+      "case": "old-start",
+      "sha256": "b3615b803b1b7471452421579ef5a1096017cc1271379e6c8ad476770a8f8a88"
+    },
+    {
+      "case": "bad-flags",
+      "sha256": "c0d2a8f918452018a1b53174f22b5200471058100a3d4f180120eea6ebcee9b8"
+    },
+    {
+      "case": "bad-descriptor",
+      "sha256": "1e00a5296edabad620c922d163deb308093b0c7453cbd53e3e454bd023a737b5"
+    },
+    {
+      "case": "bad-size",
+      "sha256": "3d0d91a220ddab59faba411477e894ad783f3e40137dbdc0cae1421c849a8437"
+    },
+    {
+      "case": "bad-tag",
+      "sha256": "fc0ee74409c71f5ab27f04a232eaabef1ee08c37e7bdcc58880eb194a644db7c"
+    },
+    {
+      "case": "bad-count",
+      "sha256": "c68b0fd430b3b1ff92ca06676e532c37356b3e2c4c9bd45217c30cf60aae7c1c"
+    },
+    {
+      "case": "root-cycle",
+      "sha256": "b05bbaee0caf2fd2df938b0567fd49b87b5acf4e269b744b921ae6a3867196e9"
+    },
+    {
+      "case": "free-cycle",
+      "sha256": "d957734b03f008fe02becc4178d16750e43c931b0b3285145bdcb6fddbe863fa"
+    },
+    {
+      "case": "ordinal",
+      "sha256": "ebd660758fbdc5ae1d9364ed673a3b1c563e6a0ac67ee89e97eb55f5e7dcb816"
+    },
+    {
+      "case": "cap",
+      "sha256": "7e2d2f6530c6e41813d98e6369965f8e9648901ca5cfb6cd21b18c24b61ab3c1"
+    },
+    {
+      "case": "overflow",
+      "sha256": "b7461700dd879b9ca58f0d0bd418234b85d39c9d19ab7d65d56b5050c14e6f3d"
+    },
+    {
+      "case": "abi",
+      "sha256": "6c0ff2dfc8925b51dfda22c526fe302027c222eff594bfe2215e29611634ac36"
+    },
+    {
+      "case": "recursive",
+      "sha256": "e510db47fe452a8ae48b0f07fb9ae1bae3cd8a24ef3e07f22849af18b391a54b"
+    },
+    {
+      "case": "capture",
+      "sha256": "8d8f9e69b5149dafbd2e3810df99d1b099b378d5fc3b6d828d58f97a5967a664"
+    },
+    {
+      "case": "partial",
+      "sha256": "17aeff6e84dc4f2d99e8d7cd8f9109c400970686813f10d3c444e688d0dda5f6"
+    },
+    {
+      "case": "globals",
+      "sha256": "bae76c54492ea5f3c39e2124bd23184d85f71a833048c83c3287869f39e8ee3c"
+    },
+    {
+      "case": "full-live",
+      "sha256": "33260d94191a41b79f1f5f2fc663aa4735ba0290481151b0a3158afd6ec51ccd"
+    }
+  ]
+}

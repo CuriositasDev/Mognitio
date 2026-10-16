@@ -1,0 +1,14 @@
+namespace Mgnc;
+use Mgnc\Data\{empty,Diagnostic};
+use Mgnc\Machine\{Code,Record,raw,label};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,shift,multiply,unary,push,pop,indirect,byteLoad,byteStore,condition};
+use Mgnc\Encode\{encode};
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let path:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ var code:Code=label(Code{records:empty<Record>(),nextLabel:2,pending:List<Int>[]},0);
+ code=raw(immediate(immediate(code,0,60),7,0),List<Int>[15,5]);
+ code=mov(code,9,14);code=load(code,10,13,-72);code=store(code,4,40,12);code=address(code,8,12,64);code=immediate(code,11,-3);code=alu(code,1,13,14);code=constant(code,7,15,17);code=shift(code,5,8,3);code=multiply(code,12,9);code=unary(code,3,10);code=pop(push(code,15),15);code=indirect(code,11,true);code=byteLoad(code,10,9,1);code=byteStore(code,4,3,6);code=condition(code,5,9);code=symbol(code,0,1);code=label(code,1);
+ let bytes:Bytes=branch on encode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return 3;}};
+ branch on publishFile(path,bytes,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(value:Unit)=>0,Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>4}
+};

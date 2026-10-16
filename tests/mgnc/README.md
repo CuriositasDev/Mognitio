@@ -206,3 +206,25 @@ contains the checker and evidence while preserving the recorded source inventory
 A source or artifact mismatch is intentional rejection, not permission to relabel old data.
 The [flow review correction](../../verification/v1.5.0-review-flow.md) records
 its replacement candidate and affected verification separately.
+
+## Whole-IR runtime components
+
+The isolated v1.6 runtime probes generate and execute AMD64 ELF files through
+Mognitio's own machine records and encoder. They do not change public compiler
+commands or establish complete native-profile acceptance.
+
+- `python3 tests/mgnc/v160-x64.py --seed PATH --output NEW_DIRECTORY` checks
+  19 independently fixed instruction byte vectors and executes the resulting ELF.
+- `python3 tests/mgnc/v160-runtime-plans.py --seed PATH --output NEW_DIRECTORY`
+  checks concrete layout and liveness plans, including 17 invalid plans.
+- `python3 tests/mgnc/v160-runtime.py --seed PATH --output NEW_DIRECTORY`
+  exercises 29 generated runtime cases and five real syscall failure sites.
+  Its independent physical-heap oracle checks reachable objects, coalescing,
+  exact block-start indexes, free-list membership, and accounting. Cases include
+  full-live and fragmented heaps, multiple arenas, stress collection, globals,
+  partial construction, capture/return handoffs, twenty arguments, deep calls,
+  invalid roots, and collector scratch growth.
+
+Use a frozen, capability-verified seed. Linux AMD64 and ptrace support are
+required for the execution and syscall fault probes. Terminal test exits are
+component harness signals; they are not public runtime diagnostic acceptance.

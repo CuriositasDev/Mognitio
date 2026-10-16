@@ -1,0 +1,34 @@
+namespace Mgnc\WholeMark;
+use Mgnc\Machine\{Code,raw,label,jump,fresh};
+use Mgnc\WholeX64\{mov,load,store,immediate,alu,constant,shift,shiftCl,byteLoad};
+use Mgnc\WholeABI\{enter,leave,arenaHead,workPointer,workCapacity,workCount,descriptorTable,descriptorCount,staticTable,staticCount,markLabel,workGrowLabel,allocationFailure,internalFailure};
+// Raw collector scratch has one owner; mremap retains the old mapping on failure.
+let grow:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=enter(label(initial,workGrowLabel));let remap:Int=code->nextLabel;let done:Int=remap+1;code=fresh(code,2);
+ code=load(code,12,15,workCapacity);code=alu(code,133,12,12);code=jump(code,List<Int>[15,133],remap);
+ code=immediate(code,12,4096);code=immediate(code,0,9);code=immediate(code,7,0);code=mov(code,6,12);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=jump(code,List<Int>[233],done);
+ code=label(code,remap);code=mov(code,6,12);code=alu(code,1,12,12);code=jump(code,List<Int>[15,128],allocationFailure);code=load(code,7,15,workPointer);code=mov(code,2,12);code=immediate(code,10,1);code=immediate(code,8,0);code=immediate(code,0,25);code=raw(code,List<Int>[15,5]);
+ code=label(code,done);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],allocationFailure);code=store(code,15,workPointer,0);code=store(code,15,workCapacity,12);leave(code)
+};
+// RDI is an object base. Heap membership uses arena ranges and the independent
+// block-start bitmap before reading the object header; static leaves use exact IDs.
+let mark:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=enter(label(initial,markLabel));let done:Int=code->nextLabel;let searchStatic:Int=done+1;let higher:Int=done+2;let staticFound:Int=done+3;let heap:Int=done+4;let arenaLoop:Int=done+5;let arenaNext:Int=done+6;let found:Int=done+7;let queued:Int=done+8;code=fresh(code,9);
+ code=mov(code,12,7);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);
+ code=immediate(code,8,0);code=load(code,9,15,staticCount);code=load(code,13,15,staticTable);
+ code=label(code,searchStatic);code=alu(code,57,8,9);code=jump(code,List<Int>[15,131],heap);code=mov(code,10,8);code=alu(code,1,10,9);code=shift(code,5,10,1);code=mov(code,0,10);code=shift(code,4,0,3);code=alu(code,1,0,13);code=load(code,0,0,0);code=alu(code,57,12,0);code=jump(code,List<Int>[15,132],staticFound);code=jump(code,List<Int>[15,135],higher);code=mov(code,9,10);code=jump(code,List<Int>[233],searchStatic);
+ code=label(code,higher);code=mov(code,8,10);code=constant(code,0,8,1);code=jump(code,List<Int>[233],searchStatic);
+ code=label(code,staticFound);code=load(code,0,12,8);code=constant(code,7,0,5);code=jump(code,List<Int>[15,133],internalFailure);code=load(code,0,12,16);code=load(code,1,15,descriptorCount);code=alu(code,57,0,1);code=jump(code,List<Int>[15,131],internalFailure);code=shift(code,4,0,3);code=load(code,1,15,descriptorTable);code=alu(code,1,0,1);code=load(code,0,0,0);code=load(code,1,0,0);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],internalFailure);code=load(code,1,0,16);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],internalFailure);code=jump(code,List<Int>[233],done);
+ code=label(code,heap);code=load(code,13,15,arenaHead);
+ code=label(code,arenaLoop);code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],internalFailure);code=load(code,0,13,16);code=alu(code,57,12,0);code=jump(code,List<Int>[15,130],arenaNext);code=load(code,1,13,24);code=alu(code,57,12,1);code=jump(code,List<Int>[15,130],found);
+ code=label(code,arenaNext);code=load(code,13,13,0);code=jump(code,List<Int>[233],arenaLoop);
+ code=label(code,found);code=mov(code,14,1);code=alu(code,41,14,12);code=constant(code,7,14,24);code=jump(code,List<Int>[15,130],internalFailure);
+ code=mov(code,8,12);code=alu(code,41,8,0);code=mov(code,0,8);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);code=shift(code,5,8,3);code=mov(code,1,8);code=constant(code,4,1,7);code=shift(code,5,8,3);code=load(code,0,13,32);code=alu(code,1,8,0);code=byteLoad(code,0,8,0);code=shiftCl(code,5,0);code=constant(code,4,0,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],internalFailure);
+ code=load(code,0,12,0);code=constant(code,7,0,32);code=jump(code,List<Int>[15,130],internalFailure);code=alu(code,57,0,14);code=jump(code,List<Int>[15,135],internalFailure);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);
+ code=load(code,0,12,16);code=load(code,1,15,descriptorCount);code=alu(code,57,0,1);code=jump(code,List<Int>[15,131],internalFailure);
+ code=load(code,0,12,8);code=constant(code,7,0,3);code=jump(code,List<Int>[15,135],internalFailure);code=mov(code,1,0);code=constant(code,4,1,1);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],internalFailure);code=constant(code,4,0,2);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],done);code=immediate(code,0,3);code=store(code,12,8,0);
+ code=load(code,0,15,workCount);code=shift(code,4,0,3);code=load(code,1,15,workCapacity);code=alu(code,57,0,1);code=jump(code,List<Int>[15,130],queued);code=jump(code,List<Int>[232],workGrowLabel);
+ code=label(code,queued);code=load(code,0,15,workCount);code=mov(code,1,0);code=shift(code,4,1,3);code=load(code,2,15,workPointer);code=alu(code,1,1,2);code=store(code,1,0,12);code=constant(code,0,0,1);code=store(code,15,workCount,0);
+ code=label(code,done);leave(code)
+};
+public let emit:Function(Code):Code=function(code:Code):Code{mark(grow(code))};

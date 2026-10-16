@@ -22,7 +22,7 @@ def main():
         prefix = "namespace App;\n//" + padding + "\r\n"
         variants = {
             "value": (prefix + 'let main:Function(List<String>):Int=function(args:List<String>):Int{discard "' + padding + '日😀\\u{1f642}\\u{0}\\\"";0};\n', 0),
-            "uppercase": (prefix + 'let main:Function(List<String>):Int=function(args:List<String>):Int{discard "' + padding + '\\\\u{10FFFF}";0};\n', 0),
+            "uppercase": (prefix + 'let main:Function(List<String>):Int=function(args:List<String>):Int{discard "' + padding + '\\u{10FFFF}";0};\n', 0),
             "escape": (prefix + 'let value:String="' + padding + '日😀\\q";\n', 1),
             "surrogate": (prefix + 'let value:String="' + padding + '\\u{d800}";\n', 1),
             "newline": (prefix + 'let value:String="' + padding + '\r\n";\n', 1),

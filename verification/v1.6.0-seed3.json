@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "stage": "replacement-bootstrap-accepted",
+  "accepted_at": "2026-10-16",
+  "seed": {
+    "bundle": "lisp-4820d16ff8c7371cc15cf4cbf94b507e3dafdf42.tar.gz",
+    "bytes": 27481284,
+    "manifestSha256": "3451e589a44fe780a5dfe23420cb5377e77d72d74cbe87918a8cbd5544dea518",
+    "schema": 1,
+    "sha256": "0e1ca6c2b60bca42b6a74a1c241559fa755bbdd7d6f8231f4091b25efe71abab",
+    "sourceCommit": "4820d16ff8c7371cc15cf4cbf94b507e3dafdf42"
+  },
+  "seed_components": 992,
+  "replaces_seed_source": "860a7550cb610e3a60642e427db659df7447fcf5",
+  "reason": "Repeated first-fit prefix scans during large escaped-literal lowering; exact first-fit geometry is preserved.",
+  "capability_runner_revision": "4820d16ff8c7371cc15cf4cbf94b507e3dafdf42",
+  "capability_fixture_sha256": "d8c72eb32a3f21fcac31633cf82dd43ac0fe06acdd9f4a0cd5bdb3fec2920be4",
+  "capability_results": [
+    {
+      "name": "module-snapshots-run",
+      "exit": 12,
+      "seconds": 0.012688498944044113,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-build",
+      "exit": 0,
+      "seconds": 0.05369123793207109,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-native",
+      "exit": 12,
+      "seconds": 0.00032072002068161964,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-run",
+      "exit": 1,
+      "seconds": 0.013267482980154455,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-build",
+      "exit": 0,
+      "seconds": 0.0535743220243603,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-native",
+      "exit": 1,
+      "seconds": 0.00031884200870990753,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-run",
+      "exit": 0,
+      "seconds": 0.01338806003332138,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-build",
+      "exit": 0,
+      "seconds": 0.053565753041766584,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-native",
+      "exit": 0,
+      "seconds": 0.00029249396175146103,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-run",
+      "exit": 0,
+      "seconds": 0.01389871898572892,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-build",
+      "exit": 0,
+      "seconds": 0.05719676706939936,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-native",
+      "exit": 0,
+      "seconds": 0.00027369591407477856,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-run",
+      "exit": 0,
+      "seconds": 0.018172085052356124,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-build",
+      "exit": 0,
+      "seconds": 0.055981419049203396,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-native",
+      "exit": 0,
+      "seconds": 0.0018606020603328943,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-build",
+      "exit": 0,
+      "seconds": 171.28732936701272,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-check",
+      "exit": 0,
+      "seconds": 293.9674756230088,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    }
+  ],
+  "corpus": {
+    "revision": "84b59d4fdb81b6032671b2f1f731b08d75e2522d",
+    "files": 102,
+    "bytes": 1076892,
+    "inventory_sha256": "d01b7bacc62b585761b24cde0bcee94186e1343a7e425da26b9d42e9bb58bbee",
+    "compiler_sha256": "1f4588fc50722211b3c3b336838d1b730351d6e06a28c6c07066b758d8173cfa",
+    "compiler_bytes": 6518720
+  },
+  "cumulative_lisp": {
+    "groups": 235,
+    "assertions": 605717,
+    "processes": 1314,
+    "failures": 0
+  },
+  "cumulative_python": "Complete ASDF integration sequence passed, ending with 55 path-inspection checks.",
+  "restored_seed": "992 components verified; mutation rejected; isolated run/build and independent ELF passed.",
+  "implementation_complete": false,
+  "runtime_acceptance_complete": false,
+  "release_performed": false
+}

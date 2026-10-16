@@ -1,0 +1,17 @@
+namespace Mgnc\WholeNativeLookup;
+use Mgnc\Data\{Diagnostic,Span,problem,lookup};
+use Mgnc\WholeNativeData\{Native,Literal,Constructor,Procedure};
+use Mgnc\WholeConcrete\{Instance,Target};
+use Mgnc\WholeFrameData\{Point};
+public let literal:Function(Native,Int,Int,Int,Span):Result<Int,Diagnostic>=function(plan:Native,owner:Int,block:Int,operation:Int,span:Span):Result<Int,Diagnostic>{
+ loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as value:Literal){branch when{value->instance==owner&&value->block==block&&value->operation==operation=>{return Result<Int,Diagnostic>::Ok(value->label);},else=>unit};};};Result<Int,Diagnostic>::Err(problem("internal",span,"missing native literal"))
+};
+public let constructor:Function(Native,Int,Int,Int,Span):Result<Int,Diagnostic>=function(plan:Native,owner:Int,block:Int,operation:Int,span:Span):Result<Int,Diagnostic>{
+ loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as value:Constructor){branch when{value->instance==owner&&value->block==block&&value->operation==operation=>{return Result<Int,Diagnostic>::Ok(value->entry);},else=>unit};};};Result<Int,Diagnostic>::Err(problem("internal",span,"missing native constructor"))
+};
+public let target:Function(Instance,Int,Span):Result<Int,Diagnostic>=function(instance:Instance,node:Int,span:Span):Result<Int,Diagnostic>{
+ loop over(instance->targets->pages->append(instance->targets->tail) as page:List<Target>){loop over(page as value:Target){branch when{value->node==node=>{return Result<Int,Diagnostic>::Ok(value->instance);},else=>unit};};};Result<Int,Diagnostic>::Err(problem("internal",span,"missing native concrete target"))
+};
+public let roots:Function(Procedure,Int,Int,Span):Result<Int,Diagnostic>=function(procedure:Procedure,block:Int,operation:Int,span:Span):Result<Int,Diagnostic>{
+ var index:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as page:List<Point>){loop over(page as point:Point){branch when{point->block==block&&point->operation==operation=>{return lookup<Int>(procedure->pointLabels,index);},else=>unit};index=index+1;};};Result<Int,Diagnostic>::Err(problem("internal",span,"missing native allocation roots"))
+};

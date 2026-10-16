@@ -1,0 +1,24 @@
+namespace Mgnc\WholePipeline;
+use Std\Binary\{Bytes};
+use Mgnc\Data\{Diagnostic};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\WholeIR\{Project};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeConcrete\{Plan,build as concrete};
+use Mgnc\WholeConcreteCheck\{verify as concreteCheck};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativePlan\{build as native};
+use Mgnc\WholeNativeCheck\{verify as nativeCheck};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machineCheck};
+use Mgnc\Machine\{Code};
+use Mgnc\Encode\{encode};
+// Profile admission is performed by the driver before this internal pipeline.
+public let prepare:Function(SemanticProject):Result<Native,Diagnostic>=function(semantic:SemanticProject):Result<Native,Diagnostic>{
+ let source:Project=try lower(semantic);try verify(semantic,source);let plan:Plan=try concrete(semantic,source);try concreteCheck(semantic,source,plan);
+ let prepared:Native=try native(semantic,source,plan);try nativeCheck(semantic,source,prepared);Result<Native,Diagnostic>::Ok(prepared)
+};
+public let compile:Function(Native):Result<Bytes,Diagnostic>=function(plan:Native):Result<Bytes,Diagnostic>{
+ let code:Code=try emit(plan);try machineCheck(plan,code);encode(code)
+};

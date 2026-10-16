@@ -1,0 +1,293 @@
+{
+  "scalar": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{(7*8-3)/3};\n",
+    "args": [],
+    "status": 17,
+    "stdout": "",
+    "stderr": ""
+  },
+  "minimum": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{branch when{-9223372036854775808 < -7 && -9223372036854775808 % -1 == 0=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "closure": {
+    "source": "namespace App;\ntype Pair=product{x:Int;f:Function(Int):Int;};let make:Function(Int):Function(Int):Int=function(base:Int):Function(Int):Int{function(value:Int):Int{base+value}};let main:Function(List<String>):Int=function(args:List<String>):Int{let p:Pair=Pair{f:make(7),x:2};p->f(p->x)};\n",
+    "args": [],
+    "status": 9,
+    "stdout": "",
+    "stderr": ""
+  },
+  "list": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let a:List<Int>=List<Int>[2,3];let b:List<Int>=a->append(5);var total:Int=0;loop over(b as value:Int){total=total+value;};branch when{a->length()==2&&b->length()==3=>total,else=>99}};\n",
+    "args": [],
+    "status": 10,
+    "stdout": "",
+    "stderr": ""
+  },
+  "unicode": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let a:String=\"日😀\"+\"\\0x\";branch when{a==\"\\u{65e5}\\u{1f600}\\0x\"&&a->length()==4=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "args": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{var total:Int=0;loop over(args as arg:String){total=total+arg->length();};total};\n",
+    "args": [
+      "日😀",
+      "abc",
+      ""
+    ],
+    "status": 5,
+    "stdout": "",
+    "stderr": ""
+  },
+  "result": {
+    "source": "namespace App;\ntemplate pass<T>=function(value:Result<T,String>):Result<Int,String>{let found:T=try value;Result<Int,String>::Ok(7)};let main:Function(List<String>):Int=function(args:List<String>):Int{let r:Result<Int,String>=pass<Bool>(Result<Bool,String>::Err(\"keep\"+\" me\"));branch on r{Result<Int,String>::Ok(value:Int)=>1,Result<Int,String>::Err(error:String)=>branch when{error==\"keep me\"=>0,else=>2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "list-string": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{var xs:List<String>=List<String>[];var n:Int=0;loop while(n<30000){xs=xs->append(\"x\"+\"y\");n=n+1;};var count:Int=0;loop over(xs as x:String){branch when{x==\"xy\"=>{count=count+1;},else=>{return 1;}};};branch when{count==30000=>0,else=>2}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "at-int": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let xs:List<Int>=List<Int>[7,9];branch on xs->at(1){Result<Int,IndexError>::Ok(value:Int)=>value,Result<Int,IndexError>::Err(error:IndexError)=>99}};\n",
+    "args": [],
+    "status": 9,
+    "stdout": "",
+    "stderr": ""
+  },
+  "at-error": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let xs:List<String>=List<String>[\"a\"+\"b\"];branch on xs->at(-1){Result<String,IndexError>::Ok(value:String)=>1,Result<String,IndexError>::Err(error:IndexError)=>branch when{error->index== -1&&error->length==1=>0,else=>2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "slice": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let text:String=\"a日😀\\0z\";branch on text->slice(1,4){Result<String,SliceError>::Ok(value:String)=>branch when{value==\"日😀\\0\"&&value->length()==3=>0,else=>1},Result<String,SliceError>::Err(error:SliceError)=>2}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "slice-error": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{branch on \"😀x\"->slice(2,1){Result<String,SliceError>::Ok(value:String)=>1,Result<String,SliceError>::Err(error:SliceError)=>branch when{error->start==2&&error->end==1&&error->length==2=>0,else=>2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "join": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let xs:List<String>=List<String>[\"日\",\"\", \"😀\\0\"];let text:String=xs->join(\"|\");branch when{text==\"日||😀\\0\"&&text->length()==5=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "scalars": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{let text:String=\"日😀\\0x\";let xs:List<String>=text->scalars();branch when{xs->length()==4&&xs->join(\"\")==text&&xs->join(\"|\")==\"日|😀|\\0|x\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "empty-text": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{branch when{List<String>[]->join(\"x\")==\"\"&&\"\"->scalars()->length()==0&&List<String>[\"日\"]->join(\"|\")==\"日\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "loop-capture": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{var fs:List<Function():String>=List<Function():String>[];loop over((\"a\"+\"日😀\")->scalars() as value:String){fs=fs->append(function():String{value});};var texts:List<String>=List<String>[];loop over(fs as f:Function():String){texts=texts->append(f());};branch when{texts->join(\"\")==\"a日😀\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "callee-arguments": {
+    "source": "namespace App;\nuse Std\\Io\\{writeStdout,IoError};\nlet mark:Function(String,Int):Int=function(text:String,value:Int):Int{discard writeStdout(text);value};\nlet make:Function():Function(Int,Int):Int=function():Function(Int,Int):Int{discard writeStdout(\"C\");function(a:Int,b:Int):Int{a+b}};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;make()(mark(\"A\",2),mark(\"B\",3))};\n",
+    "args": [],
+    "status": 5,
+    "stdout": "CAB",
+    "stderr": ""
+  },
+  "short-circuit": {
+    "source": "namespace App;\nuse Std\\Io\\{writeStdout,IoError};\nlet mark:Function(String,Int):Int=function(text:String,value:Int):Int{discard writeStdout(text);value};\nlet yes:Function(String):Bool=function(text:String):Bool{discard writeStdout(text);true};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let a:Bool=false&&yes(\"bad\");let b:Bool=true||yes(\"bad\");branch when{a||!b=>1,true=>{discard writeStdout(\"ok\");0},else=>{discard writeStdout(\"bad\");2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "ok",
+    "stderr": ""
+  },
+  "try-argument": {
+    "source": "namespace App;\nuse Std\\Io\\{writeStdout,IoError};\nlet mark:Function(String,Int):Int=function(text:String,value:Int):Int{discard writeStdout(text);value};\nlet pair:Function(Int,Int):Result<Bool,String>=function(a:Int,b:Int):Result<Bool,String>{Result<Bool,String>::Ok(a==b)};let failure:Function():Result<Int,String>=function():Result<Int,String>{discard writeStdout(\"E\");Result<Int,String>::Err(\"kept\"+\" error\")};let invoke:Function():Result<Bool,String>=function():Result<Bool,String>{pair(try failure(),mark(\"bad\",2))};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch on invoke(){Result<Bool,String>::Ok(value:Bool)=>1,Result<Bool,String>::Err(error:String)=>branch when{error==\"kept error\"=>0,else=>2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "E",
+    "stderr": ""
+  },
+  "switch-once": {
+    "source": "namespace App;\nuse Std\\Io\\{writeStdout,IoError};\nlet mark:Function(String,Int):Int=function(text:String,value:Int):Int{discard writeStdout(text);value};\ntype Choice=sum{No;Yes(String);};let choose:Function():Choice=function():Choice{discard writeStdout(\"T\");Choice::Yes(\"a\"+\"b\")};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch on choose(){Choice::No=>{discard writeStdout(\"bad\");1},Choice::Yes(text:String)=>{discard writeStdout(text);0}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "Tab",
+    "stderr": ""
+  },
+  "over-rebind": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;var list:List<Int>=List<Int>[1,2,3];var total:Int=0;loop over(list as value:Int){total=total*10+value;list=List<Int>[9];};branch when{total==123&&list->length()==1=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "outer-break-while": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let value:Int=loop{loop while({break 7;}){unit};};value};\n",
+    "args": [],
+    "status": 7,
+    "stdout": "",
+    "stderr": ""
+  },
+  "outer-break-over": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let value:Int=loop{loop over({break 8;} as item:Int){discard item;};};value};\n",
+    "args": [],
+    "status": 8,
+    "stdout": "",
+    "stderr": ""
+  },
+  "panic-return": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;panic{{return 19;}}};\n",
+    "args": [],
+    "status": 19,
+    "stdout": "",
+    "stderr": ""
+  },
+  "panic-inner": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;panic{panic{\"inner\"}}};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "panic: inner\n"
+  },
+  "panic-try": {
+    "source": "namespace App;\nlet fail:Function():Result<Int,String>=function():Result<Int,String>{panic{try Result<String,String>::Err(\"kept\")}};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch on fail(){Result<Int,String>::Ok(value:Int)=>1,Result<Int,String>::Err(error:String)=>branch when{error==\"kept\"=>0,else=>2}}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "aggregate-lifetime": {
+    "source": "namespace App;\ntype Box=product{values:List<Function():String>;};let churn:Function():Int=function():Int{var n:Int=0;loop while(n<40000){discard \"a\"+\"b\";n=n+1;};0};let make:Function():Box=function():Box{let text:String=\"kept\"+\" string\";Box{values:List<Function():String>[function():String{text}]}};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let box:Box=make();discard churn();let f:Function():String=branch on box->values->at(0){Result<Function():String,IndexError>::Ok(value:Function():String)=>value,Result<Function():String,IndexError>::Err(error:IndexError)=>panic{\"missing\"}};branch when{f()==\"kept string\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "partial-product": {
+    "source": "namespace App;\ntype Box=product{first:String;second:String;fn:Function():String;};let churn:Function():String=function():String{var n:Int=0;loop while(n<40000){discard \"a\"+\"b\";n=n+1;};\"second\"+\" value\"};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let saved:String=\"kept\"+\" closure\";let box:Box=Box{first:\"first\"+\" value\",second:churn(),fn:function():String{saved}};branch when{box->first==\"first value\"&&box->second==\"second value\"&&box->fn()==\"kept closure\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "partial-list": {
+    "source": "namespace App;\nlet churn:Function():String=function():String{var n:Int=0;loop while(n<40000){discard \"a\"+\"b\";n=n+1;};\"third\"+\" value\"};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let values:List<String>=List<String>[\"first\"+\" value\",\"second\"+\" value\",churn()];branch when{values->join(\"|\")==\"first value|second value|third value\"=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "argument-lifetime": {
+    "source": "namespace App;\nlet churn:Function():String=function():String{var n:Int=0;loop while(n<40000){discard \"a\"+\"b\";n=n+1;};\"tail\"+\" value\"};let make:Function():Function(String,String):Bool=function():Function(String,String):Bool{let text:String=\"captured\"+\" value\";function(a:String,b:String):Bool{text==\"captured value\"&&a==\"first value\"&&b==\"tail value\"}};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch when{make()(\"first\"+\" value\",churn())=>0,else=>1}};\n",
+    "args": [],
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "normal-four": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;4};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": ""
+  },
+  "invalid-exit-low": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;-1};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: invalid exit status\n"
+  },
+  "invalid-exit-high": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;256};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: invalid exit status\n"
+  },
+  "arithmetic-add": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;9223372036854775807+1};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: integer overflow\n"
+  },
+  "arithmetic-sub": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;-9223372036854775808-1};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: integer overflow\n"
+  },
+  "arithmetic-mul": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;9223372036854775807*2};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: integer overflow\n"
+  },
+  "arithmetic-neg": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;-(-9223372036854775808)};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: integer overflow\n"
+  },
+  "arithmetic-div": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;-9223372036854775808/(-1)};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: integer overflow\n"
+  },
+  "arithmetic-zero": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;1/0};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: division by zero\n"
+  },
+  "arithmetic-rem-zero": {
+    "source": "namespace App;\nlet main:Function(List<String>):Int=function(args:List<String>):Int{discard args;1%0};\n",
+    "args": [],
+    "status": 4,
+    "stdout": "",
+    "stderr": "runtime error: division by zero\n"
+  },
+  "remainder-minimum": {
+    "source": "namespace App;let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;-9223372036854775808%(-1)};\n",
+    "status": 0,
+    "stdout": "",
+    "stderr": "",
+    "args": []
+  }
+}

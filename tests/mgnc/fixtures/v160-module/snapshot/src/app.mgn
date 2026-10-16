@@ -1,0 +1,1 @@
+namespace App;var value:String="old";let before:Function():String=function():String{value};let changed:Unit={value="new";};let after:Function():String=function():String{value};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch when{before()=="old"&&after()=="new"=>0,else=>1}};

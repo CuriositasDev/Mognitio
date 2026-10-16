@@ -1,0 +1,40 @@
+namespace Mgnc\WholeIoResource;
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{mov,load,store,immediate,alu,constant};
+use Mgnc\WholeABI\{enter,leave,resources};
+// Record: previous, owned fd, three independent mapping/size pairs, primary errno,
+// explicit kind, phase, secondary errno, fd state, generation, allocation site,
+// byte count, scalar count, transfer offset, UTF-8 pending/value/minimum/count.
+public let emit:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=label(initial,60);
+ // Scalar-only mapping helper. The caller publishes each acquired mapping
+ // immediately, before any allocation, callback, or diagnostic construction.
+ code=mov(code,6,7);code=immediate(code,7,0);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=immediate(code,0,9);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],1);code=raw(code,List<Int>[195]);
+ code=label(code,62);let absent:Int=code->nextLabel;code=fresh(code,1);
+ code=mov(code,2,7);code=load(code,7,2,8);code=constant(code,7,7,0);code=jump(code,List<Int>[15,140],absent);
+ code=immediate(code,0,-1);code=store(code,2,8,0);code=immediate(code,0,2);code=store(code,2,96,0);code=immediate(code,0,3);code=raw(code,List<Int>[15,5]);code=raw(code,List<Int>[195]);
+ code=label(code,absent);code=immediate(code,0,0);code=raw(code,List<Int>[195]);
+ code=enter(label(code,61));code=mov(code,12,7);code=immediate(code,13,0);code=immediate(code,14,0);code=jump(code,List<Int>[232],62);
+ let closeOk:Int=code->nextLabel;code=fresh(code,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],closeOk);code=mov(code,13,0);code=constant(code,7,0,-9);let closeKnown:Int=code->nextLabel;code=fresh(code,1);code=jump(code,List<Int>[15,133],closeKnown);code=immediate(code,14,1);code=label(code,closeKnown);code=label(code,closeOk);
+ loop over(List<Int>[16,32,48] as offset:Int){
+  let absentMap:Int=code->nextLabel;let kept:Int=absentMap+1;code=fresh(code,2);
+  code=load(code,7,12,offset);code=alu(code,133,7,7);code=jump(code,List<Int>[15,132],absentMap);code=load(code,6,12,offset+8);
+  code=immediate(code,0,0);code=store(code,12,offset,0);code=immediate(code,0,11);code=raw(code,List<Int>[15,5]);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],absentMap);
+  code=store(code,12,88,0);code=alu(code,133,13,13);code=jump(code,List<Int>[15,133],kept);code=mov(code,13,0);code=label(code,kept);
+  code=constant(code,7,0,-22);code=jump(code,List<Int>[15,133],absentMap);code=immediate(code,14,1);code=label(code,absentMap);
+ };
+ code=mov(code,0,13);code=mov(code,2,14);code=leave(code);
+ // Terminal traversal is bounded by stack ordering. It never replaces a primary.
+ code=enter(label(code,63));let next:Int=code->nextLabel;let done:Int=next+1;let popRecord:Int=next+2;code=fresh(code,3);
+ code=label(code,next);code=load(code,12,15,resources);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);code=mov(code,0,12);code=constant(code,4,0,7);code=jump(code,List<Int>[15,133],done);code=alu(code,57,12,5);code=jump(code,List<Int>[15,134],done);
+ code=load(code,1,15,216);code=constant(code,5,1,192);code=alu(code,57,12,1);code=jump(code,List<Int>[15,135],done);code=load(code,0,12,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],popRecord);code=alu(code,57,0,12);code=jump(code,List<Int>[15,134],done);code=alu(code,57,0,1);code=jump(code,List<Int>[15,135],done);
+ code=label(code,popRecord);code=store(code,15,resources,0);code=mov(code,7,12);code=jump(code,List<Int>[232],61);code=jump(code,List<Int>[233],next);
+ code=label(code,done);code=immediate(code,0,0);code=store(code,15,resources,0);code=leave(code);
+ // Linux errno classification retains the public kind independently of phase.
+ code=label(code,64);let fallback:Int=code->nextLabel;code=fresh(code,7);
+ loop over(List<Int>[2,3,4,5,6] as kind:Int){
+  let numbers:List<Int>=branch when{kind==2=>List<Int>[2,20],kind==3=>List<Int>[13,1,30],kind==4=>List<Int>[21],kind==5=>List<Int>[32],else=>List<Int>[24,23,28,122,12]};
+  loop over(numbers as number:Int){code=constant(code,7,0,-number);code=jump(code,List<Int>[15,132],fallback+kind);};
+ };
+ code=immediate(code,0,7);code=raw(code,List<Int>[195]);loop over(List<Int>[2,3,4,5,6] as kind:Int){code=label(code,fallback+kind);code=immediate(code,0,kind);code=raw(code,List<Int>[195]);};code
+};

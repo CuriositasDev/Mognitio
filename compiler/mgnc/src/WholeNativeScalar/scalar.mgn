@@ -1,0 +1,28 @@
+namespace Mgnc\WholeNativeScalar;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\WholeIR\{Operation};
+use Mgnc\Machine\{Code,raw,label,jump,fresh};
+use Mgnc\WholeX64\{immediate,load,alu,constant,multiply,unary,condition,mov};
+use Mgnc\WholeFrame\{offset};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+// RAX and RCX hold scalar operands; failure labels are linked by the runtime.
+public let emit:Function(Code,Operation):Result<Code,Diagnostic>=function(initial:Code,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let name:String=op->code;
+ branch when{name=="neg"=>{branch when{op->integer== -9223372036854775808=>{code=immediate(code,0,-9223372036854775808);},else=>{code=unary(code,3,0);code=jump(code,List<Int>[15,128],4);}};},
+ name=="not"=>{code=constant(code,6,0,1);},
+ name=="add"||name=="sub"||name=="mul"=>{
+  branch when{name=="mul"=>{code=multiply(code,0,1);},else=>{code=alu(code,branch when{name=="add"=>1,else=>41},0,1);}};code=jump(code,List<Int>[15,128],4);
+ },
+ name=="div"||name=="rem"=>{
+  let normal:Int=code->nextLabel;let done:Int=normal+1;code=fresh(code,2);
+  code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],5);
+  code=immediate(code,2,-9223372036854775808);code=alu(code,57,0,2);code=jump(code,List<Int>[15,133],normal);code=constant(code,7,1,-1);code=jump(code,List<Int>[15,133],normal);
+  branch when{name=="div"=>{code=jump(code,List<Int>[233],4);},else=>{code=immediate(code,0,0);code=jump(code,List<Int>[233],done);}};
+  code=label(code,normal);code=raw(code,List<Int>[72,153]);code=unary(code,7,1);branch when{name=="rem"=>{code=mov(code,0,2);},else=>unit};code=label(code,done);
+ },
+ else=>{
+  try require(name=="eq"||name=="ne"||name=="lt"||name=="le"||name=="gt"||name=="ge",op->origin->span,"unknown scalar emission");
+  code=alu(code,57,0,1);code=condition(code,branch when{name=="eq"=>4,name=="ne"=>5,name=="lt"=>12,name=="le"=>14,name=="gt"=>15,else=>13},0);
+ }};Result<Code,Diagnostic>::Ok(code)
+};

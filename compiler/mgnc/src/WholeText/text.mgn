@@ -1,0 +1,37 @@
+namespace Mgnc\WholeText;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,empty};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end,select};
+use Mgnc\Machine\{Code,label,jump,fresh,field,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteLoad};
+use Mgnc\WholeABI\{allocateLabel};
+let join:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ let frame:Frame=Frame{slots:2,outgoing:8,extent:144,entry:List<Bits<64>>[Bits<64>{3}],points:empty<Point>()};
+ var code:Code=try begin(label(initial,43),frame,List<Int>[0,1],List<Int>[],137);
+ let count:Int=code->nextLabel;let fragment:Int=count+1;let allocate:Int=count+2;let copy:Int=count+3;let done:Int=count+4;code=fresh(code,5);
+ code=load(code,3,5,-72);code=load(code,12,5,-80);code=immediate(code,13,0);code=immediate(code,14,0);code=mov(code,8,3);code=immediate(code,10,0);
+ code=label(code,count);code=alu(code,133,8,8);code=jump(code,List<Int>[15,132],allocate);code=alu(code,133,10,10);code=jump(code,List<Int>[15,132],fragment);
+ code=load(code,0,12,24);code=alu(code,1,13,0);code=jump(code,List<Int>[15,128],6);code=load(code,0,12,32);code=alu(code,1,14,0);code=jump(code,List<Int>[15,128],6);
+ code=label(code,fragment);code=load(code,9,8,40);code=load(code,0,9,24);code=alu(code,1,13,0);code=jump(code,List<Int>[15,128],6);code=load(code,0,9,32);code=alu(code,1,14,0);code=jump(code,List<Int>[15,128],6);code=constant(code,0,10,1);code=load(code,8,8,32);code=jump(code,List<Int>[233],count);
+ code=label(code,allocate);code=mov(code,7,13);code=constant(code,0,7,40);code=jump(code,List<Int>[15,128],6);code=load(code,6,5,40);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=store(code,0,32,14);code=address(code,14,0,40);code=alu(code,1,14,13);code=mov(code,8,3);code=alu(code,133,8,8);code=jump(code,List<Int>[15,132],done);
+ code=label(code,copy);code=load(code,9,8,40);code=load(code,10,9,24);code=alu(code,41,14,10);code=mov(code,7,14);code=address(code,6,9,40);code=mov(code,1,10);code=raw(code,List<Int>[243,164]);code=load(code,8,8,32);code=alu(code,133,8,8);code=jump(code,List<Int>[15,132],done);
+ code=load(code,10,12,24);code=alu(code,41,14,10);code=mov(code,7,14);code=address(code,6,12,40);code=mov(code,1,10);code=raw(code,List<Int>[243,164]);code=jump(code,List<Int>[233],copy);
+ code=label(code,done);Result<Code,Diagnostic>::Ok(end(code,frame))
+};
+let scalars:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ let frame:Frame=Frame{slots:3,outgoing:8,extent:160,entry:List<Bits<64>>[Bits<64>{3}],points:empty<Point>()};
+ var code:Code=try begin(label(initial,44),frame,List<Int>[0],List<Int>[],138);
+ let scan:Int=code->nextLabel;let one:Int=scan+1;let two:Int=scan+2;let three:Int=scan+3;let allocate:Int=scan+4;let length:Int=scan+5;let done:Int=scan+6;code=fresh(code,7);
+ code=load(code,3,5,-72);code=load(code,12,3,24);code=immediate(code,13,0);
+ code=label(code,scan);code=alu(code,57,13,12);code=jump(code,List<Int>[15,131],done);code=mov(code,2,3);code=alu(code,1,2,13);code=byteLoad(code,0,2,40);code=constant(code,7,0,128);code=jump(code,List<Int>[15,130],one);code=constant(code,7,0,224);code=jump(code,List<Int>[15,130],two);code=constant(code,7,0,240);code=jump(code,List<Int>[15,130],three);code=immediate(code,14,4);code=jump(code,List<Int>[233],allocate);
+ code=label(code,one);code=immediate(code,14,1);code=jump(code,List<Int>[233],allocate);code=label(code,two);code=immediate(code,14,2);code=jump(code,List<Int>[233],allocate);code=label(code,three);code=immediate(code,14,3);
+ code=label(code,allocate);code=mov(code,7,14);code=constant(code,0,7,40);code=load(code,6,5,32);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=immediate(code,2,1);code=store(code,0,32,2);code=address(code,7,0,40);code=address(code,6,3,40);code=alu(code,1,6,13);code=mov(code,1,14);code=raw(code,List<Int>[243,164]);code=store(code,5,-88,0);code=select(code,139);
+ code=immediate(code,7,48);code=load(code,6,5,40);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,-80);code=store(code,0,32,2);code=immediate(code,1,0);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],length);code=load(code,1,2,24);
+ code=label(code,length);code=constant(code,0,1,1);code=jump(code,List<Int>[15,128],6);code=store(code,0,24,1);code=load(code,2,5,-88);code=store(code,0,40,2);code=store(code,5,-80,0);code=immediate(code,0,0);code=store(code,5,-88,0);code=select(code,138);code=alu(code,1,13,14);code=jump(code,List<Int>[233],scan);
+ code=label(code,done);code=load(code,0,5,-80);Result<Code,Diagnostic>::Ok(end(code,frame))
+};
+public let emit:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ var code:Code=try scalars(try join(initial));code=label(code,137);code=field(code,4,2);code=field(code,4,3);
+ code=label(code,138);code=field(code,4,3);code=field(code,4,3);code=label(code,139);code=field(code,4,3);code=field(code,4,7);Result<Code,Diagnostic>::Ok(code)
+};

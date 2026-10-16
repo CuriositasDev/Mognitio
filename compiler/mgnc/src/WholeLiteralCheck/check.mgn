@@ -1,0 +1,29 @@
+namespace Mgnc\WholeLiteralCheck;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\WholeIR\{TextPart};
+use Mgnc\WholeUnicode\{number};
+use Mgnc\WholeChecks\{require};
+type Cached=product{scalar:String;value:Int;};
+// Decode emitted bytes independently of the encoder, then compare source scalars.
+public let verify:Function(List<TextPart>,List<Int>,Int,Span):Result<Unit,Diagnostic>=function(parts:List<TextPart>,bytes:List<Int>,count:Int,span:Span):Result<Unit,Diagnostic>{
+ var decoded:Paged<Int>=empty<Int>();var pending:Int=0;var accumulator:Int=0;var minimum:Int=0;
+ loop over(bytes as byte:Int){
+  try require(byte>=0&&byte<=255,span,"literal byte");
+  branch when{pending==0=>{
+   branch when{byte<128=>{decoded=push<Int>(decoded,byte);},byte>=194&&byte<=223=>{accumulator=byte-192;pending=1;minimum=128;},byte>=224&&byte<=239=>{accumulator=byte-224;pending=2;minimum=2048;},byte>=240&&byte<=244=>{accumulator=byte-240;pending=3;minimum=65536;},else=>{try require(false,span,"literal UTF-8 leading byte");}};
+  },else=>{
+   try require(byte>=128&&byte<=191,span,"literal UTF-8 continuation");accumulator=accumulator*64+byte-128;pending=pending-1;
+   branch when{pending==0=>{try require(accumulator>=minimum&&accumulator<=1114111&&!(accumulator>=55296&&accumulator<=57343),span,"literal UTF-8 scalar");decoded=push<Int>(decoded,accumulator);},else=>unit};
+  }};
+ };
+ try require(pending==0&&decoded->count==count,span,"literal UTF-8 count");
+ var index:Int=0;var cache:List<Cached>=List<Cached>[];
+ loop over(parts as part:TextPart){branch on part{
+  TextPart::Scalar(value:Int)=>{try require(index<decoded->count,span,"literal source scalar count");try require((try lookup<Int>(decoded,index))==value,span,"literal source scalar");index=index+1;},
+  TextPart::Text(text:String)=>{loop over(text->scalars() as scalar:String){
+   var value:Int= -1;loop over(cache as cached:Cached){branch when{cached->scalar==scalar=>{value=cached->value;break;},else=>unit};};
+   branch when{value<0=>{value=number(scalar);cache=cache->append(Cached{scalar:scalar,value:value});},else=>unit};
+   try require(index<decoded->count,span,"literal source scalar count");try require((try lookup<Int>(decoded,index))==value,span,"literal source scalar");index=index+1;
+  };}
+ };};try require(index==decoded->count,span,"literal source scalar count");Result<Unit,Diagnostic>::Ok(unit)
+};

@@ -1,0 +1,65 @@
+namespace Mgnc\WholeNativeCollections;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeIR\{Body,Operation};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\WholeChecks\{require,slotType};
+use Mgnc\WholeFrame\{offset};
+use Mgnc\IntMap\{get};
+use Mgnc\Tables\{atList};
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,shift,condition};
+use Mgnc\WholeABI\{allocateLabel};
+public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation,output:Int):Result<Code,Diagnostic>{
+ var code:Code=initial;let input:Int=try atList<Int>(op->inputs,0);let shape:Type=try lookup<Type>(plan->concrete->types->types,try slotType(body,input));let name:String=op->code;
+ code=load(code,12,5,offset(input));
+ branch when{name=="method:length"=>{
+  code=immediate(code,0,0);let done:Int=code->nextLabel;code=fresh(code,1);branch when{shape->kind==10=>{code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);},else=>unit};
+  code=load(code,0,12,branch when{shape->kind==3=>32,else=>24});code=label(code,done);
+ },
+ name=="method:append"=>{
+  try require(shape->kind==10,op->origin->span,"native append receiver");let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native list descriptor");
+  code=immediate(code,13,0);let length:Int=code->nextLabel;code=fresh(code,1);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],length);code=load(code,13,12,24);code=label(code,length);code=constant(code,0,13,1);code=jump(code,List<Int>[15,128],9);
+  code=immediate(code,7,48);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=store(code,0,32,12);code=load(code,2,5,offset(try atList<Int>(op->inputs,1)));code=store(code,0,40,2);
+ },
+
+
+ name=="method:join"||name=="method:scalars"=>{
+  code=immediate(code,0,0);code=store(code,4,0,0);code=load(code,0,5,offset(input));code=store(code,4,8,0);let stringDescriptor:Int=try get(plan->layouts->types,3);try require(stringDescriptor>=0,op->origin->span,"native text descriptor");
+  branch when{name=="method:join"=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,1)));code=store(code,4,16,0);code=immediate(code,0,stringDescriptor);code=store(code,4,24,0);},
+  else=>{let listDescriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(listDescriptor>=0,op->origin->span,"native scalar list descriptor");code=immediate(code,0,stringDescriptor);code=store(code,4,16,0);code=immediate(code,0,listDescriptor);code=store(code,4,24,0);}};
+  code=jump(code,List<Int>[232],branch when{name=="method:join"=>43,else=>44});
+ },
+ name=="method:at"||name=="method:slice"=>{
+  let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native checked-result descriptor");code=immediate(code,0,0);code=store(code,4,0,0);var position:Int=1;
+  loop over(op->inputs as slot:Int){code=load(code,0,5,offset(slot));code=store(code,4,position*8,0);position=position+1;};code=immediate(code,0,descriptor);code=store(code,4,position*8,0);position=position+1;
+  let errorDescriptor:Int=try get(plan->layouts->types,branch when{name=="method:at"=>4,else=>5});try require(errorDescriptor>=0,op->origin->span,"native bounds error descriptor");code=immediate(code,0,errorDescriptor);code=store(code,4,position*8,0);position=position+1;
+  branch when{name=="method:at"=>{
+   let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,op->origin->span,"native list element");0}};let elementKind:Int=(try lookup<Type>(plan->concrete->types->types,element))->kind;code=immediate(code,0,branch when{elementKind>=3=>1,else=>0});
+  },else=>{code=immediate(code,0,try get(plan->layouts->types,3));}};code=store(code,4,position*8,0);code=jump(code,List<Int>[232],branch when{name=="method:at"=>41,else=>42});
+ },
+ name=="iterator-init"=>{
+  let descriptor:Int=try get(plan->layouts->buffers,try slotType(body,input));try require(descriptor>=0,op->origin->span,"native buffer descriptor");
+  let length:Int=code->nextLabel;let fill:Int=length+1;let done:Int=length+2;code=fresh(code,3);code=immediate(code,13,0);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],length);code=load(code,13,12,24);
+  code=label(code,length);code=immediate(code,0,1152921504606846969);code=alu(code,57,13,0);code=jump(code,List<Int>[15,135],1);code=mov(code,7,13);code=shift(code,4,7,3);code=constant(code,0,7,40);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,14,0);
+  code=store(code,14,24,13);code=immediate(code,0,0);code=store(code,14,32,0);code=address(code,7,14,40);code=mov(code,1,13);code=raw(code,List<Int>[243,72,171]);
+  code=mov(code,10,13);code=alu(code,133,10,10);code=jump(code,List<Int>[15,132],done);
+  code=label(code,fill);code=constant(code,5,10,1);code=mov(code,9,10);code=shift(code,4,9,3);code=alu(code,1,9,14);code=load(code,2,12,40);code=store(code,9,40,2);code=load(code,12,12,32);code=alu(code,133,10,10);code=jump(code,List<Int>[15,133],fill);code=label(code,done);code=mov(code,0,14);
+ },
+ name=="iterator-more"=>{code=load(code,0,12,32);code=load(code,1,12,24);code=alu(code,57,0,1);code=condition(code,2,0);},
+ name=="iterator-next"=>{
+  code=load(code,1,12,32);code=load(code,2,12,24);code=alu(code,57,1,2);code=jump(code,List<Int>[15,131],2);code=mov(code,9,1);code=shift(code,4,9,3);code=alu(code,1,9,12);code=load(code,0,9,40);code=immediate(code,2,0);code=store(code,9,40,2);code=constant(code,0,1,1);code=store(code,12,32,1);
+ },
+ (name=="eq"||name=="ne")&&shape->kind==3=>{
+  let unequal:Int=code->nextLabel;let done:Int=unequal+1;code=fresh(code,2);code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));
+  code=load(code,1,12,24);code=load(code,2,13,24);code=alu(code,57,1,2);code=jump(code,List<Int>[15,133],unequal);code=address(code,7,12,40);code=address(code,6,13,40);code=alu(code,57,1,1);code=raw(code,List<Int>[243,166]);code=condition(code,branch when{name=="eq"=>4,else=>5},0);code=jump(code,List<Int>[233],done);
+  code=label(code,unequal);code=immediate(code,0,branch when{name=="eq"=>0,else=>1});code=label(code,done);
+ },
+ name=="add"&&shape->kind==3=>{
+  let descriptor:Int=try get(plan->layouts->types,3);try require(descriptor>=0,op->origin->span,"native String descriptor");code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));code=load(code,14,12,24);code=load(code,0,13,24);code=alu(code,1,14,0);code=jump(code,List<Int>[15,128],6);
+  code=mov(code,7,14);code=constant(code,0,7,40);code=jump(code,List<Int>[15,128],6);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=load(code,2,12,32);code=load(code,1,13,32);code=alu(code,1,2,1);code=jump(code,List<Int>[15,128],6);code=store(code,0,32,2);
+  code=address(code,7,0,40);code=address(code,6,12,40);code=load(code,1,12,24);code=raw(code,List<Int>[243,164]);code=address(code,6,13,40);code=load(code,1,13,24);code=raw(code,List<Int>[243,164]);
+ },
+ else=>{return Result<Code,Diagnostic>::Err(problem("internal",op->origin->span,"native collection emission pending: "+name));}
+ };Result<Code,Diagnostic>::Ok(code)
+};

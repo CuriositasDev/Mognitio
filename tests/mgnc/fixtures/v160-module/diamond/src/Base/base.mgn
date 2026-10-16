@@ -1,0 +1,1 @@
+namespace App\Base;public let base:Int=4;

@@ -1,0 +1,29 @@
+namespace Mgnc\WholeNativeConstruct;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,empty,lookup};
+use Mgnc\WholeNativeData\{Native,Constructor};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeIR\{Block,Operation};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end};
+use Mgnc\Machine\{Code,label,jump,field};
+use Mgnc\WholeX64\{load,store,immediate};
+use Mgnc\WholeABI\{allocateLabel};
+use Mgnc\Tables\{atList};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ var code:Code=initial;let frame:Frame=Frame{slots:1,outgoing:8,extent:144,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};
+ loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as constructor:Constructor){
+  let instance:Instance=try lookup<Instance>(plan->concrete->instances,constructor->instance);let block:Block=try lookup<Block>(instance->body->blocks,constructor->block);let op:Operation=try atList<Operation>(block->operations,constructor->operation);
+  code=try begin(label(code,constructor->entry),frame,List<Int>[],List<Int>[],constructor->roots);
+  branch when{op->code=="function"=>{
+   code=immediate(code,7,branch when{op->inputs->length()==0=>32,else=>24+op->inputs->length()*8});code=load(code,6,5,24);code=jump(code,List<Int>[232],allocateLabel);
+   var position:Int=0;loop over(op->inputs as ignored:Int){discard ignored;code=load(code,2,5,48+position*8);code=store(code,0,24+position*8,2);position=position+1;};code=store(code,5,-72,0);
+   code=immediate(code,7,40);code=load(code,6,5,32);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,40);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);
+  },else=>{
+   var position:Int=0;loop over(op->inputs as ignored:Int){discard ignored;code=immediate(code,7,48);code=load(code,6,5,24);code=jump(code,List<Int>[232],allocateLabel);
+    code=immediate(code,2,position+1);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);code=load(code,2,5,32+position*8);code=store(code,0,40,2);code=store(code,5,-72,0);position=position+1;
+   };code=load(code,0,5,-72);
+  }};
+  code=end(code,frame);code=label(code,constructor->roots);code=field(code,4,1);code=field(code,4,1);
+ };};Result<Code,Diagnostic>::Ok(code)
+};

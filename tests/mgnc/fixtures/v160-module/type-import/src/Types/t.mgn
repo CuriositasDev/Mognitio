@@ -1,0 +1,1 @@
+namespace App\Types; public type Thing=product{value:Int;};let marker:Int=panic{"type dependency"};

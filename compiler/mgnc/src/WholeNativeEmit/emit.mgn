@@ -1,0 +1,24 @@
+namespace Mgnc\WholeNativeEmit;
+use Mgnc\Data\{Diagnostic,empty};
+use Mgnc\Machine\{Code,Record};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeStartup\{emit as startup};
+use Mgnc\WholeNativeBodies\{emit as bodies};
+use Mgnc\WholeNativeConstruct\{emit as constructors};
+use Mgnc\WholeNativeTables\{emit as tables};
+use Mgnc\WholeArena\{emit as arena};
+use Mgnc\WholeMark\{emit as mark};
+use Mgnc\WholeSweep\{emit as sweep};
+use Mgnc\WholeCollect\{emit as collect};
+use Mgnc\WholeText\{emit as text};
+use Mgnc\WholeBounds\{emit as bounds};
+use Mgnc\WholeUtf8\{emit as utf8};
+use Mgnc\WholeUtf8Feed\{emit as feed};
+use Mgnc\WholeIoResource\{emit as resources};
+use Mgnc\WholeIo\{emit as io};
+use Mgnc\WholeTerminal\{emit as terminal};
+// Terminal handlers are supplied by the runtime linker.
+public let emit:Function(Native):Result<Code,Diagnostic>=function(plan:Native):Result<Code,Diagnostic>{
+ var code:Code=Code{records:empty<Record>(),nextLabel:plan->nextLabel,pending:List<Int>[]};
+ code=try startup(code,plan);code=try bodies(code,plan);code=try constructors(code,plan);code=try text(try bounds(code));code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code),plan)
+};

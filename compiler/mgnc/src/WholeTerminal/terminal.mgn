@@ -1,0 +1,45 @@
+namespace Mgnc\WholeTerminal;
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant};
+use Mgnc\WholeABI\{enter,leave,primary};
+// Allocation-free diagnostic writes use a bounded EINTR policy, separately
+// from normal I/O. RDI bytes / RSI count; return zero on complete, -1 on error.
+public let emit:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=enter(label(initial,65));let write:Int=code->nextLabel;let done:Int=write+1;let failed:Int=write+2;let interrupted:Int=write+3;code=fresh(code,4);
+ code=mov(code,12,7);code=mov(code,13,6);code=immediate(code,14,0);
+ code=label(code,write);code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],done);code=immediate(code,7,2);code=mov(code,6,12);code=mov(code,2,13);code=immediate(code,0,1);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],interrupted);code=constant(code,7,0,0);code=jump(code,List<Int>[15,142],failed);code=alu(code,1,12,0);code=alu(code,41,13,0);code=immediate(code,14,0);code=jump(code,List<Int>[233],write);
+ code=label(code,interrupted);code=constant(code,0,14,1);code=constant(code,7,14,16);code=jump(code,List<Int>[15,131],failed);code=jump(code,List<Int>[233],write);
+ code=label(code,done);code=immediate(code,0,0);code=leave(code);code=label(code,failed);code=immediate(code,0,-1);code=leave(code);
+ // R15 is zero only before context acquisition, before owned resources exist.
+ loop over(List<Int>[1,2,3,4,5,6,7,8,9] as kind:Int){
+  code=label(code,kind);code=immediate(code,12,kind);branch when{kind==3=>{code=mov(code,13,7);},else=>unit};code=jump(code,List<Int>[233],66);
+ };
+ code=label(code,66);let noContext:Int=code->nextLabel;let exit:Int=noContext+1;let panicLabel:Int=noContext+2;code=fresh(code,3);
+ code=alu(code,133,15,15);code=jump(code,List<Int>[15,132],noContext);code=store(code,15,primary,12);code=jump(code,List<Int>[232],63);
+ code=label(code,noContext);
+ // Protect stderr even if allocation failed before the startup signal guard.
+ code=constant(code,5,4,32);code=immediate(code,0,0);loop over(List<Int>[0,8,16,24] as offset:Int){code=store(code,4,offset,0);};code=immediate(code,0,1);code=store(code,4,0,0);code=immediate(code,0,13);code=immediate(code,7,13);code=mov(code,6,4);code=immediate(code,2,0);code=immediate(code,10,8);code=raw(code,List<Int>[15,5]);code=constant(code,0,4,32);
+ code=constant(code,7,12,3);code=jump(code,List<Int>[15,132],panicLabel);
+ let next1:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,1);code=jump(code,List<Int>[15,133],next1);code=symbol(code,7,151);code=immediate(code,6,34);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next1);
+ let next2:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,2);code=jump(code,List<Int>[15,133],next2);code=symbol(code,7,152);code=immediate(code,6,41);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next2);
+ let next4:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,4);code=jump(code,List<Int>[15,133],next4);code=symbol(code,7,154);code=immediate(code,6,32);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next4);
+ let next5:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,5);code=jump(code,List<Int>[15,133],next5);code=symbol(code,7,155);code=immediate(code,6,32);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next5);
+ let next6:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,6);code=jump(code,List<Int>[15,133],next6);code=symbol(code,7,156);code=immediate(code,6,38);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next6);
+ let next7:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,7);code=jump(code,List<Int>[15,133],next7);code=symbol(code,7,157);code=immediate(code,6,40);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next7);
+ let next8:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,8);code=jump(code,List<Int>[15,133],next8);code=symbol(code,7,158);code=immediate(code,6,35);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next8);
+ let next9:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,9);code=jump(code,List<Int>[15,133],next9);code=symbol(code,7,159);code=immediate(code,6,36);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next9);
+code=jump(code,List<Int>[233],exit);
+ code=label(code,panicLabel);code=symbol(code,7,153);code=immediate(code,6,7);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=address(code,7,13,40);code=load(code,6,13,24);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=symbol(code,7,150);code=immediate(code,6,1);code=jump(code,List<Int>[232],65);
+ code=label(code,exit);code=immediate(code,7,4);let statusReady:Int=code->nextLabel;let notInternal:Int=statusReady+1;code=fresh(code,2);code=constant(code,7,12,2);code=jump(code,List<Int>[15,133],notInternal);code=immediate(code,7,3);code=jump(code,List<Int>[233],statusReady);code=label(code,notInternal);code=constant(code,7,12,7);code=jump(code,List<Int>[15,133],statusReady);code=immediate(code,7,2);code=label(code,statusReady);code=immediate(code,0,60);code=raw(code,List<Int>[15,5]);
+ code=label(code,150);code=raw(code,List<Int>[10]);
+ code=label(code,153);code=raw(code,List<Int>[112,97,110,105,99,58,32]);
+ code=label(code,151);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,97,108,108,111,99,97,116,105,111,110,32,102,97,105,108,117,114,101,10]);
+ code=label(code,152);code=raw(code,List<Int>[105,110,116,101,114,110,97,108,32,101,114,114,111,114,58,32,110,97,116,105,118,101,32,114,117,110,116,105,109,101,32,105,110,118,97,114,105,97,110,116,10]);
+ code=label(code,154);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,105,110,116,101,103,101,114,32,111,118,101,114,102,108,111,119,10]);
+ code=label(code,155);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,100,105,118,105,115,105,111,110,32,98,121,32,122,101,114,111,10]);
+ code=label(code,156);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,115,116,114,105,110,103,32,108,101,110,103,116,104,32,111,118,101,114,102,108,111,119,10]);
+ code=label(code,157);code=raw(code,List<Int>[114,117,110,116,105,109,101,58,32,105,110,118,97,108,105,100,32,85,84,70,45,56,32,114,117,110,116,105,109,101,32,97,114,103,117,109,101,110,116,10]);
+ code=label(code,158);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,105,110,118,97,108,105,100,32,101,120,105,116,32,115,116,97,116,117,115,10]);
+ code=label(code,159);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,108,105,115,116,32,108,101,110,103,116,104,32,111,118,101,114,102,108,111,119,10]);
+ code
+};

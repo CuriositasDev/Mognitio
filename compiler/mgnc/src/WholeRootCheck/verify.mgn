@@ -11,37 +11,57 @@ use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Tables\{atList};
 use Mgnc\Facts\{mask,at as wordAt};
 type Visit=product{block:Int;start:Int;};
+type Event=product{operation:Int;read:Bool;};
+type Uses=product{blocks:Paged<List<Event>>;};
 let contains:Function(List<Int>,Int):Bool=function(values:List<Int>,wanted:Int):Bool{loop over(values as value:Int){branch when{value==wanted=>{return true;},else=>unit};};false};
 // Independent forward oracle: can a read be reached before the next write?
-// No backward fixed-point equations or producer helpers are reused.
-let needed:Function(Body,Int,Int,Int):Result<Bool,Diagnostic>=function(body:Body,blockId:Int,start:Int,slot:Int):Result<Bool,Diagnostic>{
+// Index each slot's reads/writes once. Queries still follow forward CFG edges;
+// no backward fixed-point equations or producer liveness helpers are reused.
+let indexUses:Function(Store,Body):Result<Paged<Uses>,Diagnostic>=function(store:Store,body:Body):Result<Paged<Uses>,Diagnostic>{
+ var result:Paged<Uses>=empty<Uses>();var slotId:Int=0;
+ loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
+  let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;var blocks:Paged<List<Event>>=empty<List<Event>>();
+  branch when{kind>=3=>{
+   loop over(body->blocks->pages->append(body->blocks->tail) as pages:List<Block>){loop over(pages as block:Block){
+    var events:List<Event>=List<Event>[];var position:Int=0;
+    loop over(block->operations as op:Operation){
+     branch when{contains(op->inputs,slotId)=>{events=events->append(Event{operation:position,read:true});},else=>unit};
+     branch on op->output{Parent::Some(destination:Int)=>{branch when{destination==slotId=>{events=events->append(Event{operation:position,read:false});},else=>unit};},Parent::None=>unit};
+     position=position+1;
+    };
+    branch when{contains(block->terminator->inputs,slotId)=>{events=events->append(Event{operation:position,read:true});},else=>unit};
+    blocks=push<List<Event>>(blocks,events);
+   };};
+  },else=>unit};result=push<Uses>(result,Uses{blocks:blocks});slotId=slotId+1;
+ };};Result<Paged<Uses>,Diagnostic>::Ok(result)
+};
+let needed:Function(Body,Uses,Int,Int):Result<Bool,Diagnostic>=function(body:Body,uses:Uses,blockId:Int,start:Int):Result<Bool,Diagnostic>{
  var queue:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{block:blockId,start:start});var cursor:Int=0;var seen:Map=create();
  loop while(cursor<queue->count){let visit:Visit=try lookup<Visit>(queue,cursor);cursor=cursor+1;
   branch when{visit->start==0=>{branch when{(try get(seen,visit->block))>=0=>{continue;},else=>unit};seen=try put(seen,visit->block,1);},else=>unit};
-  let block:Block=try lookup<Block>(body->blocks,visit->block);var index:Int=0;var killed:Bool=false;
-  loop over(block->operations as op:Operation){branch when{index>=visit->start=>{
-   branch when{contains(op->inputs,slot)=>{return Result<Bool,Diagnostic>::Ok(true);},else=>unit};
-   branch on op->output{Parent::None=>unit,Parent::Some(destination:Int)=>{branch when{destination==slot=>{killed=true;break;},else=>unit};}};
-  },else=>unit};index=index+1;};
-  branch when{killed=>{continue;},contains(block->terminator->inputs,slot)=>{return Result<Bool,Diagnostic>::Ok(true);},else=>unit};
-  loop over(block->terminator->targets as target:Int){queue=push<Visit>(queue,Visit{block:target,start:0});};
+  var killed:Bool=false;
+  loop over(try lookup<List<Event>>(uses->blocks,visit->block) as event:Event){
+   branch when{event->operation>=visit->start=>{branch when{event->read=>{return Result<Bool,Diagnostic>::Ok(true);},else=>{killed=true;break;}};},else=>unit};
+  };
+  branch when{killed=>{continue;},else=>unit};
+  let block:Block=try lookup<Block>(body->blocks,visit->block);loop over(block->terminator->targets as target:Int){queue=push<Visit>(queue,Visit{block:target,start:0});};
  };Result<Bool,Diagnostic>::Ok(false)
 };
-let roots:Function(Store,Body,Int,Int,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(store:Store,body:Body,block:Int,start:Int,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{
+let roots:Function(Store,Body,Paged<Uses>,Int,Int,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(store:Store,body:Body,uses:Paged<Uses>,block:Int,start:Int,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{
  try require(actual->length()==(body->slots->count+63)/64,span,"root bitmap shape");var slotId:Int=0;
  loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
   let shape:Type=try lookup<Type>(store->types,slot->valueType);let reference:Bool=shape->kind!=0&&shape->kind!=1&&shape->kind!=2;
-  let expected:Bool=reference&&(try needed(body,block,start,slotId));let selected:Bool=(try wordAt(actual,slotId/64,span))->and(try mask(slotId,span))!=Bits<64>{0};
+  let expected:Bool=reference&&(try needed(body,try lookup<Uses>(uses,slotId),block,start));let selected:Bool=(try wordAt(actual,slotId/64,span))->and(try mask(slotId,span))!=Bits<64>{0};
   try require(expected==selected,span,branch when{expected=>"missing live managed root",else=>"dead or scalar root retained"});slotId=slotId+1;
  };};
  loop while(slotId<actual->length()*64){try require((try wordAt(actual,slotId/64,span))->and(try mask(slotId,span))==Bits<64>{0},span,"root bitmap padding");slotId=slotId+1;};Result<Unit,Diagnostic>::Ok(unit)
 };
 public let verify:Function(Store,Body,Frame):Result<Unit,Diagnostic>=function(store:Store,body:Body,frame:Frame):Result<Unit,Diagnostic>{
  let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(frame->slots>=0&&frame->slots<=268435440&&frame->outgoing>=8&&frame->outgoing<=268435440-frame->slots,span,"frame size bounds");try require(frame->slots==body->slots->count&&frame->extent%16==0&&frame->extent>=64+frame->slots*8+frame->outgoing*8&&frame->extent<2147483648,span,"frame layout or alignment");
- try roots(store,body,body->entry,0,frame->entry,span);var id:Int=0;
+ let uses:Paged<Uses>=try indexUses(store,body);try roots(store,body,uses,body->entry,0,frame->entry,span);var id:Int=0;
  loop over(frame->points->pages->append(frame->points->tail) as page:List<Point>){loop over(page as point:Point){let block:Block=try lookup<Block>(body->blocks,point->block);try require(point->operation>=0&&point->operation<block->operations->length(),span,"root point operation bounds");
   var earlier:Int=0;loop while(earlier<id){let other:Point=try lookup<Point>(frame->points,earlier);try require(other->block!=point->block||other->operation!=point->operation,span,"duplicate root point");earlier=earlier+1;};
-  let op:Operation=try atList<Operation>(block->operations,point->operation);try require(try allocating(store,body,op),span,"root point on nonallocating operation");try roots(store,body,point->block,point->operation,point->roots,span);id=id+1;
+  let op:Operation=try atList<Operation>(block->operations,point->operation);try require(try allocating(store,body,op),span,"root point on nonallocating operation");try roots(store,body,uses,point->block,point->operation,point->roots,span);id=id+1;
  };};
  var expected:Int=0;var maximum:Int=8;
  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{try allocating(store,body,op)=>{expected=expected+1;},else=>unit};branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};

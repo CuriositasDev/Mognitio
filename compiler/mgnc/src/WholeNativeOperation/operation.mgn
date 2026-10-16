@@ -1,0 +1,58 @@
+namespace Mgnc\WholeNativeOperation;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\WholeNativeData\{Native,Procedure};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeIR\{Body,Operation};
+use Mgnc\WholeFrame\{offset,select};
+use Mgnc\WholeNativeLookup\{literal,constructor,target,roots};
+use Mgnc\WholeNativeCollections\{emit as collection};
+use Mgnc\WholeNativeScalar\{emit as scalar};
+use Mgnc\WholeChecks\{require,present,slotType};
+use Mgnc\WholeEffects\{allocating};
+use Mgnc\WholeABI\{allocateLabel,globalBase};
+use Mgnc\Machine\{Code,label,jump,fresh};
+use Mgnc\WholeX64\{immediate,symbol,load,store,alu,constant,indirect};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{get};
+public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnostic>=function(initial:Code,plan:Native,owner:Int,block:Int,operation:Int,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let instance:Instance=try lookup<Instance>(plan->concrete->instances,owner);let body:Body=instance->body;let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);let name:String=op->code;
+ branch when{op->unavailable->length()>0=>{return Result<Code,Diagnostic>::Ok(jump(code,List<Int>[233],2));},else=>unit};
+ branch when{try allocating(plan->concrete->types,body,op)=>{code=select(code,try roots(procedure,block,operation,op->origin->span));},else=>unit};
+ let output:Int=branch on op->output{Parent::None=>-1,Parent::Some(value:Int)=>value};
+ branch when{name=="integer"||name=="boolean"||name=="unit"=>{code=immediate(code,0,branch when{op->minimum=>-9223372036854775808,else=>op->integer});},
+ name=="value-parameter"=>{let value:Int=branch on try atList<Argument>(op->arguments,0){Argument::Value(term:ValueTerm)=>term->value,Argument::Type(id:Int)=>{try require(false,op->origin->span,"native value argument");0}};code=immediate(code,0,value);},
+ name=="string"=>{code=symbol(code,0,try literal(plan,owner,block,operation,op->origin->span));},
+ name=="copy"=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));},
+ name=="global-load"||name=="global-store"=>{
+  let index:Int=try get(plan->globalSymbols,try present(op->symbol,op->origin->span,"native global identity"));try require(index>=0,op->origin->span,"native global membership");code=load(code,2,15,globalBase);
+  branch when{name=="global-load"=>{code=load(code,0,2,index*8);},else=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=store(code,2,index*8,0);}};
+ },
+ name=="function"||name=="list"=>{
+  code=immediate(code,0,0);code=store(code,4,0,0);let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native constructor descriptor");
+  var start:Int=16;
+  branch when{name=="function"=>{
+   let callee:Int=try target(instance,op->origin->node,op->origin->span);code=immediate(code,0,try lookup<Int>(plan->layouts->environments,callee));code=store(code,4,8,0);code=immediate(code,0,descriptor);code=store(code,4,16,0);code=symbol(code,0,(try lookup<Procedure>(plan->procedures,callee))->entry);code=store(code,4,24,0);start=32;
+  },else=>{code=immediate(code,0,descriptor);code=store(code,4,8,0);}};
+  loop over(op->inputs as input:Int){code=load(code,0,5,offset(input));code=store(code,4,start,0);start=start+8;};code=jump(code,List<Int>[232],try constructor(plan,owner,block,operation,op->origin->span));
+ },
+ name=="template"=>{let callee:Int=try target(instance,op->origin->node,op->origin->span);code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,callee))->entry);},
+ name=="product"||name=="variant"=>{
+  let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native aggregate descriptor");code=immediate(code,6,descriptor);
+  code=immediate(code,7,branch when{name=="variant"=>40,op->inputs->length()==0=>32,else=>24+op->inputs->length()*8});code=jump(code,List<Int>[232],allocateLabel);
+  branch when{name=="variant"=>{code=immediate(code,2,try atList<Int>(op->mapping,0));code=store(code,0,24,2);code=immediate(code,2,0);branch when{op->inputs->length()==1=>{code=load(code,2,5,offset(try atList<Int>(op->inputs,0)));},else=>unit};code=store(code,0,32,2);},
+  else=>{var position:Int=0;loop over(op->inputs as input:Int){code=load(code,2,5,offset(input));code=store(code,0,24+(try atList<Int>(op->mapping,position))*8,2);position=position+1;};}};
+ },
+ name=="field"||name=="sum-payload"=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=load(code,0,0,branch when{name=="field"=>24+(try atList<Int>(op->mapping,0))*8,else=>32});},
+ name=="call"||name=="field-call"=>{
+  code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));branch when{name=="field-call"=>{code=load(code,0,0,24+(try atList<Int>(op->mapping,0))*8);},else=>unit};
+  code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);var position:Int=0;loop over(op->inputs as input:Int){branch when{position>0=>{code=load(code,0,5,offset(input));code=store(code,4,position*8,0);},else=>unit};position=position+1;};code=indirect(code,11,true);
+ },
+ else=>{
+  try require(op->inputs->length()>0,op->origin->span,"native operation operands");let input:Int=try atList<Int>(op->inputs,0);let shape:Type=try lookup<Type>(plan->concrete->types->types,try slotType(body,input));
+  branch when{shape->kind>=3=>{code=try collection(code,plan,body,op,output);},else=>{
+  code=load(code,0,5,offset(input));branch when{op->inputs->length()>1=>{code=load(code,1,5,offset(try atList<Int>(op->inputs,1)));},else=>unit};code=try scalar(code,op);}};
+ }};
+ branch when{output>=0=>{code=store(code,5,offset(output),0);},else=>unit};Result<Code,Diagnostic>::Ok(code)
+};

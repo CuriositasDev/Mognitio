@@ -1,0 +1,51 @@
+namespace Mgnc\WholeLayoutCheck;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Type,Argument,Member,ValueTerm};
+use Mgnc\WholeIR\{Slot,Block,Operation};
+use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeLayout\{Layouts,Descriptor};
+use Mgnc\WholeChecks\{require,present,integers};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+let reference:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{let value:Type=try lookup<Type>(store->types,id);Result<Bool,Diagnostic>::Ok(value->kind!=0&&value->kind!=1&&value->kind!=2)};
+let argument:Function(Type,Int,Span):Result<Int,Diagnostic>=function(value:Type,index:Int,span:Span):Result<Int,Diagnostic>{branch on try atList<Argument>(value->arguments,index){Argument::Type(id:Int)=>Result<Int,Diagnostic>::Ok(id),Argument::Value(term:ValueTerm)=>{try require(false,span,"descriptor type argument");Result<Int,Diagnostic>::Ok(0)}}};
+let claim:Function(Map,Int,Span):Result<Map,Diagnostic>=function(seen:Map,id:Int,span:Span):Result<Map,Diagnostic>{try require(id>=0,span,"missing descriptor");try require((try get(seen,id))<0,span,"descriptor identity shared");put(seen,id,1)};
+let fixed:Function(Descriptor,Int,List<Int>,Span):Result<Unit,Diagnostic>=function(descriptor:Descriptor,size:Int,refs:List<Int>,span:Span):Result<Unit,Diagnostic>{
+ try require(descriptor->mode==0&&descriptor->size==size&&integers(descriptor->references,refs)&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"fixed descriptor layout");Result<Unit,Diagnostic>::Ok(unit)
+};
+public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:Plan,layouts:Layouts):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var roots:Paged<Int>=empty<Int>();var needed:Map=create();
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){roots=push<Int>(roots,instance->body->resultType);
+  loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){roots=push<Int>(roots,slot->valueType);};};
+  loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as operation:Operation){loop over(operation->arguments as value:Argument){branch on value{Argument::Type(id:Int)=>{roots=push<Int>(roots,id);},Argument::Value(term:ValueTerm)=>unit};};};};};
+ };};
+ var cursor:Int=0;loop while(cursor<roots->count){let id:Int=try lookup<Int>(roots,cursor);cursor=cursor+1;branch when{(try get(needed,id))>=0=>{continue;},else=>unit};needed=try put(needed,id,1);let value:Type=try lookup<Type>(plan->types->types,id);
+  loop over(value->arguments as arg:Argument){branch on arg{Argument::Type(child:Int)=>{roots=push<Int>(roots,child);},Argument::Value(term:ValueTerm)=>unit};};loop over(value->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{roots=push<Int>(roots,child);},Parent::None=>unit};};
+ };
+ var used:Map=create();var count:Int=0;var typeId:Int=0;
+ loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as value:Type){let id:Int=try get(layouts->types,typeId);let wanted:Bool=(try get(needed,typeId))>=0&&(try reference(plan->types,typeId));
+  try require((id>=0)==wanted,span,"descriptor type membership");
+  branch when{wanted=>{
+   used=try claim(used,id,span);count=count+1;let descriptor:Descriptor=try lookup<Descriptor>(layouts->descriptors,id);
+   branch when{value->kind==3=>{try fixed(descriptor,0,List<Int>[],span);},value->kind==12=>{try fixed(descriptor,40,List<Int>[32],span);},value->kind==10=>{
+    let element:Int=try argument(value,0,span);let traced:Bool=try reference(plan->types,element);try fixed(descriptor,48,branch when{traced=>List<Int>[32,40],else=>List<Int>[32]},span);
+    let bufferId:Int=try get(layouts->buffers,typeId);used=try claim(used,bufferId,span);count=count+1;let buffer:Descriptor=try lookup<Descriptor>(layouts->descriptors,bufferId);
+    try require(buffer->mode==2&&buffer->size==0&&buffer->references->length()==0&&buffer->variants->length()==0&&buffer->elementManaged==traced,span,"iteration buffer descriptor");
+   },value->kind==4||value->kind==5||value->kind==20=>{
+    var expected:List<Int>=List<Int>[];var position:Int=0;loop over(value->members as member:Member){branch when{try reference(plan->types,try present(member->value,span,"descriptor field type"))=>{expected=expected->append(24+position*8);},else=>unit};position=position+1;};
+    try fixed(descriptor,branch when{position==0=>32,else=>24+position*8},expected,span);
+   },value->kind==11||value->kind==21=>{
+    let variantCount:Int=branch when{value->kind==11=>2,else=>value->members->length()};try require(descriptor->mode==1&&descriptor->size==40&&descriptor->references->length()==0&&descriptor->variants->length()==variantCount&&!descriptor->elementManaged,span,"sum descriptor shape");var position:Int=0;
+    loop while(position<variantCount){let payload:Parent=branch when{value->kind==11=>Parent::Some(try argument(value,position,span)),else=>(try atList<Member>(value->members,position))->value};let traced:Bool=branch on payload{Parent::None=>false,Parent::Some(payloadType:Int)=>try reference(plan->types,payloadType)};
+     try require(integers(try atList<List<Int>>(descriptor->variants,position),branch when{traced=>List<Int>[32],else=>List<Int>[]}),span,"active variant trace fields");position=position+1;
+    };
+   },else=>{try require(false,span,"unsupported descriptor type");}};
+  },else=>unit};
+  branch when{!wanted||value->kind!=10=>{try require((try get(layouts->buffers,typeId))<0,span,"unexpected iteration descriptor");},else=>unit};typeId=typeId+1;
+ };};
+ try require(layouts->environments->count==plan->instances->count,span,"environment descriptor membership");var instanceId:Int=0;
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){let id:Int=try lookup<Int>(layouts->environments,instanceId);instanceId=instanceId+1;used=try claim(used,id,span);count=count+1;
+  let descriptor:Descriptor=try lookup<Descriptor>(layouts->descriptors,id);var references:List<Int>=List<Int>[];var position:Int=0;loop over(instance->body->captures as slotId:Int){let slot:Slot=try lookup<Slot>(instance->body->slots,slotId);branch when{try reference(plan->types,slot->valueType)=>{references=references->append(24+position*8);},else=>unit};position=position+1;};try fixed(descriptor,branch when{position==0=>32,else=>24+position*8},references,span);
+ };};try require(count==layouts->descriptors->count,span,"descriptor table membership");Result<Unit,Diagnostic>::Ok(unit)
+};

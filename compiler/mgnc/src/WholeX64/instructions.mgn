@@ -1,0 +1,28 @@
+namespace Mgnc\WholeX64;
+use Mgnc\Machine\{Code,raw,field,reference};
+// Registers use the architectural encoding: RAX=0, RCX=1, ..., R15=15.
+// Every memory operand has a checked signed 32-bit displacement at Encode.
+let rex:Function(Code,Int,Int,Bool):Code=function(code:Code,reg:Int,base:Int,wide:Bool):Code{raw(code,List<Int>[64+branch when{wide=>8,else=>0}+reg/8*4+base/8])};
+let memory:Function(Code,Int,Int,Int):Code=function(code:Code,reg:Int,base:Int,displacement:Int):Code{
+ var result:Code=raw(code,List<Int>[128+reg%8*8+base%8]);branch when{base%8==4=>{result=raw(result,List<Int>[36]);},else=>unit};field(result,3,displacement)
+};
+public let mov:Function(Code,Int,Int):Code=function(code:Code,destination:Int,source:Int):Code{raw(rex(code,source,destination,true),List<Int>[137,192+source%8*8+destination%8])};
+public let load:Function(Code,Int,Int,Int):Code=function(code:Code,destination:Int,base:Int,displacement:Int):Code{memory(raw(rex(code,destination,base,true),List<Int>[139]),destination,base,displacement)};
+public let store:Function(Code,Int,Int,Int):Code=function(code:Code,base:Int,displacement:Int,source:Int):Code{memory(raw(rex(code,source,base,true),List<Int>[137]),source,base,displacement)};
+public let address:Function(Code,Int,Int,Int):Code=function(code:Code,destination:Int,base:Int,displacement:Int):Code{memory(raw(rex(code,destination,base,true),List<Int>[141]),destination,base,displacement)};
+public let immediate:Function(Code,Int,Int):Code=function(code:Code,destination:Int,value:Int):Code{field(raw(rex(code,0,destination,true),List<Int>[184+destination%8]),4,value)};
+public let symbol:Function(Code,Int,Int):Code=function(code:Code,destination:Int,target:Int):Code{reference(raw(rex(code,0,destination,true),List<Int>[184+destination%8]),5,target)};
+public let alu:Function(Code,Int,Int,Int):Code=function(code:Code,opcode:Int,destination:Int,source:Int):Code{raw(rex(code,source,destination,true),List<Int>[opcode,192+source%8*8+destination%8])};
+public let constant:Function(Code,Int,Int,Int):Code=function(code:Code,operation:Int,destination:Int,value:Int):Code{field(raw(rex(code,0,destination,true),List<Int>[129,192+operation*8+destination%8]),3,value)};
+public let shift:Function(Code,Int,Int,Int):Code=function(code:Code,operation:Int,destination:Int,count:Int):Code{raw(rex(code,0,destination,true),List<Int>[193,192+operation*8+destination%8,count])};
+public let shiftCl:Function(Code,Int,Int):Code=function(code:Code,operation:Int,destination:Int):Code{raw(rex(code,0,destination,true),List<Int>[211,192+operation*8+destination%8])};
+public let multiply:Function(Code,Int,Int):Code=function(code:Code,destination:Int,source:Int):Code{raw(rex(code,destination,source,true),List<Int>[15,175,192+destination%8*8+source%8])};
+public let unary:Function(Code,Int,Int):Code=function(code:Code,operation:Int,reg:Int):Code{raw(rex(code,0,reg,true),List<Int>[247,192+operation*8+reg%8])};
+public let push:Function(Code,Int):Code=function(code:Code,reg:Int):Code{raw(code,branch when{reg>=8=>List<Int>[65,80+reg%8],else=>List<Int>[80+reg]})};
+public let pop:Function(Code,Int):Code=function(code:Code,reg:Int):Code{raw(code,branch when{reg>=8=>List<Int>[65,88+reg%8],else=>List<Int>[88+reg]})};
+public let indirect:Function(Code,Int,Bool):Code=function(code:Code,reg:Int,call:Bool):Code{raw(rex(code,0,reg,false),List<Int>[255,192+branch when{call=>16,else=>32}+reg%8])};
+public let byteLoad:Function(Code,Int,Int,Int):Code=function(code:Code,destination:Int,base:Int,displacement:Int):Code{memory(raw(rex(code,destination,base,true),List<Int>[15,182]),destination,base,displacement)};
+public let byteStore:Function(Code,Int,Int,Int):Code=function(code:Code,base:Int,displacement:Int,source:Int):Code{memory(raw(rex(code,source,base,false),List<Int>[136]),source,base,displacement)};
+public let condition:Function(Code,Int,Int):Code=function(code:Code,conditionCode:Int,reg:Int):Code{
+ let result:Code=raw(rex(code,0,reg,false),List<Int>[15,144+conditionCode,192+reg%8]);raw(rex(result,reg,reg,true),List<Int>[15,182,192+reg%8*8+reg%8])
+};

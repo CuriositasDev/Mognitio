@@ -1,0 +1,9 @@
+namespace Mgnc\WholeEffects;
+use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Type};
+use Mgnc\WholeIR\{Body,Slot,Operation};
+public let allocating:Function(Store,Body,Operation):Result<Bool,Diagnostic>=function(store:Store,body:Body,op:Operation):Result<Bool,Diagnostic>{
+ branch when{op->code=="function"||op->code=="template"||op->code=="call"||op->code=="field-call"||op->code=="product"||op->code=="list"||op->code=="variant"||op->code=="iterator-init"||op->code=="method:append"||op->code=="method:at"||op->code=="method:join"||op->code=="method:slice"||op->code=="method:scalars"=>{return Result<Bool,Diagnostic>::Ok(true);},else=>unit};
+ branch when{op->code=="add"=>{branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{return Result<Bool,Diagnostic>::Ok((try lookup<Type>(store->types,(try lookup<Slot>(body->slots,slot))->valueType))->kind==3);}};},else=>unit};Result<Bool,Diagnostic>::Ok(false)
+};

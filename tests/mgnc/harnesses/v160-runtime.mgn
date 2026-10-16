@@ -1,0 +1,154 @@
+namespace Mgnc;
+use Mgnc\Data\{empty,Diagnostic,Span};
+use Mgnc\Machine\{Code,Record,raw,label,jump,field,reference};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,shift};
+use Mgnc\WholeArena\{emit as arena};
+use Mgnc\WholeMark\{emit as mark};
+use Mgnc\WholeSweep\{emit as sweep};
+use Mgnc\WholeCollect\{emit as collect};
+use Mgnc\WholeABI\{rootHead,descriptorTable,descriptorCount,allocations,collections,mappedBytes,liveBytes,workCapacity,stress,freeHead,arenaHead,failOrdinal,mappedCap,markLabel,allocateLabel,collectLabel};
+use Mgnc\Encode\{encode};
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Mgnc\WholeFrame\{begin,end};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Std\Numeric\{Bits};
+use Mgnc\WholeABI\{enter as helperEnter,leave as helperLeave};
+let exit:Function(Code,Int):Code=function(code:Code,status:Int):Code{raw(immediate(immediate(code,0,60),7,status),List<Int>[15,5])};
+
+let call:Function(Code,Int):Code=function(code:Code,target:Int):Code{jump(code,List<Int>[232],target)};
+let fail:Function(Code,Int,Int,Int):Code=function(initial:Code,left:Int,value:Int,condition:Int):Code{jump(constant(initial,7,left,value),List<Int>[15,condition],3)};
+let allocate:Function(Code,Int,Int):Code=function(initial:Code,size:Int,descriptor:Int):Code{call(immediate(immediate(initial,7,size),6,descriptor),allocateLabel)};
+let root:Function(Code,Int,Int):Code=function(initial:Code,slot:Int,reg:Int):Code{store(initial,5,-72-slot*8,reg)};
+let child:Function(Code,Int,Int):Code=function(initial:Code,offset:Int,reg:Int):Code{store(initial,0,offset,reg)};
+let frame:Function(Int,Int):Frame=function(slots:Int,outgoing:Int):Frame{Frame{slots:slots,outgoing:outgoing,extent:((64+slots*8+outgoing*8+15)/16)*16,entry:List<Bits<64>>[],points:empty<Point>()}};
+
+let program:Function(String):Result<Code,Diagnostic>=function(mode:String):Result<Code,Diagnostic>{
+ var code:Code=label(Code{records:empty<Record>(),nextLabel:256,pending:List<Int>[]},0);
+ code=mov(code,5,4);code=constant(code,5,4,512);code=immediate(code,0,9);code=immediate(code,7,0);code=immediate(code,6,4096);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],1);code=mov(code,15,0);
+ code=symbol(code,0,90);code=store(code,15,descriptorTable,0);code=immediate(code,0,7);code=store(code,15,descriptorCount,0);
+ code=immediate(code,0,0);code=store(code,5,-64,0);code=store(code,5,-72,0);code=store(code,5,-80,0);code=store(code,5,-56,5);code=symbol(code,0,91);code=store(code,5,-48,0);code=address(code,0,5,-64);code=store(code,15,rootHead,0);
+
+ code=immediate(code,0,0);code=store(code,5,-88,0);code=store(code,5,-96,0);
+ code=symbol(code,0,98);code=store(code,15,112,0);code=immediate(code,0,1);code=store(code,15,120,0);
+
+branch when{
+"graph"==mode=>{ code=immediate(code,3,1234567);code=immediate(code,13,2345678);code=immediate(code,14,3456789);code=immediate(code,12,0);
+ code=label(code,30);code=immediate(code,7,40);code=immediate(code,6,0);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,-72);code=store(code,0,24,2);code=store(code,0,32,12);code=store(code,5,-72,0);code=constant(code,0,12,1);code=constant(code,7,12,50000);code=jump(code,List<Int>[15,130],30);
+ code=immediate(code,12,0);code=label(code,31);code=immediate(code,7,32);code=immediate(code,6,1);code=jump(code,List<Int>[232],allocateLabel);code=constant(code,0,12,1);code=constant(code,7,12,200000);code=jump(code,List<Int>[15,130],31);
+ code=jump(code,List<Int>[232],collectLabel);code=constant(code,7,3,1234567);code=jump(code,List<Int>[15,133],3);code=constant(code,7,13,2345678);code=jump(code,List<Int>[15,133],3);code=constant(code,7,14,3456789);code=jump(code,List<Int>[15,133],3);
+ code=load(code,0,15,mappedBytes);code=constant(code,7,0,8388608);code=jump(code,List<Int>[15,135],3);code=load(code,0,15,workCapacity);code=constant(code,7,0,1048576);code=jump(code,List<Int>[15,135],3);code=load(code,0,15,collections);code=constant(code,7,0,2);code=jump(code,List<Int>[15,130],3);
+ code=call(code,100);code=load(code,0,5,-72);code=immediate(code,12,50000);code=immediate(code,14,0);code=label(code,32);code=load(code,1,0,0);code=constant(code,7,1,40);code=jump(code,List<Int>[15,130],3);code=constant(code,7,1,64);code=jump(code,List<Int>[15,135],3);code=alu(code,1,14,1);code=constant(code,5,12,1);code=load(code,1,0,32);code=alu(code,57,1,12);code=jump(code,List<Int>[15,133],3);code=load(code,0,0,24);code=alu(code,133,12,12);code=jump(code,List<Int>[15,133],32);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],3);
+ code=load(code,0,15,liveBytes);code=alu(code,57,0,14);code=jump(code,List<Int>[15,133],3);code=immediate(code,0,0);code=store(code,5,-72,0);code=jump(code,List<Int>[232],collectLabel);code=load(code,0,15,liveBytes);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],3);
+},
+"stress"==mode=>{
+ code=immediate(code,0,1);code=store(code,15,stress,0);code=immediate(code,12,0);
+ code=label(code,30);code=allocate(code,40,0);code=load(code,2,5,-72);code=child(code,24,2);code=child(code,32,12);code=root(code,0,0);code=constant(code,0,12,1);code=constant(code,7,12,200);code=jump(code,List<Int>[15,130],30);code=call(code,collectLabel);
+},
+"fragment"==mode=>{
+ code=immediate(code,12,0);code=label(code,30);
+ code=allocate(code,40,0);code=load(code,2,5,-72);code=child(code,24,2);code=child(code,32,12);code=root(code,0,0);
+ code=allocate(code,32,1);code=constant(code,0,12,1);code=constant(code,7,12,1000);code=jump(code,List<Int>[15,130],30);code=call(code,collectLabel);code=call(code,100);
+ code=immediate(code,12,0);code=label(code,31);code=allocate(code,32,1);code=constant(code,0,12,1);code=constant(code,7,12,1000);code=jump(code,List<Int>[15,130],31);code=call(code,collectLabel);
+},
+"static"==mode=>{
+ code=symbol(code,0,99);code=root(code,0,0);code=call(code,collectLabel);
+},
+"variant"==mode=>{
+ code=allocate(code,32,1);code=root(code,0,0);code=allocate(code,40,2);code=immediate(code,2,1);code=child(code,24,2);code=load(code,2,5,-72);code=child(code,32,2);code=root(code,0,0);code=call(code,collectLabel);
+},
+"variant-scalar"==mode=>{
+ code=allocate(code,40,2);code=immediate(code,2,0);code=child(code,24,2);code=immediate(code,2,-1);code=child(code,32,2);code=root(code,0,0);code=call(code,collectLabel);
+},
+"buffer"==mode=>{
+ code=allocate(code,32,1);code=root(code,0,0);code=allocate(code,72,3);code=immediate(code,2,2);code=child(code,24,2);code=immediate(code,2,1);code=child(code,32,2);code=load(code,2,5,-72);code=child(code,40,2);code=child(code,48,2);code=immediate(code,2,-1);code=child(code,56,2);code=child(code,64,2);code=root(code,0,0);code=call(code,collectLabel);
+},
+"empty"==mode=>{code=call(code,collectLabel);},
+"interior"==mode=>{code=allocate(code,40,0);code=constant(code,0,0,8);code=root(code,0,0);code=call(code,collectLabel);},
+"unaligned"==mode=>{code=allocate(code,40,0);code=constant(code,0,0,1);code=root(code,0,0);code=call(code,collectLabel);},
+"foreign"==mode=>{code=immediate(code,0,4096);code=root(code,0,0);code=call(code,collectLabel);},
+"freed"==mode=>{code=allocate(code,32,1);code=mov(code,12,0);code=call(code,collectLabel);code=root(code,0,12);code=call(code,collectLabel);},
+"old-start"==mode=>{code=allocate(code,32,1);code=allocate(code,32,1);code=mov(code,12,0);code=call(code,collectLabel);code=root(code,0,12);code=call(code,collectLabel);},
+"bad-flags"==mode=>{code=allocate(code,32,1);code=root(code,0,0);code=immediate(code,2,7);code=child(code,8,2);code=call(code,collectLabel);},
+"bad-descriptor"==mode=>{code=allocate(code,32,1);code=root(code,0,0);code=immediate(code,2,7);code=child(code,16,2);code=call(code,collectLabel);},
+"bad-size"==mode=>{code=allocate(code,32,1);code=root(code,0,0);code=immediate(code,2,31);code=child(code,0,2);code=call(code,collectLabel);},
+"bad-tag"==mode=>{code=allocate(code,40,2);code=root(code,0,0);code=immediate(code,2,2);code=child(code,24,2);code=call(code,collectLabel);},
+"bad-count"==mode=>{code=allocate(code,48,3);code=root(code,0,0);code=immediate(code,2,2);code=child(code,24,2);code=immediate(code,2,0);code=child(code,32,2);code=call(code,collectLabel);},
+"root-cycle"==mode=>{code=address(code,0,5,-64);code=store(code,5,-64,0);code=call(code,collectLabel);},
+"free-cycle"==mode=>{code=allocate(code,32,1);code=load(code,0,15,freeHead);code=store(code,0,24,0);code=allocate(code,2097152,1);},
+"ordinal"==mode=>{code=immediate(code,0,2);code=store(code,15,failOrdinal,0);code=allocate(code,32,1);code=allocate(code,32,1);},
+"cap"==mode=>{code=immediate(code,0,1048576);code=store(code,15,mappedCap,0);code=allocate(code,32,1);},
+"overflow"==mode=>{code=allocate(code,9223372036854775807,1);},
+"abi"==mode=>{
+ code=allocate(code,32,1);code=root(code,0,0);
+ code=immediate(code,3,1234567);code=immediate(code,12,2345678);code=immediate(code,13,3456789);code=immediate(code,14,4567890);
+ code=load(code,0,5,-72);code=immediate(code,2,0);code=store(code,4,0,2);var argument:Int=0;loop while(argument<20){code=store(code,4,8+argument*8,0);argument=argument+1;};code=call(code,110);
+ code=root(code,0,0);code=call(code,collectLabel);code=fail(code,3,1234567,133);code=fail(code,12,2345678,133);code=fail(code,13,3456789,133);code=fail(code,14,4567890,133);
+},
+"recursive"==mode=>{
+ code=allocate(code,32,1);code=root(code,0,0);code=immediate(code,2,0);code=store(code,4,0,2);code=store(code,4,8,0);code=immediate(code,2,1000);code=store(code,4,16,2);code=call(code,111);code=root(code,0,0);code=call(code,collectLabel);
+},
+
+
+"full-live"==mode=>{
+ code=immediate(code,12,0);code=label(code,30);code=allocate(code,32,5);code=load(code,2,5,-72);code=child(code,24,2);code=root(code,0,0);code=constant(code,0,12,1);code=constant(code,7,12,32768);code=jump(code,List<Int>[15,130],30);code=call(code,collectLabel);code=call(code,100);
+ code=allocate(code,32,5);code=load(code,2,5,-72);code=child(code,24,2);code=root(code,0,0);code=call(code,collectLabel);
+},
+"capture"==mode=>{
+ code=allocate(code,32,1);code=root(code,0,0);code=allocate(code,32,5);code=load(code,2,5,-72);code=child(code,24,2);
+ code=store(code,4,0,0);code=symbol(code,0,118);code=store(code,5,-48,0);code=call(code,117);code=root(code,0,0);code=symbol(code,0,91);code=store(code,5,-48,0);code=call(code,collectLabel);
+},
+"partial"==mode=>{
+ code=immediate(code,0,1);code=store(code,15,stress,0);code=allocate(code,32,1);code=root(code,0,0);
+ code=allocate(code,32,5);code=load(code,2,5,-72);code=child(code,24,2);code=root(code,0,0);
+ code=allocate(code,40,6);code=load(code,2,5,-72);code=child(code,32,2);code=immediate(code,2,12345);code=child(code,24,2);code=root(code,0,0);code=call(code,collectLabel);
+},
+"globals"==mode=>{
+ code=allocate(code,32,1);code=store(code,4,0,0);code=immediate(code,0,-1);code=store(code,4,8,0);code=store(code,15,128,4);code=immediate(code,0,2);code=store(code,15,136,0);code=symbol(code,0,119);code=store(code,15,144,0);code=call(code,collectLabel);
+},
+else=>{return Result<Code,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"unknown runtime fixture"});}};
+
+ code=call(code,100);code=exit(code,0);
+ code=exit(label(code,1),71);code=exit(label(code,2),72);code=exit(label(code,3),73);
+ // Independent test snapshot: context, then each physical arena mapping.
+ code=helperEnter(label(code,100));code=mov(code,6,15);code=immediate(code,2,256);code=call(code,101);code=load(code,0,15,rootHead);code=load(code,6,0,8);code=constant(code,5,6,96);code=immediate(code,2,32);code=call(code,101);code=symbol(code,6,120);code=load(code,0,15,136);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],121);code=load(code,6,15,128);code=label(code,121);code=immediate(code,2,16);code=call(code,101);code=load(code,12,15,arenaHead);code=label(code,102);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],103);code=mov(code,6,12);code=load(code,2,12,8);code=call(code,101);code=load(code,12,12,0);code=jump(code,List<Int>[233],102);code=label(code,103);code=helperLeave(code);
+ code=label(code,101);code=immediate(code,0,1);code=immediate(code,7,1);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],101);code=constant(code,7,0,0);code=jump(code,List<Int>[15,142],3);code=alu(code,1,6,0);code=alu(code,41,2,0);code=jump(code,List<Int>[15,133],101);code=raw(code,List<Int>[195]);
+ // Twenty managed arguments survive a collection in the callee.
+ var parameters:List<Int>=List<Int>[];var index:Int=0;loop while(index<20){parameters=parameters->append(index);index=index+1;};
+ code=try begin(label(code,110),frame(20,8),parameters,List<Int>[],112);
+ code=mov(code,0,4);code=constant(code,4,0,15);code=fail(code,0,0,133);code=call(code,collectLabel);code=load(code,0,5,-224);code=end(code,frame(20,8));
+ // Each nested frame owns its argument and unwinds without a return safepoint.
+ code=try begin(label(code,111),frame(2,8),List<Int>[0,1],List<Int>[],113);
+ code=call(code,collectLabel);code=load(code,2,5,-80);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],114);code=constant(code,5,2,1);code=store(code,4,16,2);code=load(code,0,5,-72);code=store(code,4,8,0);code=immediate(code,2,0);code=store(code,4,0,2);code=call(code,111);code=root(code,0,0);
+ code=label(code,114);code=load(code,0,5,-72);code=end(code,frame(2,8));
+
+ code=try begin(label(code,117),frame(1,8),List<Int>[],List<Int>[0],123);code=call(code,collectLabel);code=load(code,0,5,-72);code=end(code,frame(1,8));
+ code=collect(sweep(mark(arena(code))));
+ code=label(code,90);loop over(List<Int>[92,93,94,95,96,97,122] as target:Int){code=reference(code,5,target);};
+ code=label(code,91);code=field(code,4,4);code=field(code,4,1);
+ code=label(code,92);loop over(List<Int>[0,40,1,0,0,24] as value:Int){code=field(code,4,value);};
+ code=label(code,93);loop over(List<Int>[0,32,0,0,0] as value:Int){code=field(code,4,value);};
+ code=label(code,94);loop over(List<Int>[1,40,0,2,0] as value:Int){code=field(code,4,value);};code=reference(code,5,115);code=reference(code,5,116);
+ code=label(code,95);loop over(List<Int>[2,0,0,0,1] as value:Int){code=field(code,4,value);};
+ code=label(code,96);loop over(List<Int>[0,0,0,0,0] as value:Int){code=field(code,4,value);};
+ code=label(code,97);loop over(List<Int>[0,32,1,0,0,24] as value:Int){code=field(code,4,value);};
+ code=label(code,98);code=reference(code,5,99);
+ code=label(code,99);loop over(List<Int>[40,5,4,0,0] as value:Int){code=field(code,4,value);};
+ code=label(code,112);code=field(code,4,20);code=field(code,4,1048575);
+ code=label(code,113);code=field(code,4,2);code=field(code,4,1);
+ code=label(code,115);code=field(code,4,0);
+ code=label(code,116);code=field(code,4,1);code=field(code,4,32);
+
+ code=label(code,118);code=field(code,4,4);code=field(code,4,0);
+ code=label(code,119);code=field(code,4,2);code=field(code,4,1);
+ code=label(code,120);code=field(code,4,0);code=field(code,4,0);
+ code=label(code,122);loop over(List<Int>[0,40,1,0,0,32] as value:Int){code=field(code,4,value);};
+ code=label(code,123);code=field(code,4,1);code=field(code,4,1);
+ Result<Code,Diagnostic>::Ok(code)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let path:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ let mode:String=branch on args->at(1){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ let code:Code=branch on program(mode){Result<Code,Diagnostic>::Ok(value:Code)=>value,Result<Code,Diagnostic>::Err(error:Diagnostic)=>{return 3;}};
+ let bytes:Bytes=branch on encode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return 3;}};
+ branch on publishFile(path,bytes,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(value:Unit)=>0,Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>4}
+};

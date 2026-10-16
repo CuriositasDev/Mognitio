@@ -1,0 +1,41 @@
+namespace Mgnc\WholeRoots;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation};
+use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeEffects\{allocating};
+use Mgnc\WholeLayout\{managed};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Facts\{words,combine,equal,define,mask,fromSlots};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\WholeFrameData\{Point,Frame};
+use Mgnc\Tables\{atList};
+type Flow=product{versions:Paged<List<Bits<64>>>;heads:Map;};
+let incoming:Function(Flow,Int,List<Bits<64>>):Result<List<Bits<64>>,Diagnostic>=function(flow:Flow,id:Int,blank:List<Bits<64>>):Result<List<Bits<64>>,Diagnostic>{let version:Int=try get(flow->heads,id);branch when{version<0=>Result<List<Bits<64>>,Diagnostic>::Ok(blank),else=>lookup<List<Bits<64>>>(flow->versions,version)}};
+let clear:Function(List<Bits<64>>,Int,Span):Result<List<Bits<64>>,Diagnostic>=function(values:List<Bits<64>>,slot:Int,span:Span):Result<List<Bits<64>>,Diagnostic>{var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;let bit:Bits<64>=try mask(slot,span);loop over(values as word:Bits<64>){result=result->append(branch when{index==slot/64=>word->and(bit->not()),else=>word});index=index+1;};Result<List<Bits<64>>,Diagnostic>::Ok(result)};
+let transfer:Function(List<Bits<64>>,Operation):Result<List<Bits<64>>,Diagnostic>=function(after:List<Bits<64>>,op:Operation):Result<List<Bits<64>>,Diagnostic>{
+ var before:List<Bits<64>>=after;branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{before=try clear(before,slot,op->origin->span);}};loop over(op->inputs as slot:Int){before=try define(before,slot,op->origin->span);};Result<List<Bits<64>>,Diagnostic>::Ok(before)
+};
+let outgoing:Function(Flow,Block,List<Bits<64>>,Span):Result<List<Bits<64>>,Diagnostic>=function(flow:Flow,block:Block,blank:List<Bits<64>>,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ var live:List<Bits<64>>=blank;loop over(block->terminator->targets as target:Int){live=try combine(live,try incoming(flow,target,blank),true,span);};loop over(block->terminator->inputs as slot:Int){live=try define(live,slot,span);};Result<List<Bits<64>>,Diagnostic>::Ok(live)
+};
+public let frame:Function(Store,Body):Result<Frame,Diagnostic>=function(store:Store,body:Body):Result<Frame,Diagnostic>{
+ let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(body->slots->count>=0&&body->slots->count<=268435440,span,"frame slot range");let blank:List<Bits<64>>=words(body->slots->count,false);var flow:Flow=Flow{versions:empty<List<Bits<64>>>(),heads:create()};var changed:Bool=true;
+ var operations:Paged<Paged<Operation>>=empty<Paged<Operation>>();var maximum:Int=8;
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){var table:Paged<Operation>=empty<Operation>();loop over(block->operations as op:Operation){table=push<Operation>(table,op);branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};operations=push<Paged<Operation>>(operations,table);};};
+ loop while(changed){changed=false;var id:Int=body->blocks->count;
+  loop while(id>0){id=id-1;let block:Block=try lookup<Block>(body->blocks,id);let table:Paged<Operation>=try lookup<Paged<Operation>>(operations,id);var live:List<Bits<64>>=try outgoing(flow,block,blank,span);var position:Int=table->count;
+   loop while(position>0){position=position-1;live=try transfer(live,try lookup<Operation>(table,position));};
+   branch when{!(try equal(live,try incoming(flow,id,blank),span))=>{flow=Flow{versions:push<List<Bits<64>>>(flow->versions,live),heads:try put(flow->heads,id,flow->versions->count)};changed=true;},else=>unit};
+  };
+ };
+ var references:List<Int>=List<Int>[];var slotId:Int=0;loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){branch when{try managed(store,slot->valueType)=>{references=references->append(slotId);},else=>unit};slotId=slotId+1;};};let referenceBits:List<Bits<64>>=try fromSlots(body->slots->count,references,span);
+ var points:Paged<Point>=empty<Point>();var id:Int=0;
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){let table:Paged<Operation>=try lookup<Paged<Operation>>(operations,id);var live:List<Bits<64>>=try outgoing(flow,block,blank,span);var position:Int=table->count;
+  loop while(position>0){position=position-1;let op:Operation=try lookup<Operation>(table,position);live=try transfer(live,op);branch when{try allocating(store,body,op)=>{points=push<Point>(points,Point{block:id,operation:position,roots:try combine(live,referenceBits,false,span)});},else=>unit};};id=id+1;
+ };};
+ try require(maximum<=268435440-body->slots->count,span,"frame encoding range");Result<Frame,Diagnostic>::Ok(Frame{slots:body->slots->count,outgoing:maximum,extent:((64+body->slots->count*8+maximum*8+15)/16)*16,entry:try combine(try incoming(flow,body->entry,blank),referenceBits,false,span),points:points})
+};
+public let build:Function(Plan):Result<Paged<Frame>,Diagnostic>=function(plan:Plan):Result<Paged<Frame>,Diagnostic>{var frames:Paged<Frame>=empty<Frame>();loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){frames=push<Frame>(frames,try frame(plan->types,item->body));};};Result<Paged<Frame>,Diagnostic>::Ok(frames)};

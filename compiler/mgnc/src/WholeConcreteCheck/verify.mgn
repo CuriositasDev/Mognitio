@@ -1,0 +1,82 @@
+namespace Mgnc\WholeConcreteCheck;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticData\{Module,Declaration as SourceDeclaration,Parameter};
+use Mgnc\SemanticValues\{FunctionInfo};
+use Mgnc\TypeData\{Argument,ValueTerm};
+use Mgnc\TypeOps\{parentEqual,argumentsEqual};
+use Mgnc\WholeIR\{Project,Body,Block,Operation,Declaration};
+use Mgnc\WholeConcrete\{Plan,Key,Instance,Target};
+use Mgnc\WholeSubstitution\{Binding};
+use Mgnc\WholeConcreteTypes\{prefix,closed};
+use Mgnc\WholeConcreteBody\{verify as verifyBody};
+use Mgnc\WholeVerify\{verify as verifyLowered};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{Map,create,get,put};
+let bindingsEqual:Function(List<Binding>,List<Binding>):Bool=function(left:List<Binding>,right:List<Binding>):Bool{
+ branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;
+ loop over(left as item:Binding){let other:Binding=branch on right->at(index){Result<Binding,IndexError>::Ok(value:Binding)=>value,Result<Binding,IndexError>::Err(error:IndexError)=>{return false;}};index=index+1;
+  branch when{item->owner!=other->owner||!argumentsEqual(item->arguments,other->arguments)=>{return false;},else=>unit};
+ };true
+};
+let root:Function(Plan,Int,Span):Result<Int,Diagnostic>=function(plan:Plan,body:Int,span:Span):Result<Int,Diagnostic>{
+ var found:Int= -1;var index:Int=0;loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  branch when{item->key->body==body&&item->key->bindings->length()==0=>{try require(found<0,span,"concrete duplicate root");found=index;},else=>unit};index=index+1;
+ };};try require(found>=0,span,"concrete missing root");Result<Int,Diagnostic>::Ok(found)
+};
+public let verify:Function(SemanticProject,Project,Plan):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Plan):Result<Unit,Diagnostic>{
+ try verifyLowered(semantic,source);let span:Span=Span{start:0,end:0,line:1,column:1};try prefix(source->types,plan->types,span);
+ var roots:Paged<Int>=empty<Int>();var position:Int=0;
+ loop over(semantic->state->types->headers->order as moduleId:Int){let module:Module=try lookup<Module>(semantic->state->types->headers->modules,moduleId);branch when{module->standard=>{continue;},else=>unit};
+  loop over(module->declarations as declarationId:Int){let declared:SourceDeclaration=try lookup<SourceDeclaration>(semantic->state->types->headers->declarations,declarationId);
+   branch when{declared->kind==4||declared->kind==5=>{
+    let sourceBody:Int=try present((try lookup<Declaration>(source->declarations,declarationId))->body,span,"concrete initializer source");let target:Int=try root(plan,sourceBody,span);
+    try require((try atList<Int>(plan->initializers,position))==target,span,"concrete initializer order");position=position+1;roots=push<Int>(roots,target);
+   },else=>unit};
+  };
+ };
+ try require(position==plan->initializers->length(),span,"concrete initializer count");position=0;
+ loop over(semantic->state->functions->pages->append(semantic->state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){
+  branch on info->templateOwner{Parent::None=>{roots=push<Int>(roots,try root(plan,try lookup<Int>(source->functions,position),span));},Parent::Some(owner:Int)=>unit};position=position+1;
+ };};
+ var instanceId:Int=0;
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  let original:Body=try lookup<Body>(source->bodies,item->key->body);var owner:Parent=Parent::None;
+  branch on original->functionOwner{Parent::Some(functionId:Int)=>{owner=(try lookup<FunctionInfo>(semantic->state->functions,functionId))->templateOwner;},Parent::None=>{
+   let declarationId:Int=try present(original->declaration,span,"concrete initializer owner");let declared:SourceDeclaration=try lookup<SourceDeclaration>(semantic->state->types->headers->declarations,declarationId);
+   branch when{declared->kind==3=>{owner=Parent::Some(declarationId);},else=>unit};
+  }};
+  branch on owner{Parent::None=>{try require(item->key->bindings->length()==0,span,"concrete extraneous lexical bindings");},Parent::Some(ownerId:Int)=>{
+   try require(item->key->bindings->length()==1,span,"concrete lexical binding count");let binding:Binding=try atList<Binding>(item->key->bindings,0);try require(binding->owner==ownerId,span,"concrete lexical binding owner");
+   let declared:SourceDeclaration=try lookup<SourceDeclaration>(semantic->state->types->headers->declarations,ownerId);try require(binding->arguments->length()==declared->parameters->length(),span,"concrete binding arity");var ordinal:Int=0;
+   loop over(declared->parameters as parameter:Parameter){let argument:Argument=try atList<Argument>(binding->arguments,ordinal);ordinal=ordinal+1;
+    branch on argument{Argument::Type(typeId:Int)=>{try require(parameter->kind==0,span,"concrete binding kind");try closed(plan->types,typeId,span);},Argument::Value(term:ValueTerm)=>{try require(parameter->kind!=0&&parentEqual(term->parameter,Parent::None),span,"concrete binding kind or value");}};
+   };
+  }};
+  var previous:Int=0;loop while(previous<instanceId){let other:Instance=try lookup<Instance>(plan->instances,previous);try require(other->key->body!=item->key->body||!bindingsEqual(other->key->bindings,item->key->bindings),span,"concrete duplicate complete key");previous=previous+1;};
+  try verifyBody(source->types,plan->types,original,item->body,item->key->bindings,span);
+  var sites:Map=create();loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){
+   discard try lookup<Instance>(plan->instances,target->instance);try require((try get(sites,target->node))<0,span,"concrete duplicate target site");sites=try put(sites,target->node,target->instance);
+  };};
+  var count:Int=0;loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){
+   branch when{op->code=="function"||op->code=="template"=>{
+    count=count+1;let resolved:Int=try get(sites,op->origin->node);try require(resolved>=0,span,"concrete missing creation target");let target:Instance=try lookup<Instance>(plan->instances,resolved);let identity:Int=try present(op->target,span,"concrete creation identity");
+    var targetBody:Int=0;var expected:List<Binding>=List<Binding>[];
+    branch when{op->code=="function"=>{
+     targetBody=try lookup<Int>(source->functions,identity);let info:FunctionInfo=try lookup<FunctionInfo>(semantic->state->functions,identity);
+     branch on info->templateOwner{Parent::None=>unit,Parent::Some(targetOwner:Int)=>{
+      loop over(item->key->bindings as binding:Binding){branch when{binding->owner==targetOwner=>{expected=expected->append(binding);},else=>unit};};try require(expected->length()==1,span,"concrete lost nested environment");
+     }};
+    },else=>{targetBody=try present((try lookup<Declaration>(source->declarations,identity))->body,span,"concrete template body");expected=List<Binding>[Binding{owner:identity,arguments:op->arguments}];}};
+    try require(target->key->body==targetBody&&bindingsEqual(target->key->bindings,expected),span,"concrete creation complete key");
+   },else=>unit};
+  };};};try require(count==item->targets->count,span,"concrete target membership");instanceId=instanceId+1;
+ };};
+ // Only roots and the independently checked creation edges justify membership.
+ var seen:Map=create();var cursor:Int=0;var reached:Int=0;
+ loop while(cursor<roots->count){let id:Int=try lookup<Int>(roots,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);reached=reached+1;
+  let item:Instance=try lookup<Instance>(plan->instances,id);loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){roots=push<Int>(roots,target->instance);};};
+ };try require(reached==plan->instances->count,span,"concrete unreachable instance");Result<Unit,Diagnostic>::Ok(unit)
+};

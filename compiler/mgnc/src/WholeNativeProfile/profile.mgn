@@ -1,0 +1,74 @@
+namespace Mgnc\WholeNativeProfile;
+use Mgnc\Data\{Paged,Span,Diagnostic,lookup,empty,push,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{State,Node,Symbol};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Introduction};
+use Mgnc\InputData\{InputError};
+use Mgnc\TypeData\{Store,Type,Structure,Argument,Member,ValueTerm};
+use Mgnc\IntMap\{Map,create,get,put};
+type Use=product{typeId:Int;file:Int;span:Span;};
+let failure:Function(Headers,Int,Span,String):InputError=function(headers:Headers,file:Int,span:Span,message:String):InputError{
+ let source:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(foundModule:Module)=>foundModule,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"native profile source invariant"}};
+ InputError{status:1,path:source->source->displayPath,diagnostic:problem("unsupported",span,message),positionKnown:true,operation:"",kind:"",ioPhase:""}
+};
+let standard:Function(Headers,Int,Int,Span):Result<Unit,InputError>=function(headers:Headers,declaration:Int,file:Int,span:Span):Result<Unit,InputError>{
+ let declared:Declaration=branch on lookup<Declaration>(headers->declarations,declaration){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"native profile declaration invariant"}};
+ let owner:Module=branch on lookup<Module>(headers->modules,declared->file){Result<Module,Diagnostic>::Ok(foundModule:Module)=>foundModule,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"native profile standard owner invariant"}};
+ branch when{!owner->standard=>{return Result<Unit,InputError>::Ok(unit);},else=>unit};
+ let name:String=declared->name;
+ branch when{owner->nameSpace=="Std\\Io"&&(name=="readTextFile"||name=="writeTextFile"||name=="readStdin"||name=="writeStdout"||name=="writeStderr"||name=="IoError"||name=="IoOperation"||name=="IoErrorKind"||name=="IoErrorPhase")=>Result<Unit,InputError>::Ok(unit),
+ else=>Result<Unit,InputError>::Err(failure(headers,file,span,"standard symbol is outside the native profile: "+owner->nameSpace+"\\"+name))}
+};
+template checked<T>=function(value:Result<T,Diagnostic>,headers:Headers,file:Int,span:Span):Result<T,InputError>{
+ branch on value{Result<T,Diagnostic>::Ok(found:T)=>Result<T,InputError>::Ok(found),Result<T,Diagnostic>::Err(error:Diagnostic)=>{
+  let source:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(foundModule:Module)=>foundModule,Result<Module,Diagnostic>::Err(failed:Diagnostic)=>panic{"native profile source invariant"}};
+  Result<T,InputError>::Err(InputError{status:3,path:source->source->displayPath,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""})
+ }}
+};
+// The catalog contains all standard declarations. Only resolved user references
+// and their complete type graphs participate in this closed profile.
+public let validate:Function(SemanticProject):Result<Unit,InputError>=function(semantic:SemanticProject):Result<Unit,InputError>{
+ let state:State=semantic->state;let headers:Headers=state->types->headers;
+ let fallback:Span=Span{start:0,end:0,line:1,column:1};var work:Paged<Use>=empty<Use>();
+ loop over(headers->names->pages->append(headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){
+  let module:Module=try checked<Module>(lookup<Module>(headers->modules,name->file),headers,headers->input->entry,fallback);
+  branch when{!module->standard=>{try standard(headers,name->declaration,name->file,name->span);},else=>unit};
+ };};
+ var id:Int=0;
+ loop over(headers->declarations->pages->append(headers->declarations->tail) as page:List<Declaration>){loop over(page as declared:Declaration){
+  let module:Module=try checked<Module>(lookup<Module>(headers->modules,declared->file),headers,headers->input->entry,fallback);
+  branch when{!module->standard=>{branch on try checked<Parent>(lookup<Parent>(state->types->declarations,id),headers,declared->file,declared->span){
+   Parent::None=>unit,Parent::Some(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:declared->file,span:declared->span});}
+  };},else=>unit};id=id+1;
+ };};
+ loop over(state->symbols->pages->append(state->symbols->tail) as page:List<Symbol>){loop over(page as symbol:Symbol){
+  let module:Module=try checked<Module>(lookup<Module>(headers->modules,symbol->file),headers,headers->input->entry,fallback);
+  branch when{!module->standard=>{work=push<Use>(work,Use{typeId:symbol->valueType,file:symbol->file,span:symbol->span});},else=>unit};
+ };};
+ loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
+  branch on node->structure{Structure::Unknown=>unit,Structure::Known(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});}};
+  loop over(node->arguments as argument:Argument){branch on argument{
+   Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});},Argument::Value(term:ValueTerm)=>unit
+  };};
+  branch when{node->operation=="template"=>{branch on node->target{
+   Parent::None=>unit,Parent::Some(declaration:Int)=>{try standard(headers,declaration,node->file,node->span);}
+  };},else=>unit};
+ };};
+ var seen:Map=create();var cursor:Int=0;
+ loop while(cursor<work->count){
+  let site:Use=try checked<Use>(lookup<Use>(work,cursor),headers,headers->input->entry,fallback);cursor=cursor+1;
+  branch when{(try checked<Int>(get(seen,site->typeId),headers,site->file,site->span))>=0=>{continue;},else=>unit};
+  seen=try checked<Map>(put(seen,site->typeId,1),headers,site->file,site->span);
+  let shape:Type=try checked<Type>(lookup<Type>(state->types->types,site->typeId),headers,site->file,site->span);
+  branch when{shape->kind>=23&&shape->kind<=28=>{return Result<Unit,InputError>::Err(failure(headers,site->file,site->span,"type family is outside the native profile"));},else=>unit};
+  branch on shape->owner{Parent::None=>unit,Parent::Some(owner:Int)=>{try standard(headers,owner,site->file,site->span);}};
+  loop over(shape->arguments as argument:Argument){branch on argument{
+   Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:site->file,span:site->span});},Argument::Value(term:ValueTerm)=>unit
+  };};
+  loop over(shape->members as member:Member){branch on member->value{
+   Parent::None=>unit,Parent::Some(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:site->file,span:site->span});}
+  };};
+ };
+ Result<Unit,InputError>::Ok(unit)
+};

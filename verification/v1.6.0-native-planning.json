@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "stage": "concrete-and-closure-planning",
+  "source_revision": "47cc1598ea155db8aa9b778125c1a32628b32bd2",
+  "seed_source": "e7c9c60425b6721d8ce3d5cf4f69b2e505747c4b",
+  "seed_manifest_sha256": "ba9239102424c10feb1ebd75d20248df82a3c78f84367b8f3ad89b25cae10f30",
+  "probe_sha256": "fa4663ef26bce91f4868678299152d50e898375f14d23029d1def6a451e7def8",
+  "profile_fixture_sha256": "d38adbdbf2407a28547d8fec734860bd84042afd76ebc0998c6509ad8d44cd93",
+  "generic_fixture_sha256": "3c5fac2082328ba470e5e7d229157e8fff6defac9f21f9c7624beac6ab2e0942",
+  "harness_sha256": "1af53da2d26bf185851235d582977cbaee8307fe2b73d958a34534469d4e2a2a",
+  "profile_cases": 31,
+  "generic_cases": 6,
+  "internal_valid": 4,
+  "internal_rejected": 14,
+  "public_cli_unchanged": true,
+  "native_runtime_complete": false,
+  "formal_performance_accepted": false,
+  "release_performed": false
+}

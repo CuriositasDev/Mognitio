@@ -1,0 +1,30 @@
+namespace Mgnc\WholeClosureCheck;
+use Mgnc\Data\{Paged,Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation};
+use Mgnc\WholeConcrete\{Plan,Instance,Target};
+use Mgnc\WholeClosures\{Closures,Field,Capture,Creation};
+use Mgnc\WholeChecks\{present,require};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{Map,create,get,put};
+// Called after source/concrete correspondence. No producer helper is used here.
+public let verify:Function(Plan,Closures):Result<Unit,Diagnostic>=function(plan:Plan,closures:Closures):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};try require(closures->frames->count==plan->instances->count&&closures->sites->count==plan->instances->count,span,"closure plan membership");var id:Int=0;
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  let frame:List<Field>=try lookup<List<Field>>(closures->frames,id);try require(frame->length()==item->body->captures->length(),span,"closure field count");var position:Int=0;
+  loop over(frame as field:Field){let slotId:Int=try atList<Int>(item->body->captures,position);let slot:Slot=try lookup<Slot>(item->body->slots,slotId);position=position+1;try require(field->slot==slotId&&parentEqual(slot->symbol,Parent::Some(field->symbol))&&field->valueType==slot->valueType&&slot->kind==3,span,"closure field identity");};
+  let sites:Paged<Creation>=try lookup<Paged<Creation>>(closures->sites,id);var byNode:Map=create();position=0;
+  loop over(sites->pages->append(sites->tail) as entries:List<Creation>){loop over(entries as site:Creation){try require((try get(byNode,site->node))<0,span,"closure duplicate creation");byNode=try put(byNode,site->node,position);position=position+1;};};
+  var count:Int=0;loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){
+   branch when{op->code=="function"=>{
+    count=count+1;let siteId:Int=try get(byNode,op->origin->node);try require(siteId>=0,span,"closure missing creation");let site:Creation=try lookup<Creation>(sites,siteId);
+    var resolved:Int= -1;loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){branch when{target->node==op->origin->node=>{resolved=target->instance;},else=>unit};};};try require(site->target==resolved&&resolved>=0,span,"closure target identity");
+    let fields:List<Field>=try lookup<List<Field>>(closures->frames,site->target);try require(site->captures->length()==fields->length()&&site->captures->length()==op->inputs->length(),span,"closure capture count");var seen:Map=create();position=0;
+    loop over(site->captures as capture:Capture){let field:Field=try atList<Field>(fields,capture->field);let source:Int=try atList<Int>(op->inputs,position);let symbol:Int=try atList<Int>(op->mapping,position);position=position+1;
+     try require(capture->source==source&&field->symbol==symbol&&field->valueType==(try lookup<Slot>(item->body->slots,source))->valueType&&(try get(seen,capture->field))<0,span,"closure capture source and field");seen=try put(seen,capture->field,1);
+    };
+   },else=>unit};
+  };};};try require(count==sites->count,span,"closure creation membership");id=id+1;
+ };};Result<Unit,Diagnostic>::Ok(unit)
+};

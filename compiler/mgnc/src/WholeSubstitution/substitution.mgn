@@ -1,0 +1,65 @@
+namespace Mgnc\WholeSubstitution;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Argument,ValueTerm,Formed,Obligation};
+use Mgnc\TypeOps\{substitute,substituteValue,argumentsEqual};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation,Terminator,TrySite};
+use Mgnc\WholeChecks\{require};
+public type Binding=product{owner:Int;arguments:List<Argument>;};
+public type Applied=product{store:Store;body:Body;};
+public type Arguments=product{store:Store;values:List<Argument>;};
+// Bindings use checked owner identities and declaration parameter order.
+public let equal:Function(List<Binding>,List<Binding>):Bool=function(left:List<Binding>,right:List<Binding>):Bool{
+ branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;
+ loop over(left as binding:Binding){
+  let other:Binding=branch on right->at(index){Result<Binding,IndexError>::Ok(value:Binding)=>value,Result<Binding,IndexError>::Err(error:IndexError)=>{return false;}};
+  branch when{binding->owner!=other->owner||!argumentsEqual(binding->arguments,other->arguments)=>{return false;},else=>unit};index=index+1;
+ };true
+};
+public let value:Function(ValueTerm,List<Binding>,Span):Result<ValueTerm,Diagnostic>=function(original:ValueTerm,bindings:List<Binding>,span:Span):Result<ValueTerm,Diagnostic>{
+ var current:ValueTerm=original;loop over(bindings as binding:Binding){current=try substituteValue(current,binding->owner,binding->arguments,span);};Result<ValueTerm,Diagnostic>::Ok(current)
+};
+public let shape:Function(Store,Int,List<Binding>,Span):Result<Formed,Diagnostic>=function(initial:Store,original:Int,bindings:List<Binding>,span:Span):Result<Formed,Diagnostic>{
+ var formed:Formed=Formed{store:initial,value:original,obligations:List<Obligation>[]};
+ loop over(bindings as binding:Binding){formed=try substitute(formed->store,formed->value,binding->owner,binding->arguments,span);};
+ Result<Formed,Diagnostic>::Ok(formed)
+};
+public let arguments:Function(Store,List<Argument>,List<Binding>,Span):Result<Arguments,Diagnostic>=function(initial:Store,original:List<Argument>,bindings:List<Binding>,span:Span):Result<Arguments,Diagnostic>{
+ var store:Store=initial;var values:List<Argument>=List<Argument>[];
+ loop over(original as argument:Argument){branch on argument{
+  Argument::Type(typeId:Int)=>{let formed:Formed=try shape(store,typeId,bindings,span);store=formed->store;values=values->append(Argument::Type(formed->value));},
+  Argument::Value(term:ValueTerm)=>{values=values->append(Argument::Value(try value(term,bindings,span)));}
+ };};Result<Arguments,Diagnostic>::Ok(Arguments{store:store,values:values})
+};
+public let body:Function(Store,Body,List<Binding>):Result<Applied,Diagnostic>=function(initial:Store,original:Body,bindings:List<Binding>):Result<Applied,Diagnostic>{
+ var store:Store=initial;let span:Span=(try lookup<Block>(original->blocks,original->entry))->terminator->origin->span;
+ let result:Formed=try shape(store,original->resultType,bindings,span);store=result->store;
+ var slots:Paged<Slot>=empty<Slot>();var blocks:Paged<Block>=empty<Block>();var tries:List<TrySite>=List<TrySite>[];
+ loop over(original->slots->pages->append(original->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
+  let formed:Formed=try shape(store,slot->valueType,bindings,span);store=formed->store;
+  slots=push<Slot>(slots,Slot{valueType:formed->value,kind:slot->kind,symbol:slot->symbol});
+ };};
+ loop over(original->blocks->pages->append(original->blocks->tail) as page:List<Block>){loop over(page as block:Block){
+  var operations:List<Operation>=List<Operation>[];
+  loop over(block->operations as operation:Operation){
+   let replaced:Arguments=try arguments(store,operation->arguments,bindings,operation->origin->span);store=replaced->store;
+   var target:Parent=operation->target;
+   branch when{operation->code=="sum-payload"||operation->code=="iterator-init"||operation->code=="variant"=>{
+    branch on target{Parent::None=>unit,Parent::Some(typeId:Int)=>{
+     let formed:Formed=try shape(store,typeId,bindings,operation->origin->span);store=formed->store;target=Parent::Some(formed->value);
+    }};
+   },else=>unit};
+   operations=operations->append(Operation{code:operation->code,output:operation->output,inputs:operation->inputs,unavailable:operation->unavailable,symbol:operation->symbol,target:target,arguments:replaced->values,mapping:operation->mapping,integer:operation->integer,minimum:operation->minimum,wide:operation->wide,text:operation->text,origin:operation->origin});
+  };
+  let term:Terminator=block->terminator;var sumType:Parent=term->sumType;
+  branch on sumType{Parent::None=>unit,Parent::Some(typeId:Int)=>{let formed:Formed=try shape(store,typeId,bindings,term->origin->span);store=formed->store;sumType=Parent::Some(formed->value);}};
+  blocks=push<Block>(blocks,Block{operations:operations,terminator:Terminator{code:term->code,inputs:term->inputs,targets:term->targets,variants:term->variants,sumType:sumType,origin:term->origin}});
+ };};
+ loop over(original->tries as site:TrySite){
+  let operand:Formed=try shape(store,site->operandType,bindings,span);store=operand->store;
+  let returned:Formed=try shape(store,site->returnType,bindings,span);store=returned->store;
+  let error:Formed=try shape(store,site->errorType,bindings,span);store=error->store;
+  tries=tries->append(TrySite{node:site->node,owner:site->owner,operandType:operand->value,returnType:returned->value,errorType:error->value,dispatch:site->dispatch,ok:site->ok,err:site->err,payload:site->payload,returned:site->returned});
+ };
+ Result<Applied,Diagnostic>::Ok(Applied{store:store,body:Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:result->value,slots:slots,blocks:blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:tries}})
+};

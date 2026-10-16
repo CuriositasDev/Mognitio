@@ -1,0 +1,76 @@
+namespace Mgnc\WholeConcrete;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticData\{Declaration as SourceDeclaration,Module};
+use Mgnc\SemanticValues\{FunctionInfo};
+use Mgnc\TypeData\{Store,Argument};
+use Mgnc\WholeIR\{Project,Declaration,Body,Block,Operation};
+use Mgnc\WholeSubstitution\{Binding,Applied,equal,body as substituteBody};
+use Mgnc\WholeChecks\{present,require};
+use Mgnc\IntMap\{Map,create,get,put};
+// A body identity includes its original function or template initializer.
+// The ordered owner bindings include every lexical compile-time parameter.
+public type Key=product{body:Int;bindings:List<Binding>;};
+public type Target=product{node:Int;instance:Int;};
+public type Instance=product{key:Key;body:Body;targets:Paged<Target>;};
+public type Plan=product{types:Store;instances:Paged<Instance>;initializers:List<Int>;};
+type Registered=product{keys:Paged<Key>;id:Int;};
+public let same:Function(Key,Key):Bool=function(left:Key,right:Key):Bool{left->body==right->body&&equal(left->bindings,right->bindings)};
+let register:Function(Paged<Key>,Key):Registered=function(keys:Paged<Key>,key:Key):Registered{
+ var id:Int=0;loop over(keys->pages->append(keys->tail) as page:List<Key>){loop over(page as previous:Key){
+  branch when{same(previous,key)=>{return Registered{keys:keys,id:id};},else=>unit};id=id+1;
+ };};Registered{keys:push<Key>(keys,key),id:keys->count}
+};
+public let lexical:Function(Parent,List<Binding>,Span):Result<List<Binding>,Diagnostic>=function(owner:Parent,bindings:List<Binding>,span:Span):Result<List<Binding>,Diagnostic>{
+ branch on owner{Parent::None=>Result<List<Binding>,Diagnostic>::Ok(List<Binding>[]),Parent::Some(id:Int)=>{
+  loop over(bindings as binding:Binding){branch when{binding->owner==id=>{return Result<List<Binding>,Diagnostic>::Ok(List<Binding>[binding]);},else=>unit};};
+  Result<List<Binding>,Diagnostic>::Err(problem("internal",span,"concrete function lost lexical bindings"))
+ }}
+};
+public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project):Result<Plan,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var keys:Paged<Key>=empty<Key>();var initializers:List<Int>=List<Int>[];
+ loop over(source->moduleOrder as moduleId:Int){
+  let module:Module=try lookup<Module>(source->types->headers->modules,moduleId);
+  branch when{module->standard=>{continue;},else=>unit};
+  loop over(module->declarations as declarationId:Int){
+   let declaration:Declaration=try lookup<Declaration>(source->declarations,declarationId);
+   branch when{declaration->kind==4||declaration->kind==5=>{
+    let registered:Registered=register(keys,Key{body:try present(declaration->body,span,"runtime initializer body"),bindings:List<Binding>[]});
+    keys=registered->keys;initializers=initializers->append(registered->id);
+   },else=>unit};
+  };
+ };
+ // Non-generic unused functions are concrete too; symbolic templates stay in L160.
+ var functionId:Int=0;
+ loop over(semantic->state->functions->pages->append(semantic->state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){
+  branch on info->templateOwner{Parent::Some(owner:Int)=>unit,Parent::None=>{
+   let registered:Registered=register(keys,Key{body:try lookup<Int>(source->functions,functionId),bindings:List<Binding>[]});keys=registered->keys;
+  }};functionId=functionId+1;
+ };};
+ var types:Store=source->types;var instances:Paged<Instance>=empty<Instance>();var cursor:Int=0;
+ // Register before expansion; recursive requests resolve the existing key.
+ loop while(cursor<keys->count){
+  let key:Key=try lookup<Key>(keys,cursor);let original:Body=try lookup<Body>(source->bodies,key->body);
+  let applied:Applied=try substituteBody(types,original,key->bindings);types=applied->store;let body:Body=applied->body;var targets:Paged<Target>=empty<Target>();var targetNodes:Map=create();
+  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as operation:Operation){
+   branch when{operation->code=="function"||operation->code=="template"=>{
+    let origin:Int=try present(operation->target,operation->origin->span,"concrete callable target");var target:Int=0;var bindings:List<Binding>=List<Binding>[];
+    branch when{operation->code=="function"=>{
+     let info:FunctionInfo=try lookup<FunctionInfo>(semantic->state->functions,origin);target=try lookup<Int>(source->functions,origin);
+     bindings=try lexical(info->templateOwner,key->bindings,operation->origin->span);
+    },else=>{
+     let declaration:Declaration=try lookup<Declaration>(source->declarations,origin);
+     target=try present(declaration->body,operation->origin->span,"template initializer body");
+     bindings=List<Binding>[Binding{owner:origin,arguments:operation->arguments}];
+    }};
+    let registered:Registered=register(keys,Key{body:target,bindings:bindings});keys=registered->keys;
+    try require((try get(targetNodes,operation->origin->node))<0,operation->origin->span,"duplicate concrete creation site");
+    targetNodes=try put(targetNodes,operation->origin->node,registered->id);
+    targets=push<Target>(targets,Target{node:operation->origin->node,instance:registered->id});
+   },else=>unit};
+  };};};
+  instances=push<Instance>(instances,Instance{key:key,body:body,targets:targets});cursor=cursor+1;
+ };
+ Result<Plan,Diagnostic>::Ok(Plan{types:types,instances:instances,initializers:initializers})
+};

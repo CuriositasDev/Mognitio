@@ -86,9 +86,23 @@
         (when (option :stress) '((:call (:runtime :collect))))
         '((:load-frame :rax -8) (:store-out 0 :rax) (:call (:runtime :find-free))
           (:test) (:jnz :found) (:call (:runtime :collect)))
-        '((:load-frame :rax -8) (:store-out 0 :rax) (:call (:runtime :find-free))
+        ;; A tiny reclaimable tail must not force a full collection for every
+        ;; short-lived object. Keep bounded reserve after collection; explicit
+        ;; geometry/caps retain their original reuse and failure behavior.
+        (unless (or (option :arena-unit) cap)
+          `((:load-word :rax :r15 ,+mapped-bytes+) (:imm-rcx 4) (:imm-rdx 0) (:div-rcx)
+            (:cmp-imm :rax 67108864) (:jbe :reserve-sized) (:imm-rax 67108864)
+            (:label :reserve-sized) (:mov-reg :r8 :rax) (:imm-rax 0)
+            (:load-word :r9 :r15 ,(context-field-offset :free-head (test-image-p)))
+            (:label :reserve-block) (:cmp-reg :rax :r8) (:jae :retry)
+            (:cmp-imm :r9 0) (:jz :reserve-low)
+            (:load-word :rdx :r9 0) (:add-reg :rax :rdx)
+            (:load-word :r9 :r9 16) (:jmp :reserve-block)
+            (:label :reserve-low) (:imm-rax 1) (:store-frame -24 :rax) (:jmp :grow)))
+        '((:label :retry) (:load-frame :rax -8) (:store-out 0 :rax) (:call (:runtime :find-free))
           (:test) (:jnz :found)
-          ;; One bounded arena extension, after one failed retry.
+          (:label :grow)
+          ;; At most one bounded extension per allocation attempt.
           (:load-frame :rax -8) (:add-imm :rax 32) (:jb :allocation-failed))
         ;; Preserve the small-heap minimum. Large live heaps need reserve space
         ;; proportional to their size, instead of collecting after every 1 MiB.
@@ -96,7 +110,7 @@
         (unless (or (option :arena-unit) cap)
           `((:mov-reg :r8 :rax) (:load-word :rax :r15 ,+mapped-bytes+)
             (:imm-rcx 4) (:imm-rdx 0) (:div-rcx)
-            (:cmp-imm :rax 16777216) (:jbe :growth-clamped) (:imm-rax 16777216)
+            (:cmp-imm :rax 67108864) (:jbe :growth-clamped) (:imm-rax 67108864)
             (:label :growth-clamped) (:cmp-reg :rax :r8) (:jae :growth-sized)
             (:mov-reg :rax :r8) (:label :growth-sized)))
         `((:cmp-imm :rax ,unit) (:jae :round) (:imm-rax ,unit)
@@ -108,7 +122,16 @@
         '((:imm-reg :rdi 0) (:load-frame :rsi -16) (:imm-rdx 3)
           (:imm-reg :r10 34) (:imm-reg :r8 -1) (:imm-reg :r9 0) (:mov-eax 9))
         (if (option :mmap-fail) '((:imm-rax -12)) '((:syscall)))
-        '((:cmp-imm :rax -4095) (:jae :allocation-failed) (:mov-reg :r9 :rax)
+        (if (or (option :arena-unit) cap)
+            '((:cmp-imm :rax -4095) (:jae :allocation-failed))
+            '((:cmp-imm :rax -4095) (:jb :mapped)
+              ;; Reserve growth is optional when a reclaimed block can satisfy
+              ;; this request. A failed mmap must not discard that valid result.
+              (:load-frame :rax -24) (:test) (:jz :allocation-failed)
+              (:load-frame :rax -8) (:store-out 0 :rax) (:call (:runtime :find-free))
+              (:test) (:jnz :found) (:jmp :allocation-failed)
+              (:label :mapped)))
+        '((:mov-reg :r9 :rax)
           (:imm-rdx 0) (:store-word :r9 0 :rdx) (:store-word :r9 24 :rdx)
           (:load-frame :rdx -16) (:store-word :r9 8 :rdx)
           (:imm-rax 32) (:store-word :r9 16 :rax))
@@ -126,6 +149,12 @@
           (:label :free-tail) (:load-word :rax :r11 0) (:test) (:jz :free-append)
           (:lea-base :r11 :rax 16) (:jmp :free-tail)
           (:label :free-append) (:store-word :r11 0 :r9) (:load-frame :rcx -8))
+        (unless (or (option :arena-unit) cap)
+          '((:load-frame :rax -24) (:test) (:jz :consume-new)
+            ;; Preserve first-fit selection after proactive growth as well.
+            (:load-frame :rax -8) (:store-out 0 :rax) (:call (:runtime :find-free))
+            (:test) (:jnz :found) (:jmp :allocation-failed)
+            (:label :consume-new)))
         (take-free-forms)
         '((:label :found) (:mov-reg :r9 :rax))
         (bump +alloc-count+)

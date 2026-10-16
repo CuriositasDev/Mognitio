@@ -8,6 +8,9 @@ use Mgnc\Project\{single,project};
 use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
 use Mgnc\InputDiagnostics\{message as inputMessage,escapePath};
 use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholeIR\{Project as LoweredProject};
+use Mgnc\WholeLower\{lower as wholeLower};
+use Mgnc\WholeVerify\{verify as verifyWhole};
 use Mgnc\Structural\{analyzeSyntax};
 use Mgnc\Forest\{SyntaxForest};
 public let report:Function(Int,String):Int=function(status:Int,message:String):Int{
@@ -53,9 +56,17 @@ public let publicationMessage:Function(BinaryOutputError):String=function(error:
 };
 // End the semantic ownership scope before allocating backend code and bytes.
 type Analyzed=sum{Checked;Native(CheckedProgram);};
-let front:Function(ProjectInput,Bool):Result<Analyzed,InputError>=function(input:ProjectInput,checking:Bool):Result<Analyzed,InputError>{
+let front:Function(ProjectInput,Bool,Bool):Result<Analyzed,InputError>=function(input:ProjectInput,checking:Bool,lowering:Bool):Result<Analyzed,InputError>{
  let semantic:SemanticProject=try analyze(input);
  branch when{checking=>{return Result<Analyzed,InputError>::Ok(Analyzed::Checked);},else=>unit};
+ branch when{lowering=>{
+  let lowered:LoweredProject=branch on wholeLower(semantic){
+   Result<LoweredProject,Diagnostic>::Ok(value:LoweredProject)=>value,
+   Result<LoweredProject,Diagnostic>::Err(error:Diagnostic)=>{return Result<Analyzed,InputError>::Err(InputError{status:3,path:"compiler",diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""});}
+  };
+  branch on verifyWhole(semantic,lowered){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<Analyzed,InputError>::Err(InputError{status:3,path:"compiler",diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""});}};
+  return Result<Analyzed,InputError>::Ok(Analyzed::Checked);
+ },else=>unit};
  let program:CheckedProgram=branch on prepare(semantic){
   Result<CheckedProgram,Diagnostic>::Ok(value:CheckedProgram)=>value,
   Result<CheckedProgram,Diagnostic>::Err(error:Diagnostic)=>{
@@ -67,16 +78,16 @@ let front:Function(ProjectInput,Bool):Result<Analyzed,InputError>=function(input
 };
 public let run:Function(List<String>):Int=function(args:List<String>):Int{
  let command:String=argument(args,0);let sourcePath:String=argument(args,1);
- let parsing:Bool=command=="parse";let checking:Bool=command=="check";
+ let parsing:Bool=command=="parse";let checking:Bool=command=="check";let lowering:Bool=command=="lower";
  let option:String=argument(args,2);let outputPath:String=argument(args,3);
- branch when{!(((parsing||checking)&&args->length()==2)||(command=="build"&&args->length()==4&&option=="-o"))=>{
-  return report(2,"mgnc: cli: expected parse source.mgn, check source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n");
+ branch when{!(((parsing||checking||lowering)&&args->length()==2)||(command=="build"&&args->length()==4&&option=="-o"))=>{
+  return report(2,"mgnc: cli: expected parse source.mgn, check/lower source.mgn or mognitio.toml, or build source.mgn -o new-artifact\n");
  },else=>unit};
  branch when{sourcePath=="" || contains(sourcePath,"\0") || (command=="build"&&(outputPath==""||contains(outputPath,"\0")))=>{
   return report(2,"mgnc: cli: InvalidPath: empty or NUL-containing path\n");
  },else=>unit};
  let manifest:Bool=sourcePath=="mognitio.toml"||endsWith(sourcePath,"/mognitio.toml");
- branch when{!endsWith(sourcePath,".mgn")&&!(checking&&manifest)=>{return report(2,"mgnc: cli: "+sourcePath+": source requires .mgn extension\n");},else=>unit};
+ branch when{!endsWith(sourcePath,".mgn")&&!((checking||lowering)&&manifest)=>{return report(2,"mgnc: cli: "+sourcePath+": source requires .mgn extension\n");},else=>unit};
  branch when{command=="build"&&endsWith(outputPath,"/")=>{return report(2,"mgnc: cli: "+outputPath+": InvalidPath: trailing slash\n");},else=>unit};
  let input:ProjectInput=branch on branch when{manifest=>project(sourcePath),else=>single(sourcePath)}{
   Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
@@ -89,7 +100,7 @@ public let run:Function(List<String>):Int=function(args:List<String>):Int{
    Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>report(branch when{error->phase=="internal"=>3,else=>1},describe(escapePath(sourcePath),error)),
   };
  },else=>unit};
- let program:CheckedProgram=branch on branch on front(input,checking){
+ let program:CheckedProgram=branch on branch on front(input,checking,lowering){
   Result<Analyzed,InputError>::Ok(value:Analyzed)=>value,
   Result<Analyzed,InputError>::Err(error:InputError)=>{return report(error->status,inputMessage(error));}
  }{Analyzed::Checked=>{return 0;},Analyzed::Native(value:CheckedProgram)=>value};

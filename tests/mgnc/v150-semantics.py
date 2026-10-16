@@ -3,7 +3,7 @@
 import argparse,json,shutil,subprocess,tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
-p=argparse.ArgumentParser();p.add_argument("--seed",type=Path);p.add_argument("--compiler",type=Path);p.add_argument("--interpret",action="store_true");args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument("--seed",type=Path);p.add_argument("--compiler",type=Path);p.add_argument("--interpret",action="store_true");p.add_argument("--command",choices=("check","lower"),default="check");args=p.parse_args()
 def program(body,prefix=""):return "namespace App;"+prefix+"let main:Function(List<String>):Int=function(args:List<String>):Int{"+body+"};"
 cases=[
  (program("0"),True),
@@ -71,7 +71,7 @@ if args.compiler:
   source=Path(temp)/"case.mgn";failures=[]
   for index,(text,expected) in enumerate(cases):
    source.write_text(text)
-   result=subprocess.run([str(args.compiler),"check",str(source)],capture_output=True,timeout=60)
+   result=subprocess.run([str(args.compiler),args.command,str(source)],capture_output=True,timeout=60)
    if (result.returncode==0)!=expected or result.stdout or (expected and result.stderr) or result.returncode not in (0,1):
     failures.append((index,result.returncode,result.stderr.decode()))
   assert not failures,failures

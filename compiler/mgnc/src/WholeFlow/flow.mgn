@@ -1,0 +1,31 @@
+namespace Mgnc\WholeFlow;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{Node};
+use Mgnc\WholeIR\{Operation,Origin,Terminator};
+use Mgnc\WholeBuilder\{Builder,Plan,plan,output,term,operation,setBlock,reserveBlock,continueAt};
+use Mgnc\Tables\{atList};
+public let child:Function(Builder,Node,Int):Result<Plan,Diagnostic>=function(builder:Builder,node:Node,index:Int):Result<Plan,Diagnostic>{plan(builder,try atList<Int>(node->children,index))};
+public let jump:Function(Int,Origin):Terminator=function(target:Int,site:Origin):Terminator{term("jump",List<Int>[],List<Int>[target],site)};
+public let failure:Function(Origin):Terminator=function(site:Origin):Terminator{term("unreachable",List<Int>[],List<Int>[],site)};
+public let finish:Function(Builder,Plan,Node,List<Operation>,Origin):Result<Builder,Diagnostic>=function(builder:Builder,current:Plan,node:Node,operations:List<Operation>,site:Origin):Result<Builder,Diagnostic>{
+ setBlock(builder,current->exit,operations,branch when{node->normal=>jump(current->continuation,site),else=>failure(site)})
+};
+public let sequence:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;let count:Int=branch when{node->operation=="function"=>0,else=>node->children->length()};
+ builder=try setBlock(builder,current->entry,List<Operation>[],jump(branch when{count==0=>current->exit,else=>(try child(builder,node,0))->entry},site));
+ var previous:Parent=Parent::None;
+ branch when{count>0=>{loop over(node->children as childId:Int){
+  branch on previous{Parent::None=>unit,Parent::Some(id:Int)=>{builder=try continueAt(builder,id,(try plan(builder,childId))->entry);}};previous=Parent::Some(childId);
+ };},else=>unit};
+ branch on previous{Parent::None=>unit,Parent::Some(id:Int)=>{builder=try continueAt(builder,id,current->exit);}};
+ Result<Builder,Diagnostic>::Ok(builder)
+};
+public let bridge:Function(Builder,Plan,Plan,Origin):Result<Builder,Diagnostic>=function(initial:Builder,source:Plan,destination:Plan,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;let id:Int=builder->blockCount;builder=reserveBlock(builder,site);
+ builder=try continueAt(builder,source->node,id);var operations:List<Operation>=List<Operation>[];
+ branch on source->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
+  branch on destination->output{Parent::None=>unit,Parent::Some(target:Int)=>{operations=operations->append(operation("copy",Parent::Some(target),List<Int>[slot],site));}};
+ }};
+ setBlock(builder,id,operations,jump(destination->exit,site))
+};

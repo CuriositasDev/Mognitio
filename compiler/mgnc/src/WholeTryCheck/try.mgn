@@ -1,0 +1,33 @@
+namespace Mgnc\WholeTryCheck;
+use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node};
+use Mgnc\TypeData\{Type,Structure};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\WholeIR\{Body,TrySite,Occurrence,Block,Operation,Slot};
+use Mgnc\WholeChecks\{require,present,occurrence};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+public let verify:Function(State,Body,Map):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map):Result<Unit,Diagnostic>{
+ var seen:Map=create();
+ loop over(body->tries as site:TrySite){
+  let node:Node=try lookup<Node>(state->nodes,site->node);let value:Occurrence=try occurrence(body,index,site->node);
+  try require(node->operation=="try"&&(try get(seen,site->node))<0,node->span,"TrySite source identity");seen=try put(seen,site->node,1);
+  let operand:Node=try lookup<Node>(state->nodes,try atList<Int>(node->children,0));let inputType:Int=branch on operand->structure{Structure::Known(typeId:Int)=>typeId,Structure::Unknown=>{try require(false,node->span,"TrySite unknown operand");0}};
+  try require(site->operandType==inputType&&parentEqual(node->target,Parent::Some(site->owner))&&parentEqual(body->functionOwner,node->target)&&site->returnType==body->resultType,node->span,"TrySite lexical owner or types");
+  let input:Type=try lookup<Type>(state->types->types,inputType);let output:Type=try lookup<Type>(state->types->types,site->returnType);
+  try require(input->kind==11&&output->kind==11&&(try memberType(input->arguments,1,node->span))==site->errorType&&(try memberType(output->arguments,1,node->span))==site->errorType,node->span,"TrySite exact Result error type");
+  branch when{operand->normal=>{
+   try require(parentEqual(site->dispatch,Parent::Some(value->exit)),node->span,"TrySite dispatch");let dispatch:Block=try lookup<Block>(body->blocks,value->exit);
+   try require(parentEqual(site->ok,Parent::Some(try atList<Int>(dispatch->terminator->targets,0)))&&parentEqual(site->err,Parent::Some(try atList<Int>(dispatch->terminator->targets,1))),node->span,"TrySite branch identities");
+   let error:Block=try lookup<Block>(body->blocks,try present(site->err,node->span,"TrySite Err block"));let payload:Operation=try atList<Operation>(error->operations,0);let rebuilt:Operation=try atList<Operation>(error->operations,1);
+   try require(parentEqual(payload->output,site->payload)&&parentEqual(rebuilt->output,site->returned),node->span,"TrySite reconstruction values");
+   try require((try lookup<Slot>(body->slots,try present(site->payload,node->span,"TrySite payload")))->valueType==site->errorType&&(try lookup<Slot>(body->slots,try present(site->returned,node->span,"TrySite returned value")))->valueType==site->returnType,node->span,"TrySite payload and return slot types");
+  },else=>{
+   try require(parentEqual(site->dispatch,Parent::None)&&parentEqual(site->ok,Parent::None)&&parentEqual(site->err,Parent::None)&&parentEqual(site->payload,Parent::None)&&parentEqual(site->returned,Parent::None),node->span,"TrySite fabricated non-completing edge");
+  }};
+ };
+ loop over(body->occurrences->pages->append(body->occurrences->tail) as page:List<Occurrence>){loop over(page as value:Occurrence){let node:Node=try lookup<Node>(state->nodes,value->node);branch when{node->operation=="try"=>{try require((try get(seen,value->node))==1,node->span,"missing TrySite");},else=>unit};};};
+ Result<Unit,Diagnostic>::Ok(unit)
+};

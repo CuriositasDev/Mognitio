@@ -1,0 +1,21 @@
+namespace Mgnc\WholeChecks;
+use Mgnc\Data\{Diagnostic,Span,problem,lookup,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Slot,Occurrence};
+use Mgnc\IntMap\{Map,get};
+use Mgnc\Tables\{atList};
+public let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(valid:Bool,span:Span,message:String):Result<Unit,Diagnostic>{
+ branch when{valid=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",span,"whole IR: "+message))}
+};
+let integerKey:Function(List<Int>):String=function(values:List<Int>):String{
+ var parts:List<String>=List<String>[];loop over(values as value:Int){parts=parts->append(number(value))->append(",");};parts->join("")
+};
+public let integers:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{
+ branch when{left->length()!=right->length()=>{return false;},left->length()>8=>{return integerKey(left)==integerKey(right);},else=>unit};
+ var index:Int=0;loop over(left as value:Int){let other:Int=branch on right->at(index){Result<Int,IndexError>::Ok(item:Int)=>item,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true
+};
+public let present:Function(Parent,Span,String):Result<Int,Diagnostic>=function(value:Parent,span:Span,message:String):Result<Int,Diagnostic>{
+ branch on value{Parent::Some(id:Int)=>Result<Int,Diagnostic>::Ok(id),Parent::None=>Result<Int,Diagnostic>::Err(problem("internal",span,"whole IR: "+message))}
+};
+public let slotType:Function(Body,Int):Result<Int,Diagnostic>=function(body:Body,slot:Int):Result<Int,Diagnostic>{Result<Int,Diagnostic>::Ok((try lookup<Slot>(body->slots,slot))->valueType)};
+public let occurrence:Function(Body,Map,Int):Result<Occurrence,Diagnostic>=function(body:Body,index:Map,node:Int):Result<Occurrence,Diagnostic>{lookup<Occurrence>(body->occurrences,try get(index,node))};

@@ -1,0 +1,45 @@
+namespace Mgnc\WholeLower;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup,problem,Span};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{State,Node,BodyState,FunctionInfo};
+use Mgnc\SemanticData\{Declaration as SourceDeclaration};
+use Mgnc\TypeData\{Type};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\WholeIR\{Project,Declaration,Body};
+use Mgnc\WholeBody\{lower as lowerBody};
+use Mgnc\WholeCaptures\{collect as collectCaptures};
+use Mgnc\IntMap\{Map,create,get,put};
+public let lower:Function(SemanticProject):Result<Project,Diagnostic>=function(semantic:SemanticProject):Result<Project,Diagnostic>{
+ let state:State=semantic->state;let captures:Paged<List<Int>>=try collectCaptures(state);
+ var owners:Map=create();var seen:Int=0;var declarations:Paged<Declaration>=empty<Declaration>();var bodies:Paged<Body>=empty<Body>();var functions:Paged<Int>=empty<Int>();var id:Int=0;
+ loop while(id<state->bodies->count){
+  let declaration:SourceDeclaration=try lookup<SourceDeclaration>(state->types->headers->declarations,id);
+  let valueType:Parent=try lookup<Parent>(state->types->declarations,id);var body:Parent=Parent::None;
+  branch on try lookup<BodyState>(state->bodies,id){
+   BodyState::NotRequired=>unit,
+   BodyState::Pending=>{return Result<Project,Diagnostic>::Err(problem("internal",declaration->span,"whole lowering: unchecked declaration"));},
+   BodyState::Checking=>{return Result<Project,Diagnostic>::Err(problem("internal",declaration->span,"whole lowering: incomplete declaration"));},
+   BodyState::Complete(root:Int)=>{
+    let expected:Int=branch on valueType{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Project,Diagnostic>::Err(problem("internal",declaration->span,"whole lowering: missing declaration type"));}};
+    body=Parent::Some(bodies->count);bodies=push<Body>(bodies,try lowerBody(state,root,Parent::Some(id),Parent::None,expected,captures));
+    var work:Paged<Int>=push<Int>(empty<Int>(),root);var index:Int=0;
+    loop while(index<work->count){
+     let nodeId:Int=try lookup<Int>(work,index);let node:Node=try lookup<Node>(state->nodes,nodeId);
+     branch when{(try get(owners,nodeId))>=0=>{return Result<Project,Diagnostic>::Err(problem("internal",node->span,"whole lowering: duplicate semantic occurrence"));},else=>unit};
+     owners=try put(owners,nodeId,id);seen=seen+1;loop over(node->children as child:Int){work=push<Int>(work,child);};index=index+1;
+    };
+   }
+  };
+  declarations=push<Declaration>(declarations,Declaration{source:id,file:declaration->file,kind:declaration->kind,valueType:valueType,body:body});id=id+1;
+ };
+ branch when{seen!=state->nodes->count=>{return Result<Project,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"whole lowering: unowned semantic occurrence"));},else=>unit};
+ id=0;loop while(id<state->functions->count){
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,id);let shape:Type=try lookup<Type>(state->types->types,info->valueType);
+  let root:Int=branch on info->body{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Project,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"whole lowering: missing function body"));}};
+  let node:Node=try lookup<Node>(state->nodes,root);let resultType:Int=try memberType(shape->arguments,shape->arguments->length()-1,node->span);
+  let declaration:Int=try get(owners,root);functions=push<Int>(functions,bodies->count);
+  bodies=push<Body>(bodies,try lowerBody(state,root,Parent::Some(declaration),Parent::Some(id),resultType,captures));id=id+1;
+ };
+ Result<Project,Diagnostic>::Ok(Project{types:state->types,declarations:declarations,bodies:bodies,functions:functions,entry:semantic->entry,moduleOrder:state->types->headers->order,obligations:state->obligations})
+};

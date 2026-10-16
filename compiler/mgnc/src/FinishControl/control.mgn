@@ -4,10 +4,10 @@ use Mgnc\Data\{Diagnostic,Span,lookup,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Expressions\{Expression};
 use Mgnc\SemanticValues\{State,Environment,Node,Loop,Frame,Evaluated};
-use Mgnc\TypeData\{Type,Structure,Member,Formed};
+use Mgnc\TypeData\{Type,Structure,Member,Formed,Argument};
 use Mgnc\TypeOps\{resultKind,listKind};
 use Mgnc\ValueSupport\{known,expect,structureEqual,withLoops,withTypes};
-use Mgnc\ValueFactory\{node as makeNode,withTarget};
+use Mgnc\ValueFactory\{node as makeNode,withTarget,withArguments};
 use Mgnc\VariantSupport\{memberType,variants};
 use Mgnc\GenericApplication\{structural};
 use Mgnc\Projection\{item};
@@ -63,7 +63,7 @@ public let finish:Function(State,Frame):Result<Evaluated,Diagnostic>=function(in
    let target:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
    branch when{rule==ruleLoopWhile=>{try expect(target,2);operation="while";},else=>{
     let element:Int=branch on frame->annotation{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"loop element type invariant"));}};
-    let formed:Formed=try structural(state->types,listKind,List<Int>[element]);state=withTypes(state,formed->store,formed->obligations);try expect(target,formed->value);operation="over";
+    let formed:Formed=try structural(state->types,listKind,List<Int>[element]);state=withTypes(state,formed->store,formed->obligations);try expect(target,formed->value);frame=withArguments(frame,List<Argument>[Argument::Type(formed->value)]);operation="over";
    }};structure=Structure::Known(0);normal=target->normal;
   }};
   frame=withTarget(frame,frame->loopTarget);

@@ -1,0 +1,108 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,contains,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo,BodyState,Loop};
+use Mgnc\TypeData\{Store,Type,Argument,Obligation};
+use Mgnc\MathValue\{Integer};
+use Mgnc\WholeIR\{Project,Declaration,Body,Slot,Block,Operation,Origin,Terminator,Occurrence,TrySite,TextPart};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let reverseIds:Function(List<Int>,Int):List<Int>=function(ids:List<Int>,count:Int):List<Int>{var result:List<Int>=List<Int>[];loop over(ids as id:Int){result=result->append(count-1-id);};result};
+let reverseParent:Function(Parent,Int):Parent=function(parent:Parent,count:Int):Parent{branch on parent{Parent::None=>Parent::None,Parent::Some(id:Int)=>Parent::Some(count-1-id)}};
+let reverseParents:Function(List<Parent>,Int):List<Parent>=function(values:List<Parent>,count:Int):List<Parent>{var result:List<Parent>=List<Parent>[];loop over(values as value:Parent){result=result->append(reverseParent(value,count));};result};
+let renumber:Function(SemanticProject):Result<SemanticProject,Diagnostic>=function(original:SemanticProject):Result<SemanticProject,Diagnostic>{
+ let state:State=original->state;var nodes:Paged<Node>=empty<Node>();var symbols:Paged<Symbol>=empty<Symbol>();var index:Int=state->nodes->count-1;
+ loop while(index>=0){
+  let node:Node=try lookup<Node>(state->nodes,index);
+  nodes=push<Node>(nodes,Node{file:node->file,cursor:node->cursor,rule:node->rule,flag:node->flag,structure:node->structure,normal:node->normal,operation:node->operation,binding:reverseParent(node->binding,state->symbols->count),target:node->target,children:reverseIds(node->children,state->nodes->count),span:node->span,integer:node->integer,minimum:node->minimum,literal:node->literal,text:node->text,binder:reverseParent(node->binder,state->symbols->count),binders:reverseParents(node->binders,state->symbols->count),functionOwner:node->functionOwner,mapping:node->mapping,arguments:node->arguments});index=index-1;
+ };
+ index=state->symbols->count-1;loop while(index>=0){symbols=push<Symbol>(symbols,try lookup<Symbol>(state->symbols,index));index=index-1;};
+ var globals:Paged<Parent>=empty<Parent>();index=0;loop while(index<state->globals->count){globals=push<Parent>(globals,reverseParent(try lookup<Parent>(state->globals,index),state->symbols->count));index=index+1;};
+ var functions:Paged<FunctionInfo>=empty<FunctionInfo>();index=0;loop while(index<state->functions->count){
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,index);
+  functions=push<FunctionInfo>(functions,FunctionInfo{file:info->file,cursor:info->cursor,valueType:info->valueType,parameters:reverseIds(info->parameters,state->symbols->count),body:reverseParent(info->body,state->nodes->count),captures:reverseIds(info->captures,state->symbols->count),parent:info->parent,templateOwner:info->templateOwner});index=index+1;
+ };
+ var bodies:Paged<BodyState>=empty<BodyState>();index=0;loop while(index<state->bodies->count){
+  let body:BodyState=try lookup<BodyState>(state->bodies,index);bodies=push<BodyState>(bodies,branch on body{BodyState::Complete(root:Int)=>BodyState::Complete(state->nodes->count-1-root),BodyState::NotRequired=>BodyState::NotRequired,BodyState::Pending=>BodyState::Pending,BodyState::Checking=>BodyState::Checking});index=index+1;
+ };
+ var loops:Paged<Loop>=empty<Loop>();index=0;loop while(index<state->loops->count){let info:Loop=try lookup<Loop>(state->loops,index);loops=push<Loop>(loops,Loop{kind:info->kind,breaks:reverseIds(info->breaks,state->nodes->count)});index=index+1;};
+ Result<SemanticProject,Diagnostic>::Ok(SemanticProject{entry:original->entry,state:State{types:state->types,nodes:nodes,symbols:symbols,globals:globals,functions:functions,loops:loops,obligations:state->obligations,bodies:bodies}})
+};
+let withProjectBodies:Function(Project,Paged<Body>):Project=function(original:Project,value:Paged<Body>):Project{Project{types:original->types,declarations:original->declarations,bodies:value,functions:original->functions,entry:original->entry,moduleOrder:original->moduleOrder,obligations:original->obligations}};
+let withBodyBlocks:Function(Body,Paged<Block>):Body=function(original:Body,value:Paged<Block>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:original->slots,blocks:value,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:original->tries}};
+let withBodySlots:Function(Body,Paged<Slot>):Body=function(original:Body,value:Paged<Slot>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:value,blocks:original->blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:original->tries}};
+let withBodyOccurrences:Function(Body,Paged<Occurrence>):Body=function(original:Body,value:Paged<Occurrence>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:original->slots,blocks:original->blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:value,tries:original->tries}};
+let withBodyTries:Function(Body,List<TrySite>):Body=function(original:Body,value:List<TrySite>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:original->slots,blocks:original->blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:value}};
+let withOperationInteger:Function(Operation,Int):Operation=function(original:Operation,value:Int):Operation{Operation{code:original->code,output:original->output,inputs:original->inputs,unavailable:original->unavailable,symbol:original->symbol,target:original->target,arguments:original->arguments,mapping:original->mapping,integer:value,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+let withOperationInputs:Function(Operation,List<Int>):Operation=function(original:Operation,value:List<Int>):Operation{Operation{code:original->code,output:original->output,inputs:value,unavailable:original->unavailable,symbol:original->symbol,target:original->target,arguments:original->arguments,mapping:original->mapping,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+let withOperationTarget:Function(Operation,Parent):Operation=function(original:Operation,value:Parent):Operation{Operation{code:original->code,output:original->output,inputs:original->inputs,unavailable:original->unavailable,symbol:original->symbol,target:value,arguments:original->arguments,mapping:original->mapping,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+
+let reverseSlots:Function(List<Int>,Int):List<Int>=function(values:List<Int>,count:Int):List<Int>{var result:List<Int>=List<Int>[];loop over(values as value:Int){result=result->append(count-1-value);};result};
+let reorder:Function(Project):Result<Project,Diagnostic>=function(original:Project):Result<Project,Diagnostic>{
+ var bodies:Paged<Body>=empty<Body>();
+ loop over(original->bodies->pages->append(original->bodies->tail) as page:List<Body>){loop over(page as body:Body){
+  var slots:Paged<Slot>=empty<Slot>();var slotIndex:Int=body->slots->count;loop while(slotIndex>0){slotIndex=slotIndex-1;slots=push<Slot>(slots,try lookup<Slot>(body->slots,slotIndex));};
+  var blocks:Paged<Block>=empty<Block>();var blockIndex:Int=body->blocks->count;
+  loop while(blockIndex>0){blockIndex=blockIndex-1;let block:Block=try lookup<Block>(body->blocks,blockIndex);var operations:List<Operation>=List<Operation>[];
+   loop over(block->operations as op:Operation){operations=operations->append(Operation{code:op->code,output:reverseParent(op->output,body->slots->count),inputs:reverseSlots(op->inputs,body->slots->count),unavailable:op->unavailable,symbol:op->symbol,target:op->target,arguments:op->arguments,mapping:op->mapping,integer:op->integer,minimum:op->minimum,wide:op->wide,text:op->text,origin:op->origin});};
+   let end:Terminator=block->terminator;blocks=push<Block>(blocks,Block{operations:operations,terminator:Terminator{code:end->code,inputs:reverseSlots(end->inputs,body->slots->count),targets:reverseSlots(end->targets,body->blocks->count),variants:end->variants,sumType:end->sumType,origin:end->origin}});
+  };
+  var occurrences:Paged<Occurrence>=empty<Occurrence>();loop over(body->occurrences->pages->append(body->occurrences->tail) as entries:List<Occurrence>){loop over(entries as entry:Occurrence){occurrences=push<Occurrence>(occurrences,Occurrence{node:entry->node,entry:body->blocks->count-1-entry->entry,exit:body->blocks->count-1-entry->exit,output:reverseParent(entry->output,body->slots->count)});};};
+  var tries:List<TrySite>=List<TrySite>[];loop over(body->tries as site:TrySite){tries=tries->append(TrySite{node:site->node,owner:site->owner,operandType:site->operandType,returnType:site->returnType,errorType:site->errorType,dispatch:reverseParent(site->dispatch,body->blocks->count),ok:reverseParent(site->ok,body->blocks->count),err:reverseParent(site->err,body->blocks->count),payload:reverseParent(site->payload,body->slots->count),returned:reverseParent(site->returned,body->slots->count)});};
+  bodies=push<Body>(bodies,Body{declaration:body->declaration,functionOwner:body->functionOwner,root:body->root,resultType:body->resultType,slots:slots,blocks:blocks,parameters:reverseSlots(body->parameters,body->slots->count),captures:reverseSlots(body->captures,body->slots->count),entry:body->blocks->count-1-body->entry,occurrences:occurrences,tries:tries});
+ };};Result<Project,Diagnostic>::Ok(withProjectBodies(original,bodies))
+};
+let mutate:Function(Project,Int):Result<Project,Diagnostic>=function(original:Project,mutation:Int):Result<Project,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ branch when{mutation==0=>{return Result<Project,Diagnostic>::Ok(withProjectBodies(original,empty<Body>()));},
+ mutation==1=>{return Result<Project,Diagnostic>::Ok(Project{types:original->types,declarations:empty<Declaration>(),bodies:original->bodies,functions:original->functions,entry:original->entry,moduleOrder:original->moduleOrder,obligations:original->obligations});},
+ mutation==2=>{let store:Store=original->types;let types:Store=Store{headers:store->headers,types:empty<Type>(),buckets:store->buckets,declarations:store->declarations,constraints:store->constraints};return Result<Project,Diagnostic>::Ok(Project{types:types,declarations:original->declarations,bodies:original->bodies,functions:original->functions,entry:original->entry,moduleOrder:original->moduleOrder,obligations:original->obligations});},
+ mutation==3=>{return Result<Project,Diagnostic>::Ok(Project{types:original->types,declarations:original->declarations,bodies:original->bodies,functions:empty<Int>(),entry:original->entry,moduleOrder:original->moduleOrder,obligations:original->obligations});},
+ mutation==4=>{try require(original->obligations->length()>0,span,"test requires symbolic obligations");return Result<Project,Diagnostic>::Ok(Project{types:original->types,declarations:original->declarations,bodies:original->bodies,functions:original->functions,entry:original->entry,moduleOrder:original->moduleOrder,obligations:List<Obligation>[]});},else=>unit};
+ var bodyIndex:Int=0;
+ loop over(original->bodies->pages->append(original->bodies->tail) as page:List<Body>){loop over(page as body:Body){
+  branch when{mutation==5=>{return Result<Project,Diagnostic>::Ok(withProjectBodies(original,try replaceItem<Body>(original->bodies,bodyIndex,withBodyOccurrences(body,empty<Occurrence>()))));},
+  mutation==6&&body->tries->length()>0=>{return Result<Project,Diagnostic>::Ok(withProjectBodies(original,try replaceItem<Body>(original->bodies,bodyIndex,withBodyTries(body,List<TrySite>[]))));},else=>unit};
+  var blockIndex:Int=0;loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   var operations:List<Operation>=List<Operation>[];var changed:Bool=false;
+   loop over(block->operations as op:Operation){var updated:Operation=op;var omit:Bool=false;
+    branch when{!changed&&op->code=="integer"&&(mutation==7||mutation==8||mutation==9)=>{
+     branch when{mutation==7=>{updated=withOperationInteger(op,op->integer+1);},mutation==8=>{omit=true;},else=>{
+      let slotId:Int=try present(op->output,span,"test literal destination");let slot:Slot=try lookup<Slot>(body->slots,slotId);let slots:Paged<Slot>=try replaceItem<Slot>(body->slots,slotId,Slot{valueType:2,kind:slot->kind,symbol:slot->symbol});
+      return Result<Project,Diagnostic>::Ok(withProjectBodies(original,try replaceItem<Body>(original->bodies,bodyIndex,withBodySlots(body,slots))));
+     }};changed=true;
+    },!changed&&mutation==10&&op->code=="add"=>{updated=withOperationInputs(op,List<Int>[]);changed=true;},
+    !changed&&mutation==11&&op->code=="function"&&op->mapping->length()>0=>{updated=Operation{code:op->code,output:op->output,inputs:List<Int>[],unavailable:op->unavailable,symbol:op->symbol,target:op->target,arguments:op->arguments,mapping:List<Int>[],integer:op->integer,minimum:op->minimum,wide:op->wide,text:op->text,origin:op->origin};changed=true;},
+    !changed&&mutation==12&&op->code=="variant"&&body->tries->length()>0=>{
+     let site:TrySite=try atList<TrySite>(body->tries,0);
+     branch when{op->origin->node==site->node=>{updated=withOperationTarget(op,Parent::Some(1));changed=true;},else=>unit};
+    },else=>unit};
+    branch when{!omit=>{operations=operations->append(updated);},else=>unit};
+   };
+   branch when{changed=>{let updatedBlocks:Paged<Block>=try replaceItem<Block>(body->blocks,blockIndex,Block{operations:operations,terminator:block->terminator});return Result<Project,Diagnostic>::Ok(withProjectBodies(original,try replaceItem<Body>(original->bodies,bodyIndex,withBodyBlocks(body,updatedBlocks))));},else=>unit};blockIndex=blockIndex+1;
+  };};bodyIndex=bodyIndex+1;
+ };};try require(false,span,"mutation did not find its target");Result<Project,Diagnostic>::Ok(original)
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let unitSource:SourceUnit=SourceUnit{path:"whole.mgn",displayPath:"whole.mgn",relativePath:"whole.mgn",expectedNamespace:"",text:"namespace App;\nuse Std\\Numeric\\{Bits};\ntemplate numeric<N:Int>=function():Bits<N>{Bits<N>{255}};\ntype Failure=sum{Failed(String);};\nvar shared:Int=1;\nlet helper:Function():Int=function():Int{shared};\nlet changed:Unit={shared=2;};\nlet convert:Function(Result<String,Failure>):Result<Int,Failure>=function(input:Result<String,Failure>):Result<Int,Failure>{let text:String=try input;Result<Int,Failure>::Ok(text->length())};\nlet unused:Function():Int=function():Int{88};\nlet main:Function(List<String>):Int=function(args:List<String>):Int{\n let nested:Function():Function():Int=function():Function():Int{function():Int{shared}};\n var count:Int=0;loop while(count<2){count=count+1;};\n discard convert(Result<String,Failure>::Err(Failure::Failed(\"kept\")));\n branch on Result<Int,Failure>::Ok(count){Result<Int,Failure>::Ok(value:Int)=>value,Result<Int,Failure>::Err(error:Failure)=>0}\n};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[unitSource]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let valid:Project=try lower(semantic);try verify(semantic,valid);try verify(semantic,try reorder(valid));
+ let permuted:SemanticProject=try renumber(semantic);try verify(permuted,try lower(permuted));
+ let expected:List<String>=List<String>["body membership count","project membership","type table membership","project membership","symbolic obligation count","missing root occurrence","missing TrySite","literal magnitude","missing or duplicate lowered operation","occurrence result slot","source operand","closure capture completeness","try owner Err descriptor"];
+ var mutation:Int=0;loop while(mutation<13){
+  let invalid:Project=try mutate(valid,mutation);
+  branch on verify(semantic,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,Span{start:0,end:0,line:1,column:1},"accepted mutant");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+   let detector:String=try atList<String>(expected,mutation);
+   branch when{error->phase!="internal"||!contains(error->message,detector)=>{discard writeStdout("mutant "+number(mutation)+" detector: "+error->message+"\n");try require(false,error->span,"wrong mutation detector");},else=>unit};
+   discard writeStdout("V160_MUTANT "+number(mutation)+" rejected "+detector+"\n");
+  }};mutation=mutation+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_WHOLE_IR_OK valid=3 rejected=13\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}
+};

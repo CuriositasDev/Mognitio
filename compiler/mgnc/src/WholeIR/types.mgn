@@ -1,0 +1,17 @@
+namespace Mgnc\WholeIR;
+use Mgnc\Data\{Paged,Span};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Structure,Argument,Obligation};
+use Mgnc\MathValue\{Integer};
+// A Unicode escape is already a scalar value; text runs retain decoded scalars.
+public type TextPart=sum{Text(String);Scalar(Int);};
+public type Origin=product{node:Int;file:Int;span:Span;};
+public type Slot=product{valueType:Int;kind:Int;symbol:Parent;};
+public type Operation=product{code:String;output:Parent;inputs:List<Int>;unavailable:List<Int>;symbol:Parent;target:Parent;arguments:List<Argument>;mapping:List<Int>;integer:Int;minimum:Bool;wide:List<Integer>;text:List<TextPart>;origin:Origin;};
+public type Terminator=product{code:String;inputs:List<Int>;targets:List<Int>;variants:List<Int>;sumType:Parent;origin:Origin;};
+public type Block=product{operations:List<Operation>;terminator:Terminator;};
+public type Occurrence=product{node:Int;entry:Int;exit:Int;output:Parent;};
+public type TrySite=product{node:Int;owner:Int;operandType:Int;returnType:Int;errorType:Int;dispatch:Parent;ok:Parent;err:Parent;payload:Parent;returned:Parent;};
+public type Body=product{declaration:Parent;functionOwner:Parent;root:Int;resultType:Int;slots:Paged<Slot>;blocks:Paged<Block>;parameters:List<Int>;captures:List<Int>;entry:Int;occurrences:Paged<Occurrence>;tries:List<TrySite>;};
+public type Declaration=product{source:Int;file:Int;kind:Int;valueType:Parent;body:Parent;};
+public type Project=product{types:Store;declarations:Paged<Declaration>;bodies:Paged<Body>;functions:Paged<Int>;entry:Int;moduleOrder:List<Int>;obligations:List<Obligation>;};

@@ -1,6 +1,6 @@
 # Experimental native compiler
 
-This source project implements the Mognitio 1.5 compiler, mgnc.
+This source project contains the Mognitio 1.5 compiler, mgnc, and ongoing 1.6 work.
 It remains experimental and is not included in the regular Debian package,
 APT repository, or installer bundle. The corrected implementation and formal
 performance results are accepted for 1.5.0; see the
@@ -26,6 +26,8 @@ The existing frozen bundle must not be regenerated or replaced silently.
 /new/output/mgnc parse path/to/source.mgn
 /new/output/mgnc check path/to/source.mgn
 /new/output/mgnc check path/to/mognitio.toml
+/new/output/mgnc lower path/to/source.mgn
+/new/output/mgnc lower path/to/mognitio.toml
 /new/output/mgnc build path/to/source.mgn -o path/to/new-artifact
 path/to/new-artifact argument
 ~~~
@@ -39,6 +41,15 @@ control flow, and entry types. A project check includes every eligible source,
 including unused modules and bodies. Project input rejects symlink entries and
 duplicate file identities according to the v1.5 input-protection contract.
 Check does not evaluate initializers, execute main, or write output files.
+
+Lower transforms the complete semantic result into typed slot operations and
+control-flow graphs, including unused bodies, nested functions, templates and
+unreachable operands. Independent checks cover source membership, resolved
+identities, operand order, lexical captures, definite assignment, current-value
+variant guards and owner-typed Result reconstruction. Lower accepts the same
+single-file and project inputs as check and neither evaluates user code nor
+writes an artifact. This command is part of the ongoing 1.6 work; it does not
+establish completion of the expanded native backend or performance acceptance.
 
 Build consumes the same complete semantic result, then selects the existing
 native subset: a single file with typed scalar helpers and main, direct calls,

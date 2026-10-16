@@ -1,0 +1,40 @@
+{
+  "compiler_commit": "25d72e550843f089d35d81b7ad177f439fe77119",
+  "normal_suite": {
+    "groups": 238,
+    "assertions": 605763,
+    "processes": 1322,
+    "python_integrations": "Passed"
+  },
+  "low_reserve": {
+    "allocations": 121605,
+    "default": {
+      "collections": 5,
+      "mapped_bytes": 2097152
+    },
+    "fixed_1mib": {
+      "collections": 4763,
+      "mapped_bytes": 1048576
+    }
+  },
+  "large_live": {
+    "allocations": 3000002,
+    "default": {
+      "collections": 20,
+      "mapped_bytes": 149082112
+    },
+    "fixed_1mib": {
+      "collections": 178,
+      "mapped_bytes": 96468992
+    }
+  },
+  "mmap_fault_ordinals": {
+    "1": "AllocationFailure",
+    "2": "AllocationFailure",
+    "3": "SuccessfulReuse",
+    "4": "AllocationFailure"
+  },
+  "new_frozen_seed": "Pending",
+  "whole_project_acceptance": "Pending",
+  "formal_performance": "NotRun"
+}

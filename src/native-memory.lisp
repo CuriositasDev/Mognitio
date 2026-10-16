@@ -90,6 +90,15 @@
           (:test) (:jnz :found)
           ;; One bounded arena extension, after one failed retry.
           (:load-frame :rax -8) (:add-imm :rax 32) (:jb :allocation-failed))
+        ;; Preserve the small-heap minimum. Large live heaps need reserve space
+        ;; proportional to their size, instead of collecting after every 1 MiB.
+        ;; Explicit test geometry and caps retain the requested fixed unit.
+        (unless (or (option :arena-unit) cap)
+          `((:mov-reg :r8 :rax) (:load-word :rax :r15 ,+mapped-bytes+)
+            (:imm-rcx 4) (:imm-rdx 0) (:div-rcx)
+            (:cmp-imm :rax 16777216) (:jbe :growth-clamped) (:imm-rax 16777216)
+            (:label :growth-clamped) (:cmp-reg :rax :r8) (:jae :growth-sized)
+            (:mov-reg :rax :r8) (:label :growth-sized)))
         `((:cmp-imm :rax ,unit) (:jae :round) (:imm-rax ,unit)
           (:label :round) (:load-word :rcx :r15 ,+page-size+)
           (:mov-reg :rdx :rcx) (:add-imm :rdx -1) (:add-reg :rax :rdx) (:jb :allocation-failed)

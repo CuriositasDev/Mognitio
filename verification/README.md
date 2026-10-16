@@ -115,3 +115,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [Small allocation search cursors](v1.6.0-fit-cursors.md): first-fit preserving search reuse for compiler-scale workloads.
 
 - [v1.6 replacement bootstrap seed](v1.6.0-seed3.md): immutable replacement identity and capability evidence.
+
+- [v1.6 large-live-heap arena growth](v1.6.0-arena-growth.md): reserve policy and independent collection-count regression.

@@ -19,6 +19,8 @@ def verify(root):
     return record
 
 def freeze(a):
+    if not (1 <= a.dynamic_space_mib <= 1048576 and 1 <= a.control_stack_mib <= 1024):
+        raise ValueError("Seed execution capacities are positive MiB within supported bounds")
     repo=a.repository.resolve()
     commit=subprocess.check_output(["git","rev-parse",a.commit+"^{commit}"],cwd=repo,text=True).strip()
     evidence=a.acceptance_evidence or ["verification/v1.5.0-lisp.md","verification/v1.5.0-lisp/diagnostic-cumulative-ubuntu26.txt"]
@@ -74,6 +76,7 @@ mgn_launch() {
     for argument do printf '%s\\000' "$argument"; done
 } | mgn_launch
 """.replace("ROOTPATH","$"+"{0%/*}")
+        launcher=launcher.replace(' --core ',f' --dynamic-space-size {a.dynamic_space_mib} --control-stack-size {a.control_stack_mib} --core ')
         (root/"bin/mgn").write_text(launcher);(root/"bin/mgn").chmod(0o755)
         shutil.copy2(__file__,root/"freeze-seed.py")
         dump(root/"acceptance.json",{"sourceCommit":commit,"acceptedDate":a.accepted_date,
@@ -87,7 +90,9 @@ mgn_launch() {
         ident=json.loads((root/"artifact/identity.json").read_text())
         normalized=[x.replace(str(runtime),"<runtime>").replace(str(work),"<staging>") for x in command]
         dump(root/"manifest.json",{"schema":1,"sourceCommit":commit,"docsRevision":a.docs_revision,
-             "target":"linux-amd64","acceptance":"acceptance.json","payloadIdentity":ident["build"],"seedEntry":"bin/mgn",
+             "target":"linux-amd64","acceptance":"acceptance.json",
+             "executionCapacity":{"dynamicSpaceMiB":a.dynamic_space_mib,"controlStackMiB":a.control_stack_mib,
+                "scope":"Host Lisp seed process only; not generated native heap or performance acceptance"},"payloadIdentity":ident["build"],"seedEntry":"bin/mgn",
              "build":{"cwd":"source","command":normalized,"env":{"SBCL_HOME":"<runtime>/usr/lib/sbcl",
                 "GIT_DIR":"<repository>/.git","GIT_WORK_TREE":"source"},
                 "python":subprocess.check_output(["python3","--version"],text=True).strip(),"kernel":os.uname().release},
@@ -108,6 +113,8 @@ if __name__=="__main__":
     p.add_argument("--acceptance-evidence",action="append",help="Repository-relative accepted evidence; repeat for multiple records")
     for key in ("repository","runtime-root","system-root","output"): p.add_argument("--"+key,type=Path)
     for key in ("commit","docs-revision","accepted-date","image-digest"): p.add_argument("--"+key)
+    p.add_argument("--dynamic-space-mib",type=int,default=4096,help="Frozen host Lisp dynamic-space capacity in MiB")
+    p.add_argument("--control-stack-mib",type=int,default=64,help="Frozen host Lisp control-stack capacity in MiB")
     args=p.parse_args()
     if args.verify: print("SEED_COMPONENTS_OK "+verify(args.verify)["sourceCommit"])
     else: freeze(args)

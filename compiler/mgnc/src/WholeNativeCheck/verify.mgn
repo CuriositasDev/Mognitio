@@ -1,0 +1,96 @@
+namespace Mgnc\WholeNativeCheck;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Paged,Diagnostic,Span,lookup,empty,push};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{Symbol};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Introduction};
+use Mgnc\TypeData\{Type};
+use Mgnc\WholeIR\{Project,Body,Block,Operation};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeNativeData\{Native,Procedure,Global,Literal,Constructor};
+use Mgnc\WholeRootCheck\{verify as roots};
+use Mgnc\WholeClosureCheck\{verify as closures};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\WholeLayout\{Descriptor};
+use Mgnc\WholeLiteralCheck\{verify as literal};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+use Mgnc\Facts\{at as wordAt,mask};
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{
+ branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){branch on right->at(index){Result<Int,IndexError>::Ok(other:Int)=>{branch when{value!=other=>{return false;},else=>unit};},Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};index=index+1;};true
+};
+let claim:Function(Map,Int,Int,Span):Result<Map,Diagnostic>=function(labels:Map,id:Int,limit:Int,span:Span):Result<Map,Diagnostic>{
+ try require(id>=256&&id<limit&&(try get(labels,id))<0,span,"native label ownership");put(labels,id,1)
+};
+let global:Function(SemanticProject,Native,Int,Span):Result<Int,Diagnostic>=function(semantic:SemanticProject,plan:Native,symbolId:Int,span:Span):Result<Int,Diagnostic>{
+ let symbol:Symbol=try lookup<Symbol>(semantic->state->symbols,symbolId);let declaration:Int=try present(symbol->declaration,span,"global source declaration");let cell:Int=try get(plan->globalSymbols,symbolId);try require(cell>=0,span,"missing native global symbol");let value:Global=try lookup<Global>(plan->globals,cell);
+ try require(value->declaration==declaration&&value->valueType==symbol->valueType&&(try get(plan->globalDeclarations,declaration))==cell,span,"global alias identity");Result<Int,Diagnostic>::Ok(cell)
+};
+// Independently inspect each plan table after concrete/source correspondence.
+public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Native):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let headers:Headers=semantic->state->types->headers;
+ try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
+ try require(plan->procedures->count==plan->concrete->instances->count&&plan->moduleCount==headers->modules->count,span,"native procedure/module membership");
+ var labels:Map=create();var used:Map=create();var owner:Int=0;var literalCount:Int=0;var constructorCount:Int=0;
+ loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+  let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);try roots(plan->concrete->types,instance->body,procedure->frame);
+  labels=try claim(labels,procedure->endLabel,plan->nextLabel,span);labels=try claim(labels,procedure->entry,plan->nextLabel,span);labels=try claim(labels,procedure->entryRoots,plan->nextLabel,span);
+  try require(procedure->pointLabels->count==procedure->frame->points->count,span,"root label membership");
+  loop over(procedure->pointLabels->pages->append(procedure->pointLabels->tail) as points:List<Int>){loop over(points as point:Int){labels=try claim(labels,point,plan->nextLabel,span);};};
+  try require(procedure->operationLabels->count==instance->body->blocks->count&&procedure->terminatorLabels->count==instance->body->blocks->count,span,"machine source block labels");
+  var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   labels=try claim(labels,procedure->blocks+blockId,plan->nextLabel,span);var operationId:Int=0;
+   let operationLabels:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);try require(operationLabels->length()==block->operations->length(),span,"machine source operation labels");loop over(operationLabels as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};labels=try claim(labels,try lookup<Int>(procedure->terminatorLabels,blockId),plan->nextLabel,span);
+
+   loop over(block->operations as op:Operation){
+    branch when{op->code=="global-load"||op->code=="global-store"=>{let id:Int=try global(semantic,plan,try present(op->symbol,span,"global operation"),span);used=try put(used,id,1);},else=>unit};
+    branch when{op->code=="string"=>{
+     var found:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{try literal(op->text,entry->bytes,entry->scalars,span);found=found+1;},else=>unit};};};try require(found==1,span,"literal source membership");literalCount=literalCount+1;
+    },op->code=="function"||op->code=="list"=>{
+     var found:Int=0;loop over(plan->constructors->pages->append(plan->constructors->tail) as entries:List<Constructor>){loop over(entries as entry:Constructor){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{found=found+1;},else=>unit};};};try require(found==1,span,"constructor source membership");constructorCount=constructorCount+1;
+    },else=>unit};operationId=operationId+1;
+   };blockId=blockId+1;
+  };};owner=owner+1;
+ };};
+ try require(plan->constructors->count==constructorCount&&plan->literals->count==literalCount+3,span,"constructor/literal completeness");
+ loop over(plan->constructors->pages->append(plan->constructors->tail) as entries:List<Constructor>){loop over(entries as entry:Constructor){labels=try claim(labels,entry->entry,plan->nextLabel,span);labels=try claim(labels,entry->roots,plan->nextLabel,span);};};
+ var stream:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){
+  branch when{entry->instance>=0=>{labels=try claim(labels,entry->label,plan->nextLabel,span);},else=>{
+   let expected:List<Int>=branch when{stream==0=>List<Int>[115,116,100,105,110],stream==1=>List<Int>[115,116,100,111,117,116],else=>List<Int>[115,116,100,101,114,114]};
+   try require(stream<3&&entry->instance== -1&&entry->block== -1&&entry->operation==stream&&entry->label==140+stream&&entry->scalars==expected->length()&&same(entry->bytes,expected),span,"standard stream literal");stream=stream+1;
+  }};try require(entry->scalars>=0&&entry->scalars<=entry->bytes->length()&&entry->bytes->length()<=9223372036854775760,span,"literal extent");
+  loop over(entry->bytes as byte:Int){try require(byte>=0&&byte<=255,span,"literal byte");};
+ };};try require(stream==3,span,"stream literal completeness");
+ try require(plan->descriptors->count==plan->layouts->descriptors->count&&plan->variants->count==plan->descriptors->count,span,"descriptor label membership");
+ loop over(plan->descriptors->pages->append(plan->descriptors->tail) as entries:List<Int>){loop over(entries as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};};
+ var descriptorId:Int=0;loop over(plan->variants->pages->append(plan->variants->tail) as pages:List<List<Int>>){loop over(pages as entries:List<Int>){try require(entries->length()==(try lookup<Descriptor>(plan->layouts->descriptors,descriptorId))->variants->length(),span,"descriptor variant label membership");descriptorId=descriptorId+1;loop over(entries as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};};};
+ // Reconstruct entry dependency closure by repeated edge propagation, independently
+ // from the producer's queue. Type-only and unused imports are included.
+ var reachable:Map=try put(create(),headers->input->entry,1);var changed:Bool=true;
+ loop while(changed){changed=false;loop over(headers->names->pages->append(headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){branch when{name->imported&&(try get(reachable,name->file))>=0=>{
+  let target:Int=(try lookup<Declaration>(headers->declarations,name->declaration))->file;branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,1);changed=true;},else=>unit};
+ },else=>unit};};};};
+ var modules:List<Int>=List<Int>[];var initializers:List<Int>=List<Int>[];
+ loop over(headers->order as file:Int){let module:Module=try lookup<Module>(headers->modules,file);branch when{module->standard||(try get(reachable,file))<0=>{continue;},else=>unit};modules=modules->append(file);
+  loop over(module->declarations as declaration:Int){let declared:Declaration=try lookup<Declaration>(headers->declarations,declaration);branch when{declared->kind!=4&&declared->kind!=5=>{continue;},else=>unit};
+   var match:Int= -1;var id:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+    let isInitializer:Bool=branch on instance->body->functionOwner{Parent::None=>true,Parent::Some(value:Int)=>false};let sameDeclaration:Bool=branch on instance->body->declaration{Parent::Some(value:Int)=>value==declaration,Parent::None=>false};
+    branch when{isInitializer&&sameDeclaration&&instance->key->bindings->length()==0=>{try require(match<0,span,"duplicate initializer instance");match=id;},else=>unit};id=id+1;
+   };};try require(match>=0,span,"missing module initializer");initializers=initializers->append(match);
+  };
+ };
+ try require(same(modules,plan->modules)&&same(initializers,plan->initializers),span,"runtime module initialization order");
+ // All concrete initializer cells are retained, including non-runtime modules.
+ loop over(plan->concrete->initializers as id:Int){let instance:Instance=try lookup<Instance>(plan->concrete->instances,id);let declaration:Int=try present(instance->body->declaration,span,"initializer declaration");let symbolId:Int=try present(try lookup<Parent>(semantic->state->globals,declaration),span,"initializer symbol");let cell:Int=try global(semantic,plan,symbolId,span);used=try put(used,cell,1);};
+ var declarations:Map=create();var index:Int=0;try require(plan->globalRoots->length()==(plan->globals->count+63)/64,span,"global root shape");
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){
+  try require((try get(used,index))>=0&&(try get(declarations,value->declaration))<0,span,"extra or duplicated global cell");declarations=try put(declarations,value->declaration,index);
+  try require((try global(semantic,plan,value->symbol,span))==index,span,"global representative symbol");let declaration:Declaration=try lookup<Declaration>(headers->declarations,value->declaration);let module:Module=try lookup<Module>(headers->modules,declaration->file);try require(value->standard==branch when{module->standard=>declaration->name,else=>""},span,"global standard origin");
+  let kind:Int=(try lookup<Type>(plan->concrete->types->types,value->valueType))->kind;let selected:Bool=(try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))!=Bits<64>{0};try require(selected==(kind>=3),span,"global root type");index=index+1;
+ };};
+ loop while(index<plan->globalRoots->length()*64){try require((try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))==Bits<64>{0},span,"global root padding");index=index+1;};
+ try require(plan->entryGlobal>=0&&(try lookup<Global>(plan->globals,plan->entryGlobal))->declaration==semantic->entry&&source->entry==semantic->entry,span,"native main identity");
+ Result<Unit,Diagnostic>::Ok(unit)
+};

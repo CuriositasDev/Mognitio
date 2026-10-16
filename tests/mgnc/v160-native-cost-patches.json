@@ -1,0 +1,80 @@
+[
+  {
+    "path": "src/WholeNativeCollections/collections.mgn",
+    "match": "code=load(code,0,12,branch when{shape->kind==3=>32,else=>24});",
+    "replacement": "code=raw(code,List<Int>[204,1]);code=load(code,0,12,branch when{shape->kind==3=>32,else=>24});",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeCollections/collections.mgn",
+    "match": "code=load(code,13,12,24);code=label(code,length);code=constant(code,0,13,1);",
+    "replacement": "code=raw(code,List<Int>[204,3]);code=load(code,13,12,24);code=label(code,length);code=constant(code,0,13,1);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeCollections/collections.mgn",
+    "match": "code=immediate(code,7,48);code=immediate(code,6,descriptor);",
+    "replacement": "code=raw(code,List<Int>[204,2]);code=immediate(code,7,48);code=immediate(code,6,descriptor);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeCollections/collections.mgn",
+    "match": "code=label(code,fill);code=constant(code,5,10,1);",
+    "replacement": "code=label(code,fill);code=raw(code,List<Int>[204,5]);code=constant(code,5,10,1);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeCollections/collections.mgn",
+    "match": "name==\"iterator-next\"=>{\n  code=load",
+    "replacement": "name==\"iterator-next\"=>{\n  code=raw(code,List<Int>[204,6]);code=load",
+    "count": 1
+  },
+  {
+    "path": "src/WholeBounds/bounds.mgn",
+    "match": "code=load(code,12,12,32);",
+    "replacement": "code=raw(code,List<Int>[204,4]);code=load(code,12,12,32);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=label(code,fragment);code=load(code,9,8,40);",
+    "replacement": "code=label(code,fragment);code=raw(code,List<Int>[204,11]);code=load(code,9,8,40);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=label(code,copy);code=load(code,9,8,40);",
+    "replacement": "code=label(code,copy);code=raw(code,List<Int>[204,12]);code=load(code,9,8,40);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=mov(code,1,10);code=raw(code,List<Int>[243,164]);",
+    "replacement": "code=mov(code,1,10);code=raw(code,List<Int>[204,13]);code=raw(code,List<Int>[243,164]);",
+    "count": 2
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=byteLoad(code,0,2,40);",
+    "replacement": "code=raw(code,List<Int>[204,7]);code=byteLoad(code,0,2,40);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=label(code,allocate);code=mov(code,7,14);",
+    "replacement": "code=label(code,allocate);code=raw(code,List<Int>[204,9]);code=mov(code,7,14);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=mov(code,1,14);code=raw(code,List<Int>[243,164]);",
+    "replacement": "code=mov(code,1,14);code=raw(code,List<Int>[204,8]);code=raw(code,List<Int>[243,164]);",
+    "count": 1
+  },
+  {
+    "path": "src/WholeText/text.mgn",
+    "match": "code=immediate(code,7,48);",
+    "replacement": "code=raw(code,List<Int>[204,10]);code=immediate(code,7,48);",
+    "count": 1
+  }
+]

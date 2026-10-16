@@ -1,0 +1,41 @@
+namespace Mgnc\WholeNativeTables;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Span,Diagnostic,lookup};
+use Mgnc\Machine\{Code,Record,label,field,reference,raw};
+use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel};
+use Mgnc\WholeLayout\{Descriptor};
+use Mgnc\WholeFrameData\{Point};
+use Mgnc\IntMap\{get};
+use Mgnc\Tables\{atList};
+use Mgnc\Facts\{mask};
+use Mgnc\WholeChecks\{require};
+public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=function(initial:Code,count:Int,words:List<Bits<64>>):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var code:Code=field(initial,4,count);
+ loop over(words as word:Bits<64>){var bit:Int=0;var value:Int=0;var power:Int=1;loop while(bit<64){
+  branch when{word->and(try mask(bit,span))!=Bits<64>{0}=>{value=value+power;},else=>unit};bit=bit+1;power=power*2;
+  branch when{bit%8==0=>{code=raw(code,List<Int>[value]);value=0;power=1;},else=>unit};
+ };};Result<Code,Diagnostic>::Ok(code)
+};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){loop over(page as record:Record){extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};
+ var code:Code=initial;loop while(extent%8!=0){code=raw(code,List<Int>[0]);extent=extent+1;};code=label(code,descriptorTableLabel);
+ loop over(plan->descriptors->pages->append(plan->descriptors->tail) as page:List<Int>){loop over(page as target:Int){code=reference(code,5,target);};};
+ var index:Int=0;loop over(plan->layouts->descriptors->pages->append(plan->layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
+  code=label(code,try lookup<Int>(plan->descriptors,index));let rows:List<Int>=try lookup<List<Int>>(plan->variants,index);index=index+1;
+  loop over(List<Int>[descriptor->mode,descriptor->size,descriptor->references->length(),descriptor->variants->length(),branch when{descriptor->elementManaged=>1,else=>0}] as value:Int){code=field(code,4,value);};
+  loop over(descriptor->references as offset:Int){code=field(code,4,offset);};loop over(rows as target:Int){code=reference(code,5,target);};
+  var ordinal:Int=0;loop over(descriptor->variants as refs:List<Int>){code=label(code,try atList<Int>(rows,ordinal));ordinal=ordinal+1;code=field(code,4,refs->length());loop over(refs as offset:Int){code=field(code,4,offset);};};
+ };};
+ loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){
+  code=try bitmap(label(code,procedure->entryRoots),procedure->frame->slots,procedure->frame->entry);var pointId:Int=0;
+  loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try bitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots);pointId=pointId+1;};};
+ };};
+ code=try bitmap(label(code,globalRootsLabel),plan->globals->count,plan->globalRoots);
+ code=label(code,staticTableLabel);loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){code=reference(code,5,literal->label);};};
+ let stringDescriptor:Int=try get(plan->layouts->types,3);try require(stringDescriptor>=0,span,"native String descriptor");
+ loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){
+  let physical:Int=((40+literal->bytes->length()+7)/8)*8;code=label(code,literal->label);
+  loop over(List<Int>[physical,5,stringDescriptor,literal->bytes->length(),literal->scalars] as value:Int){code=field(code,4,value);};
+  code=raw(code,literal->bytes);var pad:Int=physical-40-literal->bytes->length();loop while(pad>0){code=raw(code,List<Int>[0]);pad=pad-1;};
+ };};Result<Code,Diagnostic>::Ok(code)
+};

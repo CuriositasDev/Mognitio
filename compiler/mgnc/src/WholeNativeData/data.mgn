@@ -1,0 +1,20 @@
+namespace Mgnc\WholeNativeData;
+use Mgnc\Data\{Paged};
+use Mgnc\WholeConcrete\{Plan};
+use Mgnc\WholeClosures\{Closures};
+use Mgnc\WholeLayout\{Layouts};
+use Mgnc\WholeFrameData\{Frame};
+use Mgnc\IntMap\{Map};
+use Std\Numeric\{Bits};
+public type Procedure=product{entry:Int;blocks:Int;entryRoots:Int;pointLabels:Paged<Int>;operationLabels:Paged<List<Int>>;terminatorLabels:Paged<Int>;endLabel:Int;frame:Frame;};
+public type Literal=product{instance:Int;block:Int;operation:Int;label:Int;bytes:List<Int>;scalars:Int;};
+public type Global=product{symbol:Int;declaration:Int;valueType:Int;standard:String;};
+public type Constructor=product{instance:Int;block:Int;operation:Int;entry:Int;roots:Int;};
+public type Native=product{
+ concrete:Plan;closures:Closures;layouts:Layouts;procedures:Paged<Procedure>;literals:Paged<Literal>;constructors:Paged<Constructor>;
+ globals:Paged<Global>;globalSymbols:Map;globalDeclarations:Map;globalRoots:List<Bits<64>>;
+ initializers:List<Int>;modules:List<Int>;moduleCount:Int;descriptors:Paged<Int>;variants:Paged<List<Int>>;entryGlobal:Int;nextLabel:Int;
+};
+public let descriptorTableLabel:Int=128;
+public let staticTableLabel:Int=129;
+public let globalRootsLabel:Int=130;

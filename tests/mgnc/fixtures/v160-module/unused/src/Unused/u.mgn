@@ -1,0 +1,1 @@
+namespace App\Unused; let value:Int=panic{"must not initialize"};

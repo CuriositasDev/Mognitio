@@ -1,0 +1,42 @@
+namespace Mgnc\WholeOutput;
+use Std\Io\{inspectPath,readTextFile,PathInfo,PathInfoError,FileIdentity,IoError};
+use Mgnc\InputData\{ProjectInput,SourceUnit,InputError,failure,fromInspection,fromIo};
+use Mgnc\Project\{project};
+use Mgnc\TextUtil\{cut,ends};
+public type Identity=product{path:String;value:FileIdentity;text:String;};
+public type Snapshot=product{files:List<Identity>;};
+public type Selected=sum{None;Some(Snapshot);};
+let inspect:Function(String):Result<PathInfo,InputError>=function(path:String):Result<PathInfo,InputError>{
+ branch on inspectPath(path){Result<PathInfo,PathInfoError>::Ok(value:PathInfo)=>Result<PathInfo,InputError>::Ok(value),Result<PathInfo,PathInfoError>::Err(error:PathInfoError)=>Result<PathInfo,InputError>::Err(fromInspection(error))}
+};
+let parent:Function(String):String=function(path:String):String{
+ var last:Int= -1;var index:Int=0;loop over(path->scalars() as scalar:String){branch when{scalar=="/"=>{last=index;},else=>unit};index=index+1;};branch when{last<0=>".",last==0=>"/",else=>cut(path,0,last)}
+};
+// Snapshot only the inputs here; output filesystem validation follows compilation.
+public let capture:Function(ProjectInput):Result<Snapshot,InputError>=function(input:ProjectInput):Result<Snapshot,InputError>{
+ var files:List<Identity>=List<Identity>[];
+ branch when{input->manifestPath!=""=>{files=files->append(Identity{path:input->manifestPath,value:(try inspect(input->manifestPath))->identity,text:input->manifestText});},else=>unit};
+ loop over(input->sources as source:SourceUnit){files=files->append(Identity{path:source->path,value:(try inspect(source->path))->identity,text:source->text});};
+ Result<Snapshot,InputError>::Ok(Snapshot{files:files})
+};
+public let verify:Function(ProjectInput,Snapshot,String):Result<Unit,InputError>=function(input:ProjectInput,snapshot:Snapshot,output:String):Result<Unit,InputError>{
+ loop over(snapshot->files as file:Identity){
+  let info:PathInfo=try inspect(file->path);let text:String=branch on readTextFile(file->path){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>{return Result<Unit,InputError>::Err(fromIo(error));}};
+  branch when{info->identity!=file->value||text!=file->text=>{return Result<Unit,InputError>::Err(failure(2,file->path,"io","compiler input changed before publication"));},else=>unit};
+ };
+ branch when{input->manifestPath!=""=>{
+  let current:ProjectInput=try project(input->manifestPath);
+  branch when{current->manifestText!=input->manifestText||current->sources->length()!=input->sources->length()=>{return Result<Unit,InputError>::Err(failure(2,input->manifestPath,"io","project membership changed before publication"));},else=>unit};
+  var index:Int=0;loop over(current->sources as source:SourceUnit){let previous:SourceUnit=branch on input->sources->at(index){Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,Result<SourceUnit,IndexError>::Err(error:IndexError)=>panic{"source membership invariant"}};
+   branch when{source->relativePath!=previous->relativePath||source->text!=previous->text=>{return Result<Unit,InputError>::Err(failure(2,source->path,"io","project input changed before publication"));},else=>unit};index=index+1;
+  };
+  branch when{ends(output,".mgn")=>{
+   let sourceRoot:FileIdentity=(try inspect(parent(input->manifestPath)+"/src/."))->identity;var directory:String=parent(output);var previous:FileIdentity=(try inspect(directory+"/."))->identity;
+   loop{
+    branch when{previous==sourceRoot=>{return Result<Unit,InputError>::Err(failure(2,output,"publication","output would enter the next project source set"));},else=>unit};
+    directory=directory+"/..";let ancestor:FileIdentity=(try inspect(directory+"/."))->identity;branch when{ancestor==previous=>{break unit;},else=>unit};previous=ancestor;
+   };
+  },else=>unit};
+ },else=>unit};
+ Result<Unit,InputError>::Ok(unit)
+};

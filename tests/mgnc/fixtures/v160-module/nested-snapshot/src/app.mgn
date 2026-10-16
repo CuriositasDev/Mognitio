@@ -1,0 +1,1 @@
+namespace App;var value:String="old";let maker:Function():Function():String=function():Function():String{function():String{value}};let changed:Unit={value="new";};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;let fn:Function():String=maker();var n:Int=0;loop while(n<30000){discard "x"+"y";n=n+1;};branch when{fn()=="old"=>0,else=>1}};

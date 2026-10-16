@@ -1,0 +1,1 @@
+namespace App\A;use App\Base\{base};public let a:Int=base+1;

@@ -1,0 +1,19 @@
+namespace Mgnc\WholeUtf8Feed;
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{mov,load,store,immediate,alu,constant,byteLoad,shift};
+// RDI bytes, RSI count, RDX four-word state. No allocation or syscall.
+// State stores pending continuation count, scalar bits, minimum, total scalars.
+public let emit:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=label(initial,45);let next:Int=code->nextLabel;let valid:Int=next+1;let invalid:Int=next+2;let continuation:Int=next+3;let scalar:Int=next+4;let advance:Int=next+5;code=fresh(code,6);
+ code=mov(code,8,7);code=mov(code,9,6);code=mov(code,10,2);
+ code=label(code,next);code=alu(code,133,9,9);code=jump(code,List<Int>[15,132],valid);code=byteLoad(code,11,8,0);code=load(code,0,10,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],continuation);code=constant(code,7,11,128);code=jump(code,List<Int>[15,130],scalar);
+ var pending:Int=1;loop while(pending<=3){
+  let low:Int=branch when{pending==1=>194,pending==2=>224,else=>240};let high:Int=branch when{pending==1=>223,pending==2=>239,else=>244};let minimum:Int=branch when{pending==1=>128,pending==2=>2048,else=>65536};let mask:Int=branch when{pending==1=>31,pending==2=>15,else=>7};
+  let following:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,11,low);code=jump(code,List<Int>[15,130],invalid);code=constant(code,7,11,high);code=jump(code,List<Int>[15,135],following);
+  code=mov(code,0,11);code=constant(code,4,0,mask);code=store(code,10,8,0);code=immediate(code,0,pending);code=store(code,10,0,0);code=immediate(code,0,minimum);code=store(code,10,16,0);code=jump(code,List<Int>[233],advance);code=label(code,following);pending=pending+1;
+ };code=jump(code,List<Int>[233],invalid);
+ code=label(code,continuation);code=constant(code,7,11,128);code=jump(code,List<Int>[15,130],invalid);code=constant(code,7,11,191);code=jump(code,List<Int>[15,135],invalid);code=load(code,0,10,8);code=shift(code,4,0,6);code=constant(code,5,11,128);code=alu(code,1,0,11);code=store(code,10,8,0);code=load(code,1,10,0);code=constant(code,5,1,1);code=store(code,10,0,1);code=jump(code,List<Int>[15,133],advance);code=load(code,1,10,16);code=alu(code,57,0,1);code=jump(code,List<Int>[15,130],invalid);code=constant(code,7,0,1114111);code=jump(code,List<Int>[15,135],invalid);code=constant(code,7,0,55296);code=jump(code,List<Int>[15,130],scalar);code=constant(code,7,0,57343);code=jump(code,List<Int>[15,134],invalid);
+ code=label(code,scalar);code=load(code,0,10,24);code=constant(code,0,0,1);code=jump(code,List<Int>[15,128],6);code=store(code,10,24,0);
+ code=label(code,advance);code=constant(code,0,8,1);code=constant(code,5,9,1);code=jump(code,List<Int>[233],next);
+ code=label(code,valid);code=immediate(code,0,0);code=raw(code,List<Int>[195]);code=label(code,invalid);code=immediate(code,0,-1);raw(code,List<Int>[195])
+};

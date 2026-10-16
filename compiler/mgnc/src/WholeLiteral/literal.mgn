@@ -1,0 +1,23 @@
+namespace Mgnc\WholeLiteral;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\WholeIR\{TextPart};
+use Mgnc\WholeUnicode\{number};
+use Mgnc\WholeChecks\{require};
+public type Encoded=product{bytes:List<Int>;scalars:Int;};
+type Cached=product{scalar:String;value:Int;};
+let append:Function(List<Int>,Int,Span):Result<List<Int>,Diagnostic>=function(initial:List<Int>,value:Int,span:Span):Result<List<Int>,Diagnostic>{
+ try require(value>=0&&value<=1114111&&!(value>=55296&&value<=57343),span,"UTF-8 scalar range");var bytes:List<Int>=initial;
+ branch when{value<128=>{bytes=bytes->append(value);},value<2048=>{bytes=bytes->append(192+value/64)->append(128+value%64);},value<65536=>{bytes=bytes->append(224+value/4096)->append(128+(value/64)%64)->append(128+value%64);},else=>{bytes=bytes->append(240+value/262144)->append(128+(value/4096)%64)->append(128+(value/64)%64)->append(128+value%64);}};
+ Result<List<Int>,Diagnostic>::Ok(bytes)
+};
+public let encode:Function(List<TextPart>,Span):Result<Encoded,Diagnostic>=function(parts:List<TextPart>,span:Span):Result<Encoded,Diagnostic>{
+ var bytes:List<Int>=List<Int>[];var count:Int=0;var cache:List<Cached>=List<Cached>[];
+ loop over(parts as part:TextPart){branch on part{
+  TextPart::Scalar(value:Int)=>{bytes=try append(bytes,value,span);count=count+1;},
+  TextPart::Text(text:String)=>{loop over(text->scalars() as scalar:String){
+   var value:Int=-1;loop over(cache as cached:Cached){branch when{cached->scalar==scalar=>{value=cached->value;break;},else=>unit};};
+   branch when{value<0=>{value=number(scalar);cache=cache->append(Cached{scalar:scalar,value:value});},else=>unit};
+   bytes=try append(bytes,value,span);count=count+1;
+  };}
+ };};Result<Encoded,Diagnostic>::Ok(Encoded{bytes:bytes,scalars:count})
+};

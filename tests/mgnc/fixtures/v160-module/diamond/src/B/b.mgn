@@ -1,0 +1,1 @@
+namespace App\B;use App\Base\{base};public let b:Int=base+2;

@@ -1,0 +1,70 @@
+namespace Mgnc\WholeNativePlan;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{Symbol};
+use Mgnc\SemanticData\{Declaration,Module,Introduction};
+use Mgnc\TypeData\{Type};
+use Mgnc\WholeIR\{Project,Body,Block,Operation};
+use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeClosures\{Closures,build as closuresPlan};
+use Mgnc\WholeLayout\{Layouts,Descriptor,build as layoutsPlan,managed};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeRoots\{build as rootsPlan};
+use Mgnc\WholeNativeData\{Native,Procedure,Literal,Global,Constructor};
+use Mgnc\WholeLiteral\{Encoded,encode};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Facts\{fromSlots};
+public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Plan):Result<Native,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let closures:Closures=try closuresPlan(plan);let layouts:Layouts=try layoutsPlan(plan,closures);let frames:Paged<Frame>=try rootsPlan(plan);
+ var next:Int=256;var descriptors:Paged<Int>=empty<Int>();var variants:Paged<List<Int>>=empty<List<Int>>();
+ loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
+  descriptors=push<Int>(descriptors,next);next=next+1;var rows:List<Int>=List<Int>[];loop over(descriptor->variants as refs:List<Int>){discard refs;rows=rows->append(next);next=next+1;};variants=push<List<Int>>(variants,rows);
+ };};
+ var constructors:Paged<Constructor>=empty<Constructor>();var procedures:Paged<Procedure>=empty<Procedure>();var literals:Paged<Literal>=empty<Literal>();var instanceId:Int=0;var neededGlobals:Map=create();
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+  let frame:Frame=try lookup<Frame>(frames,instanceId);let entry:Int=next;let blocks:Int=next+1;let entryRoots:Int=blocks+instance->body->blocks->count;next=entryRoots+1;var pointLabels:Paged<Int>=empty<Int>();
+  loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){discard point;pointLabels=push<Int>(pointLabels,next);next=next+1;};};
+  var operationLabels:Paged<List<Int>>=empty<List<Int>>();var terminatorLabels:Paged<Int>=empty<Int>();
+  loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as pages:List<Block>){loop over(pages as item:Block){
+   var entries:List<Int>=List<Int>[];loop over(item->operations as op:Operation){discard op;entries=entries->append(next);next=next+1;};operationLabels=push<List<Int>>(operationLabels,entries);terminatorLabels=push<Int>(terminatorLabels,next);next=next+1;
+  };};
+  let endLabel:Int=next;next=next+1;procedures=push<Procedure>(procedures,Procedure{entry:entry,blocks:blocks,entryRoots:entryRoots,pointLabels:pointLabels,operationLabels:operationLabels,terminatorLabels:terminatorLabels,endLabel:endLabel,frame:frame});
+  var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocksPage:List<Block>){loop over(blocksPage as block:Block){var operationId:Int=0;loop over(block->operations as operation:Operation){
+   branch when{operation->code=="function"||operation->code=="list"=>{constructors=push<Constructor>(constructors,Constructor{instance:instanceId,block:blockId,operation:operationId,entry:next,roots:next+1});next=next+2;},else=>unit};
+   branch when{operation->code=="string"=>{let encoded:Encoded=try encode(operation->text,operation->origin->span);literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:operationId,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;},
+    operation->code=="global-load"||operation->code=="global-store"=>{neededGlobals=try put(neededGlobals,try present(operation->symbol,span,"native global symbol"),1);},else=>unit};operationId=operationId+1;
+  };blockId=blockId+1;};};instanceId=instanceId+1;
+ };};
+ loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Int=try present(instance->body->declaration,span,"native initializer declaration");let symbol:Int=try present(try lookup<Parent>(semantic->state->globals,declaration),span,"native initializer symbol");neededGlobals=try put(neededGlobals,symbol,1);};
+ var globals:Paged<Global>=empty<Global>();var globalSymbols:Map=create();var globalDeclarations:Map=create();var references:List<Int>=List<Int>[];var symbolId:Int=0;
+ loop over(semantic->state->symbols->pages->append(semantic->state->symbols->tail) as page:List<Symbol>){loop over(page as symbol:Symbol){
+  branch when{(try get(neededGlobals,symbolId))>=0=>{
+   let declarationId:Int=try present(symbol->declaration,span,"native global declaration");
+   // Imported aliases share the source declaration's single runtime cell.
+   let existing:Int=try get(globalDeclarations,declarationId);branch when{existing>=0=>{globalSymbols=try put(globalSymbols,symbolId,existing);symbolId=symbolId+1;continue;},else=>unit};
+   let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,declarationId);let module:Module=try lookup<Module>(plan->types->headers->modules,declaration->file);
+   let standard:String=branch when{module->standard=>declaration->name,else=>""};
+   try require(!module->standard||(module->nameSpace=="Std\\Io"&&(standard=="readTextFile"||standard=="writeTextFile"||standard=="readStdin"||standard=="writeStdout"||standard=="writeStderr")),span,"native global standard identity");
+   branch when{try managed(plan->types,symbol->valueType)=>{references=references->append(globals->count);},else=>unit};
+   globalSymbols=try put(globalSymbols,symbolId,globals->count);globalDeclarations=try put(globalDeclarations,declarationId,globals->count);globals=push<Global>(globals,Global{symbol:symbolId,declaration:declarationId,valueType:symbol->valueType,standard:standard});
+  },else=>unit};symbolId=symbolId+1;
+ };};
+
+ // I/O subject objects are ordinary verified static String leaves.
+ var stream:Int=0;loop over(List<List<Int>>[List<Int>[115,116,100,105,110],List<Int>[115,116,100,111,117,116],List<Int>[115,116,100,101,114,114]] as bytes:List<Int>){
+  literals=push<Literal>(literals,Literal{instance:-1,block:-1,operation:stream,label:140+stream,bytes:bytes,scalars:bytes->length()});stream=stream+1;
+ };
+ // All bodies remain concrete; only entry-reachable modules run initializers.
+ var reachable:Map=create();var pending:Paged<Int>=push<Int>(empty<Int>(),plan->types->headers->input->entry);var cursor:Int=0;
+ loop while(cursor<pending->count){let file:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(reachable,file))>=0=>{continue;},else=>unit};reachable=try put(reachable,file,1);
+  loop over(plan->types->headers->names->pages->append(plan->types->headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){
+   branch when{name->imported&&name->file==file=>{pending=push<Int>(pending,(try lookup<Declaration>(plan->types->headers->declarations,name->declaration))->file);},else=>unit};
+  };};
+ };
+ var modules:List<Int>=List<Int>[];loop over(source->moduleOrder as file:Int){branch when{(try get(reachable,file))>=0&&!(try lookup<Module>(plan->types->headers->modules,file))->standard=>{modules=modules->append(file);},else=>unit};};
+ var initializers:List<Int>=List<Int>[];loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,try present(instance->body->declaration,span,"initializer source"));branch when{(try get(reachable,declaration->file))>=0=>{initializers=initializers->append(initializer);},else=>unit};};
+ let entryGlobal:Int=try get(globalDeclarations,source->entry);try require(entryGlobal>=0,span,"native entry global");
+ Result<Native,Diagnostic>::Ok(Native{concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
+};

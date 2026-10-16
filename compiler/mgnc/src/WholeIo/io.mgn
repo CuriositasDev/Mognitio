@@ -1,0 +1,92 @@
+namespace Mgnc\WholeIo;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,Span,lookup,empty};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Type,Member};
+use Mgnc\Tables\{atList};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\IntMap\{get};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end};
+use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,byteLoad,byteStore};
+use Mgnc\WholeABI\{allocateLabel,resources};
+public let operation:Function(String):Int=function(name:String):Int{
+ branch when{name=="readTextFile"=>0,name=="writeTextFile"=>1,name=="readStdin"=>2,name=="writeStdout"=>3,name=="writeStderr"=>4,else=>-1}
+};
+let descriptor:Function(Native,Int):Result<Int,Diagnostic>=function(plan:Native,id:Int):Result<Int,Diagnostic>{
+ let result:Int=try get(plan->layouts->types,id);try require(result>=0,Span{start:0,end:0,line:1,column:1},"I/O type descriptor");Result<Int,Diagnostic>::Ok(result)
+};
+let allocate:Function(Code,Int,Int,Int):Code=function(initial:Code,size:Int,desc:Int,site:Int):Code{
+ var code:Code=immediate(initial,0,site);code=store(code,3,112,0);code=immediate(code,7,size);code=immediate(code,6,desc);jump(code,List<Int>[232],allocateLabel)
+};
+let helper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let number:Int=operation(global->standard);let file:Bool=number<2;let read:Bool=number==0||number==2;
+ let signature:Type=try lookup<Type>(plan->concrete->types->types,global->valueType);let resultType:Int=try argumentType(signature,signature->arguments->length()-1,span);
+ let result:Type=try lookup<Type>(plan->concrete->types->types,resultType);let errorType:Int=try argumentType(result,1,span);let error:Type=try lookup<Type>(plan->concrete->types->types,errorType);
+ let operationType:Int=try present((try atList<Member>(error->members,0))->value,span,"I/O operation type");let kindType:Int=try present((try atList<Member>(error->members,1))->value,span,"I/O kind type");let phaseType:Int=try present((try atList<Member>(error->members,3))->value,span,"I/O phase type");
+ let resultDesc:Int=try descriptor(plan,resultType);let errorDesc:Int=try descriptor(plan,errorType);let operationDesc:Int=try descriptor(plan,operationType);let kindDesc:Int=try descriptor(plan,kindType);let phaseDesc:Int=try descriptor(plan,phaseType);let stringDesc:Int=try descriptor(plan,3);
+ let frame:Frame=Frame{slots:6,outgoing:64,extent:624,entry:List<Bits<64>>[Bits<64>{63}],points:empty<Point>()};
+ var code:Code=try begin(label(initial,50+number),frame,branch when{file&&read=>List<Int>[0],file=>List<Int>[0,1],read=>List<Int>[],else=>List<Int>[1]},List<Int>[],143);
+ // Root frame precedes ownership publication; all raw scratch is outside roots.
+ code=address(code,3,4,64);code=mov(code,7,3);code=immediate(code,0,0);code=immediate(code,1,24);code=raw(code,List<Int>[243,72,171]);code=load(code,0,15,resources);code=store(code,3,0,0);code=store(code,15,resources,3);code=immediate(code,0,-1);code=store(code,3,8,0);code=store(code,3,72,0);
+ let invalidPath:Int=code->nextLabel;let unsupported:Int=invalidPath+1;let invalidEncoding:Int=invalidPath+2;let zeroWrite:Int=invalidPath+3;let osError:Int=invalidPath+4;let close:Int=invalidPath+5;let closed:Int=invalidPath+6;let cleanup:Int=invalidPath+7;let cleaned:Int=invalidPath+8;let errorValue:Int=invalidPath+9;let ok:Int=invalidPath+10;let done:Int=invalidPath+11;let internal:Int=invalidPath+12;let resultValue:Int=invalidPath+13;code=fresh(code,14);
+ branch when{file=>{
+  let pathCheck:Int=code->nextLabel;let stat:Int=pathCheck+1;let open:Int=pathCheck+2;let fstat:Int=pathCheck+3;let truncate:Int=pathCheck+4;code=fresh(code,5);
+  code=load(code,6,5,-72);code=load(code,1,6,24);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],invalidPath);code=mov(code,14,1);code=constant(code,0,6,40);
+  code=label(code,pathCheck);code=byteLoad(code,0,6,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],invalidPath);code=constant(code,0,6,1);code=constant(code,5,1,1);code=jump(code,List<Int>[15,133],pathCheck);
+  code=mov(code,7,14);code=constant(code,0,7,1);code=jump(code,List<Int>[15,128],1);code=store(code,3,24,7);code=immediate(code,0,1);code=store(code,3,112,0);code=jump(code,List<Int>[232],60);code=store(code,3,16,0);
+  code=mov(code,7,0);code=load(code,6,5,-72);code=load(code,1,6,24);code=constant(code,0,6,40);code=raw(code,List<Int>[243,164]);code=immediate(code,0,0);code=byteStore(code,7,0,0);
+  code=immediate(code,0,1);code=store(code,3,80,0);
+  code=label(code,stat);code=immediate(code,7,-100);code=load(code,6,3,16);code=address(code,2,4,256);code=immediate(code,10,0);code=immediate(code,0,262);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],stat);
+  branch when{!read=>{code=constant(code,7,0,-2);code=jump(code,List<Int>[15,132],open);},else=>unit};
+  code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);code=load(code,0,4,280);code=constant(code,4,0,61440);code=constant(code,7,0,32768);code=jump(code,List<Int>[15,133],unsupported);
+  code=label(code,open);code=load(code,7,3,16);code=immediate(code,6,branch when{read=>526336,else=>526401});code=immediate(code,2,438);code=immediate(code,0,2);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],open);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);
+  code=store(code,3,8,0);code=mov(code,12,0);code=immediate(code,0,1);code=store(code,3,96,0);code=store(code,3,104,0);
+  code=label(code,fstat);code=mov(code,7,12);code=address(code,6,4,256);code=immediate(code,0,5);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],fstat);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);code=load(code,0,4,280);code=constant(code,4,0,61440);code=constant(code,7,0,32768);code=jump(code,List<Int>[15,133],unsupported);
+  branch when{!read=>{code=label(code,truncate);code=mov(code,7,12);code=immediate(code,6,0);code=immediate(code,0,77);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],truncate);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);},else=>unit};
+ },else=>{code=immediate(code,12,number-2);code=symbol(code,0,140+number-2);code=store(code,5,-72,0);}};
+ code=immediate(code,0,2);code=store(code,3,80,0);
+ branch when{read=>{
+  let readLoop:Int=code->nextLabel;let capacity:Int=readLoop+1;let first:Int=readLoop+2;let grow:Int=readLoop+3;let eof:Int=readLoop+4;code=fresh(code,5);
+  code=label(code,readLoop);code=load(code,0,3,120);code=constant(code,0,0,4096);code=jump(code,List<Int>[15,128],1);code=load(code,1,3,40);code=alu(code,57,0,1);code=jump(code,List<Int>[15,134],capacity);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],first);
+  code=mov(code,14,1);code=alu(code,1,14,14);code=jump(code,List<Int>[15,128],1);code=jump(code,List<Int>[233],grow);code=label(code,first);code=immediate(code,14,4096);
+  code=label(code,grow);code=load(code,0,3,32);code=store(code,3,48,0);code=load(code,0,3,40);code=store(code,3,56,0);code=immediate(code,0,0);code=store(code,3,32,0);code=immediate(code,0,2);code=store(code,3,112,0);
+  code=mov(code,7,14);code=jump(code,List<Int>[232],60);code=store(code,3,32,0);code=store(code,3,40,14);code=load(code,6,3,48);code=alu(code,133,6,6);code=jump(code,List<Int>[15,132],capacity);
+  code=mov(code,7,0);code=load(code,1,3,120);code=raw(code,List<Int>[243,164]);code=load(code,7,3,48);code=load(code,6,3,56);code=immediate(code,0,0);code=store(code,3,48,0);code=immediate(code,0,11);code=raw(code,List<Int>[15,5]);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);
+  code=label(code,capacity);code=mov(code,7,12);code=load(code,6,3,32);code=load(code,0,3,120);code=alu(code,1,6,0);code=immediate(code,2,4096);code=immediate(code,0,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],readLoop);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);code=jump(code,List<Int>[15,132],eof);
+  code=mov(code,14,0);code=load(code,7,3,32);code=load(code,0,3,120);code=alu(code,1,7,0);code=mov(code,6,14);code=address(code,2,3,144);code=jump(code,List<Int>[232],45);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],invalidEncoding);
+  code=load(code,0,3,120);code=alu(code,1,0,14);code=jump(code,List<Int>[15,128],6);code=store(code,3,120,0);code=jump(code,List<Int>[233],readLoop);
+  code=label(code,eof);code=load(code,0,3,144);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],invalidEncoding);code=load(code,0,3,168);code=store(code,3,128,0);code=jump(code,List<Int>[233],close);
+ },else=>{
+  let write:Int=code->nextLabel;code=fresh(code,1);code=label(code,write);code=load(code,6,5,-80);code=load(code,2,6,24);code=load(code,0,3,136);code=alu(code,57,0,2);code=jump(code,List<Int>[15,131],close);code=alu(code,41,2,0);code=constant(code,0,6,40);code=alu(code,1,6,0);code=mov(code,7,12);code=immediate(code,0,1);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],write);code=alu(code,133,0,0);code=jump(code,List<Int>[15,140],osError);code=jump(code,List<Int>[15,132],zeroWrite);code=load(code,1,3,136);code=alu(code,1,0,1);code=store(code,3,136,0);code=jump(code,List<Int>[233],write);
+ }};
+ code=label(code,invalidPath);code=immediate(code,0,0);code=store(code,3,72,0);code=jump(code,List<Int>[233],close);
+ code=label(code,unsupported);code=immediate(code,0,4);code=store(code,3,72,0);code=jump(code,List<Int>[233],close);
+ code=label(code,invalidEncoding);code=immediate(code,0,1);code=store(code,3,72,0);code=jump(code,List<Int>[233],close);
+ code=label(code,zeroWrite);code=immediate(code,0,7);code=store(code,3,72,0);code=jump(code,List<Int>[233],close);
+ code=label(code,osError);code=store(code,3,64,0);
+ code=label(code,close);code=mov(code,7,3);code=jump(code,List<Int>[232],62);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],closed);code=constant(code,7,0,-9);code=jump(code,List<Int>[15,132],internal);
+ code=store(code,3,88,0);code=load(code,1,3,64);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],closed);code=load(code,1,3,72);code=constant(code,7,1,-1);code=jump(code,List<Int>[15,133],closed);code=store(code,3,64,0);code=immediate(code,0,branch when{file=>3,else=>2});code=store(code,3,80,0);
+ code=label(code,closed);code=load(code,0,3,64);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],cleanup);code=load(code,0,3,72);code=constant(code,7,0,-1);code=jump(code,List<Int>[15,133],cleanup);
+ branch when{read=>{
+  code=immediate(code,0,3);code=store(code,3,112,0);code=load(code,7,3,120);code=constant(code,0,7,40);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,stringDesc);code=jump(code,List<Int>[232],allocateLabel);code=store(code,5,-88,0);code=load(code,1,3,120);code=store(code,0,24,1);code=load(code,2,3,128);code=store(code,0,32,2);code=address(code,7,0,40);code=load(code,6,3,32);code=raw(code,List<Int>[243,164]);
+ },else=>unit};
+ code=label(code,cleanup);code=mov(code,7,3);code=jump(code,List<Int>[232],61);code=alu(code,133,2,2);code=jump(code,List<Int>[15,133],internal);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],cleaned);
+ code=load(code,1,3,64);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],cleaned);code=load(code,1,3,72);code=constant(code,7,1,-1);code=jump(code,List<Int>[15,133],cleaned);code=store(code,3,64,0);code=immediate(code,0,branch when{file=>3,else=>2});code=store(code,3,80,0);
+ code=label(code,cleaned);code=load(code,0,3,72);code=constant(code,7,0,-1);code=jump(code,List<Int>[15,133],errorValue);code=load(code,0,3,64);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],ok);code=jump(code,List<Int>[232],64);
+ code=label(code,errorValue);code=store(code,3,72,0);
+ code=allocate(code,40,operationDesc,4);code=immediate(code,2,number);code=store(code,0,24,2);code=store(code,5,-96,0);
+ code=allocate(code,40,kindDesc,5);code=load(code,2,3,72);code=store(code,0,24,2);code=store(code,5,-104,0);
+ code=allocate(code,40,phaseDesc,6);code=load(code,2,3,80);code=store(code,0,24,2);code=store(code,5,-112,0);
+ code=allocate(code,56,errorDesc,7);code=load(code,2,5,-96);code=store(code,0,24,2);code=load(code,2,5,-104);code=store(code,0,32,2);code=load(code,2,5,-72);code=store(code,0,40,2);code=load(code,2,5,-112);code=store(code,0,48,2);code=store(code,5,-88,0);code=immediate(code,14,1);code=jump(code,List<Int>[233],resultValue);
+ code=label(code,ok);code=immediate(code,14,0);
+ code=label(code,resultValue);code=allocate(code,40,resultDesc,8);code=store(code,0,24,14);code=load(code,2,5,-88);code=store(code,0,32,2);code=load(code,2,3,0);code=store(code,15,resources,2);code=end(code,frame);
+ code=label(code,internal);code=jump(code,List<Int>[233],2);Result<Code,Diagnostic>::Ok(code)
+};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ var code:Code=initial;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{global->standard!=""=>{code=try helper(code,plan,global);},else=>unit};};};
+ code=label(code,143);code=field(code,4,6);code=field(code,4,63);Result<Code,Diagnostic>::Ok(code)
+};

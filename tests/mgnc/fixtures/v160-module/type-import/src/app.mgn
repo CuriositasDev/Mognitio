@@ -1,0 +1,1 @@
+namespace App; use App\Types\{Thing}; let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;0};

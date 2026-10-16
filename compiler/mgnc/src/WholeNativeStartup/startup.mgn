@@ -1,0 +1,59 @@
+namespace Mgnc\WholeNativeStartup;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,Span,lookup,empty};
+use Mgnc\WholeNativeData\{Native,Procedure,Global,descriptorTableLabel,staticTableLabel,globalRootsLabel};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,select};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\IntMap\{get};
+use Mgnc\SemanticData\{Declaration};
+use Mgnc\WholeIo\{operation};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\Tables\{atList};
+use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,push,byteLoad,indirect};
+use Mgnc\WholeABI\{contextSize,descriptorTable,descriptorCount,staticTable,staticCount,globalBase,globalCount,globalMask,allocateLabel};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let main:Global=try lookup<Global>(plan->globals,plan->entryGlobal);let signature:Type=try lookup<Type>(plan->concrete->types->types,main->valueType);
+ let listType:Int=branch on try atList<Argument>(signature->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,span,"startup argument type");0}};
+ let listDescriptor:Int=try get(plan->layouts->types,listType);let stringDescriptor:Int=try get(plan->layouts->types,3);try require(listDescriptor>=0&&stringDescriptor>=0,span,"startup descriptors");
+ try require(plan->globals->count<134217600&&plan->moduleCount<134217600,span,"native global table size");let size:Int=((contextSize+plan->globals->count*8+plan->moduleCount*8+4095)/4096)*4096;
+ var code:Code=label(initial,0);code=mov(code,12,4);code=immediate(code,15,0);
+ code=immediate(code,0,9);code=immediate(code,7,0);code=immediate(code,6,size);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],1);code=mov(code,15,0);code=store(code,15,216,12);
+ code=symbol(code,0,descriptorTableLabel);code=store(code,15,descriptorTable,0);code=immediate(code,0,plan->layouts->descriptors->count);code=store(code,15,descriptorCount,0);
+ code=symbol(code,0,staticTableLabel);code=store(code,15,staticTable,0);code=immediate(code,0,plan->literals->count);code=store(code,15,staticCount,0);
+ code=address(code,0,15,contextSize);code=store(code,15,globalBase,0);code=immediate(code,0,plan->globals->count);code=store(code,15,globalCount,0);code=symbol(code,0,globalRootsLabel);code=store(code,15,globalMask,0);code=address(code,0,15,contextSize+plan->globals->count*8);code=store(code,15,200,0);code=immediate(code,0,plan->moduleCount);code=store(code,15,208,0);
+ // Ignore SIGPIPE so write failures remain ordinary I/O results.
+ code=immediate(code,0,1);code=store(code,15,224,0);code=immediate(code,0,13);code=immediate(code,7,13);code=address(code,6,15,224);code=immediate(code,2,0);code=immediate(code,10,8);code=raw(code,List<Int>[15,5]);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],2);
+ code=immediate(code,0,13);code=immediate(code,7,25);code=address(code,6,15,224);code=immediate(code,2,0);code=immediate(code,10,8);code=raw(code,List<Int>[15,5]);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],2);
+ code=load(code,14,12,0);code=constant(code,5,14,1);code=address(code,13,12,16);code=immediate(code,0,0);code=push(code,0);
+ let frame:Frame=Frame{slots:3,outgoing:8,extent:160,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};
+ code=try begin(code,frame,List<Int>[],List<Int>[],131);
+ let arguments:Int=code->nextLabel;let scan:Int=arguments+1;let text:Int=arguments+2;let initialized:Int=arguments+3;let append:Int=arguments+4;code=fresh(code,5);
+ code=label(code,arguments);code=alu(code,133,14,14);code=jump(code,List<Int>[15,132],initialized);code=load(code,3,13,0);code=immediate(code,12,0);
+ code=label(code,scan);code=mov(code,2,3);code=alu(code,1,2,12);code=byteLoad(code,0,2,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],text);code=constant(code,0,12,1);code=jump(code,List<Int>[233],scan);
+ code=label(code,text);code=mov(code,7,3);code=mov(code,6,12);code=jump(code,List<Int>[232],40);code=constant(code,7,0,0);code=jump(code,List<Int>[15,140],7);code=store(code,4,56,0);
+ code=mov(code,7,12);code=constant(code,0,7,40);code=jump(code,List<Int>[15,128],6);code=immediate(code,6,stringDescriptor);code=jump(code,List<Int>[232],allocateLabel);
+ code=store(code,0,24,12);code=load(code,2,4,56);code=store(code,0,32,2);code=address(code,7,0,40);code=mov(code,6,3);code=mov(code,1,12);code=raw(code,List<Int>[243,164]);code=store(code,5,-80,0);code=select(code,132);
+ code=immediate(code,7,48);code=immediate(code,6,listDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,-72);code=store(code,0,32,2);code=immediate(code,1,0);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],append);code=load(code,1,2,24);
+ code=label(code,append);code=constant(code,0,1,1);code=jump(code,List<Int>[15,128],9);code=store(code,0,24,1);code=load(code,2,5,-80);code=store(code,0,40,2);code=store(code,5,-72,0);code=immediate(code,0,0);code=store(code,5,-80,0);code=select(code,131);
+ code=constant(code,0,13,8);code=constant(code,5,14,1);code=jump(code,List<Int>[233],arguments);
+ code=label(code,initialized);
+ // Standard function values are linked by the I/O startup component.
+ var globalId:Int=0;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){
+  branch when{global->standard!=""=>{
+   let number:Int=operation(global->standard);let descriptor:Int=try get(plan->layouts->types,global->valueType);try require(number>=0&&descriptor>=0,span,"standard Function value");
+   code=immediate(code,7,40);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=symbol(code,2,50+number);code=store(code,0,24,2);code=immediate(code,2,0);code=store(code,0,32,2);code=load(code,2,15,globalBase);code=store(code,2,globalId*8,0);
+  },else=>unit};globalId=globalId+1;
+ };};
+ loop over(plan->modules as file:Int){
+  code=load(code,2,15,200);code=load(code,0,2,file*8);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],2);code=immediate(code,0,1);code=store(code,2,file*8,0);
+ loop over(plan->initializers as initializer:Int){
+  let instance:Instance=try lookup<Instance>(plan->concrete->instances,initializer);let declaration:Int=try present(instance->body->declaration,span,"initializer identity");branch when{(try lookup<Declaration>(plan->concrete->types->headers->declarations,declaration))->file!=file=>{continue;},else=>unit};let destination:Int=try get(plan->globalDeclarations,declaration);try require(destination>=0,span,"initializer global");
+  code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,initializer))->entry);code=load(code,2,15,globalBase);code=store(code,2,destination*8,0);
+ };code=load(code,2,15,200);code=immediate(code,0,2);code=store(code,2,file*8,0);};
+ code=load(code,2,15,globalBase);code=load(code,0,2,plan->entryGlobal*8);code=store(code,5,-88,0);code=select(code,133);code=load(code,0,5,-88);code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);code=load(code,0,5,-72);code=store(code,4,8,0);code=indirect(code,11,true);
+ code=constant(code,7,0,255);code=jump(code,List<Int>[15,135],8);code=mov(code,7,0);code=immediate(code,0,60);code=raw(code,List<Int>[15,5]);
+ loop over(List<Int>[131,132,133] as bitmap:Int){code=label(code,bitmap);code=field(code,4,3);code=field(code,4,branch when{bitmap==131=>1,bitmap==132=>3,else=>5});};Result<Code,Diagnostic>::Ok(code)
+};

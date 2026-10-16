@@ -1,0 +1,24 @@
+namespace Mgnc\WholeUtf8;
+use Mgnc\Machine\{Code,label,jump,fresh};
+use Mgnc\WholeX64\{mov,load,immediate,alu,constant,byteLoad};
+use Mgnc\WholeABI\{enter,leave};
+// RDI points to exactly RSI bytes. Return scalar count, or -1 for invalid UTF-8.
+// This helper is nonallocating and preserves all language callee-save registers.
+public let emit:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=enter(label(initial,40));let scan:Int=code->nextLabel;let ascii:Int=scan+1;let two:Int=scan+2;let three:Int=scan+3;let four:Int=scan+4;let e0:Int=scan+5;let ed:Int=scan+6;let f0:Int=scan+7;let f4:Int=scan+8;let continuation:Int=scan+9;let loopLabel:Int=scan+10;let invalid:Int=scan+11;let done:Int=scan+12;code=fresh(code,13);
+ code=mov(code,12,7);code=mov(code,13,7);code=alu(code,1,13,6);code=jump(code,List<Int>[15,130],invalid);code=immediate(code,14,0);
+ code=label(code,scan);code=alu(code,57,12,13);code=jump(code,List<Int>[15,132],done);code=byteLoad(code,0,12,0);code=constant(code,0,12,1);code=constant(code,7,0,127);code=jump(code,List<Int>[15,134],ascii);
+ code=immediate(code,8,128);code=immediate(code,9,191);code=constant(code,7,0,194);code=jump(code,List<Int>[15,130],invalid);code=constant(code,7,0,223);code=jump(code,List<Int>[15,134],two);code=constant(code,7,0,239);code=jump(code,List<Int>[15,134],three);code=constant(code,7,0,244);code=jump(code,List<Int>[15,134],four);code=jump(code,List<Int>[233],invalid);
+ code=label(code,two);code=immediate(code,3,1);code=jump(code,List<Int>[233],continuation);
+ code=label(code,three);code=immediate(code,3,2);code=constant(code,7,0,224);code=jump(code,List<Int>[15,132],e0);code=constant(code,7,0,237);code=jump(code,List<Int>[15,132],ed);code=jump(code,List<Int>[233],continuation);
+ code=label(code,four);code=immediate(code,3,3);code=constant(code,7,0,240);code=jump(code,List<Int>[15,132],f0);code=constant(code,7,0,244);code=jump(code,List<Int>[15,132],f4);code=jump(code,List<Int>[233],continuation);
+ code=label(code,e0);code=immediate(code,8,160);code=jump(code,List<Int>[233],continuation);
+ code=label(code,ed);code=immediate(code,9,159);code=jump(code,List<Int>[233],continuation);
+ code=label(code,f0);code=immediate(code,8,144);code=jump(code,List<Int>[233],continuation);
+ code=label(code,f4);code=immediate(code,9,143);
+ code=label(code,continuation);code=mov(code,0,13);code=alu(code,41,0,12);code=alu(code,57,0,3);code=jump(code,List<Int>[15,130],invalid);
+ code=label(code,loopLabel);code=byteLoad(code,0,12,0);code=alu(code,57,0,8);code=jump(code,List<Int>[15,130],invalid);code=alu(code,57,0,9);code=jump(code,List<Int>[15,135],invalid);code=constant(code,0,12,1);code=immediate(code,8,128);code=immediate(code,9,191);code=constant(code,5,3,1);code=jump(code,List<Int>[15,133],loopLabel);
+ code=label(code,ascii);code=constant(code,0,14,1);code=jump(code,List<Int>[233],scan);
+ code=label(code,invalid);code=immediate(code,0,-1);code=leave(code);
+ code=label(code,done);code=mov(code,0,14);leave(code)
+};

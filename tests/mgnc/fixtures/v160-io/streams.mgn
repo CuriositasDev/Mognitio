@@ -1,0 +1,7 @@
+namespace App;
+use Std\Io\{readTextFile,writeTextFile,readStdin,writeStdout,writeStderr,IoError,IoOperation,IoErrorKind,IoErrorPhase};
+let code:Function(IoError):Int=function(error:IoError):Int{
+ let k:Int=branch on error->kind{IoErrorKind::InvalidPath=>0,IoErrorKind::InvalidEncoding=>1,IoErrorKind::NotFound=>2,IoErrorKind::PermissionDenied=>3,IoErrorKind::UnsupportedTarget=>4,IoErrorKind::BrokenPipe=>5,IoErrorKind::ResourceExhausted=>6,IoErrorKind::Other=>7};
+ let p:Int=branch on error->phase{IoErrorPhase::Input=>0,IoErrorPhase::Target=>1,IoErrorPhase::Body=>2,IoErrorPhase::Cleanup=>3};k+p*16+64
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;discard writeStdout("hello 日本😀\u{0}\n");discard writeStderr("err");0};

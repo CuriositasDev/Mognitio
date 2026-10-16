@@ -1,0 +1,1 @@
+namespace App; use App\A\{a};use App\B\{b};let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;a+b};

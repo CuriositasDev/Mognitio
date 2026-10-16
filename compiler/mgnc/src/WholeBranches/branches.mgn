@@ -1,0 +1,57 @@
+namespace Mgnc\WholeBranches;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{Node};
+use Mgnc\TypeData\{Structure};
+use Mgnc\WholeIR\{Operation,Origin,Terminator};
+use Mgnc\WholeBuilder\{Builder,Plan,plan,output,term,operation,setBlock,reserveBlock,continueAt};
+use Mgnc\WholeFlow\{child,jump,failure,finish,bridge};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{get};
+public let conditional:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;
+ builder=try setBlock(builder,current->entry,List<Operation>[],jump((try child(builder,node,0))->entry,site));
+ var index:Int=0;
+ loop while(index+1<node->children->length()){
+  let condition:Plan=try child(builder,node,index);let selected:Plan=try child(builder,node,index+1);let next:Plan=try child(builder,node,index+2);
+  let decision:Int=builder->blockCount;builder=reserveBlock(builder,site);builder=try continueAt(builder,condition->node,decision);
+  let terminator:Terminator=branch on condition->output{Parent::Some(slot:Int)=>term("branch",List<Int>[slot],List<Int>[selected->entry,next->entry],site),Parent::None=>failure(site)};
+  builder=try setBlock(builder,decision,List<Operation>[],terminator);builder=try bridge(builder,selected,current,site);index=index+2;
+ };
+ builder=try bridge(builder,try child(builder,node,index),current,site);
+ finish(builder,current,node,List<Operation>[],site)
+};
+public let logical:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;let left:Plan=try child(builder,node,0);let right:Plan=try child(builder,node,1);
+ let decision:Int=builder->blockCount;builder=reserveBlock(builder,site);let bypass:Int=builder->blockCount;builder=reserveBlock(builder,site);
+ builder=try setBlock(builder,current->entry,List<Operation>[],jump(left->entry,site));builder=try continueAt(builder,left->node,decision);
+ let targets:List<Int>=branch when{node->operation=="and"=>List<Int>[right->entry,bypass],else=>List<Int>[bypass,right->entry]};
+ builder=try setBlock(builder,decision,List<Operation>[],branch on left->output{Parent::Some(slot:Int)=>term("branch",List<Int>[slot],targets,site),Parent::None=>failure(site)});
+ var operations:List<Operation>=List<Operation>[];
+ branch on current->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
+  let base:Operation=operation("boolean",current->output,List<Int>[],site);
+  operations=operations->append(Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:base->symbol,target:base->target,arguments:base->arguments,mapping:base->mapping,integer:branch when{node->operation=="or"=>1,else=>0},minimum:base->minimum,wide:base->wide,text:base->text,origin:base->origin});
+ }};
+ builder=try setBlock(builder,bypass,operations,jump(current->exit,site));builder=try bridge(builder,right,current,site);
+ finish(builder,current,node,List<Operation>[],site)
+};
+public let matched:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;let subject:Plan=try child(builder,node,0);let subjectNode:Node=try lookup<Node>(builder->context->state->nodes,subject->node);
+ let sumType:Int=branch on subjectNode->structure{Structure::Known(value:Int)=>value,Structure::Unknown=>{return Result<Builder,Diagnostic>::Err(problem("internal",node->span,"whole lowering: unknown switch type"));}};
+ let decision:Int=builder->blockCount;builder=reserveBlock(builder,site);var targets:List<Int>=List<Int>[];
+ builder=try setBlock(builder,current->entry,List<Operation>[],jump(subject->entry,site));builder=try continueAt(builder,subject->node,decision);
+ var index:Int=1;loop while(index<node->children->length()){
+  let arm:Plan=try child(builder,node,index);let enter:Int=builder->blockCount;builder=reserveBlock(builder,site);targets=targets->append(enter);
+  var operations:List<Operation>=List<Operation>[];
+  branch on try atList<Parent>(node->binders,index-1){Parent::None=>unit,Parent::Some(symbol:Int)=>{
+   let slot:Int=try get(builder->symbols,symbol);let base:Operation=operation("sum-payload",Parent::Some(slot),List<Int>[],site);
+   let inputs:List<Int>=branch on subject->output{Parent::Some(value:Int)=>List<Int>[value],Parent::None=>List<Int>[]};
+   let unavailable:List<Int>=branch on subject->output{Parent::Some(value:Int)=>List<Int>[],Parent::None=>List<Int>[0]};
+   operations=operations->append(Operation{code:base->code,output:base->output,inputs:inputs,unavailable:unavailable,symbol:Parent::Some(symbol),target:Parent::Some(sumType),arguments:base->arguments,mapping:List<Int>[try atList<Int>(node->mapping,index-1),0],integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:site});
+  }};
+  builder=try setBlock(builder,enter,operations,jump(arm->entry,site));builder=try bridge(builder,arm,current,site);index=index+1;
+ };
+ let terminator:Terminator=branch on subject->output{Parent::Some(slot:Int)=>Terminator{code:"switch",inputs:List<Int>[slot],targets:targets,variants:node->mapping,sumType:Parent::Some(sumType),origin:site},Parent::None=>failure(site)};
+ builder=try setBlock(builder,decision,List<Operation>[],terminator);
+ finish(builder,current,node,List<Operation>[],site)
+};

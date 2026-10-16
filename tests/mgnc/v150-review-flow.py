@@ -10,6 +10,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument("--compiler", required=True, type=Path)
 parser.add_argument("--evidence", required=True, type=Path)
+parser.add_argument("--command", choices=("check", "lower"), default="check")
 args = parser.parse_args()
 compiler = args.compiler.resolve()
 records = []
@@ -110,7 +111,7 @@ with tempfile.TemporaryDirectory(prefix="v150-review-flow-") as temporary:
                   for p in project.rglob("*") if p.is_file()}
         for form, path in inputs:
             output = project / "program"
-            run(name + "-" + form, "check", path, output, other or text,
+            run(name + "-" + form, args.command, path, output, other or text,
                 1 if phase else 0, phase, token)
             if form == "project":
                 continue

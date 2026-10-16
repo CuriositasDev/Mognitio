@@ -1,0 +1,39 @@
+namespace Mgnc\LiteralText;
+use Mgnc\Data\{Span,Diagnostic,problem};
+use Mgnc\WholeIR\{TextPart};
+use Mgnc\Tables\{atList};
+let hex:Function(String):Int=function(scalar:String):Int{
+ branch when{scalar=="0"=>0,scalar=="1"=>1,scalar=="2"=>2,scalar=="3"=>3,scalar=="4"=>4,scalar=="5"=>5,scalar=="6"=>6,scalar=="7"=>7,scalar=="8"=>8,scalar=="9"=>9,scalar=="a"=>10,scalar=="b"=>11,scalar=="c"=>12,scalar=="d"=>13,scalar=="e"=>14,scalar=="f"=>15,scalar=="A"=>10,scalar=="B"=>11,scalar=="C"=>12,scalar=="D"=>13,scalar=="E"=>14,scalar=="F"=>15,else=>-1}
+};
+// This normalizes a lexically checked literal, without parsing source syntax.
+public let decode:Function(String,Span):Result<List<TextPart>,Diagnostic>=function(spelling:String,span:Span):Result<List<TextPart>,Diagnostic>{
+ var result:List<TextPart>=List<TextPart>[];var fragments:List<String>=List<String>[];
+ var state:Int=0;var scalarValue:Int=0;var digits:Int=0;var index:Int=0;let length:Int=spelling->length();
+ branch when{length<2=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: missing quotes"));},else=>unit};
+ loop over(spelling->scalars() as scalar:String){
+  let boundary:Bool=index==0||index==length-1;index=index+1;
+  branch when{boundary=>{
+   branch when{scalar!="\""||state!=0=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: invalid boundary"));},else=>unit};continue;
+  },else=>unit};
+  branch when{state==0=>{
+   branch when{scalar=="\\"=>{state=1;},scalar=="\""||scalar=="\n"||scalar=="\r"=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: invalid raw scalar"));},else=>{fragments=fragments->append(scalar);}};
+  },state==1=>{
+   branch when{scalar=="u"=>{state=2;scalarValue=0;digits=0;},else=>{
+    let decoded:String=branch when{scalar=="n"=>"\n",scalar=="r"=>"\r",scalar=="t"=>"\t",scalar=="0"=>"\0",scalar=="\\"=>"\\",scalar=="\""=>"\"",else=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: invalid escape"));}};
+    fragments=fragments->append(decoded);state=0;
+   }};
+  },state==2=>{
+   branch when{scalar!="{"=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: Unicode opening brace"));},else=>unit};state=3;
+  },else=>{
+   branch when{scalar=="}"=>{
+    branch when{digits==0||scalarValue>1114111||(scalarValue>=55296&&scalarValue<=57343)=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: invalid Unicode scalar"));},else=>unit};
+    branch when{fragments->length()>0=>{result=result->append(TextPart::Text(fragments->join("")));fragments=List<String>[];},else=>unit};
+    result=result->append(TextPart::Scalar(scalarValue));state=0;
+   },else=>{
+    let digit:Int=hex(scalar);branch when{digit<0||digits==6=>{return Result<List<TextPart>,Diagnostic>::Err(problem("internal",span,"literal text: invalid Unicode digits"));},else=>unit};scalarValue=scalarValue*16+digit;digits=digits+1;
+   }};
+  }};
+ };
+ branch when{fragments->length()>0=>{result=result->append(TextPart::Text(fragments->join("")));},else=>unit};
+ Result<List<TextPart>,Diagnostic>::Ok(result)
+};

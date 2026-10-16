@@ -1,0 +1,113 @@
+namespace Mgnc\WholeShape;
+use Mgnc\Data\{Diagnostic,lookup,Span,Paged,empty,push};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
+use Mgnc\TypeData\{Type,Structure,Member};
+use Mgnc\TypeOps\{parentEqual,argumentsEqual};
+use Mgnc\VariantSupport\{variants,memberType,at as memberAt};
+use Mgnc\WholeIR\{Body,Slot,Operation,Terminator,Occurrence,TextPart};
+use Mgnc\WholeChecks\{require,integers,present,slotType,occurrence};
+use Mgnc\IntMap\{Map};
+use Mgnc\Tables\{atList};
+use Mgnc\MathValue\{Integer};
+use Mgnc\LiteralText\{decode};
+// Compare decoded values directly, paging the right operand once.
+public let textEqual:Function(List<TextPart>,List<TextPart>):Result<Bool,Diagnostic>=function(left:List<TextPart>,right:List<TextPart>):Result<Bool,Diagnostic>{
+ branch when{left->length()!=right->length()=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ var table:Paged<TextPart>=empty<TextPart>();loop over(right as value:TextPart){table=push<TextPart>(table,value);};
+ var index:Int=0;
+ loop over(left as item:TextPart){let other:TextPart=try lookup<TextPart>(table,index);
+  let same:Bool=branch on item{TextPart::Text(value:String)=>branch on other{TextPart::Text(actual:String)=>value==actual,TextPart::Scalar(actual:Int)=>false},TextPart::Scalar(value:Int)=>branch on other{TextPart::Text(actual:String)=>false,TextPart::Scalar(actual:Int)=>value==actual}};
+  branch when{!same=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};index=index+1;
+ };Result<Bool,Diagnostic>::Ok(true)
+};
+public let sourceOperation:Function(String):Bool=function(code:String):Bool{
+ code=="integer"||code=="boolean"||code=="unit"||code=="string"||code=="typed-integer"||code=="value-parameter"||code=="template"||code=="product"||code=="list"||code=="variant"||code=="call"||code=="field"||code=="field-call"||code=="neg"||code=="not"||code=="add"||code=="sub"||code=="mul"||code=="div"||code=="rem"||code=="lt"||code=="le"||code=="gt"||code=="ge"||code=="eq"||code=="ne"||code=="method:length"||code=="method:append"||code=="method:at"||code=="method:join"||code=="method:slice"||code=="method:scalars"||code=="method:convertTo"||code=="method:toBits"||code=="method:and"||code=="method:or"||code=="method:xor"||code=="method:not"||code=="method:shiftLeft"||code=="method:shiftRight"||code=="method:asInteger"||code=="method:toBytes"||code=="method:concat"
+};
+public let operation:Function(State,Body,Map,Operation):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map,op:Operation):Result<Unit,Diagnostic>{
+ let node:Node=try lookup<Node>(state->nodes,op->origin->node);let span:Span=node->span;let source:Occurrence=try occurrence(body,index,op->origin->node);
+ try require(op->origin->file==node->file&&op->origin->span->start==span->start&&op->origin->span->end==span->end,span,"operation origin");
+ loop over(op->inputs as slot:Int){discard try slotType(body,slot);};
+ branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{discard try slotType(body,slot);}};
+ branch when{sourceOperation(op->code)&&op->code==node->operation=>{
+  var inputs:List<Int>=List<Int>[];var unavailable:List<Int>=List<Int>[];var position:Int=0;
+  loop over(node->children as child:Int){let value:Occurrence=try occurrence(body,index,child);branch on value->output{Parent::Some(slot:Int)=>{inputs=inputs->append(slot);},Parent::None=>{unavailable=unavailable->append(position);}};position=position+1;};
+  try require(integers(inputs,op->inputs)&&integers(unavailable,op->unavailable)&&parentEqual(op->output,source->output),span,"source operand or destination correspondence");
+  try require(parentEqual(op->symbol,node->binding)&&parentEqual(op->target,node->target)&&argumentsEqual(op->arguments,node->arguments)&&integers(op->mapping,node->mapping),span,"resolved operation identity");
+  try require(op->integer==node->integer&&op->minimum==node->minimum&&op->wide->length()==node->literal->length(),span,"literal magnitude metadata");
+  position=0;loop over(op->wide as value:Integer){let expected:Integer=try atList<Integer>(node->literal,position);try require(value->negative==expected->negative&&value->digits==expected->digits,span,"wide literal value");position=position+1;};
+  try require(try textEqual(op->text,branch when{node->operation=="string"=>try decode(node->text,span),else=>List<TextPart>[]}),span,"text literal value");
+  return Result<Unit,Diagnostic>::Ok(unit);
+ },else=>unit};
+ // Helper signatures are checked separately from their source correspondence.
+ try require(op->arguments->length()==0&&op->wide->length()==0&&op->text->length()==0&&!op->minimum,span,"helper literal or generic operands");
+ branch when{op->code=="copy"=>{
+  try require(op->inputs->length()==1&&op->unavailable->length()==0,span,"copy arity");let destination:Int=try present(op->output,span,"copy destination");
+  try require((try slotType(body,destination))==(try slotType(body,try atList<Int>(op->inputs,0))),span,"copy type");
+  try require(node->operation=="binding"||node->operation=="declare"||node->operation=="assign"||node->operation=="group"||node->operation=="block"||node->operation=="when"||node->operation=="on"||node->operation=="and"||node->operation=="or"||node->operation=="break",span,"copy origin category");
+ },op->code=="unit"||op->code=="boolean"=>{
+  try require(op->inputs->length()==0&&op->unavailable->length()==0,span,"constant helper arity");let destination:Int=try present(op->output,span,"constant helper destination");
+  try require((try slotType(body,destination))==branch when{op->code=="unit"=>0,else=>2},span,"constant helper type");
+  try require(parentEqual(op->output,source->output),span,"constant helper output");
+  branch when{op->code=="boolean"=>{try require((node->operation=="and"&&op->integer==0)||(node->operation=="or"&&op->integer==1),span,"short-circuit constant");},else=>{
+   try require(node->operation=="declare"||node->operation=="assign"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"||node->operation=="while"||node->operation=="over",span,"Unit helper origin");
+  }};
+ },op->code=="global-load"||op->code=="global-store"=>{
+  let symbolId:Int=try present(op->symbol,span,"global identity");let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);
+  discard try present(symbol->declaration,span,"global declaration");try require(parentEqual(body->functionOwner,Parent::None),span,"global access crossed source function boundary");
+  try require(op->unavailable->length()==0,span,"global unavailable operand");
+  branch when{op->code=="global-load"=>{
+   try require(op->inputs->length()==0,span,"global load arity");let destination:Int=try present(op->output,span,"global load destination");try require((try slotType(body,destination))==symbol->valueType,span,"global load type");
+   try require((node->operation=="binding"&&parentEqual(node->binding,op->symbol))||node->operation=="function",span,"global load source");
+  },else=>{
+   try require(op->inputs->length()==1&&parentEqual(op->output,Parent::None)&&symbol->mutable&&parentEqual(op->symbol,node->binding)&&node->operation=="assign",span,"global store signature");
+   try require((try slotType(body,try atList<Int>(op->inputs,0)))==symbol->valueType,span,"global store type");
+  }};
+ },op->code=="function"=>{
+  try require(node->operation=="function"&&parentEqual(op->target,node->target)&&parentEqual(op->output,source->output)&&op->unavailable->length()==0,span,"function creation origin");
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,try present(op->target,span,"function target"));
+  try require((try slotType(body,try present(op->output,span,"function value")))==info->valueType&&op->inputs->length()==op->mapping->length(),span,"function creation signature");
+  var position:Int=0;loop over(op->mapping as symbol:Int){try require((try slotType(body,try atList<Int>(op->inputs,position)))==(try lookup<Symbol>(state->symbols,symbol))->valueType,span,"capture operand type");position=position+1;};
+ },op->code=="sum-payload"=>{
+  try require(node->operation=="on"||node->operation=="try",span,"sum payload origin");try require(op->inputs->length()+op->unavailable->length()==1&&op->mapping->length()==2,span,"sum payload arity");
+  let sumType:Int=try present(op->target,span,"sum payload type");let members:List<Member>=try variants(state->types,sumType,span);let selected:Int=try atList<Int>(op->mapping,0);
+  let member:Member=try memberAt(members,selected,span);let valueType:Int=try present(member->value,span,"payloadless variant extraction");
+  try require((try atList<Int>(op->mapping,1))==0&&(try slotType(body,try present(op->output,span,"sum payload destination")))==valueType,span,"sum payload result type");
+  branch when{op->inputs->length()==1=>{try require((try slotType(body,try atList<Int>(op->inputs,0)))==sumType,span,"sum payload subject type");},else=>{try require(integers(op->unavailable,List<Int>[0]),span,"sum payload non-completion");}};
+ },op->code=="variant"=>{
+  try require(node->operation=="try"&&op->inputs->length()==1&&op->unavailable->length()==0&&integers(op->mapping,List<Int>[1]),span,"try Err constructor");
+  let shape:Type=try lookup<Type>(state->types->types,body->resultType);try require(shape->kind==11,span,"try owner Result type");
+  try require(parentEqual(op->target,Parent::Some(body->resultType))&&(try slotType(body,try present(op->output,span,"try Err destination")))==body->resultType,span,"try owner Err descriptor");
+  try require((try slotType(body,try atList<Int>(op->inputs,0)))==(try memberType(shape->arguments,1,span)),span,"try exact error identity");
+ },op->code=="iterator-init"||op->code=="iterator-more"||op->code=="iterator-next"=>{
+  try require(node->operation=="over"&&op->inputs->length()+op->unavailable->length()==1,span,"iterator origin or arity");
+  let listType:Int=try memberType(node->arguments,0,span);let destination:Int=try present(op->output,span,"iterator destination");
+  branch when{op->code=="iterator-init"=>{
+   let slot:Slot=try lookup<Slot>(body->slots,destination);try require(slot->kind==4&&slot->valueType==listType&&parentEqual(op->target,Parent::Some(listType)),span,"iterator snapshot type");
+   branch when{op->inputs->length()==1=>{try require((try slotType(body,try atList<Int>(op->inputs,0)))==listType,span,"iterator input type");},else=>unit};
+  },else=>{
+   try require(op->unavailable->length()==0,span,"iterator state non-completion");let input:Slot=try lookup<Slot>(body->slots,try atList<Int>(op->inputs,0));try require(input->kind==4&&input->valueType==listType,span,"iterator state type");
+   let expected:Int=branch when{op->code=="iterator-more"=>2,else=>(try lookup<Symbol>(state->symbols,try present(node->binder,span,"iterator binding")))->valueType};
+   try require((try slotType(body,destination))==expected,span,"iterator operation result");
+  }};
+ },else=>{try require(false,span,"unknown operation or origin mismatch");}};
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+public let terminator:Function(State,Body,Terminator):Result<Unit,Diagnostic>=function(state:State,body:Body,value:Terminator):Result<Unit,Diagnostic>{
+ let node:Node=try lookup<Node>(state->nodes,value->origin->node);let span:Span=node->span;
+ loop over(value->targets as target:Int){try require(target>=0&&target<body->blocks->count,span,"CFG target outside body");};
+ loop over(value->inputs as slot:Int){discard try slotType(body,slot);};
+ branch when{value->code!="switch"=>{try require(value->variants->length()==0&&parentEqual(value->sumType,Parent::None),span,"unexpected variant edge");},else=>unit};
+ branch when{value->code=="jump"=>{try require(value->inputs->length()==0&&value->targets->length()==1,span,"jump arity");},
+ value->code=="branch"=>{try require(value->inputs->length()==1&&value->targets->length()==2,span,"branch arity");try require((try slotType(body,try atList<Int>(value->inputs,0)))==2,span,"branch condition type");},
+ value->code=="switch"=>{
+  try require(value->inputs->length()==1&&value->variants->length()==value->targets->length(),span,"switch arity");let sumType:Int=try present(value->sumType,span,"switch Sum identity");
+  try require((try slotType(body,try atList<Int>(value->inputs,0)))==sumType,span,"switch subject type");let members:List<Member>=try variants(state->types,sumType,span);
+  try require(members->length()==value->variants->length(),span,"switch exhaustiveness");var checked:List<Int>=List<Int>[];
+  loop over(value->variants as variant:Int){discard try memberAt(members,variant,span);loop over(checked as previous:Int){try require(previous!=variant,span,"duplicate switch variant");};checked=checked->append(variant);};
+ },value->code=="return"||value->code=="panic"=>{
+  try require(value->inputs->length()==1&&value->targets->length()==0,span,"terminal arity");
+  try require((try slotType(body,try atList<Int>(value->inputs,0)))==branch when{value->code=="return"=>body->resultType,else=>3},span,"terminal value type");
+ },value->code=="unreachable"=>{try require(value->inputs->length()==0&&value->targets->length()==0,span,"unreachable arity");},else=>{try require(false,span,"unknown terminator");}};
+ Result<Unit,Diagnostic>::Ok(unit)
+};

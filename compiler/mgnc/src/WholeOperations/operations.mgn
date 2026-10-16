@@ -1,0 +1,62 @@
+namespace Mgnc\WholeOperations;
+use Mgnc\Data\{Paged,Diagnostic,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{Node,Symbol};
+use Mgnc\WholeIR\{Slot,Operation,Origin,TextPart};
+use Mgnc\WholeBuilder\{Builder,Plan,plan,output,operation,withSlots};
+use Mgnc\IntMap\{get};
+use Mgnc\Tables\{atList};
+use Mgnc\LiteralText\{decode};
+public type Emitted=product{builder:Builder;operations:List<Operation>;};
+public let semantic:Function(Node,Origin,Parent,List<Int>,List<Int>,List<TextPart>):Operation=function(node:Node,site:Origin,destination:Parent,inputs:List<Int>,unavailable:List<Int>,text:List<TextPart>):Operation{
+ Operation{code:node->operation,output:destination,inputs:inputs,unavailable:unavailable,symbol:node->binding,target:node->target,arguments:node->arguments,mapping:node->mapping,integer:node->integer,minimum:node->minimum,wide:node->literal,text:text,origin:site}
+};
+public let loadSymbol:Function(Int,Parent,Origin):Operation=function(symbol:Int,destination:Parent,site:Origin):Operation{
+ let base:Operation=operation("global-load",destination,List<Int>[],site);
+ Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:Parent::Some(symbol),target:base->target,arguments:base->arguments,mapping:base->mapping,integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:base->origin}
+};
+public let ordinary:Function(Builder,Plan,Node,Origin):Result<Emitted,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Emitted,Diagnostic>{
+ var builder:Builder=initial;var operations:List<Operation>=List<Operation>[];var inputs:List<Int>=List<Int>[];var unavailable:List<Int>=List<Int>[];var index:Int=0;
+ branch when{node->operation!="function"=>{
+  loop over(node->children as child:Int){let childPlan:Plan=try plan(builder,child);
+   branch on childPlan->output{Parent::Some(slot:Int)=>{inputs=inputs->append(slot);},Parent::None=>{unavailable=unavailable->append(index);}};index=index+1;
+  };
+ },else=>unit};
+ branch when{node->operation=="binding"=>{
+  let symbol:Int=branch on node->binding{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Emitted,Diagnostic>::Err(problem("internal",node->span,"whole lowering: missing resolved binding"));}};
+  let local:Int=try get(builder->symbols,symbol);
+  operations=operations->append(branch when{local>=0=>operation("copy",current->output,List<Int>[local],site),else=>loadSymbol(symbol,current->output,site)});
+ },node->operation=="declare"||node->operation=="assign"=>{
+  branch when{node->normal=>{
+   let symbol:Int=branch on node->binding{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Emitted,Diagnostic>::Err(problem("internal",node->span,"whole lowering: missing store binding"));}};
+   let value:Int=try atList<Int>(inputs,inputs->length()-1);let local:Int=try get(builder->symbols,symbol);
+   branch when{local>=0=>{operations=operations->append(operation("copy",Parent::Some(local),List<Int>[value],site));},else=>{
+    let base:Operation=loadSymbol(symbol,Parent::None,site);
+    operations=operations->append(Operation{code:"global-store",output:base->output,inputs:List<Int>[value],unavailable:base->unavailable,symbol:base->symbol,target:base->target,arguments:base->arguments,mapping:base->mapping,integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:site});
+   }};
+   operations=operations->append(operation("unit",current->output,List<Int>[],site));
+  },else=>unit};
+ },node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
+  branch when{node->normal=>{
+   let carries:Bool=node->operation=="group"||(node->operation=="block"&&node->flag);
+   operations=operations->append(branch when{carries=>operation("copy",current->output,List<Int>[try atList<Int>(inputs,inputs->length()-1)],site),else=>operation("unit",current->output,List<Int>[],site)});
+  },else=>unit};
+ },node->operation=="function"=>{
+  let id:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Emitted,Diagnostic>::Err(problem("internal",node->span,"whole lowering: function identity"));}};
+  let captures:List<Int>=try lookup<List<Int>>(builder->context->capturesByFunction,id);
+  loop over(captures as symbolId:Int){
+   let local:Int=try get(builder->symbols,symbolId);
+   branch when{local>=0=>{inputs=inputs->append(local);},else=>{
+    let symbol:Symbol=try lookup<Symbol>(builder->context->state->symbols,symbolId);let slot:Int=builder->slots->count;
+    builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:symbol->valueType,kind:0,symbol:Parent::None}));
+    operations=operations->append(loadSymbol(symbolId,Parent::Some(slot),site));inputs=inputs->append(slot);
+   }};
+  };
+  let base:Operation=semantic(node,site,current->output,inputs,List<Int>[],List<TextPart>[]);
+  operations=operations->append(Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:base->symbol,target:base->target,arguments:base->arguments,mapping:captures,integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:base->origin});
+ },else=>{
+  let text:List<TextPart>=branch when{node->operation=="string"=>try decode(node->text,node->span),else=>List<TextPart>[]};
+  operations=operations->append(semantic(node,site,current->output,inputs,unavailable,text));
+ }};
+ Result<Emitted,Diagnostic>::Ok(Emitted{builder:builder,operations:operations})
+};

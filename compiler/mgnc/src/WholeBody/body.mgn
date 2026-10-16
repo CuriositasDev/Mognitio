@@ -1,0 +1,48 @@
+namespace Mgnc\WholeBody;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node};
+use Mgnc\WholeIR\{Body,Occurrence,Operation,Origin,Block};
+use Mgnc\WholeBuilder\{Builder,Plan,start,plan,origin,output,term,operation,setBlock,reserveBlock,continueAt};
+use Mgnc\WholeFlow\{child,jump,failure,sequence,finish};
+use Mgnc\WholeOperations\{Emitted,ordinary};
+use Mgnc\WholeBranches\{conditional,logical,matched};
+use Mgnc\WholeLoops\{lower as lowerLoop};
+use Mgnc\WholeTry\{lower as lowerTry};
+use Mgnc\IntMap\{get};
+public let lower:Function(State,Int,Parent,Parent,Int,Paged<List<Int>>):Result<Body,Diagnostic>=function(state:State,root:Int,declaration:Parent,functionOwner:Parent,resultType:Int,captures:Paged<List<Int>>):Result<Body,Diagnostic>{
+ var builder:Builder=try start(state,root,functionOwner,resultType,captures);let rootNode:Node=try lookup<Node>(state->nodes,root);let rootPlan:Plan=try plan(builder,root);let site:Origin=origin(root,rootNode);
+ let returnBlock:Int=builder->blockCount;builder=reserveBlock(builder,site);builder=try continueAt(builder,root,returnBlock);
+ builder=try setBlock(builder,returnBlock,List<Operation>[],branch on rootPlan->output{Parent::Some(slot:Int)=>term("return",List<Int>[slot],List<Int>[],site),Parent::None=>failure(site)});
+ var index:Int=0;var occurrences:Paged<Occurrence>=empty<Occurrence>();
+ loop while(index<builder->plans->count){
+  let planned:Plan=try lookup<Plan>(builder->plans,index);let current:Plan=Plan{node:planned->node,entry:planned->entry,exit:planned->exit,output:planned->output,continuation:try get(builder->nextBlocks,planned->node)};let node:Node=try lookup<Node>(state->nodes,current->node);let at:Origin=origin(current->node,node);
+  branch when{current->continuation<0=>{return Result<Body,Diagnostic>::Err(problem("internal",node->span,"whole lowering: missing continuation"));},else=>unit};
+  occurrences=push<Occurrence>(occurrences,Occurrence{node:current->node,entry:current->entry,exit:current->exit,output:current->output});
+  branch when{node->operation=="when"=>{builder=try conditional(builder,current,node,at);},node->operation=="and"||node->operation=="or"=>{builder=try logical(builder,current,node,at);},node->operation=="on"=>{builder=try matched(builder,current,node,at);},
+   node->operation=="loop"||node->operation=="while"||node->operation=="over"=>{builder=try lowerLoop(builder,current,node,at);},node->operation=="try"=>{builder=try lowerTry(builder,current,node,at);},else=>{
+    builder=try sequence(builder,current,node,at);
+    branch when{node->operation=="return"||node->operation=="panic"=>{
+     let operand:Plan=try child(builder,node,0);
+     builder=try setBlock(builder,current->exit,List<Operation>[],branch on operand->output{Parent::Some(slot:Int)=>term(node->operation,List<Int>[slot],List<Int>[],at),Parent::None=>failure(at)});
+    },node->operation=="break"||node->operation=="continue"=>{
+     let loopId:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Body,Diagnostic>::Err(problem("internal",node->span,"whole lowering: transfer target"));}};
+     let target:Plan=try lookup<Plan>(builder->plans,try get(builder->loops,loopId));var operations:List<Operation>=List<Operation>[];var arrives:Bool=true;
+     branch when{node->children->length()>0=>{
+      let value:Plan=try child(builder,node,0);
+      branch on value->output{Parent::None=>{arrives=false;},Parent::Some(slot:Int)=>{
+       branch on target->output{Parent::None=>unit,Parent::Some(destination:Int)=>{operations=operations->append(operation("copy",Parent::Some(destination),List<Int>[slot],at));}};
+      }};
+     },else=>unit};
+     let destination:Int=branch when{node->operation=="break"=>target->exit,else=>try get(builder->continues,loopId)};
+     builder=try setBlock(builder,current->exit,operations,branch when{arrives=>jump(destination,at),else=>failure(at)});
+    },else=>{
+     let emitted:Emitted=try ordinary(builder,current,node,at);builder=try finish(emitted->builder,current,node,emitted->operations,at);
+    }};
+   }
+  };index=index+1;
+ };
+ var blocks:Paged<Block>=empty<Block>();index=0;
+ loop while(index<builder->blockCount){let emitted:Int=try get(builder->blockIds,index);branch when{emitted<0=>{return Result<Body,Diagnostic>::Err(problem("internal",rootNode->span,"whole lowering: unfilled block"));},else=>unit};blocks=push<Block>(blocks,try lookup<Block>(builder->blocks,emitted));index=index+1;};
+ Result<Body,Diagnostic>::Ok(Body{declaration:declaration,functionOwner:functionOwner,root:root,resultType:resultType,slots:builder->slots,blocks:blocks,parameters:builder->parameters,captures:builder->captures,entry:rootPlan->entry,occurrences:occurrences,tries:builder->tries})
+};

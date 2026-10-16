@@ -1,0 +1,95 @@
+namespace Mgnc\WholeVerify;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo,BodyState};
+use Mgnc\SemanticData\{Declaration as SourceDeclaration};
+use Mgnc\TypeData\{Type,Structure};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\WholeIR\{Project,Declaration,Body,Slot,Occurrence,Block,Operation};
+use Mgnc\WholeShape\{operation as operationShape,terminator as terminatorShape,sourceOperation};
+use Mgnc\WholeDataflow\{verify as verifyDataflow};
+use Mgnc\WholeChecks\{require,integers,present};
+use Mgnc\WholeTryCheck\{verify as verifyTry};
+use Mgnc\WholeControlCheck\{verify as verifyControl};
+use Mgnc\WholeTables\{verify as verifyTables};
+use Mgnc\WholeCaptureCheck\{expected as expectedCaptures,verify as verifyCaptures};
+use Mgnc\Data\{Paged};
+use Mgnc\IntMap\{Map,create,get,put};
+let matches:Function(Body,Node,Occurrence):Result<Unit,Diagnostic>=function(body:Body,node:Node,value:Occurrence):Result<Unit,Diagnostic>{
+ let span:Span=node->span;try require(parentEqual(node->functionOwner,body->functionOwner),span,"occurrence function owner");
+ branch when{node->normal=>{
+  let slot:Slot=try lookup<Slot>(body->slots,try present(value->output,span,"missing normal value"));
+  let expected:Int=branch on node->structure{Structure::Known(typeId:Int)=>typeId,Structure::Unknown=>{try require(false,span,"normal Unknown");0}};
+  try require(slot->valueType==expected&&slot->kind==0,span,"occurrence result slot");
+ },else=>{try require(parentEqual(value->output,Parent::None),span,"non-completing expression has a dummy result");}};
+ let entry:Block=try lookup<Block>(body->blocks,value->entry);let exit:Block=try lookup<Block>(body->blocks,value->exit);
+ try require(entry->terminator->origin->node==value->node&&exit->terminator->origin->node==value->node,span,"occurrence CFG boundaries");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+public let verify:Function(SemanticProject,Project):Result<Unit,Diagnostic>=function(source:SemanticProject,project:Project):Result<Unit,Diagnostic>{
+ try verifyTables(source,project);let captures:Paged<List<Int>>=try expectedCaptures(source->state);let state:State=source->state;let span:Span=Span{start:0,end:0,line:1,column:1};
+ try require(project->entry==source->entry&&project->declarations->count==state->types->headers->declarations->count&&project->functions->count==state->functions->count,span,"project membership");
+ try require(integers(project->moduleOrder,state->types->headers->order),span,"module initialization order");
+ var id:Int=0;var expectedBodies:Int=state->functions->count;
+ loop over(state->bodies->pages->append(state->bodies->tail) as states:List<BodyState>){loop over(states as status:BodyState){branch on status{BodyState::Complete(root:Int)=>{expectedBodies=expectedBodies+1;},BodyState::NotRequired=>unit,BodyState::Pending=>unit,BodyState::Checking=>unit};};};
+ try require(project->bodies->count==expectedBodies,span,"body membership count");
+ loop over(project->declarations->pages->append(project->declarations->tail) as page:List<Declaration>){loop over(page as declaration:Declaration){
+  let expected:SourceDeclaration=try lookup<SourceDeclaration>(state->types->headers->declarations,id);
+  try require(declaration->source==id&&declaration->file==expected->file&&declaration->kind==expected->kind&&parentEqual(declaration->valueType,try lookup<Parent>(state->types->declarations,id)),expected->span,"declaration identity");
+  branch on try lookup<BodyState>(state->bodies,id){
+   BodyState::Complete(root:Int)=>{
+    let body:Body=try lookup<Body>(project->bodies,try present(declaration->body,expected->span,"missing initializer or template"));
+    try require(body->root==root&&parentEqual(body->declaration,Parent::Some(id))&&parentEqual(body->functionOwner,Parent::None),expected->span,"initializer or template identity");
+   },BodyState::NotRequired=>{try require(parentEqual(declaration->body,Parent::None),expected->span,"unexpected runtime body");},
+   BodyState::Pending=>{try require(false,expected->span,"unchecked source body");},BodyState::Checking=>{try require(false,expected->span,"incomplete source body");}
+  };id=id+1;
+ };};
+ try require(project->bodies->count==expectedBodies,span,"body membership count");var seen:Map=create();var bodyKeys:Map=create();var covered:Int=0;id=0;
+ loop over(project->bodies->pages->append(project->bodies->tail) as page:List<Body>){loop over(page as body:Body){
+  let root:Node=try lookup<Node>(state->nodes,body->root);let at:Span=root->span;var key:Int=0;
+  branch on body->functionOwner{Parent::None=>{
+   let declaration:Int=try present(body->declaration,at,"body declaration");key=declaration;
+   let origin:Declaration=try lookup<Declaration>(project->declarations,declaration);try require(parentEqual(origin->body,Parent::Some(id)),at,"duplicate initializer identity");
+   try require(parentEqual(origin->valueType,Parent::Some(body->resultType))&&body->parameters->length()==0&&body->captures->length()==0,at,"initializer signature");
+  },Parent::Some(functionId:Int)=>{
+   key=project->declarations->count+functionId;let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,functionId);let shape:Type=try lookup<Type>(state->types->types,info->valueType);
+   try require((try lookup<Int>(project->functions,functionId))==id&&parentEqual(info->body,Parent::Some(body->root)),at,"function body identity");
+   try require(body->resultType==(try memberType(shape->arguments,shape->arguments->length()-1,at))&&body->parameters->length()==info->parameters->length(),at,"function signature");
+  }};
+  try require((try get(bodyKeys,key))<0,at,"duplicate body");bodyKeys=try put(bodyKeys,key,id);
+  var index:Map=create();var ordinal:Int=0;var destinations:Map=create();
+  loop over(body->occurrences->pages->append(body->occurrences->tail) as occurrences:List<Occurrence>){loop over(occurrences as value:Occurrence){
+   let node:Node=try lookup<Node>(state->nodes,value->node);try require((try get(seen,value->node))<0,node->span,"duplicate source occurrence");seen=try put(seen,value->node,id);covered=covered+1;
+   index=try put(index,value->node,ordinal);ordinal=ordinal+1;try matches(body,node,value);
+   branch on value->output{Parent::None=>unit,Parent::Some(slot:Int)=>{try require((try get(destinations,slot))<0,node->span,"shared expression output slot");destinations=try put(destinations,slot,value->node);}};
+   branch when{value->node==body->root=>{try require(value->entry==body->entry,node->span,"body entry correspondence");},else=>unit};
+  };};
+  try require((try get(index,body->root))>=0,at,"missing root occurrence");
+  loop over(body->slots->pages->append(body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){
+   discard try lookup<Type>(state->types->types,slot->valueType);try require(slot->kind>=0&&slot->kind<=4,at,"slot storage kind");
+   branch on slot->symbol{Parent::None=>{try require(slot->kind==0||slot->kind==4,at,"missing slot symbol");},Parent::Some(symbolId:Int)=>{
+    let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);try require(slot->valueType==symbol->valueType,at,"symbol slot type");
+    try require(slot->kind>=1&&slot->kind<=3,at,"symbol storage kind");
+   }};
+  };};
+  var core:Map=create();
+  loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   try require((try get(index,block->terminator->origin->node))>=0,at,"terminator source owner");try terminatorShape(state,body,block->terminator);
+   loop over(block->operations as op:Operation){
+    try operationShape(state,body,index,op);let node:Node=try lookup<Node>(state->nodes,op->origin->node);
+    branch when{op->code==node->operation&&(sourceOperation(op->code)||op->code=="function")=>{
+     let previous:Int=try get(core,op->origin->node);core=try put(core,op->origin->node,branch when{previous<0=>1,else=>previous+1});
+    },else=>unit};
+   };
+  };};
+  loop over(body->occurrences->pages->append(body->occurrences->tail) as occurrences:List<Occurrence>){loop over(occurrences as value:Occurrence){
+   let node:Node=try lookup<Node>(state->nodes,value->node);
+   branch when{sourceOperation(node->operation)||node->operation=="function"=>{try require((try get(core,value->node))==1,node->span,"missing or duplicate lowered operation");},else=>unit};
+  };};
+  try verifyTry(state,body,index);try verifyControl(state,body,index);try verifyCaptures(state,captures,body);try verifyDataflow(body);id=id+1;
+ };};
+ try require(covered==state->nodes->count,span,"whole-source occurrence coverage");
+ Result<Unit,Diagnostic>::Ok(unit)
+};

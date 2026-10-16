@@ -1,0 +1,35 @@
+namespace Mgnc\WholeTry;
+use Mgnc\Data\{Diagnostic,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{Node,FunctionInfo};
+use Mgnc\TypeData\{Type,Structure};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\WholeIR\{Slot,Operation,Origin,Terminator,TrySite};
+use Mgnc\WholeBuilder\{Builder,Plan,output,term,operation,setBlock,reserveBlock,continueAt,withSlots,withTries};
+use Mgnc\WholeChecks\{present};
+use Mgnc\WholeFlow\{child,jump,failure,sequence};
+public let payload:Function(Int,Int,Int,Int,Origin):Operation=function(destination:Int,subject:Int,sumType:Int,variant:Int,site:Origin):Operation{
+ let base:Operation=operation("sum-payload",Parent::Some(destination),List<Int>[subject],site);
+ Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:base->symbol,target:Parent::Some(sumType),arguments:base->arguments,mapping:List<Int>[variant,0],integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:site}
+};
+public let lower:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
+ var builder:Builder=initial;let operand:Plan=try child(builder,node,0);builder=try sequence(builder,current,node,site);
+ let operandNode:Node=try lookup<Node>(builder->context->state->nodes,operand->node);
+ let inputType:Int=branch on operandNode->structure{Structure::Known(value:Int)=>value,Structure::Unknown=>{return Result<Builder,Diagnostic>::Err(problem("internal",node->span,"whole lowering: try operand identity"));}};
+ let input:Type=try lookup<Type>(builder->context->state->types->types,inputType);
+ let errorType:Int=try memberType(input->arguments,1,node->span);
+ let owner:Int=try present(node->target,node->span,"try owner");
+ let subject:Int=branch on operand->output{Parent::Some(value:Int)=>value,Parent::None=>{
+  builder=withTries(builder,builder->tries->append(TrySite{node:current->node,owner:owner,operandType:inputType,returnType:builder->context->resultType,errorType:errorType,dispatch:Parent::None,ok:Parent::None,err:Parent::None,payload:Parent::None,returned:Parent::None}));
+  return setBlock(builder,current->exit,List<Operation>[],failure(site));
+ }};
+ let error:Int=builder->slots->count;builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:errorType,kind:0,symbol:Parent::None}));
+ let returned:Int=builder->slots->count;builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:builder->context->resultType,kind:0,symbol:Parent::None}));
+ let ok:Int=builder->blockCount;builder=reserveBlock(builder,site);let err:Int=builder->blockCount;builder=reserveBlock(builder,site);
+ builder=withTries(builder,builder->tries->append(TrySite{node:current->node,owner:owner,operandType:inputType,returnType:builder->context->resultType,errorType:errorType,dispatch:Parent::Some(current->exit),ok:Parent::Some(ok),err:Parent::Some(err),payload:Parent::Some(error),returned:Parent::Some(returned)}));
+ builder=try setBlock(builder,current->exit,List<Operation>[],Terminator{code:"switch",inputs:List<Int>[subject],targets:List<Int>[ok,err],variants:List<Int>[0,1],sumType:Parent::Some(inputType),origin:site});
+ builder=try setBlock(builder,ok,List<Operation>[payload(try output(current,node->span),subject,inputType,0,site)],jump(current->continuation,site));
+ let base:Operation=operation("variant",Parent::Some(returned),List<Int>[error],site);
+ let rebuilt:Operation=Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:base->symbol,target:Parent::Some(builder->context->resultType),arguments:base->arguments,mapping:List<Int>[1],integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:site};
+ setBlock(builder,err,List<Operation>[payload(error,subject,inputType,1,site),rebuilt],term("return",List<Int>[returned],List<Int>[],site))
+};

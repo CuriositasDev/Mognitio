@@ -1,0 +1,33 @@
+namespace Mgnc\WholeTables;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticData\{Introduction,Module};
+use Mgnc\TypeData\{Store,Type,Member,Obligation};
+use Mgnc\TypeOps\{parentEqual,argumentsEqual};
+use Mgnc\WholeIR\{Project};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+public let obligations:Function(List<Obligation>,List<Obligation>,Span):Result<Unit,Diagnostic>=function(actual:List<Obligation>,expected:List<Obligation>,span:Span):Result<Unit,Diagnostic>{
+ try require(actual->length()==expected->length(),span,"symbolic obligation count");var index:Int=0;
+ loop over(actual as item:Obligation){let other:Obligation=try atList<Obligation>(expected,index);
+  try require(item->owner==other->owner&&item->parameter==other->parameter&&item->minimum==other->minimum&&item->maximum==other->maximum&&item->span->start==other->span->start&&item->span->end==other->span->end,span,"symbolic obligation identity");index=index+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+public let verify:Function(SemanticProject,Project):Result<Unit,Diagnostic>=function(source:SemanticProject,project:Project):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let actual:Store=project->types;let expected:Store=source->state->types;
+ try require(actual->types->count==expected->types->count&&actual->declarations->count==expected->declarations->count&&actual->constraints->count==expected->constraints->count,span,"type table membership");
+ var index:Int=0;loop over(actual->types->pages->append(actual->types->tail) as page:List<Type>){loop over(page as item:Type){let other:Type=try lookup<Type>(expected->types,index);
+  try require(item->kind==other->kind&&parentEqual(item->owner,other->owner)&&argumentsEqual(item->arguments,other->arguments)&&item->members->length()==other->members->length(),span,"type structure identity");
+  var position:Int=0;loop over(item->members as member:Member){let original:Member=try atList<Member>(other->members,position);try require(member->name==original->name&&parentEqual(member->value,original->value),span,"type member identity");position=position+1;};index=index+1;
+ };};
+ index=0;loop while(index<actual->constraints->count){try obligations(try lookup<List<Obligation>>(actual->constraints,index),try lookup<List<Obligation>>(expected->constraints,index),span);index=index+1;};
+ try obligations(project->obligations,source->state->obligations,span);
+ try require(actual->headers->names->count==expected->headers->names->count&&actual->headers->modules->count==expected->headers->modules->count,span,"source and import table membership");
+ index=0;loop over(actual->headers->names->pages->append(actual->headers->names->tail) as page:List<Introduction>){loop over(page as item:Introduction){let other:Introduction=try lookup<Introduction>(expected->headers->names,index);
+  try require(item->file==other->file&&item->name==other->name&&item->declaration==other->declaration&&item->imported==other->imported,span,"resolved import origin");index=index+1;
+ };};
+ index=0;loop over(actual->headers->modules->pages->append(actual->headers->modules->tail) as page:List<Module>){loop over(page as item:Module){let other:Module=try lookup<Module>(expected->headers->modules,index);
+  try require(item->nameSpace==other->nameSpace&&item->standard==other->standard&&item->source->text==other->source->text&&item->source->relativePath==other->source->relativePath,span,"source snapshot identity");index=index+1;
+ };};
+ Result<Unit,Diagnostic>::Ok(unit)
+};

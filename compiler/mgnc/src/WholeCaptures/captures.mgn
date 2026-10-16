@@ -1,0 +1,29 @@
+namespace Mgnc\WholeCaptures;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Symbol,FunctionInfo};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\Tables\{replaceItem};
+public let contains:Function(List<Int>,Int):Bool=function(values:List<Int>,wanted:Int):Bool{
+ loop over(values as value:Int){branch when{value==wanted=>{return true;},else=>unit};};false
+};
+// Propagate a nested function's free bindings through its lexical parents.
+// Module bindings participate exactly like locals, stopping at the initializer.
+public let collect:Function(State):Result<Paged<List<Int>>,Diagnostic>=function(state:State):Result<Paged<List<Int>>,Diagnostic>{
+ var result:Paged<List<Int>>=empty<List<Int>>();var id:Int=0;
+ loop while(id<state->functions->count){result=push<List<Int>>(result,List<Int>[]);id=id+1;};
+ id=0;loop while(id<state->functions->count){
+  let functionInfo:FunctionInfo=try lookup<FunctionInfo>(state->functions,id);
+  loop over(functionInfo->captures as symbolId:Int){
+   let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);var owner:Parent=Parent::Some(id);var steps:Int=0;
+   loop while(!parentEqual(owner,symbol->functionOwner)){
+    let current:Int=branch on owner{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Paged<List<Int>>,Diagnostic>::Err(problem("internal",symbol->span,"capture parent does not reach binding owner"));}};
+    let previous:List<Int>=try lookup<List<Int>>(result,current);
+    branch when{!contains(previous,symbolId)=>{result=try replaceItem<List<Int>>(result,current,previous->append(symbolId));},else=>unit};
+    owner=(try lookup<FunctionInfo>(state->functions,current))->parent;steps=steps+1;
+    branch when{steps>state->functions->count=>{return Result<Paged<List<Int>>,Diagnostic>::Err(problem("internal",symbol->span,"cyclic lexical function parents"));},else=>unit};
+   };
+  };id=id+1;
+ };
+ Result<Paged<List<Int>>,Diagnostic>::Ok(result)
+};

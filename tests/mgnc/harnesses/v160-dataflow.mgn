@@ -1,0 +1,48 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation,Origin,Terminator,Occurrence,TrySite};
+use Mgnc\WholeBuilder\{operation,term};
+use Mgnc\WholeDataflow\{verify};
+use Std\Io\{writeStdout};
+let site:Origin=Origin{node:0,file:0,span:Span{start:0,end:1,line:1,column:1}};
+let payload:Function(Int):Operation=function(subject:Int):Operation{
+ let base:Operation=operation("sum-payload",Parent::Some(2),List<Int>[subject],site);
+ Operation{code:base->code,output:base->output,inputs:base->inputs,unavailable:base->unavailable,symbol:base->symbol,target:Parent::Some(11),arguments:base->arguments,mapping:List<Int>[0,0],integer:base->integer,minimum:base->minimum,wide:base->wide,text:base->text,origin:site}
+};
+let block:Function(List<Operation>,Terminator):Block=function(operations:List<Operation>,end:Terminator):Block{Block{operations:operations,terminator:end}};
+let returned:Function(Int):Terminator=function(slot:Int):Terminator{term("return",List<Int>[slot],List<Int>[],site)};
+let jumped:Function(Int):Terminator=function(target:Int):Terminator{term("jump",List<Int>[],List<Int>[target],site)};
+let switched:Function(List<Int>):Terminator=function(targets:List<Int>):Terminator{Terminator{code:"switch",inputs:List<Int>[0],targets:targets,variants:List<Int>[0,1],sumType:Parent::Some(11),origin:site}};
+let sample:Function(Int):Body=function(mutation:Int):Body{
+ var slots:Paged<Slot>=empty<Slot>();loop over(List<Int>[11,11,1,1,2] as valueType:Int){slots=push<Slot>(slots,Slot{valueType:valueType,kind:0,symbol:Parent::None});};
+ var blocks:Paged<Block>=empty<Block>();var before:List<Operation>=List<Operation>[];var selected:List<Operation>=List<Operation>[payload(0)];
+ branch when{mutation==1=>{before=List<Operation>[payload(0)];},
+ mutation==2=>{selected=List<Operation>[payload(1)];},
+ mutation==3=>{selected=List<Operation>[operation("copy",Parent::Some(0),List<Int>[1],site),payload(0)];},
+ mutation==6=>{selected=List<Operation>[operation("copy",Parent::Some(1),List<Int>[0],site),payload(1)];},
+ mutation==9=>{selected=List<Operation>[operation("copy",Parent::Some(2),List<Int>[2],site),payload(0)];},else=>unit};
+ blocks=push<Block>(blocks,block(before,switched(branch when{mutation==5=>List<Int>[2,1],else=>List<Int>[1,2]})));
+ branch when{mutation==4=>{
+  blocks=push<Block>(blocks,block(List<Operation>[],jumped(3)));blocks=push<Block>(blocks,block(List<Operation>[],jumped(3)));blocks=push<Block>(blocks,block(selected,returned(2)));
+ },mutation==7||mutation==8=>{
+  branch when{mutation==8=>{selected=selected->append(operation("copy",Parent::Some(0),List<Int>[1],site));},else=>unit};
+  blocks=push<Block>(blocks,block(selected,term("branch",List<Int>[4],List<Int>[1,2],site)));blocks=push<Block>(blocks,block(List<Operation>[],returned(3)));
+ },else=>{
+  blocks=push<Block>(blocks,block(selected,returned(2)));blocks=push<Block>(blocks,block(List<Operation>[],returned(3)));
+  branch when{mutation==10=>{blocks=push<Block>(blocks,block(List<Operation>[payload(1)],returned(2)));},else=>unit};
+ }};
+ Body{declaration:Parent::Some(0),functionOwner:Parent::Some(0),root:0,resultType:1,slots:slots,blocks:blocks,parameters:List<Int>[0,1,3,4],captures:List<Int>[],entry:0,occurrences:empty<Occurrence>(),tries:List<TrySite>[]}
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ var mutation:Int=0;var passed:Int=0;var rejected:Int=0;
+ loop while(mutation<=10){
+  let expected:Bool=mutation==0||mutation==7||mutation==10;
+  branch on verify(sample(mutation)){
+   Result<Unit,Diagnostic>::Ok(value:Unit)=>{branch when{!expected=>{discard writeStdout("unexpected mutant acceptance\n");return 1;},else=>unit};passed=passed+1;},
+   Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{branch when{expected||error->phase!="internal"||branch when{mutation==9=>error->message!="IR read before definition",else=>error->message!="whole IR: payload has no matching subject guard"&&error->message!="whole IR: payload variant guard not established for current subject"}=>{discard writeStdout(error->phase+": "+error->message+"\n");return 2;},else=>unit};rejected=rejected+1;}
+  };mutation=mutation+1;
+ };
+ branch when{passed!=3||rejected!=8=>{return 3;},else=>unit};
+ discard writeStdout("V160_DATAFLOW_OK valid=3 rejected=8\n");0
+};

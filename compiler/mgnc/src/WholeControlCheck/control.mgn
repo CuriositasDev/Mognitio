@@ -1,0 +1,130 @@
+namespace Mgnc\WholeControlCheck;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation,Occurrence,Terminator};
+use Mgnc\WholeChecks\{require,present,occurrence,integers};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+let child:Function(Body,Map,Node,Int):Result<Occurrence,Diagnostic>=function(body:Body,index:Map,node:Node,position:Int):Result<Occurrence,Diagnostic>{occurrence(body,index,try atList<Int>(node->children,position))};
+let jumpTo:Function(Terminator,Int,Span):Result<Unit,Diagnostic>=function(end:Terminator,target:Int,span:Span):Result<Unit,Diagnostic>{require(end->code=="jump"&&integers(end->targets,List<Int>[target]),span,"source continuation edge")};
+let successor:Function(Body,Node,Occurrence):Result<Int,Diagnostic>=function(body:Body,node:Node,value:Occurrence):Result<Int,Diagnostic>{
+ try require(node->normal,node->span,"non-completing normal successor");let exit:Block=try lookup<Block>(body->blocks,value->exit);
+ let end:Terminator=branch when{node->operation=="try"=>{
+  try require(exit->terminator->code=="switch"&&integers(exit->terminator->variants,List<Int>[0,1]),node->span,"try normal edge");
+  (try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,0)))->terminator
+ },else=>exit->terminator};
+ try require(end->code=="jump"&&end->targets->length()==1,node->span,"missing normal continuation");Result<Int,Diagnostic>::Ok(try atList<Int>(end->targets,0))
+};
+let bridge:Function(State,Body,Map,Occurrence,Occurrence,Span):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map,source:Occurrence,target:Occurrence,span:Span):Result<Unit,Diagnostic>{
+ let node:Node=try lookup<Node>(state->nodes,source->node);branch when{!node->normal=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};
+ let block:Block=try lookup<Block>(body->blocks,try successor(body,node,source));try jumpTo(block->terminator,target->exit,span);
+ branch on target->output{Parent::None=>{try require(block->operations->length()==0,span,"non-completing branch join value");},Parent::Some(slot:Int)=>{
+  try require(block->operations->length()==1,span,"branch join definition");let op:Operation=try atList<Operation>(block->operations,0);
+  try require(op->code=="copy"&&parentEqual(op->output,target->output)&&integers(op->inputs,List<Int>[try present(source->output,span,"normal branch value")]),span,"branch value correspondence");
+ }};Result<Unit,Diagnostic>::Ok(unit)
+};
+let ordinaryCopies:Function(State,Body,Map,Node,Occurrence,Block):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map,node:Node,current:Occurrence,exit:Block):Result<Unit,Diagnostic>{
+ let span:Span=node->span;
+ branch when{node->operation=="binding"=>{
+  try require(exit->operations->length()==1,span,"binding load count");let load:Operation=try atList<Operation>(exit->operations,0);try require(parentEqual(load->output,current->output),span,"binding load destination");
+  branch when{load->code=="copy"=>{let slot:Slot=try lookup<Slot>(body->slots,try atList<Int>(load->inputs,0));try require(parentEqual(slot->symbol,node->binding),span,"resolved binding slot");},else=>{try require(load->code=="global-load"&&parentEqual(load->symbol,node->binding),span,"resolved global binding");}};
+ },node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
+  try require(exit->operations->length()==branch when{node->normal=>1,else=>0},span,"wrapper lowering count");
+  branch when{node->normal&&(node->operation=="group"||(node->operation=="block"&&node->flag))=>{
+   let tail:Occurrence=try child(body,index,node,node->children->length()-1);let op:Operation=try atList<Operation>(exit->operations,0);
+   try require(op->code=="copy"&&parentEqual(op->output,current->output)&&integers(op->inputs,List<Int>[try present(tail->output,span,"wrapper tail")]),span,"wrapper tail correspondence");
+  },else=>unit};
+ },node->operation=="declare"||node->operation=="assign"=>{
+  try require(exit->operations->length()==branch when{node->normal=>2,else=>0},span,"binding store count");
+  branch when{node->normal=>{
+   let value:Occurrence=try child(body,index,node,node->children->length()-1);let store:Operation=try atList<Operation>(exit->operations,0);
+   try require(integers(store->inputs,List<Int>[try present(value->output,span,"stored value")]),span,"store value correspondence");
+   branch when{store->code=="copy"=>{let slot:Slot=try lookup<Slot>(body->slots,try present(store->output,span,"local store destination"));try require(parentEqual(slot->symbol,node->binding),span,"local store identity");},else=>{try require(store->code=="global-store"&&parentEqual(store->symbol,node->binding),span,"global store identity");}};
+  },else=>unit};
+ },else=>unit};Result<Unit,Diagnostic>::Ok(unit)
+};
+public let verify:Function(State,Body,Map):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map):Result<Unit,Diagnostic>{
+ var loops:Map=create();var continuations:Map=create();
+ loop over(body->occurrences->pages->append(body->occurrences->tail) as page:List<Occurrence>){loop over(page as value:Occurrence){let node:Node=try lookup<Node>(state->nodes,value->node);
+  branch when{node->operation=="loop"||node->operation=="while"||node->operation=="over"=>{
+   let id:Int=try present(node->target,node->span,"loop origin");loops=try put(loops,id,value->node);
+   branch when{node->operation!="over"=>{continuations=try put(continuations,id,(try child(body,index,node,0))->entry);},else=>{
+    var blockId:Int=0;var found:Int= -1;
+    loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){
+     branch when{op->code=="iterator-more"&&op->origin->node==value->node=>{try require(found<0,node->span,"duplicate iterator condition");found=blockId;},else=>unit};
+    };blockId=blockId+1;};};try require(found>=0,node->span,"missing iterator condition");continuations=try put(continuations,id,found);
+   }};
+  },else=>unit};
+ };};
+ loop over(body->occurrences->pages->append(body->occurrences->tail) as page:List<Occurrence>){loop over(page as current:Occurrence){
+  let node:Node=try lookup<Node>(state->nodes,current->node);let span:Span=node->span;let entry:Block=try lookup<Block>(body->blocks,current->entry);let exit:Block=try lookup<Block>(body->blocks,current->exit);
+  try require(entry->operations->length()==0,span,"expression entry executed before operands");
+  let hasChildren:Bool=node->operation!="function"&&node->children->length()>0;
+  try jumpTo(entry->terminator,branch when{hasChildren=>(try child(body,index,node,0))->entry,else=>current->exit},span);
+  branch when{node->operation=="when"=>{
+   var position:Int=0;loop while(position+1<node->children->length()){
+    let condition:Occurrence=try child(body,index,node,position);let conditionNode:Node=try lookup<Node>(state->nodes,condition->node);let arm:Occurrence=try child(body,index,node,position+1);let next:Occurrence=try child(body,index,node,position+2);
+    branch when{conditionNode->normal=>{let decision:Block=try lookup<Block>(body->blocks,try successor(body,conditionNode,condition));
+     try require(decision->operations->length()==0&&decision->terminator->code=="branch"&&integers(decision->terminator->inputs,List<Int>[try present(condition->output,span,"condition value")])&&integers(decision->terminator->targets,List<Int>[arm->entry,next->entry]),span,"conditional source order");
+    },else=>unit};try bridge(state,body,index,arm,current,span);position=position+2;
+   };try bridge(state,body,index,try child(body,index,node,position),current,span);
+  },node->operation=="on"=>{
+   let subject:Occurrence=try child(body,index,node,0);let subjectNode:Node=try lookup<Node>(state->nodes,subject->node);
+   branch when{subjectNode->normal=>{let decision:Block=try lookup<Block>(body->blocks,try successor(body,subjectNode,subject));
+    try require(decision->operations->length()==0&&decision->terminator->code=="switch"&&integers(decision->terminator->inputs,List<Int>[try present(subject->output,span,"switch subject")])&&integers(decision->terminator->variants,node->mapping),span,"switch source identity");
+    var position:Int=1;loop while(position<node->children->length()){
+     let arm:Occurrence=try child(body,index,node,position);let selected:Block=try lookup<Block>(body->blocks,try atList<Int>(decision->terminator->targets,position-1));try jumpTo(selected->terminator,arm->entry,span);
+     branch on try atList<Parent>(node->binders,position-1){Parent::None=>{try require(selected->operations->length()==0,span,"payloadless arm extraction");},Parent::Some(symbol:Int)=>{
+      try require(selected->operations->length()==1,span,"arm binder extraction count");let payload:Operation=try atList<Operation>(selected->operations,0);let slot:Slot=try lookup<Slot>(body->slots,try present(payload->output,span,"arm binder output"));
+      try require(payload->code=="sum-payload"&&parentEqual(slot->symbol,Parent::Some(symbol))&&integers(payload->inputs,List<Int>[try present(subject->output,span,"arm subject")])&&integers(payload->mapping,List<Int>[try atList<Int>(node->mapping,position-1),0]),span,"arm binder source");
+     }};position=position+1;
+    };
+   },else=>unit};
+   var position:Int=1;loop while(position<node->children->length()){try bridge(state,body,index,try child(body,index,node,position),current,span);position=position+1;};
+  },node->operation=="and"||node->operation=="or"=>{
+   let left:Occurrence=try child(body,index,node,0);let right:Occurrence=try child(body,index,node,1);let leftNode:Node=try lookup<Node>(state->nodes,left->node);
+   branch when{leftNode->normal=>{let decision:Block=try lookup<Block>(body->blocks,try successor(body,leftNode,left));let branchIndex:Int=branch when{node->operation=="and"=>0,else=>1};
+    try require(decision->operations->length()==0&&decision->terminator->code=="branch"&&integers(decision->terminator->inputs,List<Int>[try present(left->output,span,"logical condition")])&&(try atList<Int>(decision->terminator->targets,branchIndex))==right->entry,span,"short-circuit evaluation edge");
+    let bypass:Block=try lookup<Block>(body->blocks,try atList<Int>(decision->terminator->targets,1-branchIndex));try jumpTo(bypass->terminator,current->exit,span);try require(bypass->operations->length()==1,span,"short-circuit bypass result");
+   },else=>unit};try bridge(state,body,index,right,current,span);
+  },node->operation=="loop"||node->operation=="while"||node->operation=="over"=>{
+   let id:Int=try present(node->target,span,"loop identity");let repeat:Int=try get(continuations,id);let loopBody:Occurrence=try child(body,index,node,branch when{node->operation=="loop"=>0,else=>1});let loopNode:Node=try lookup<Node>(state->nodes,loopBody->node);
+   branch when{loopNode->normal=>{try require((try successor(body,loopNode,loopBody))==repeat,span,"loop repetition edge");},else=>unit};
+   branch when{node->operation=="while"=>{
+    let condition:Occurrence=try child(body,index,node,0);let conditionNode:Node=try lookup<Node>(state->nodes,condition->node);
+    branch when{conditionNode->normal=>{let decision:Block=try lookup<Block>(body->blocks,try successor(body,conditionNode,condition));try require(decision->terminator->code=="branch"&&integers(decision->terminator->inputs,List<Int>[try present(condition->output,span,"while condition")])&&integers(decision->terminator->targets,List<Int>[loopBody->entry,current->exit]),span,"while exit and body edge");},else=>unit};
+   },else=>unit};
+  },else=>{
+   var previous:Parent=Parent::None;
+   branch when{node->operation!="function"=>{loop over(node->children as childId:Int){let value:Occurrence=try occurrence(body,index,childId);
+    branch on previous{Parent::None=>unit,Parent::Some(previousId:Int)=>{let prior:Occurrence=try occurrence(body,index,previousId);let priorNode:Node=try lookup<Node>(state->nodes,previousId);
+     branch when{priorNode->normal=>{try require((try successor(body,priorNode,prior))==value->entry,span,"operand evaluation order");},else=>unit};
+    }};previous=Parent::Some(childId);
+   };},else=>unit};
+   branch on previous{Parent::None=>unit,Parent::Some(previousId:Int)=>{let prior:Occurrence=try occurrence(body,index,previousId);let priorNode:Node=try lookup<Node>(state->nodes,previousId);
+    branch when{priorNode->normal=>{try require((try successor(body,priorNode,prior))==current->exit,span,"final operand continuation");},else=>unit};
+   }};
+   branch when{node->operation=="return"||node->operation=="panic"=>{
+    let operand:Occurrence=try child(body,index,node,0);let operandNode:Node=try lookup<Node>(state->nodes,operand->node);
+    branch when{operandNode->normal=>{try require(exit->operations->length()==0&&exit->terminator->code==node->operation&&integers(exit->terminator->inputs,List<Int>[try present(operand->output,span,"terminal operand")]),span,"terminal source value");},else=>unit};
+    branch when{node->operation=="return"=>{try require(parentEqual(node->target,body->functionOwner),span,"return lexical owner");},else=>unit};
+   },node->operation=="break"||node->operation=="continue"=>{
+    let id:Int=try present(node->target,span,"transfer loop");let target:Occurrence=try occurrence(body,index,try get(loops,id));var arriving:Bool=true;
+    branch when{node->children->length()>0=>{arriving=(try lookup<Node>(state->nodes,(try child(body,index,node,0))->node))->normal;},else=>unit};
+    branch when{arriving=>{try jumpTo(exit->terminator,branch when{node->operation=="break"=>target->exit,else=>try get(continuations,id)},span);},else=>unit};
+   },node->operation=="try"=>{
+    try require(parentEqual(node->target,body->functionOwner),span,"try lexical owner");let operand:Occurrence=try child(body,index,node,0);let operandNode:Node=try lookup<Node>(state->nodes,operand->node);
+    branch when{operandNode->normal=>{
+     try require(exit->operations->length()==0&&exit->terminator->code=="switch"&&integers(exit->terminator->inputs,List<Int>[try present(operand->output,span,"try operand")])&&integers(exit->terminator->variants,List<Int>[0,1]),span,"try tag dispatch");
+     let ok:Block=try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,0));let err:Block=try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,1));
+     try require(ok->operations->length()==1&&err->operations->length()==2,span,"try expansion operation count");let success:Operation=try atList<Operation>(ok->operations,0);let payload:Operation=try atList<Operation>(err->operations,0);let rebuilt:Operation=try atList<Operation>(err->operations,1);
+     try require(success->code=="sum-payload"&&parentEqual(success->output,current->output)&&integers(success->mapping,List<Int>[0,0]),span,"try Ok value");
+     try require(payload->code=="sum-payload"&&integers(payload->inputs,exit->terminator->inputs)&&integers(payload->mapping,List<Int>[1,0])&&rebuilt->code=="variant"&&integers(rebuilt->inputs,List<Int>[try present(payload->output,span,"try error payload")]),span,"try Err reconstruction input");
+     try require(err->terminator->code=="return"&&integers(err->terminator->inputs,List<Int>[try present(rebuilt->output,span,"try reconstructed Err")]),span,"try Err return handoff");
+    },else=>{try require(exit->operations->length()==0&&exit->terminator->code=="unreachable",span,"non-completing try operand created an exit");}};
+   },else=>{try ordinaryCopies(state,body,index,node,current,exit);}};
+  }};
+ };};Result<Unit,Diagnostic>::Ok(unit)
+};

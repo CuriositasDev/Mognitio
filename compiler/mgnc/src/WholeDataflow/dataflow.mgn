@@ -1,0 +1,108 @@
+namespace Mgnc\WholeDataflow;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
+use Mgnc\WholeChecks\{require as invariant,present};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+use Mgnc\Facts\{words,combine,equal,define,require,mask,fromSlots};
+type Guard=product{slot:Int;sumType:Int;variant:Int;};
+type Edge=product{source:Int;guard:Parent;next:Int;};
+type Facts=product{definitions:List<Bits<64>>;guards:List<Bits<64>>;};
+let findGuard:Function(Paged<Guard>,Int,Int,Int):Result<Int,Diagnostic>=function(guards:Paged<Guard>,slot:Int,sumType:Int,variant:Int):Result<Int,Diagnostic>{
+ var index:Int=0;loop over(guards->pages->append(guards->tail) as page:List<Guard>){loop over(page as guard:Guard){
+  branch when{guard->slot==slot&&guard->sumType==sumType&&guard->variant==variant=>{return Result<Int,Diagnostic>::Ok(index);},else=>unit};index=index+1;
+ };};Result<Int,Diagnostic>::Ok(-1)
+};
+let erase:Function(List<Bits<64>>,List<Int>,Span):Result<List<Bits<64>>,Diagnostic>=function(input:List<Bits<64>>,killed:List<Int>,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ branch when{killed->length()==0=>{return Result<List<Bits<64>>,Diagnostic>::Ok(input);},else=>unit};
+ var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;
+ loop over(input as original:Bits<64>){var word:Bits<64>=original;loop over(killed as id:Int){branch when{id/64==index=>{word=word->and((try mask(id,span))->not());},else=>unit};};result=result->append(word);index=index+1;};
+ Result<List<Bits<64>>,Diagnostic>::Ok(result)
+};
+let killedBy:Function(Paged<Guard>,List<Int>):List<Int>=function(guards:Paged<Guard>,writes:List<Int>):List<Int>{
+ var result:List<Int>=List<Int>[];var index:Int=0;
+ loop over(guards->pages->append(guards->tail) as page:List<Guard>){loop over(page as guard:Guard){
+  loop over(writes as slot:Int){branch when{slot==guard->slot=>{result=result->append(index);break;},else=>unit};};index=index+1;
+ };};result
+};
+type Flow=product{values:Paged<Facts>;heads:Map;};
+let stateAt:Function(Flow,Int,Facts):Result<Facts,Diagnostic>=function(flow:Flow,id:Int,full:Facts):Result<Facts,Diagnostic>{
+ let version:Int=try get(flow->heads,id);
+ branch when{version<0=>Result<Facts,Diagnostic>::Ok(full),else=>lookup<Facts>(flow->values,version)}
+};
+let incoming:Function(Body,Int,Paged<Edge>,Map,Map,Flow,Facts,Facts,Span):Result<Facts,Diagnostic>=
+function(body:Body,current:Int,edges:Paged<Edge>,heads:Map,reachable:Map,flow:Flow,full:Facts,entry:Facts,span:Span):Result<Facts,Diagnostic>{
+ branch when{current==body->entry=>{return Result<Facts,Diagnostic>::Ok(entry);},else=>unit};
+ var facts:Facts=full;var found:Bool=false;var edgeId:Int=try get(heads,current);
+ loop while(edgeId>=0){
+  let edge:Edge=try lookup<Edge>(edges,edgeId);edgeId=edge->next;
+  branch when{(try get(reachable,edge->source))<0=>{continue;},else=>unit};
+  let previous:Facts=try stateAt(flow,edge->source,full);
+  let edgeGuards:List<Bits<64>>=branch on edge->guard{Parent::None=>previous->guards,Parent::Some(guard:Int)=>try define(previous->guards,guard,span)};
+  // Intersecting the first predecessor with top is exactly that predecessor.
+  facts=branch when{!found=>Facts{definitions:previous->definitions,guards:edgeGuards},else=>Facts{definitions:try combine(facts->definitions,previous->definitions,false,span),guards:try combine(facts->guards,edgeGuards,false,span)}};
+  found=true;
+ };
+ try invariant(found,span,"reachable block without incoming edge");
+ Result<Facts,Diagnostic>::Ok(facts)
+};
+public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Result<Unit,Diagnostic>{
+ let entry:Block=try lookup<Block>(body->blocks,body->entry);let span:Span=entry->terminator->origin->span;
+ var reachable:Map=try put(create(),body->entry,1);var order:Paged<Int>=push<Int>(empty<Int>(),body->entry);var cursor:Int=0;
+ loop while(cursor<order->count){let block:Block=try lookup<Block>(body->blocks,try lookup<Int>(order,cursor));
+  loop over(block->terminator->targets as target:Int){branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,1);order=push<Int>(order,target);},else=>unit};};cursor=cursor+1;
+ };
+ var guards:Paged<Guard>=empty<Guard>();var edges:Paged<Edge>=empty<Edge>();var heads:Map=create();var id:Int=0;
+ id=0;loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
+  let end:Terminator=block->terminator;var edgeIndex:Int=0;
+  loop over(end->targets as target:Int){var guardId:Parent=Parent::None;
+   branch when{end->code=="switch"=>{
+    let slot:Int=try atList<Int>(end->inputs,0);let sumType:Int=try present(end->sumType,span,"switch type");let variant:Int=try atList<Int>(end->variants,edgeIndex);
+    var found:Int=try findGuard(guards,slot,sumType,variant);branch when{found<0=>{found=guards->count;guards=push<Guard>(guards,Guard{slot:slot,sumType:sumType,variant:variant});},else=>unit};guardId=Parent::Some(found);
+   },else=>unit};
+   let next:Int=try get(heads,target);heads=try put(heads,target,edges->count);edges=push<Edge>(edges,Edge{source:id,guard:guardId,next:next});edgeIndex=edgeIndex+1;
+  };id=id+1;
+ };};
+ let full:Facts=Facts{definitions:words(body->slots->count,true),guards:words(guards->count,true)};
+ var boundary:List<Int>=body->parameters;loop over(body->captures as slot:Int){boundary=boundary->append(slot);};
+ let entryFacts:Facts=Facts{definitions:try fromSlots(body->slots->count,boundary,span),guards:words(guards->count,false)};
+ var generated:Paged<List<Int>>=empty<List<Int>>();var kills:Paged<List<Int>>=empty<List<Int>>();
+ var outgoing:Flow=Flow{values:empty<Facts>(),heads:create()};
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
+  var writes:List<Int>=List<Int>[];loop over(block->operations as op:Operation){branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{writes=writes->append(slot);}};};
+  generated=push<List<Int>>(generated,writes);kills=push<List<Int>>(kills,killedBy(guards,writes));
+ };};
+ var queue:Paged<Int>=order;var queued:Map=reachable;cursor=0;
+ loop while(cursor<queue->count){
+  let current:Int=try lookup<Int>(queue,cursor);queued=try put(queued,current,0);cursor=cursor+1;
+  let facts:Facts=try incoming(body,current,edges,heads,reachable,outgoing,full,entryFacts,span);
+  var definitions:List<Bits<64>>=facts->definitions;
+  loop over((try lookup<List<Int>>(generated,current)) as slot:Int){definitions=try define(definitions,slot,span);};
+  let next:Facts=Facts{definitions:definitions,guards:try erase(facts->guards,try lookup<List<Int>>(kills,current),span)};
+  let previous:Facts=try stateAt(outgoing,current,full);
+  branch when{!(try equal(next->definitions,previous->definitions,span))||!(try equal(next->guards,previous->guards,span))=>{
+   outgoing=Flow{heads:try put(outgoing->heads,current,outgoing->values->count),values:push<Facts>(outgoing->values,next)};let block:Block=try lookup<Block>(body->blocks,current);
+   loop over(block->terminator->targets as target:Int){branch when{(try get(queued,target))!=1=>{queue=push<Int>(queue,target);queued=try put(queued,target,1);},else=>unit};};
+  },else=>unit};
+ };
+ loop over(order->pages->append(order->tail) as page:List<Int>){loop over(page as blockId:Int){
+  let block:Block=try lookup<Block>(body->blocks,blockId);var facts:Facts=try incoming(body,blockId,edges,heads,reachable,outgoing,full,entryFacts,span);
+  try invariant(block->terminator->code!="unreachable",block->terminator->origin->span,"reachable non-completion boundary");
+  loop over(block->operations as op:Operation){
+   let at:Span=op->origin->span;try invariant(op->unavailable->length()==0,at,"reachable unavailable operand");
+   loop over(op->inputs as slot:Int){try require(facts->definitions,slot,at);};
+   branch when{op->code=="sum-payload"=>{
+    let guard:Int=try findGuard(guards,try atList<Int>(op->inputs,0),try present(op->target,at,"payload Sum identity"),try atList<Int>(op->mapping,0));
+    try invariant(guard>=0,at,"payload has no matching subject guard");
+    branch on require(facts->guards,guard,at){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try invariant(false,at,"payload variant guard not established for current subject");}};
+   },else=>unit};
+   branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
+    facts=Facts{definitions:try define(facts->definitions,slot,at),guards:try erase(facts->guards,killedBy(guards,List<Int>[slot]),at)};
+   }};
+  };
+  loop over(block->terminator->inputs as slot:Int){try require(facts->definitions,slot,block->terminator->origin->span);};
+ };};
+ Result<Unit,Diagnostic>::Ok(unit)
+};

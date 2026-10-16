@@ -2,7 +2,7 @@
 """Independent source, project, diagnostic, and no-execution conformance probes."""
 import argparse,hashlib,json,os,subprocess,tempfile,time
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument("--compiler",required=True,type=Path);p.add_argument("--evidence",type=Path);args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument("--compiler",required=True,type=Path);p.add_argument("--evidence",type=Path);p.add_argument("--command",choices=("check","lower"),default="check");args=p.parse_args()
 compiler=args.compiler.resolve();records=[];failures=[]
 def program(body="0",prefix=""):return "namespace App;"+prefix+"let main:Function(List<String>):Int=function(args:List<String>):Int{"+body+"};"
 cases=[]
@@ -73,7 +73,7 @@ def run(case,command,path,expected,phase=None):
 with tempfile.TemporaryDirectory(prefix="mgnc-v150-conformance-") as temporary:
  root=Path(temporary);path=root/"case.mgn"
  for case,source,phase,native,token in cases:
-  path.write_text(source);result=run(case,"check",path,0 if phase is None else 1,phase)
+  path.write_text(source);result=run(case,args.command,path,0 if phase is None else 1,phase)
   if token and phase and result.returncode==1:
    start=source.index(token);end=start+len(token.split(">")[0])
    if f"[{start},{end})" not in result.stderr.decode():
@@ -102,20 +102,20 @@ with tempfile.TemporaryDirectory(prefix="mgnc-v150-conformance-") as temporary:
   project=root/case;(project/"src").mkdir(parents=True);manifest=project/"mognitio.toml";manifest.write_text('[project]\nname="app"\nroot_namespace="App"\n')
   for name,text in files.items():
    source=project/"src"/name;source.parent.mkdir(parents=True,exist_ok=True);source.write_text(text)
-  run(case,"check",manifest,0 if phase is None else 1,phase)
+  run(case,args.command,manifest,0 if phase is None else 1,phase)
  # Check must not evaluate any user expression.
  output=root/"must-not-exist"
  path.write_text(program("0",f'use Std\\Io\\{{writeTextFile}};let attempted:Result<Unit,IoError>=writeTextFile({json.dumps(str(output))},"bad");'.replace("{writeTextFile}","{writeTextFile,IoError}")))
- run("C150-A06","check",path,0);assert not output.exists()
+ run("C150-A06",args.command,path,0);assert not output.exists()
  # Invalid UTF-8 is reported without a fabricated span.
- path.write_bytes(b"\xff");run("C150-F03-utf8","check",path,1,"source")
- path.write_bytes(b"\xef\xbb\xbf"+program().encode());run("C150-F03-bom","check",path,1,"source")
+ path.write_bytes(b"\xff");run("C150-F03-utf8",args.command,path,1,"source")
+ path.write_bytes(b"\xef\xbb\xbf"+program().encode());run("C150-F03-bom",args.command,path,1,"source")
  for case,raw,phase in [("C150-F03-escape",program('discard "\\q";0'),"lexical"),("C150-F03-eof","namespace App;","semantic")]:
-  path.write_text(raw);run(case,"check",path,1,phase)
+  path.write_text(raw);run(case,args.command,path,1,phase)
  for filename in ["with space.mgn","-entry.mgn"]:
-  target=root/filename;target.write_text(program());run("C150-A05-"+filename,"check",target,0)
+  target=root/filename;target.write_text(program());run("C150-A05-"+filename,args.command,target,0)
  for spelling in ["directory.mgn","mognitio.toml"]:
-  target=root/spelling;target.mkdir();run("C150-A09-"+spelling,"check",target,2,"io")
+  target=root/spelling;target.mkdir();run("C150-A09-"+spelling,args.command,target,2,"io")
 evidence={"compiler_sha256":hashlib.sha256(compiler.read_bytes()).hexdigest(),"records":records,"failures":len(failures)}
 if args.evidence:args.evidence.write_text(json.dumps(evidence,indent=2)+"\n")
 assert not failures,json.dumps(failures,indent=2)

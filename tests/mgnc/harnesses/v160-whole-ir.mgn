@@ -1,5 +1,5 @@
 namespace Mgnc;
-use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,contains,number};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,number};
 use Mgnc\Syntax\{Parent};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\Semantic\{SemanticProject,analyze};
@@ -93,12 +93,12 @@ let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
  let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[unitSource]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
  let valid:Project=try lower(semantic);try verify(semantic,valid);try verify(semantic,try reorder(valid));
  let permuted:SemanticProject=try renumber(semantic);try verify(permuted,try lower(permuted));
- let expected:List<String>=List<String>["body membership count","project membership","type table membership","project membership","symbolic obligation count","missing root occurrence","missing TrySite","literal magnitude","missing or duplicate lowered operation","occurrence result slot","source operand","closure capture completeness","try owner Err descriptor"];
+ let expected:List<String>=List<String>["body membership count","project membership","type table membership","project membership","symbolic obligation count","missing root occurrence","missing TrySite","literal magnitude metadata","missing or duplicate lowered operation","occurrence result slot","source operand or destination correspondence","closure capture completeness","try owner Err descriptor"];
  var mutation:Int=0;loop while(mutation<13){
   let invalid:Project=try mutate(valid,mutation);
   branch on verify(semantic,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,Span{start:0,end:0,line:1,column:1},"accepted mutant");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
    let detector:String=try atList<String>(expected,mutation);
-   branch when{error->phase!="internal"||!contains(error->message,detector)=>{discard writeStdout("mutant "+number(mutation)+" detector: "+error->message+"\n");try require(false,error->span,"wrong mutation detector");},else=>unit};
+   branch when{error->phase!="internal"||error->message!="whole IR: "+detector=>{discard writeStdout("mutant "+number(mutation)+" detector: "+error->message+"\n");try require(false,error->span,"wrong mutation detector");},else=>unit};
    discard writeStdout("V160_MUTANT "+number(mutation)+" rejected "+detector+"\n");
   }};mutation=mutation+1;
  };Result<Unit,Diagnostic>::Ok(unit)

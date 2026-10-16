@@ -1,5 +1,5 @@
 namespace Mgnc\WholeShape;
-use Mgnc\Data\{Diagnostic,lookup,Span,number};
+use Mgnc\Data\{Diagnostic,lookup,Span,Paged,empty,push};
 use Mgnc\Syntax\{Parent};
 use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
 use Mgnc\TypeData\{Type,Structure,Member};
@@ -11,18 +11,12 @@ use Mgnc\IntMap\{Map};
 use Mgnc\Tables\{atList};
 use Mgnc\MathValue\{Integer};
 use Mgnc\LiteralText\{decode};
-// Length-prefixed text and delimited scalar values form an injective encoding.
-// Comparing it avoids repeated List.at traversals for huge escaped literals.
-let textKey:Function(List<TextPart>):String=function(values:List<TextPart>):String{
- var parts:List<String>=List<String>[];
- loop over(values as item:TextPart){branch on item{
-  TextPart::Text(value:String)=>{parts=parts->append("T")->append(number(value->length()))->append(":")->append(value);},
-  TextPart::Scalar(value:Int)=>{parts=parts->append("S")->append(number(value))->append(";");}
- }};parts->join("")
-};
+// Page the comparison operand once; no per-scalar serialization or prefix scan.
 public let textEqual:Function(List<TextPart>,List<TextPart>):Result<Bool,Diagnostic>=function(left:List<TextPart>,right:List<TextPart>):Result<Bool,Diagnostic>{
- branch when{left->length()!=right->length()=>{return Result<Bool,Diagnostic>::Ok(false);},left->length()>4=>{return Result<Bool,Diagnostic>::Ok(textKey(left)==textKey(right));},else=>unit};var index:Int=0;
- loop over(left as item:TextPart){let other:TextPart=try atList<TextPart>(right,index);
+ branch when{left->length()!=right->length()=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ var table:Paged<TextPart>=empty<TextPart>();loop over(right as value:TextPart){table=push<TextPart>(table,value);};
+ var index:Int=0;
+ loop over(left as item:TextPart){let other:TextPart=try lookup<TextPart>(table,index);
   let same:Bool=branch on item{TextPart::Text(value:String)=>branch on other{TextPart::Text(actual:String)=>value==actual,TextPart::Scalar(actual:Int)=>false},TextPart::Scalar(value:Int)=>branch on other{TextPart::Text(actual:String)=>false,TextPart::Scalar(actual:Int)=>value==actual}};
   branch when{!same=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};index=index+1;
  };Result<Bool,Diagnostic>::Ok(true)

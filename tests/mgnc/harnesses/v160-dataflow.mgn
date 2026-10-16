@@ -1,5 +1,5 @@
 namespace Mgnc;
-use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,contains};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push};
 use Mgnc\Syntax\{Parent};
 use Mgnc\WholeIR\{Body,Slot,Block,Operation,Origin,Terminator,Occurrence,TrySite};
 use Mgnc\WholeBuilder\{operation,term};
@@ -40,7 +40,7 @@ let main:Function(List<String>):Int=function(args:List<String>):Int{
   let expected:Bool=mutation==0||mutation==7||mutation==10;
   branch on verify(sample(mutation)){
    Result<Unit,Diagnostic>::Ok(value:Unit)=>{branch when{!expected=>{discard writeStdout("unexpected mutant acceptance\n");return 1;},else=>unit};passed=passed+1;},
-   Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{branch when{expected||error->phase!="internal"||branch when{mutation==9=>error->message!="IR read before definition",else=>!contains(error->message,"payload")}=>{discard writeStdout(error->phase+": "+error->message+"\n");return 2;},else=>unit};rejected=rejected+1;}
+   Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{branch when{expected||error->phase!="internal"||branch when{mutation==9=>error->message!="IR read before definition",else=>error->message!="whole IR: payload has no matching subject guard"&&error->message!="whole IR: payload variant guard not established for current subject"}=>{discard writeStdout(error->phase+": "+error->message+"\n");return 2;},else=>unit};rejected=rejected+1;}
   };mutation=mutation+1;
  };
  branch when{passed!=3||rejected!=8=>{return 3;},else=>unit};

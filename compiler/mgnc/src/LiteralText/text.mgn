@@ -2,11 +2,8 @@ namespace Mgnc\LiteralText;
 use Mgnc\Data\{Span,Diagnostic,problem};
 use Mgnc\WholeIR\{TextPart};
 use Mgnc\Tables\{atList};
-let hexAlphabet:List<String>="0123456789abcdefABCDEF"->scalars();
 let hex:Function(String):Int=function(scalar:String):Int{
- var index:Int=0;loop over(hexAlphabet as digit:String){
-  branch when{scalar==digit=>{return branch when{index<16=>index,else=>index-6};},else=>unit};index=index+1;
- };-1
+ branch when{scalar=="0"=>0,scalar=="1"=>1,scalar=="2"=>2,scalar=="3"=>3,scalar=="4"=>4,scalar=="5"=>5,scalar=="6"=>6,scalar=="7"=>7,scalar=="8"=>8,scalar=="9"=>9,scalar=="a"=>10,scalar=="b"=>11,scalar=="c"=>12,scalar=="d"=>13,scalar=="e"=>14,scalar=="f"=>15,scalar=="A"=>10,scalar=="B"=>11,scalar=="C"=>12,scalar=="D"=>13,scalar=="E"=>14,scalar=="F"=>15,else=>-1}
 };
 // This normalizes a lexically checked literal, without parsing source syntax.
 public let decode:Function(String,Span):Result<List<TextPart>,Diagnostic>=function(spelling:String,span:Span):Result<List<TextPart>,Diagnostic>{

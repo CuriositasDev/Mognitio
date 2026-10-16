@@ -1,0 +1,192 @@
+{
+  "schema": 1,
+  "stage": "replacement-bootstrap-accepted",
+  "accepted_at": "2026-10-17",
+  "seed": {
+    "bundle": "lisp-7531b13d502ce012f4bd595cd633dd2c5f34d2f4.tar.gz",
+    "bytes": 30023484,
+    "manifestSha256": "9c6bf1b150eeaffd2256633f3adb147112009a539ab169f2cdc1b7babfd0a030",
+    "schema": 1,
+    "sha256": "8f864220212cbd3c67f7dcfabc30970ceeed14b86a284783d2dc812dd8d39253",
+    "sourceCommit": "7531b13d502ce012f4bd595cd633dd2c5f34d2f4"
+  },
+  "seed_components": 1142,
+  "replaces_seed_source": "1f18f89fc793c4dc79b23af9e948cc3cc29719f3",
+  "reason": "Default allocation replenishes bounded reserve after collection to prevent repeated full collections on nearly full live heaps; explicit geometry and heap caps are preserved.",
+  "capability_runner_revision": "7531b13d502ce012f4bd595cd633dd2c5f34d2f4",
+  "capability_fixture_sha256": "d8c72eb32a3f21fcac31633cf82dd43ac0fe06acdd9f4a0cd5bdb3fec2920be4",
+  "capability_results": [
+    {
+      "name": "module-snapshots-run",
+      "exit": 12,
+      "seconds": 0.021921479026786983,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-build",
+      "exit": 0,
+      "seconds": 0.06566187203861773,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-native",
+      "exit": 12,
+      "seconds": 0.0002990090288221836,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-run",
+      "exit": 1,
+      "seconds": 0.021082917926833034,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-build",
+      "exit": 0,
+      "seconds": 0.06171011400874704,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-native",
+      "exit": 1,
+      "seconds": 0.00031959195621311665,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-run",
+      "exit": 0,
+      "seconds": 0.02064722601789981,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-build",
+      "exit": 0,
+      "seconds": 0.062349464977160096,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-native",
+      "exit": 0,
+      "seconds": 0.00032333098351955414,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-run",
+      "exit": 0,
+      "seconds": 0.021376450080424547,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-build",
+      "exit": 0,
+      "seconds": 0.06324993493035436,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-native",
+      "exit": 0,
+      "seconds": 0.00031839299481362104,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-run",
+      "exit": 0,
+      "seconds": 0.025802824064157903,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-build",
+      "exit": 0,
+      "seconds": 0.06472106801811606,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-native",
+      "exit": 0,
+      "seconds": 0.0019040459301322699,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-build",
+      "exit": 0,
+      "seconds": 172.14083446201403,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-check",
+      "exit": 0,
+      "seconds": 164.2922574909171,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    }
+  ],
+  "corpus": {
+    "revision": "84b59d4fdb81b6032671b2f1f731b08d75e2522d",
+    "files": 102,
+    "bytes": 1076892,
+    "inventory_sha256": "c8f31160edc9f058a382c076cec0000d71f9a2a327f3a490b60dc3dd98303903",
+    "compiler_sha256": "48532de12677d86b9392ac0ef2ba3ab1189af252e125c8b168c44c72e4d2eae8",
+    "compiler_bytes": 6519024
+  },
+  "cumulative_lisp": {
+    "groups": 238,
+    "assertions": 605763,
+    "processes": 1322,
+    "failures": 0
+  },
+  "cumulative_python": "Complete ASDF integration sequence passed, ending with 55 path-inspection checks.",
+  "restored_seed": "1142 components verified; mutation rejected; isolated run/build and independent ELF passed.",
+  "dependent_probe": {
+    "source_commit": "7531b13d502ce012f4bd595cd633dd2c5f34d2f4",
+    "driver_override": "tests/mgnc/harnesses/v160-native-driver.mgn",
+    "driver_sha256": "f73ad27d4c5e22359a8a6960eb5c022faf6c3a42feaca6ddc2f798d61a086ffd",
+    "source_files": 168,
+    "source_bytes": 11423390,
+    "source_inventory_sha256": "4a74bce2e50554c444c489a9f619187378668be4470d64c646406ab4c615a3df",
+    "artifact_sha256": "c618ec70400032c5b23df9067c27f3cf8f9600f32ec37d1f6ff74146a55091b9",
+    "artifact_bytes": 17708000,
+    "matches_exploratory_probe": true,
+    "final_candidate_acceptance": false
+  },
+  "implementation_complete": false,
+  "runtime_acceptance_complete": false,
+  "release_performed": false,
+  "execution_capacity": {
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64,
+    "scope": "host Lisp seed process"
+  }
+}

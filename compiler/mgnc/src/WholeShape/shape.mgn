@@ -11,7 +11,7 @@ use Mgnc\IntMap\{Map};
 use Mgnc\Tables\{atList};
 use Mgnc\MathValue\{Integer};
 use Mgnc\LiteralText\{decode};
-// Page the comparison operand once; no per-scalar serialization or prefix scan.
+// Compare decoded values directly, paging the right operand once.
 public let textEqual:Function(List<TextPart>,List<TextPart>):Result<Bool,Diagnostic>=function(left:List<TextPart>,right:List<TextPart>):Result<Bool,Diagnostic>{
  branch when{left->length()!=right->length()=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
  var table:Paged<TextPart>=empty<TextPart>();loop over(right as value:TextPart){table=push<TextPart>(table,value);};

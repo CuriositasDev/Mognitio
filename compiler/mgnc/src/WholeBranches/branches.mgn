@@ -36,7 +36,7 @@ public let logical:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>
  finish(builder,current,node,List<Operation>[],site)
 };
 public let matched:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=function(initial:Builder,current:Plan,node:Node,site:Origin):Result<Builder,Diagnostic>{
- var builder:Builder=initial;let subject:Plan=try child(builder,node,0);let subjectNode:Node=try lookup<Node>(builder->state->nodes,subject->node);
+ var builder:Builder=initial;let subject:Plan=try child(builder,node,0);let subjectNode:Node=try lookup<Node>(builder->context->state->nodes,subject->node);
  let sumType:Int=branch on subjectNode->structure{Structure::Known(value:Int)=>value,Structure::Unknown=>{return Result<Builder,Diagnostic>::Err(problem("internal",node->span,"whole lowering: unknown switch type"));}};
  let decision:Int=builder->blockCount;builder=reserveBlock(builder,site);var targets:List<Int>=List<Int>[];
  builder=try setBlock(builder,current->entry,List<Operation>[],jump(subject->entry,site));builder=try continueAt(builder,subject->node,decision);

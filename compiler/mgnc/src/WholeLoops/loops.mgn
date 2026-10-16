@@ -24,7 +24,7 @@ public let lower:Function(Builder,Plan,Node,Origin):Result<Builder,Diagnostic>=f
   builder=try continueAt(builder,target->node,decision);builder=try continueAt(builder,body->node,target->entry);
   builder=try setBlock(builder,decision,List<Operation>[],branch on target->output{Parent::Some(slot:Int)=>term("branch",List<Int>[slot],List<Int>[body->entry,current->exit],site),Parent::None=>failure(site)});
  },else=>{
-  let targetNode:Node=try lookup<Node>(builder->state->nodes,target->node);
+  let targetNode:Node=try lookup<Node>(builder->context->state->nodes,target->node);
   let listType:Int=try memberType(node->arguments,0,node->span);
   let iterator:Int=builder->slots->count;builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:listType,kind:4,symbol:Parent::None}));
   let more:Int=builder->slots->count;builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:2,kind:0,symbol:Parent::None}));

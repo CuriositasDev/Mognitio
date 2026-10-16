@@ -9,45 +9,47 @@ use Mgnc\WholeIR\{Slot,Operation,Origin,Terminator,Block,TextPart,TrySite};
 use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Tables\{replaceItem};
 public type Plan=product{node:Int;entry:Int;exit:Int;output:Parent;continuation:Int;};
-public type Builder=product{state:State;functionOwner:Parent;root:Int;resultType:Int;capturesByFunction:Paged<List<Int>>;slots:Paged<Slot>;symbols:Map;plans:Paged<Plan>;nodes:Map;loops:Map;continues:Map;blocks:Paged<Block>;blockCount:Int;blockIds:Map;nextBlocks:Map;parameters:List<Int>;captures:List<Int>;tries:List<TrySite>;};
+// Share immutable body context instead of copying it on every table update.
+public type Context=product{state:State;functionOwner:Parent;root:Int;resultType:Int;capturesByFunction:Paged<List<Int>>;};
+public type Builder=product{context:Context;slots:Paged<Slot>;symbols:Map;plans:Paged<Plan>;nodes:Map;loops:Map;continues:Map;blocks:Paged<Block>;blockCount:Int;blockIds:Map;nextBlocks:Map;parameters:List<Int>;captures:List<Int>;tries:List<TrySite>;};
 public let withSlots:Function(Builder,Paged<Slot>):Builder=function(current:Builder,value:Paged<Slot>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:value,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:value,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withSymbols:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:value,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:value,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withPlans:Function(Builder,Paged<Plan>):Builder=function(current:Builder,value:Paged<Plan>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:value,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:value,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withNodes:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:value,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:value,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withLoops:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:value,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:value,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withContinues:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:value,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:value,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withBlocks:Function(Builder,Paged<Block>):Builder=function(current:Builder,value:Paged<Block>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:value,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:value,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withBlockCount:Function(Builder,Int):Builder=function(current:Builder,value:Int):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:value,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:value,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withBlockIds:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:value,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:value,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withNextBlocks:Function(Builder,Map):Builder=function(current:Builder,value:Map):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:value,parameters:current->parameters,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:value,parameters:current->parameters,captures:current->captures,tries:current->tries}
 };
 public let withParameters:Function(Builder,List<Int>):Builder=function(current:Builder,value:List<Int>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:value,captures:current->captures,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:value,captures:current->captures,tries:current->tries}
 };
 public let withCaptures:Function(Builder,List<Int>):Builder=function(current:Builder,value:List<Int>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:value,tries:current->tries}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:value,tries:current->tries}
 };
 public let withTries:Function(Builder,List<TrySite>):Builder=function(current:Builder,value:List<TrySite>):Builder{
- Builder{state:current->state,functionOwner:current->functionOwner,root:current->root,resultType:current->resultType,capturesByFunction:current->capturesByFunction,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:value}
+ Builder{context:current->context,slots:current->slots,symbols:current->symbols,plans:current->plans,nodes:current->nodes,loops:current->loops,continues:current->continues,blocks:current->blocks,blockCount:current->blockCount,blockIds:current->blockIds,nextBlocks:current->nextBlocks,parameters:current->parameters,captures:current->captures,tries:value}
 };
 
 public let origin:Function(Int,Node):Origin=function(id:Int,node:Node):Origin{Origin{node:id,file:node->file,span:node->span}};
@@ -64,7 +66,7 @@ public let output:Function(Plan,Span):Result<Int,Diagnostic>=function(value:Plan
  branch on value->output{Parent::Some(slot:Int)=>Result<Int,Diagnostic>::Ok(slot),Parent::None=>Result<Int,Diagnostic>::Err(problem("internal",span,"whole lowering: non-completing value read"))}
 };
 public let continueAt:Function(Builder,Int,Int):Result<Builder,Diagnostic>=function(builder:Builder,node:Int,target:Int):Result<Builder,Diagnostic>{
- branch when{(try get(builder->nextBlocks,node))>=0=>{return Result<Builder,Diagnostic>::Err(problem("internal",(try lookup<Node>(builder->state->nodes,node))->span,"whole lowering: duplicate continuation"));},else=>unit};
+ branch when{(try get(builder->nextBlocks,node))>=0=>{return Result<Builder,Diagnostic>::Err(problem("internal",(try lookup<Node>(builder->context->state->nodes,node))->span,"whole lowering: duplicate continuation"));},else=>unit};
  Result<Builder,Diagnostic>::Ok(withNextBlocks(builder,try put(builder->nextBlocks,node,target)))
 };
 public let setBlock:Function(Builder,Int,List<Operation>,Terminator):Result<Builder,Diagnostic>=function(builder:Builder,id:Int,operations:List<Operation>,terminator:Terminator):Result<Builder,Diagnostic>{
@@ -77,18 +79,18 @@ public let reserveBlock:Function(Builder,Origin):Builder=function(builder:Builde
 };
 public let symbolSlot:Function(Builder,Int,Int):Result<Builder,Diagnostic>=function(builder:Builder,id:Int,kind:Int):Result<Builder,Diagnostic>{
  branch when{(try get(builder->symbols,id))>=0=>{return Result<Builder,Diagnostic>::Ok(builder);},else=>unit};
- let value:Symbol=try lookup<Symbol>(builder->state->symbols,id);
+ let value:Symbol=try lookup<Symbol>(builder->context->state->symbols,id);
  let updated:Builder=withSymbols(builder,try put(builder->symbols,id,builder->slots->count));
  Result<Builder,Diagnostic>::Ok(withSlots(updated,push<Slot>(updated->slots,Slot{valueType:value->valueType,kind:kind,symbol:Parent::Some(id)})))
 };
 public let localSlot:Function(Builder,Parent):Result<Builder,Diagnostic>=function(builder:Builder,binding:Parent):Result<Builder,Diagnostic>{
  branch on binding{Parent::None=>Result<Builder,Diagnostic>::Ok(builder),Parent::Some(id:Int)=>{
-  let symbol:Symbol=try lookup<Symbol>(builder->state->symbols,id);
-  branch when{parentEqual(symbol->functionOwner,builder->functionOwner)&&parentEqual(symbol->declaration,Parent::None)=>symbolSlot(builder,id,1),else=>Result<Builder,Diagnostic>::Ok(builder)}
+  let symbol:Symbol=try lookup<Symbol>(builder->context->state->symbols,id);
+  branch when{parentEqual(symbol->functionOwner,builder->context->functionOwner)&&parentEqual(symbol->declaration,Parent::None)=>symbolSlot(builder,id,1),else=>Result<Builder,Diagnostic>::Ok(builder)}
  }}
 };
 public let start:Function(State,Int,Parent,Int,Paged<List<Int>>):Result<Builder,Diagnostic>=function(state:State,root:Int,functionOwner:Parent,resultType:Int,capturesByFunction:Paged<List<Int>>):Result<Builder,Diagnostic>{
- var builder:Builder=Builder{state:state,functionOwner:functionOwner,root:root,resultType:resultType,capturesByFunction:capturesByFunction,slots:empty<Slot>(),symbols:create(),plans:empty<Plan>(),nodes:create(),loops:create(),continues:create(),blocks:empty<Block>(),blockCount:0,blockIds:create(),nextBlocks:create(),parameters:List<Int>[],captures:List<Int>[],tries:List<TrySite>[]};
+ var builder:Builder=Builder{context:Context{state:state,functionOwner:functionOwner,root:root,resultType:resultType,capturesByFunction:capturesByFunction},slots:empty<Slot>(),symbols:create(),plans:empty<Plan>(),nodes:create(),loops:create(),continues:create(),blocks:empty<Block>(),blockCount:0,blockIds:create(),nextBlocks:create(),parameters:List<Int>[],captures:List<Int>[],tries:List<TrySite>[]};
  branch on functionOwner{Parent::None=>unit,Parent::Some(id:Int)=>{
   let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,id);
   loop over(info->parameters as symbol:Int){builder=try symbolSlot(builder,symbol,2);builder=withParameters(builder,builder->parameters->append(try get(builder->symbols,symbol)));};

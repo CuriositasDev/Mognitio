@@ -43,11 +43,11 @@ public let ordinary:Function(Builder,Plan,Node,Origin):Result<Emitted,Diagnostic
   },else=>unit};
  },node->operation=="function"=>{
   let id:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Emitted,Diagnostic>::Err(problem("internal",node->span,"whole lowering: function identity"));}};
-  let captures:List<Int>=try lookup<List<Int>>(builder->capturesByFunction,id);
+  let captures:List<Int>=try lookup<List<Int>>(builder->context->capturesByFunction,id);
   loop over(captures as symbolId:Int){
    let local:Int=try get(builder->symbols,symbolId);
    branch when{local>=0=>{inputs=inputs->append(local);},else=>{
-    let symbol:Symbol=try lookup<Symbol>(builder->state->symbols,symbolId);let slot:Int=builder->slots->count;
+    let symbol:Symbol=try lookup<Symbol>(builder->context->state->symbols,symbolId);let slot:Int=builder->slots->count;
     builder=withSlots(builder,push<Slot>(builder->slots,Slot{valueType:symbol->valueType,kind:0,symbol:Parent::None}));
     operations=operations->append(loadSymbol(symbolId,Parent::Some(slot),site));inputs=inputs->append(slot);
    }};

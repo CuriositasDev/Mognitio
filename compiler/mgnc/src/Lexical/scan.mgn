@@ -16,14 +16,9 @@ let wordKind: Function(String): Int = function(text: String): Int {
 };
 
 let canonical:Function(String):String=function(value:String):String{branch when{value=="assert"=>"assert",value=="alias"=>"alias",value=="as"=>"as",value=="branch"=>"branch",value=="break"=>"break",value=="continue"=>"continue",value=="contract"=>"contract",value=="discard"=>"discard",value=="else"=>"else",value=="function"=>"function",value=="implements"=>"implements",value=="let"=>"let",value=="loop"=>"loop",value=="on"=>"on",value=="over"=>"over",value=="panic"=>"panic",value=="product"=>"product",value=="return"=>"return",value=="sum"=>"sum",value=="template"=>"template",value=="try"=>"try",value=="type"=>"type",value=="var"=>"var",value=="when"=>"when",value=="while"=>"while",value=="witness"=>"witness",value=="true"=>"true",value=="false"=>"false",value=="unit"=>"unit",value=="namespace"=>"namespace",value=="use"=>"use",value=="public"=>"public",value=="Function"=>"Function",value=="Self"=>"Self",value=="Int"=>"Int",value=="Bool"=>"Bool",value=="Unit"=>"Unit",value=="String"=>"String",value=="List"=>"List",value=="Result"=>"Result",value=="IndexError"=>"IndexError",value=="SliceError"=>"SliceError",else=>value}};
-let hexAlphabet:List<String>="0123456789abcdefABCDEF"->scalars();
+// Escape digits do not need an allocating List iterator for each scalar.
 let hexDigit:Function(String):Int=function(scalar:String):Int{
- var index:Int=0;
- loop over(hexAlphabet as digit:String){
-  branch when{digit==scalar=>{return branch when{index<16=>index,else=>index-6};},else=>unit};
-  index=index+1;
- };
- -1
+ branch when{scalar=="0"=>0,scalar=="1"=>1,scalar=="2"=>2,scalar=="3"=>3,scalar=="4"=>4,scalar=="5"=>5,scalar=="6"=>6,scalar=="7"=>7,scalar=="8"=>8,scalar=="9"=>9,scalar=="a"=>10,scalar=="b"=>11,scalar=="c"=>12,scalar=="d"=>13,scalar=="e"=>14,scalar=="f"=>15,scalar=="A"=>10,scalar=="B"=>11,scalar=="C"=>12,scalar=="D"=>13,scalar=="E"=>14,scalar=="F"=>15,else=>-1}
 };
 let pairKind:Function(String):Bool=function(pair:String):Bool{
  pair=="->"||pair=="=>"||pair=="=="||pair=="!="||pair=="<="||pair==">="||pair=="&&"||pair=="||"||pair=="::"
@@ -64,11 +59,11 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
    offset=offset+width;scalarIndex=scalarIndex+1;
    branch when{scalar==ascii13=>{line=line+1;column=1;},scalar==ascii10=>{branch when{!previousCR=>{line=line+1;},else=>unit};column=1;},else=>{column=column+1;}};
    previousCR=scalar==ascii13;
-   let here:Span=Span{start:hereStart,end:offset,line:hereLine,column:hereColumn};
-   branch when{hereStart==0 && scalar=="\u{feff}"=>{return Result<Snapshot,Diagnostic>::Err(problem("source",here,"BOM is not allowed"));},else=>unit};
+   // Materialize diagnostic spans only on error paths.
+   branch when{hereStart==0 && scalar=="\u{feff}"=>{return Result<Snapshot,Diagnostic>::Err(problem("source",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"BOM is not allowed"));},else=>unit};
    branch when{state==3=>{branch when{scalar!=ascii13 && scalar!=ascii10=>{continue;},else=>{state=0;}};},else=>unit};
    branch when{state>=5=>{
-    branch when{scalar==ascii13||scalar==ascii10=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"newline in string"));},else=>unit};
+    branch when{scalar==ascii13||scalar==ascii10=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"newline in string"));},else=>unit};
     branch when{
      state==5=>{
       branch when{scalar==ascii34=>{
@@ -76,15 +71,15 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
       },scalar==ascii92=>{state=6;},else=>unit};
      },
      state==6=>{
-      branch when{scalar==ascii34||scalar==ascii92||scalar==ascii110||scalar==ascii114||scalar==ascii116||scalar==ascii48=>{state=5;},scalar==ascii117=>{state=7;},else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid escape"));}};
+      branch when{scalar==ascii34||scalar==ascii92||scalar==ascii110||scalar==ascii114||scalar==ascii116||scalar==ascii48=>{state=5;},scalar==ascii117=>{state=7;},else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid escape"));}};
      },
-     state==7=>{branch when{scalar!=ascii123=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"expected unicode brace"));},else=>unit};hexValue=0;hexCount=0;state=8;},
+     state==7=>{branch when{scalar!=ascii123=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"expected unicode brace"));},else=>unit};hexValue=0;hexCount=0;state=8;},
      else=>{
       branch when{scalar==ascii125=>{
-       branch when{hexCount==0||hexValue>1114111||(hexValue>=55296&&hexValue<=57343)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid unicode scalar"));},else=>unit};state=5;
+       branch when{hexCount==0||hexValue>1114111||(hexValue>=55296&&hexValue<=57343)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode scalar"));},else=>unit};state=5;
       },else=>{
        let digit:Int=hexDigit(scalar);
-       branch when{digit<0||hexCount==6=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid unicode escape"));},else=>unit};hexValue=hexValue*16+digit;hexCount=hexCount+1;
+       branch when{digit<0||hexCount==6=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode escape"));},else=>unit};hexValue=hexValue*16+digit;hexCount=hexCount+1;
       }};
      },
     };
@@ -92,10 +87,10 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
    },else=>unit};
    branch when{state==1&&(isLetter(scalar)||isDigit(scalar))=>{fragments=fragments->append(scalar);continue;},else=>unit};
    branch when{state==2&&isDigit(scalar)=>{
-    branch when{leadingZero=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"leading zero in decimal"));},else=>unit};continue;
+    branch when{leadingZero=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"leading zero in decimal"));},else=>unit};continue;
    },else=>unit};
    branch when{state==1||state==2=>{
-    branch when{state==2&&isLetter(scalar)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid decimal suffix"));},else=>unit};
+    branch when{state==2&&isLetter(scalar)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid decimal suffix"));},else=>unit};
     let name:String=branch when{state==1=>canonical(fragments->join("")),else=>""};
     tokens=addToken(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),else=>2},text:name,start:start,end:hereStart,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn});state=0;
    },else=>unit};
@@ -117,9 +112,9 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
     scalar==ascii34=>{state=5;},
     scalar==ascii47||scalar==ascii45||scalar==ascii43||scalar==ascii61||scalar==ascii33||scalar==ascii60||scalar==ascii62||scalar==ascii38||scalar==ascii124||scalar==ascii58=>{state=4;text=scalar;},
     scalar==ascii123||scalar==ascii125||scalar==ascii40||scalar==ascii41||scalar==ascii59||scalar==ascii44||scalar==ascii92||scalar==ascii42||scalar==ascii37||scalar==ascii91||scalar==ascii93||scalar==ascii64=>{
-     tokens=addToken(tokens,Lexeme{kind:3,text:scalar,start:here->start,end:here->end,line:here->line,column:here->column,scalarStart:hereScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
+     tokens=addToken(tokens,Lexeme{kind:3,text:scalar,start:hereStart,end:offset,line:hereLine,column:hereColumn,scalarStart:hereScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
     },
-    else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",here,"invalid source character"));},
+    else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid source character"));},
    };
    start=hereStart;startLine=hereLine;startColumn=hereColumn;startScalar=hereScalar;
   };

@@ -5,10 +5,21 @@
     '((:load-word :rax :rsp 8) (:add-imm :rax 39) (:jb :allocation-failed)
       (:and-imm :rax -8) (:ret))))
 
+(defun repair-fit-cursors ()
+  ;; A cursor is the address of a free-list link, not an object reference.
+  ;; Removing its containing block redirects it to that block's incoming link.
+  ;; Splits and consumption preserve the original first-fit ordering.
+  `((:lea-base :r10 :r15 ,(context-field-offset :fit-cursors (test-image-p)))
+    (:lea-base :rdx :r10 128) (:lea-base :rsi :r9 16)
+    (:label :repair-fit) (:load-word :rdi :r10 0) (:cmp-reg :rdi :rsi)
+    (:jnz :next-fit) (:store-word :r10 0 :r11)
+    (:label :next-fit) (:add-imm :r10 8) (:cmp-reg :r10 :rdx)
+    (:jb :repair-fit)))
+
 (defun take-free-forms ()
   ;; R9 is a known fitting block, R11 the address of its incoming link,
   ;; RCX the requested physical size. No call, allocation, or GC is permitted.
-  '((:load-word :r8 :r9 16)
+  (append '((:load-word :r8 :r9 16)
     (:load-word :rdx :r9 0) (:sub-reg :rdx :rcx)
     (:cmp-imm :rdx 40) (:jb :whole)
     (:store-word :r9 0 :rcx) (:mov-reg :rax :r9) (:add-reg :rax :rcx)
@@ -17,20 +28,26 @@
     (:store-word :r11 0 :rax) (:jmp :taken)
     (:label :whole) (:store-word :r11 0 :r8)
     (:label :taken) (:imm-rax 1) (:store-word :r9 8 :rax)
-    (:imm-rax 0) (:store-word :r9 16 :rax) (:store-word :r9 24 :rax)
-    (:mov-reg :rax :r9)))
+    (:imm-rax 0) (:store-word :r9 16 :rax) (:store-word :r9 24 :rax))
+    (repair-fit-cursors) '((:mov-reg :rax :r9))))
 
 (defun find-free-unit ()
   (runtime-unit :find-free
     (append
-      `((:load-word :rcx :rsp 8)
+      `((:load-word :rcx :rsp 8) (:imm-reg :r10 0)
+        (:cmp-imm :rcx 40) (:jb :head) (:cmp-imm :rcx 160) (:ja :head)
+        (:lea-base :r10 :r15 ,(- (context-field-offset :fit-cursors (test-image-p)) 40))
+        (:add-reg :r10 :rcx) (:load-word :r11 :r10 0)
+        (:cmp-imm :r11 0) (:jnz :cursor)
+        (:label :head)
         (:lea-base :r11 :r15 ,(context-field-offset :free-head (test-image-p)))
-        (:load-word :r9 :r11 0)
+        (:label :cursor) (:load-word :r9 :r11 0)
         (:label :block) (:cmp-imm :r9 0) (:jz :missing))
       (when (option :gc-counters) (bump 112))
       '((:load-word :rax :r9 0) (:cmp-reg :rax :rcx) (:jae :found)
         (:lea-base :r11 :r9 16) (:load-word :r9 :r11 0) (:jmp :block)
-        (:label :found))
+        (:label :found) (:cmp-imm :r10 0) (:jz :uncached)
+        (:store-word :r10 0 :r11) (:label :uncached))
       (take-free-forms)
       '((:ret) (:label :missing) (:imm-rax 0) (:ret)))))
 

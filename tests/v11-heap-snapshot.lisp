@@ -31,8 +31,8 @@
   (v110-inline-writes (append
     (v110-head-fault profile fault)
     (mognitio.native.runtime::helper-frame 24)
-    (loop for value in (list #x31534831314e474d 1 7 (if profile 1 0)
-                            (if profile 352 304) point ordinal)
+    (loop for value in (list #x31534831314e474d 1 8 (if profile 1 0)
+                            (mognitio.native.runtime::runtime-context-layout-size (mognitio.native.runtime::build-runtime-context-layout profile)) point ordinal)
           for offset from -72 by 8 append
       `((:imm-rax ,value) (:store-frame ,offset :rax)))
     '((:load-word :r8 :r15 8) (:imm-reg :r9 0) (:imm-reg :r10 0)
@@ -44,7 +44,7 @@
       (:label :snap-header) (:store-frame -16 :r9) (:store-frame -8 :r10)
       (:lea-base :rsi :rbp -72) (:imm-rdx 72) (:call :snap-write)
       (:mov-reg :rsi :r15))
-    `((:imm-rdx ,(if profile 352 304)))
+    `((:imm-rdx ,(mognitio.native.runtime::runtime-context-layout-size (mognitio.native.runtime::build-runtime-context-layout profile))))
     '((:call :snap-write) (:load-word :r8 :r15 8)
       (:label :snap-arena) (:cmp-imm :r8 0) (:jz :snap-exit)
       (:store-frame -112 :r8) (:load-word :rax :r8 8) (:store-frame -104 :rax)

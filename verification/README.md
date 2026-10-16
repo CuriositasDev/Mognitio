@@ -111,3 +111,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.5 formal semantic performance](v1.5.0-formal-performance.md): adopted budgets, complete formal run and harness validation.
 
 - [v1.5 wall-cutoff correction](v1.5.0-wall-cutoff.md): delayed-reap regression and saved formal-run revalidation.
+
+- [Small allocation search cursors](v1.6.0-fit-cursors.md): first-fit preserving search reuse for compiler-scale workloads.

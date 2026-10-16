@@ -113,3 +113,5 @@ Version-branch completion does not authorize main integration, a tag, or release
 - [v1.5 wall-cutoff correction](v1.5.0-wall-cutoff.md): delayed-reap regression and saved formal-run revalidation.
 
 - [Small allocation search cursors](v1.6.0-fit-cursors.md): first-fit preserving search reuse for compiler-scale workloads.
+
+- [v1.6 replacement bootstrap seed](v1.6.0-seed3.md): immutable replacement identity and capability evidence.

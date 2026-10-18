@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "stage": "stable-concrete-order-increment",
+  "source_commit": "9648bd09ef4ac0e7143a845d53aec15c9a022c69",
+  "seed_source": "e740e164cfea012257b6f351606751febfd89294",
+  "before": {
+    "expected_unstable": true,
+    "records": [
+      {
+        "name": "closures",
+        "source_sha256": "c6a64de23e5ea9914bfbf1a4d39f297d6180306130fee5dff54868e1581246a8",
+        "actual_request_order_changed": true,
+        "artifact_sha256": [
+          "1213728ed80f8be2ebf633da9cd7e0cc29e924e582e398ef77f67e44d8653a3b",
+          "231015a8ff22e6fccbd287fa608137e15ab43a5c791de3a71f15e6177783619c"
+        ],
+        "bytes_equal": false,
+        "runtime_exit": 0
+      },
+      {
+        "name": "body-only",
+        "source_sha256": "b305a281b21783a3e5a07204dcc21d9fa5078462365dbb54cd8c71d78b08369f",
+        "actual_request_order_changed": true,
+        "artifact_sha256": [
+          "6b9d0692db82959409655cd8eabba4a76a30109157ca7128446e1263a2752408",
+          "111c7c41aaff48df9bc0aa9b88f1e5e400cdc2c93895681b2235dbb366b0189d"
+        ],
+        "bytes_equal": false,
+        "runtime_exit": 0
+      }
+    ]
+  },
+  "after": {
+    "expected_unstable": false,
+    "records": [
+      {
+        "name": "closures",
+        "source_sha256": "c6a64de23e5ea9914bfbf1a4d39f297d6180306130fee5dff54868e1581246a8",
+        "actual_request_order_changed": true,
+        "type_interning_order_changed": false,
+        "artifact_sha256": [
+          "3d5178629f3196ce14cb91ca29e4597bce73046e74aa9abd883496efca1e2af2",
+          "3d5178629f3196ce14cb91ca29e4597bce73046e74aa9abd883496efca1e2af2"
+        ],
+        "bytes_equal": true,
+        "runtime_exit": 0
+      },
+      {
+        "name": "body-only",
+        "source_sha256": "b305a281b21783a3e5a07204dcc21d9fa5078462365dbb54cd8c71d78b08369f",
+        "actual_request_order_changed": true,
+        "type_interning_order_changed": true,
+        "artifact_sha256": [
+          "eed8a420593597fdd79d86f8bb7092ce6b26c0a7ceb1dae6f15b99142e453474",
+          "eed8a420593597fdd79d86f8bb7092ce6b26c0a7ceb1dae6f15b99142e453474"
+        ],
+        "bytes_equal": true,
+        "runtime_exit": 0
+      }
+    ]
+  },
+  "candidate": {
+    "files": 173,
+    "bytes": 11445026,
+    "inventory_sha256": "1e07b67d59be71ef46aa525e38d51f5282e797a772c9637394672452c7c3cb9a",
+    "artifact_sha256": "abafc1989a339eb0f3fb3c0ce0494c6058c666568d90404da2ad4d5b159f4d67",
+    "driver_override": "tests/mgnc/harnesses/v160-native-driver.mgn",
+    "driver_sha256": "f73ad27d4c5e22359a8a6960eb5c022faf6c3a42feaca6ddc2f798d61a086ffd"
+  },
+  "internal_checks": [
+    "V160_WHOLE_IR_OK valid=3 rejected=13",
+    "V160_DATAFLOW_OK valid=3 rejected=8",
+    "V160_CLOSURE_OK valid=2 rejected=4",
+    "V160_CONCRETE_OK valid=2 rejected=10",
+    "V160_HELPER_CONTRACTS_OK valid=2 rejected=10",
+    "V160_NATIVE_VERIFIERS_OK valid=2 rejected=11",
+    "V160_ROOT_DIFFERENTIAL_OK graphs=152 rejected=456",
+    "V160_RUNTIME_PLAN_OK instances=52 descriptors=76 rejected=17"
+  ],
+  "native_runtime_observations": 90,
+  "review_runtime_observations": 16,
+  "closure_scale": {
+    "build": {
+      "seconds": 118.79081206105184,
+      "peak_rss_raw": 204480,
+      "peak_rss_unit": "KiB",
+      "peak_rss_bytes": 209387520,
+      "exit": 0,
+      "signal": null,
+      "cutoff": null,
+      "harness_failure": null,
+      "sample_interval_seconds": 0.01,
+      "rss_exit_grace_seconds": 0.1,
+      "last_sample": {
+        "seconds": 118.7794280970702,
+        "rss_bytes": 195182592
+      },
+      "sample_count": 11668,
+      "streams": {
+        "stdout": {
+          "file": "stdout",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "file": "stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "descendant_residue": 0,
+      "unreaped_descendants": 0,
+      "compiler_sha256": "abafc1989a339eb0f3fb3c0ce0494c6058c666568d90404da2ad4d5b159f4d67",
+      "compiler_unchanged": true
+    },
+    "runtime_exit": 15,
+    "artifact_sha256": "57b5fc5c56e56b6d3dfc9693209e71a3eb405304dab1056e7dd960d0a465768d"
+  },
+  "normal": {
+    "groups": 242,
+    "assertions": 1889890,
+    "processes": 1324,
+    "failures": 0,
+    "python": "All subsequent integrations passed"
+  },
+  "implementation_complete": false,
+  "final_candidate_accepted": false,
+  "release_performed": false
+}

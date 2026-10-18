@@ -52,6 +52,22 @@ def main():
   save(f"list-{size}",{"src/app.mgn":source},sum(values)%251,axis="list-source-bytes",size=size)
   bad=source.replace("};\n","};\nlet invalid:Int=true;\n")
   save(f"list-{size}-late-error",{"src/app.mgn":bad},negative=True,axis="list-source-bytes",size=size)
+
+ # Combine the independent dimensions without substituting for their cells.
+ n=32;files={}
+ for index in range(n-1):
+  imports="" if index==0 else f"use App\\M{index-1}\\{{v{index-1}}};"
+  expr="0" if index==0 else f"v{index-1}+1"
+  files[f"src/M{index}/value.mgn"]=f"namespace App\\M{index};{imports}public let v{index}:Int={expr};\n"
+ text="x"*(16384-10)+"日本😀"
+ decl='use Std\\Io\\{writeStdout};use App\\M30\\{v30};let text:String="'+text+'";'
+ decl+="type Tag<N:Int,T>=product{value:T;};template make<N:Int,T>=function(value:T):Function():Tag<N,T>{function():Tag<N,T>{Tag<N,T>{value:value}}};"
+ decl+="".join(f"let f{i}:Function(Int):Function():Int=function(value:Int):Function():Int{{function():Int{{loop{{break value+{i};}}}}}};" for i in range(64))
+ body="var total:Int=v30;"
+ for i in range(64):body+=f"let a{i}:Function():Tag<{i},Int>=make<{i},Int>({i});let b{i}:Function():Int=f{i}(1);total=total+a{i}()->value+b{i}();"
+ body+='discard writeStdout(text);total%251'
+ files["src/app.mgn"]=program(body,decl)
+ save("combined-32-64-64-16384",files,(30+sum(range(64))+sum(range(1,65)))%251,stdout=text.encode(),axis="combined")
  parse=r'''let number:Function(List<String>):Int=function(args:List<String>):Int{let text:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>panic{"argument"}};var n:Int=0;loop over(text->scalars() as scalar:String){let digit:Int=branch when{scalar=="0"=>0,scalar=="1"=>1,scalar=="2"=>2,scalar=="3"=>3,scalar=="4"=>4,scalar=="5"=>5,scalar=="6"=>6,scalar=="7"=>7,scalar=="8"=>8,scalar=="9"=>9,else=>panic{"digit"}};n=n*10+digit;};n};'''
  for retaining in (False,True):
   body="let limit:Int=number(args);var kept:List<Function():String>=List<Function():String>[];var n:Int=0;loop while(n<limit){let text:String=\"kept\"+\" value\";let fn:Function():String=function():String{text};"
@@ -60,6 +76,11 @@ def main():
   source=program(body,parse).replace("discard args;","")
   save("lifetime-"+("retained" if retaining else "bounded"),{"src/app.mgn":source},axis="lifetime")
   rows[-1]["arguments"]=[["10000"],["100000"],["1000000"]]
+
+ decl=r'use Std\Io\{readTextFile,IoError,IoErrorKind};'+parse
+ body=r'''let limit:Int=number(args);let path:String=branch on args->at(1){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>panic{"path"}};let mode:String=branch on args->at(2){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>panic{"mode"}};var n:Int=0;loop while(n<limit){branch on readTextFile(path){Result<String,IoError>::Ok(text:String)=>{branch when{mode!="success"||text!="四😀\u{0}"=>{return 1;},else=>unit};},Result<String,IoError>::Err(error:IoError)=>{let matched:Bool=branch on error->kind{IoErrorKind::InvalidEncoding=>mode=="decode",IoErrorKind::Other=>mode=="read",IoErrorKind::InvalidPath=>false,IoErrorKind::NotFound=>false,IoErrorKind::PermissionDenied=>false,IoErrorKind::UnsupportedTarget=>false,IoErrorKind::BrokenPipe=>false,IoErrorKind::ResourceExhausted=>false};branch when{!matched=>{return 2;},else=>unit};}};n=n+1;};0'''
+ save("io-resource",{"src/app.mgn":program(body,decl).replace("discard args;","")},axis="io-resource")
+ rows[-1]["arguments"]=[[str(n),mode] for n in (100,1000,10000) for mode in ("success","decode","read")]
  (a.output/"manifest.json").write_text(json.dumps(rows,indent=2)+"\n")
  print("SCALE_FIXTURES",len(rows),hashlib.sha256((a.output/"manifest.json").read_bytes()).hexdigest())
 if __name__=="__main__":main()

@@ -248,3 +248,30 @@ directory and preserves prior runs.
 
 The scale runner's 900-second build and 120-second runtime guards only bound
 functional exploration. This runner does not adopt or measure formal budgets.
+
+## v1.6 measurement matrix
+
+The updated v160-native-scale.py reproduces all 34 frozen scale fixtures,
+including the combined project and resource loop. Run v160-measure-fixtures.py
+with --scale, --c0, --c1 and --output to freeze 103 measurement cells:
+whole C0/C1 check/lower, scale lower/build, and native dynamic-input runs.
+The C0 inventory and manifest must match the fixed reference corpus.
+
+v160-measure.py takes --compiler, --scale, --c0, --c1, --manifest,
+--seed-receipt and --output. It runs one fresh warm-up and three recorded runs
+per selected cell, preserves raw streams and failures, checks input identity,
+and records the environment at each start. Native cells require their measured
+build cell to pass first. --only produces explicitly partial evidence.
+
+The default 900-second / observed 4096-MiB cutoffs are preliminary bounds.
+--formal-budget requires a separately adopted record bound to the exact
+compiler, seed, source inventory and measurement manifest, with limits for
+every cell. Partial selection is rejected for formal runs. The command does
+not adopt budgets, and synthetic test budgets confer no adoption authority.
+Cost counters, reclamation/fd observations, inherited budgets and complete
+version acceptance remain separate gates.
+
+Run v160-measure-harness.py, v160-budget-harness.py and
+v160-measure-cli-harness.py (the latter takes the five fixture/seed inputs)
+before measurements. These exercise real process cleanup and controlled
+complete/partial matrices, invalid artifacts, failed warm-ups and late cutoffs.

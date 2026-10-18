@@ -99,9 +99,11 @@
         ;; A tiny reclaimable tail must not force a full collection for every
         ;; short-lived object. Keep bounded reserve after collection; explicit
         ;; geometry/caps retain their original reuse and failure behavior.
+        ;; One eighth of mapped space, capped at 16 MiB, leaves collection
+        ;; headroom without exceeding the inherited whole-project RSS budget.
         (unless (or (option :arena-unit) cap)
-          `((:load-word :rax :r15 ,+mapped-bytes+) (:imm-rcx 4) (:imm-rdx 0) (:div-rcx)
-            (:cmp-imm :rax 67108864) (:jbe :reserve-sized) (:imm-rax 67108864)
+          `((:load-word :rax :r15 ,+mapped-bytes+) (:imm-rcx 8) (:imm-rdx 0) (:div-rcx)
+            (:cmp-imm :rax 16777216) (:jbe :reserve-sized) (:imm-rax 16777216)
             (:label :reserve-sized) (:mov-reg :r8 :rax) (:imm-rax 0)
             (:load-word :r9 :r15 ,(context-field-offset :free-head (test-image-p)))
             (:label :reserve-block) (:cmp-reg :rax :r8) (:jae :retry)
@@ -119,8 +121,8 @@
         ;; Explicit test geometry and caps retain the requested fixed unit.
         (unless (or (option :arena-unit) cap)
           `((:mov-reg :r8 :rax) (:load-word :rax :r15 ,+mapped-bytes+)
-            (:imm-rcx 4) (:imm-rdx 0) (:div-rcx)
-            (:cmp-imm :rax 67108864) (:jbe :growth-clamped) (:imm-rax 67108864)
+            (:imm-rcx 8) (:imm-rdx 0) (:div-rcx)
+            (:cmp-imm :rax 16777216) (:jbe :growth-clamped) (:imm-rax 16777216)
             (:label :growth-clamped) (:cmp-reg :rax :r8) (:jae :growth-sized)
             (:mov-reg :rax :r8) (:label :growth-sized)))
         `((:cmp-imm :rax ,unit) (:jae :round) (:imm-rax ,unit)

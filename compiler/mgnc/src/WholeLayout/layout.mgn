@@ -8,6 +8,7 @@ use Mgnc\WholeConcrete\{Plan,Instance};
 use Mgnc\WholeClosures\{Closures,Field};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\Tables\{atList};
+use Mgnc\WholeStableKeys\{Entry,shape as stableShape,vector,sort as stableSort};
 use Mgnc\IntMap\{Map,create,get,put};
 // All offsets are bytes from the object base. Modes: fixed, variant, buffer.
 public type Descriptor=product{mode:Int;size:Int;references:List<Int>;variants:List<List<Int>>;elementManaged:Bool;};
@@ -27,10 +28,13 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
   loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"layout symbolic value");}};};
   loop over(shape->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};
  };
- // Order by canonical concrete TypeId, never by address or hash traversal.
- var descriptors:Paged<Descriptor>=empty<Descriptor>();var types:Map=create();var buffers:Map=create();var id:Int=0;
- loop while(id<plan->types->types->count){
-  branch when{(try get(seen,id))<0||!(try managed(plan->types,id))=>{id=id+1;continue;},else=>unit};
+ // Descriptor order follows structural type identity, independent of interning order.
+ var entries:Paged<Entry>=empty<Entry>();var typeCursor:Int=0;
+ loop while(typeCursor<plan->types->types->count){
+  branch when{(try get(seen,typeCursor))>=0&&(try managed(plan->types,typeCursor))=>{entries=push<Entry>(entries,Entry{id:typeCursor,tokens:vector(try stableShape(plan->types,typeCursor))});},else=>unit};typeCursor=typeCursor+1;
+ };entries=try stableSort(entries);
+ var descriptors:Paged<Descriptor>=empty<Descriptor>();var types:Map=create();var buffers:Map=create();
+ loop over(entries->pages->append(entries->tail) as entriesPage:List<Entry>){loop over(entriesPage as entry:Entry){let id:Int=entry->id;
   let shape:Type=try lookup<Type>(plan->types->types,id);var descriptor:Descriptor=fixed(32,List<Int>[]);
   branch when{shape->kind==3=>{descriptor=Descriptor{mode:0,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},
    shape->kind==10=>{var references:List<Int>=List<Int>[32];branch when{try managed(plan->types,try argumentType(shape,0,span))=>{references=references->append(40);},else=>unit};descriptor=fixed(48,references);},
@@ -43,11 +47,11 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
    },shape->kind==4||shape->kind==5||shape->kind==20=>{
     var references:List<Int>=List<Int>[];var ordinal:Int=0;loop over(shape->members as member:Member){let typeId:Int=try present(member->value,span,"product field type");branch when{try managed(plan->types,typeId)=>{references=references->append(24+ordinal*8);},else=>unit};ordinal=ordinal+1;};descriptor=fixed(24+ordinal*8,references);
    },else=>{try require(false,span,"unknown native layout kind");}};
-  types=try put(types,id,descriptors->count);descriptors=push<Descriptor>(descriptors,descriptor);id=id+1;
- };
+  types=try put(types,id,descriptors->count);descriptors=push<Descriptor>(descriptors,descriptor);
+ };};
  var environments:Paged<Int>=empty<Int>();loop over(closures->frames->pages->append(closures->frames->tail) as page:List<List<Field>>){loop over(page as fields:List<Field>){var references:List<Int>=List<Int>[];var ordinal:Int=0;
   loop over(fields as field:Field){branch when{try managed(plan->types,field->valueType)=>{references=references->append(24+ordinal*8);},else=>unit};ordinal=ordinal+1;};environments=push<Int>(environments,descriptors->count);descriptors=push<Descriptor>(descriptors,fixed(24+ordinal*8,references));
  };};
- id=0;loop while(id<plan->types->types->count){let shape:Type=try lookup<Type>(plan->types->types,id);branch when{shape->kind==10&&(try get(types,id))>=0=>{buffers=try put(buffers,id,descriptors->count);descriptors=push<Descriptor>(descriptors,Descriptor{mode:2,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:try managed(plan->types,try argumentType(shape,0,span))});},else=>unit};id=id+1;};
+ loop over(entries->pages->append(entries->tail) as entriesPage:List<Entry>){loop over(entriesPage as entry:Entry){let id:Int=entry->id;let shape:Type=try lookup<Type>(plan->types->types,id);branch when{shape->kind==10=>{buffers=try put(buffers,id,descriptors->count);descriptors=push<Descriptor>(descriptors,Descriptor{mode:2,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:try managed(plan->types,try argumentType(shape,0,span))});},else=>unit};};};
  Result<Layouts,Diagnostic>::Ok(Layouts{descriptors:descriptors,types:types,environments:environments,buffers:buffers})
 };

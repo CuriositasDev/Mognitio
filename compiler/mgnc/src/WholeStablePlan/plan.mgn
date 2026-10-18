@@ -1,0 +1,29 @@
+namespace Mgnc\WholeStablePlan;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\WholeConcrete\{Plan,Instance,Target};
+use Mgnc\WholeSubstitution\{Binding};
+use Mgnc\WholeStableKeys\{Entry,vector,arguments,compare,sort};
+use Mgnc\WholeChecks\{require};
+use Mgnc\IntMap\{Map,create,get,put};
+public let canonical:Function(Plan):Result<Plan,Diagnostic>=function(plan:Plan):Result<Plan,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var entries:Paged<Entry>=empty<Entry>();var ordinal:Int=0;
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  var tokens:List<Int>=List<Int>[item->key->body,item->key->bindings->length()];
+  loop over(item->key->bindings as binding:Binding){tokens=tokens->append(binding->owner);loop over((try arguments(plan->types,binding->arguments)) as token:Int){tokens=tokens->append(token);};};
+  entries=push<Entry>(entries,Entry{id:ordinal,tokens:vector(tokens)});ordinal=ordinal+1;
+ };};entries=try sort(entries);var positions:Map=create();ordinal=0;
+ loop over(entries->pages->append(entries->tail) as page:List<Entry>){loop over(page as entry:Entry){
+  branch when{ordinal>0=>{try require((try compare((try lookup<Entry>(entries,ordinal-1))->tokens,entry->tokens))<0,span,"duplicate stable concrete key");},else=>unit};
+  positions=try put(positions,entry->id,ordinal);ordinal=ordinal+1;
+ };};
+ var instances:Paged<Instance>=empty<Instance>();
+ loop over(entries->pages->append(entries->tail) as page:List<Entry>){loop over(page as entry:Entry){
+  let item:Instance=try lookup<Instance>(plan->instances,entry->id);var targets:Paged<Target>=empty<Target>();
+  loop over(item->targets->pages->append(item->targets->tail) as targetsPage:List<Target>){loop over(targetsPage as target:Target){
+   let id:Int=try get(positions,target->instance);try require(id>=0,span,"stable concrete target membership");
+   targets=push<Target>(targets,Target{node:target->node,instance:id});
+  };};instances=push<Instance>(instances,Instance{key:item->key,body:item->body,targets:targets});
+ };};
+ var initializers:List<Int>=List<Int>[];loop over(plan->initializers as original:Int){let id:Int=try get(positions,original);try require(id>=0,span,"stable initializer membership");initializers=initializers->append(id);};
+ Result<Plan,Diagnostic>::Ok(Plan{types:plan->types,instances:instances,initializers:initializers})
+};

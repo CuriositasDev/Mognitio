@@ -1,0 +1,12 @@
+[
+  {
+    "name": "closures",
+    "sha256": "c6a64de23e5ea9914bfbf1a4d39f297d6180306130fee5dff54868e1581246a8",
+    "exit": 0
+  },
+  {
+    "name": "body-only",
+    "sha256": "b305a281b21783a3e5a07204dcc21d9fa5078462365dbb54cd8c71d78b08369f",
+    "exit": 0
+  }
+]

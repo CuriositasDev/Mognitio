@@ -1,0 +1,6 @@
+namespace App;
+type Tag<N:Int,T>=product{value:T;};
+template make<N:Int,T>=function(value:T):Function():Tag<N,T>{function():Tag<N,T>{Tag<N,T>{value:value}}};
+let left:Function():Int=function():Int{let a:Function():Tag<1,Int>=make<1,Int>(7);let b:Function():Tag<2,String>=make<2,String>("old"+" value");let c:Function():Tag<1,Int>=make<1,Int>(9);branch when{a()->value==7&&b()->value=="old value"&&c()->value==9=>0,else=>1}};
+let right:Function():Int=function():Int{let a:Function():Tag<3,List<Int>>=make<3,List<Int>>(List<Int>[4,5]);branch when{a()->value->length()==2=>0,else=>2}};
+let main:Function(List<String>):Int=function(args:List<String>):Int{left()+right()};

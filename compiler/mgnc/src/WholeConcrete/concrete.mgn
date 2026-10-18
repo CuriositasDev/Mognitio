@@ -28,7 +28,7 @@ public let lexical:Function(Parent,List<Binding>,Span):Result<List<Binding>,Diag
   Result<List<Binding>,Diagnostic>::Err(problem("internal",span,"concrete function lost lexical bindings"))
  }}
 };
-public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project):Result<Plan,Diagnostic>{
+public let buildWithOrder:Function(SemanticProject,Project,Bool):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project,reverse:Bool):Result<Plan,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var keys:Paged<Key>=empty<Key>();var initializers:List<Int>=List<Int>[];
  loop over(source->moduleOrder as moduleId:Int){
   let module:Module=try lookup<Module>(source->types->headers->modules,moduleId);
@@ -42,12 +42,14 @@ public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=funct
   };
  };
  // Non-generic unused functions are concrete too; symbolic templates stay in L160.
- var functionId:Int=0;
- loop over(semantic->state->functions->pages->append(semantic->state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){
+ var requested:Int=0;
+ loop while(requested<semantic->state->functions->count){
+  let functionId:Int=branch when{reverse=>semantic->state->functions->count-1-requested,else=>requested};
+  let info:FunctionInfo=try lookup<FunctionInfo>(semantic->state->functions,functionId);
   branch on info->templateOwner{Parent::Some(owner:Int)=>unit,Parent::None=>{
    let registered:Registered=register(keys,Key{body:try lookup<Int>(source->functions,functionId),bindings:List<Binding>[]});keys=registered->keys;
-  }};functionId=functionId+1;
- };};
+  }};requested=requested+1;
+ };
  var types:Store=source->types;var instances:Paged<Instance>=empty<Instance>();var cursor:Int=0;
  // Register before expansion; recursive requests resolve the existing key.
  loop while(cursor<keys->count){
@@ -74,3 +76,5 @@ public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=funct
  };
  Result<Plan,Diagnostic>::Ok(Plan{types:types,instances:instances,initializers:initializers})
 };
+
+public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project):Result<Plan,Diagnostic>{buildWithOrder(semantic,source,false)};

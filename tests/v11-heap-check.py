@@ -22,7 +22,7 @@ def read_snapshot(data, profile, point, ordinal, check_links=True):
         struct.unpack_from("<8Q", data, 8))
     require((version, context_version) == (1, 8), "snapshot version")
     require(profile in (0, 1) and actual_profile == profile, "profile mismatch")
-    require(size == (432, 480)[profile], "context length")
+    require(size == (944, 992)[profile], "context length")
     require((actual_point, actual_ordinal) == (point, ordinal), "capture mismatch")
     require(0 <= count <= 64 and mapped <= LIMIT, "arena limits")
     context = 72

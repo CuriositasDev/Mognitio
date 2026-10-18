@@ -1,0 +1,1 @@
+namespace App\Types;use Std\Io\{writeStdout};public type Only=product{};let marker:Int={discard writeStdout("T");0};

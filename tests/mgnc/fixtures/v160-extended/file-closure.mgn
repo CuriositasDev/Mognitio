@@ -1,0 +1,4 @@
+namespace App;
+use Std\Io\{readTextFile,writeStdout,IoError};
+let read:Function(String):Result<Function():String,IoError>=function(path:String):Result<Function():String,IoError>{let text:String=try readTextFile(path);Result<Function():String,IoError>::Ok(function():String{text})};
+let main:Function(List<String>):Int=function(args:List<String>):Int{let path:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>panic{"path"}};let fn:Function():String=branch on read(path){Result<Function():String,IoError>::Ok(value:Function():String)=>value,Result<Function():String,IoError>::Err(error:IoError)=>{return 1;}};var n:Int=0;loop while(n<20000){discard "new"+" garbage";n=n+1;};discard writeStdout(fn());0};

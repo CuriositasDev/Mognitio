@@ -1,0 +1,1 @@
+namespace App\Unused;use Std\Io\{writeStdout};let marker:Int={discard writeStdout("U");0};

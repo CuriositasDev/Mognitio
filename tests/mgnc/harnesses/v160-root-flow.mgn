@@ -1,0 +1,120 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,number};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholeIR\{Project,Body,Slot,Block,Operation,Terminator,Origin,Occurrence,TrySite,TextPart};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Type,Argument};
+use Mgnc\MathValue\{Integer};
+use Mgnc\RootReference\{verify as referenceRoots};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeConcrete\{Plan,Instance,build};
+use Mgnc\WholeClosures\{Closures,build as convertClosures};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{replaceItem};
+use Std\Io\{writeStdout};
+use Std\Numeric\{Bits};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeRoots\{build as rootPlan,frame as planFrame};
+use Mgnc\WholeRootCheck\{verify as verifyRoots};
+use Mgnc\WholeLayout\{Layouts,Descriptor,build as layoutPlan};
+use Mgnc\Facts\{words,mask};
+use Mgnc\WholeLayoutCheck\{verify as verifyLayout};
+use Mgnc\IntMap\{get,put};
+let rootMutants:Function(Plan,Body,Frame):Result<Unit,Diagnostic>=function(plan:Plan,body:Body,frame:Frame):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var pointId:Int=0;var found:Bool=false;
+ loop over(frame->points->pages->append(frame->points->tail) as page:List<Point>){loop over(page as point:Point){loop over(point->roots as bits:Bits<64>){branch when{bits!=Bits<64>{0}=>{found=true;break;},else=>unit};};branch when{found=>{break;},else=>unit};pointId=pointId+1;};branch when{found=>{break;},else=>unit};};
+ try require(found,span,"root mutation target");
+ let point:Point=try lookup<Point>(frame->points,pointId);var mode:Int=0;
+ loop while(mode<9){
+  let roots:List<Bits<64>>=branch when{mode==3=>words(frame->slots,true),else=>words(frame->slots,false)};
+  let replacement:Point=Point{block:point->block,operation:branch when{mode==8=>-1,else=>point->operation},roots:branch when{mode==0||mode==3=>roots,else=>point->roots}};
+  let points:Paged<Point>=branch when{mode==1=>empty<Point>(),mode==2=>push<Point>(frame->points,point),else=>try replaceItem<Point>(frame->points,pointId,replacement)};
+  let invalid:Frame=Frame{slots:branch when{mode==7=>-1,else=>frame->slots},outgoing:branch when{mode==6=>frame->outgoing+1,else=>frame->outgoing},extent:branch when{mode==5=>frame->extent+8,else=>frame->extent},entry:branch when{mode==4=>words(frame->slots,true),else=>frame->entry},points:points};
+  branch on verifyRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"root mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+   let expected:Bool=branch when{mode==0=>error->message=="whole IR: missing live managed root",mode==1=>error->message=="whole IR: missing allocation root point",mode==2=>error->message=="whole IR: duplicate root point",mode==3||mode==4=>error->message=="whole IR: dead or scalar root retained"||error->message=="whole IR: root bitmap padding",mode==5||mode==6=>error->message=="whole IR: frame layout or alignment"||error->message=="whole IR: outgoing argument capacity",mode==7=>error->message=="whole IR: frame size bounds",else=>error->message=="whole IR: root point operation bounds"};
+   branch on referenceRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"reference root mutant accepted");},Result<Unit,Diagnostic>::Err(other:Diagnostic)=>{try require(other->message==error->message,span,"root detector disagreement");}};
+   try require(error->phase=="internal"&&expected,span,"wrong root detector");discard writeStdout("V160_ROOT_MUTANT "+number(mode)+" "+error->message+"\n");
+  }};mode=mode+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let layoutMutants:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:Plan,layouts:Layouts):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var mode:Int=0;
+ loop while(mode<8){var invalid:Layouts=layouts;
+  branch when{mode==0=>{invalid=Layouts{descriptors:push<Descriptor>(layouts->descriptors,try lookup<Descriptor>(layouts->descriptors,0)),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};},
+   mode==1=>{invalid=Layouts{descriptors:layouts->descriptors,types:layouts->types,environments:empty<Int>(),buffers:layouts->buffers};},
+   mode==2=>{invalid=Layouts{descriptors:layouts->descriptors,types:layouts->types,environments:try replaceItem<Int>(layouts->environments,1,try lookup<Int>(layouts->environments,0)),buffers:layouts->buffers};},
+   mode==6=>{var id:Int=0;loop while((try get(layouts->types,id))<0){id=id+1;};invalid=Layouts{descriptors:layouts->descriptors,types:try put(layouts->types,id,-1),environments:layouts->environments,buffers:layouts->buffers};},
+   else=>{
+    var changed:Bool=false;var id:Int=0;loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
+     let chosen:Bool=branch when{mode==3=>descriptor->mode==0&&descriptor->references->length()>0,mode==4=>descriptor->mode==1,mode==5=>descriptor->mode==2,else=>descriptor->mode==0};
+     branch when{chosen&&!changed=>{
+      let replacement:Descriptor=Descriptor{mode:descriptor->mode,size:branch when{mode==7=>descriptor->size+8,else=>descriptor->size},references:branch when{mode==3=>List<Int>[],else=>descriptor->references},variants:branch when{mode==4=>List<List<Int>>[],else=>descriptor->variants},elementManaged:branch when{mode==5=>!descriptor->elementManaged,else=>descriptor->elementManaged}};
+      invalid=Layouts{descriptors:try replaceItem<Descriptor>(layouts->descriptors,id,replacement),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};changed=true;
+     },else=>unit};id=id+1;
+    };};try require(changed,span,"layout mutation target");
+   }};
+  branch on verifyLayout(plan,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"layout mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+   let expected:String=branch when{mode==0=>"descriptor table membership",mode==1=>"environment descriptor membership",mode==2=>"descriptor identity shared",mode==3||mode==7=>"fixed descriptor layout",mode==4=>"sum descriptor shape",mode==5=>"iteration buffer descriptor",else=>"descriptor type membership"};
+   try require(error->phase=="internal"&&error->message=="whole IR: "+expected,span,"wrong layout detector");discard writeStdout("V160_LAYOUT_MUTANT "+number(mode)+" "+error->message+"\n");
+  }};mode=mode+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+
+// Synthetic event graphs deliberately exercise liveness independently of typing.
+// Cycles, empty blocks, disconnected blocks, terminator reads, and writes with
+// simultaneous reads are compared with the original forward-path oracle.
+let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let origin:Origin=Origin{node:0,file:0,span:span};
+ var stringType:Int=-1;var intType:Int=-1;var typeId:Int=0;
+ loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==3=>{stringType=typeId;},shape->kind==1=>{intType=typeId;},else=>unit};typeId=typeId+1;};};
+ try require(stringType>=0&&intType>=0,span,"differential types");
+ var scenario:Int=0;var rejected:Int=0;
+ loop while(scenario<144){
+  let size:Int=branch when{scenario<96=>3,scenario<128=>65,else=>130};let blockCount:Int=branch when{scenario<128=>4,else=>32};var slots:Paged<Slot>=empty<Slot>();var slotId:Int=0;
+  loop while(slotId<size){slots=push<Slot>(slots,Slot{valueType:branch when{slotId==0||slotId==1||slotId==64||scenario>=128&&slotId==129=>stringType,else=>intType},kind:0,symbol:Parent::None});slotId=slotId+1;};
+  var blocks:Paged<Block>=empty<Block>();var blockId:Int=0;var state:Int=scenario+17;
+  loop while(blockId<blockCount){
+   var operations:List<Operation>=List<Operation>[];var position:Int=0;
+   loop while(position<branch when{(scenario+blockId)%5==0=>0,else=>2}){
+    state=(state*1664525+1013904223)%2147483647;
+    let value:Int=branch when{state%3==0=>0,state%3==1=>1,else=>size-1};
+    let reads:List<Int>=branch when{state/3%2==0=>List<Int>[],else=>List<Int>[value]};
+    let output:Parent=branch when{state/7%2==0=>Parent::None,else=>Parent::Some(value)};
+    operations=operations->append(Operation{code:"list",output:output,inputs:reads,unavailable:List<Int>[],symbol:Parent::None,target:Parent::None,arguments:List<Argument>[],mapping:List<Int>[],integer:0,minimum:false,wide:List<Integer>[],text:List<TextPart>[],origin:origin});position=position+1;
+   };
+   var targets:List<Int>=List<Int>[];var target:Int=0;
+   loop while(target<blockCount){state=(state*1664525+1013904223)%2147483647;branch when{branch when{scenario<128=>state%3==0,scenario<136=>target==(blockId+1)%blockCount||scenario%2==0&&blockId==blockCount-1&&target==blockCount/2,else=>((blockId+25)*5)%32<31&&target==(blockId+13)%32||scenario%2==0&&((blockId+25)*5)%32==31&&target==7}=>{targets=targets->append(target);},else=>unit};target=target+1;};
+   let reads:List<Int>=branch when{state/3%3==0=>List<Int>[0],state/3%3==1=>List<Int>[size-1],else=>List<Int>[]};
+   blocks=push<Block>(blocks,Block{operations:operations,terminator:Terminator{code:"jump",inputs:reads,targets:targets,variants:List<Int>[],sumType:Parent::None,origin:origin}});blockId=blockId+1;
+  };
+  let body:Body=Body{declaration:Parent::None,functionOwner:Parent::None,root:0,resultType:intType,slots:slots,blocks:blocks,parameters:List<Int>[],captures:List<Int>[],entry:scenario%blockCount,occurrences:empty<Occurrence>(),tries:List<TrySite>[]};
+  let valid:Frame=try planFrame(plan->types,body);try verifyRoots(plan->types,body,valid);try referenceRoots(plan->types,body,valid);
+  loop over(List<Int>[0,1,size-1] as bitId:Int){
+   let bit:Bits<64>=try mask(bitId,span);var changed:List<Bits<64>>=List<Bits<64>>[];var wordId:Int=0;
+   loop over(valid->entry as word:Bits<64>){changed=changed->append(branch when{wordId==bitId/64=>word->xor(bit),else=>word});wordId=wordId+1;};
+   let invalid:Frame=Frame{slots:valid->slots,outgoing:valid->outgoing,extent:valid->extent,entry:changed,points:valid->points};
+   branch on verifyRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"differential mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+    branch on referenceRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"differential reference accepted");},Result<Unit,Diagnostic>::Err(other:Diagnostic)=>{try require(other->message==error->message,span,"differential detector disagreement");}};
+   }};rejected=rejected+1;
+  };
+  scenario=scenario+1;
+ };
+ discard writeStdout("V160_ROOT_DIFFERENTIAL_OK graphs="+number(scenario)+" rejected="+number(rejected)+"\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"generic.mgn",displayPath:"generic.mgn",relativePath:"generic.mgn",expectedNamespace:"",text:"namespace App;\ntemplate make0<T>=function(value:T):Function():T{function():T{value}};\nlet main0:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make0<Int>(7);let b:Function():String=make0<String>(\"kept\"+\" text\");let c:Function():Int=make0<Int>(9);\n branch when{!(a()==7&&b()==\"kept text\"&&c()==9)=>{return 1;},else=>unit};0\n};\ntemplate make1<T>=function():Function():Int{function():Int{let values:List<T>=List<T>[];values->length()}};\nlet main1:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make1<Int>();let b:Function():Int=make1<String>();let c:Function():Int=make1<Int>();\n branch when{!(a()==0&&b()==0&&c()==0)=>{return 1;},else=>unit};0\n};\ntype Tag2<N:Int>=product{};\ntemplate make2<N:Int>=function():Function():Int{function():Int{let tag:Tag2<N>=Tag2<N>{};discard tag;7}};\nlet main2:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make2<-1>();let b:Function():Int=make2<2>();let c:Function():Int=make2<-1>();\n branch when{!(a()+b()+c()==21)=>{return 1;},else=>unit};0\n};\ntemplate size3<T>=function():Int{let values:List<T>=List<T>[];values->length()};\ntemplate make3<T>=function():Function():Int{function():Int{size3<T>()}};\nlet main3:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make3<Int>();let b:Function():Int=make3<String>();branch when{!(a()==0&&b()==0)=>{return 1;},else=>unit};0\n};\ntemplate propagate4<T>=function(input:Result<T,String>):Result<Int,String>{\n let value:T=try input;Result<Int,String>::Ok(7)\n};\nlet main4:Function(List<String>):Int=function(args:List<String>):Int{\n let first:Result<Int,String>=propagate4<String>(Result<String,String>::Err(\"kept\"+\" error\"));\n let second:Result<Int,String>=propagate4<Bool>(Result<Bool,String>::Ok(true));\n branch when{!(branch on first{Result<Int,String>::Ok(value:Int)=>false,Result<Int,String>::Err(error:String)=>error==\"kept error\"})=>{return 1;},else=>unit};\n branch when{!(branch on second{Result<Int,String>::Ok(value:Int)=>value==7,Result<Int,String>::Err(error:String)=>false})=>{return 1;},else=>unit};0\n};\ntype Tag5<N:Int,T>=product{value:T;};\ntemplate make5<N:Int,T>=function(value:T):Function():Tag5<N,T>{function():Tag5<N,T>{Tag5<N,T>{value:value}}};\nlet main5:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Tag5<-1,Int>=make5<-1,Int>(7);let b:Function():Tag5<2,String>=make5<2,String>(\"kept\"+\" field\");\n let c:Function():Tag5<-1,Int>=make5<-1,Int>(9);\n branch when{!(a()->value==7&&b()->value==\"kept field\"&&c()->value==9)=>{return 1;},else=>unit};0\n};\nlet main:Function(List<String>):Int=function(args:List<String>):Int{main0(args)+main1(args)+main2(args)+main3(args)+main4(args)+main5(args)};\n"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+
+ let lowered:Project=try lower(semantic);let plan:Plan=try build(semantic,lowered);
+ let frames:Paged<Frame>=try rootPlan(plan);let closures:Closures=try convertClosures(plan);let layouts:Layouts=try layoutPlan(plan,closures);try verifyLayout(plan,layouts);try layoutMutants(plan,layouts);
+ var instanceId:Int=0;var mutated:Bool=false;
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+  let frame:Frame=try lookup<Frame>(frames,instanceId);try verifyRoots(plan->types,instance->body,frame);try referenceRoots(plan->types,instance->body,frame);var nonempty:Bool=false;
+  loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){loop over(point->roots as bits:Bits<64>){branch when{bits!=Bits<64>{0}=>{nonempty=true;},else=>unit};};};};
+  branch when{nonempty&&!mutated=>{try rootMutants(plan,instance->body,frame);mutated=true;},else=>unit};instanceId=instanceId+1;
+ };};try require(mutated,span,"root mutation not exercised");try differential(plan);
+ discard writeStdout("V160_RUNTIME_PLAN_OK instances="+number(frames->count)+" descriptors="+number(layouts->descriptors->count)+" rejected=17\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

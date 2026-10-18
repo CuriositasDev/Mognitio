@@ -1,0 +1,86 @@
+namespace Mgnc\WholeRootFlow;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Block,Operation};
+use Mgnc\Facts\{combine,equal,define,mask,at};
+use Mgnc\IntMap\{Map,create,get,put};
+public type Flow=product{versions:Paged<List<Bits<64>>>;heads:Map;};
+type Summary=product{used:List<Bits<64>>;defined:List<Bits<64>>;empty:Bool;};
+public let incoming:Function(Flow,Int,List<Bits<64>>):Result<List<Bits<64>>,Diagnostic>=function(flow:Flow,id:Int,blank:List<Bits<64>>):Result<List<Bits<64>>,Diagnostic>{
+ let version:Int=try get(flow->heads,id);branch when{version<0=>Result<List<Bits<64>>,Diagnostic>::Ok(blank),else=>lookup<List<Bits<64>>>(flow->versions,version)}
+};
+let clear:Function(List<Bits<64>>,Int,Span):Result<List<Bits<64>>,Diagnostic>=function(values:List<Bits<64>>,slot:Int,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;let bit:Bits<64>=try mask(slot,span);
+ loop over(values as word:Bits<64>){result=result->append(branch when{index==slot/64=>word->and(bit->not()),else=>word});index=index+1;};Result<List<Bits<64>>,Diagnostic>::Ok(result)
+};
+public let transfer:Function(List<Bits<64>>,Operation):Result<List<Bits<64>>,Diagnostic>=function(after:List<Bits<64>>,op:Operation):Result<List<Bits<64>>,Diagnostic>{
+ var before:List<Bits<64>>=after;branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{before=try clear(before,slot,op->origin->span);}};
+ loop over(op->inputs as slot:Int){before=try define(before,slot,op->origin->span);};Result<List<Bits<64>>,Diagnostic>::Ok(before)
+};
+public let outgoing:Function(Flow,Block,List<Bits<64>>,Span):Result<List<Bits<64>>,Diagnostic>=function(flow:Flow,block:Block,blank:List<Bits<64>>,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ var live:List<Bits<64>>=blank;loop over(block->terminator->targets as target:Int){live=try combine(live,try incoming(flow,target,blank),true,span);};
+ loop over(block->terminator->inputs as slot:Int){live=try define(live,slot,span);};Result<List<Bits<64>>,Diagnostic>::Ok(live)
+};
+let summarize:Function(Paged<Operation>,List<Bits<64>>):Result<Summary,Diagnostic>=function(operations:Paged<Operation>,blank:List<Bits<64>>):Result<Summary,Diagnostic>{
+ var used:List<Bits<64>>=blank;var defined:List<Bits<64>>=blank;var position:Int=operations->count;
+ loop while(position>0){position=position-1;let op:Operation=try lookup<Operation>(operations,position);used=try transfer(used,op);
+  branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{defined=try define(defined,slot,op->origin->span);}};
+ };Result<Summary,Diagnostic>::Ok(Summary{used:used,defined:defined,empty:operations->count==0})
+};
+let apply:Function(Summary,List<Bits<64>>,Span):Result<List<Bits<64>>,Diagnostic>=function(summary:Summary,after:List<Bits<64>>,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ branch when{summary->empty=>{return Result<List<Bits<64>>,Diagnostic>::Ok(after);},else=>unit};
+ var live:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;
+ loop over(after as word:Bits<64>){live=live->append(word->and((try at(summary->defined,index,span))->not())->or(try at(summary->used,index,span)));index=index+1;};
+ Result<List<Bits<64>>,Diagnostic>::Ok(live)
+};
+type Visit=product{block:Int;finish:Bool;parent:Int;};
+// A backward pass starts after successors, independent of block numbering.
+// Explicit DFS events avoid a machine-stack dependency on source CFG depth.
+let postorder:Function(Body):Result<Paged<Int>,Diagnostic>=function(body:Body):Result<Paged<Int>,Diagnostic>{
+ var result:Paged<Int>=empty<Int>();var seen:Map=create();var visits:Paged<Visit>=empty<Visit>();var root:Int= -1;
+ loop while(root<body->blocks->count){
+  let first:Int=branch when{root<0=>body->entry,else=>root};root=root+1;
+  branch when{(try get(seen,first))>=0=>{continue;},else=>unit};
+  var top:Int=visits->count;visits=push<Visit>(visits,Visit{block:first,finish:false,parent:-1});
+  loop while(top>=0){
+   let task:Visit=try lookup<Visit>(visits,top);top=task->parent;
+   branch when{task->finish=>{result=push<Int>(result,task->block);continue;},else=>unit};
+   branch when{(try get(seen,task->block))>=0=>{continue;},else=>unit};seen=try put(seen,task->block,1);
+   let parent:Int=top;top=visits->count;visits=push<Visit>(visits,Visit{block:task->block,finish:true,parent:parent});
+   let block:Block=try lookup<Block>(body->blocks,task->block);
+   loop over(block->terminator->targets as target:Int){
+    branch when{(try get(seen,target))<0=>{let prior:Int=top;top=visits->count;visits=push<Visit>(visits,Visit{block:target,finish:false,parent:prior});},else=>unit};
+   };
+  };
+ };Result<Paged<Int>,Diagnostic>::Ok(result)
+};
+// Summarize each block once, then revisit only predecessors of changed entries.
+// This is the same backward least fixed point; the verifier uses a separate
+// read-origin reachability graph and does not consume these summaries or queue.
+public let solve:Function(Body,Paged<Paged<Operation>>,List<Bits<64>>,Span):Result<Flow,Diagnostic>=function(body:Body,operations:Paged<Paged<Operation>>,blank:List<Bits<64>>,span:Span):Result<Flow,Diagnostic>{
+ var summaries:Paged<Summary>=empty<Summary>();var predecessors:Paged<List<Int>>=empty<List<Int>>();var heads:Map=create();var id:Int=0;
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
+  summaries=push<Summary>(summaries,try summarize(try lookup<Paged<Operation>>(operations,id),blank));
+  loop over(block->terminator->targets as target:Int){
+   let version:Int=try get(heads,target);let prior:List<Int>=branch when{version<0=>List<Int>[],else=>try lookup<List<Int>>(predecessors,version)};
+   heads=try put(heads,target,predecessors->count);predecessors=push<List<Int>>(predecessors,prior->append(id));
+  };id=id+1;
+ };};
+ var queue:Paged<Int>=try postorder(body);var pending:Map=create();
+ loop over(queue->pages->append(queue->tail) as page:List<Int>){loop over(page as queued:Int){pending=try put(pending,queued,1);};};
+ var cursor:Int=0;var flow:Flow=Flow{versions:empty<List<Bits<64>>>(),heads:create()};
+ loop while(cursor<queue->count){
+  id=try lookup<Int>(queue,cursor);cursor=cursor+1;pending=try put(pending,id,0);
+  let block:Block=try lookup<Block>(body->blocks,id);
+  let live:List<Bits<64>>=try apply(try lookup<Summary>(summaries,id),try outgoing(flow,block,blank,span),span);
+  branch when{!(try equal(live,try incoming(flow,id,blank),span))=>{
+   flow=Flow{versions:push<List<Bits<64>>>(flow->versions,live),heads:try put(flow->heads,id,flow->versions->count)};
+   let version:Int=try get(heads,id);branch when{version>=0=>{
+    loop over((try lookup<List<Int>>(predecessors,version)) as previous:Int){
+     branch when{(try get(pending,previous))!=1=>{queue=push<Int>(queue,previous);pending=try put(pending,previous,1);},else=>unit};
+    };
+   },else=>unit};
+  },else=>unit};
+ };Result<Flow,Diagnostic>::Ok(flow)
+};

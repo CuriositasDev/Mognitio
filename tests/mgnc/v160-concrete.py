@@ -34,8 +34,8 @@ new='''branch when{checking=>{
 assert text.count(old)==1;driver.write_text(text.replace(old,new,1))
 binary=args.output/'probe';built=subprocess.run([args.seed,'build',project/'mognitio.toml','-o',binary],capture_output=True,timeout=900);assert (built.returncode,built.stdout,built.stderr)==(0,b'',b''),(built.returncode,built.stdout,built.stderr)
 result=subprocess.run([binary,'--internals'],capture_output=True,timeout=120);assert result.returncode==0 and result.stderr==b'',(result.returncode,result.stdout,result.stderr)
-assert b'V160_CONCRETE_OK valid=2 rejected=10\n' in result.stdout and b'V160_CLOSURE_OK valid=2 rejected=4\n' in result.stdout
-assert result.stdout.count(b'V160_CONCRETE_MUTANT ')==10 and result.stdout.count(b'V160_CLOSURE_MUTANT ')==4
+assert b'V160_CONCRETE_OK valid=2 rejected=11\n' in result.stdout and b'V160_CLOSURE_OK valid=2 rejected=4\n' in result.stdout
+assert result.stdout.count(b'V160_CONCRETE_MUTANT ')==11 and result.stdout.count(b'V160_CLOSURE_MUTANT ')==4
 (args.output/'internals.log').write_bytes(result.stdout);print(result.stdout.decode(),end='',flush=True)
 subprocess.run(['python3',ROOT/'tests/mgnc/v160-native-profile.py','--compiler',binary,'--mode','profile','--output',args.output/'profile'],check=True,timeout=120)
 subprocess.run(['python3',ROOT/'tests/mgnc/v160-generics.py','--output',args.output/'generics'],check=True,timeout=120)

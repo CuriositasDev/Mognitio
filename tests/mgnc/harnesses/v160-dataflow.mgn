@@ -34,6 +34,31 @@ let sample:Function(Int):Body=function(mutation:Int):Body{
  }};
  Body{declaration:Parent::Some(0),functionOwner:Parent::Some(0),root:0,resultType:1,slots:slots,blocks:blocks,parameters:List<Int>[0,1,3,4],captures:List<Int>[],entry:0,occurrences:empty<Occurrence>(),tries:List<TrySite>[]}
 };
+// Cross bitmap words, then distinguish prior writes from future writes,
+// one-sided joins, and definitions that exist only on a backedge.
+let wide:Function(Int):Body=function(mode:Int):Body{
+ var slots:Paged<Slot>=empty<Slot>();var i:Int=0;loop while(i<130){slots=push<Slot>(slots,Slot{valueType:1,kind:0,symbol:Parent::None});i=i+1;};
+ let write:Operation=operation("copy",Parent::Some(127),List<Int>[64],site);
+ let read:Operation=operation("copy",Parent::Some(128),List<Int>[127],site);
+ var blocks:Paged<Block>=empty<Block>();
+ branch when{mode<3=>{
+  let operations:List<Operation>=branch when{mode==0=>List<Operation>[write,read],mode==1=>List<Operation>[read,write],else=>List<Operation>[operation("copy",Parent::Some(127),List<Int>[127],site),read]};
+  blocks=push<Block>(blocks,block(operations,returned(128)));
+ },mode==3||mode==4=>{
+  blocks=push<Block>(blocks,block(List<Operation>[],term("branch",List<Int>[0],List<Int>[1,2],site)));
+  blocks=push<Block>(blocks,block(List<Operation>[write],jumped(3)));
+  blocks=push<Block>(blocks,block(branch when{mode==3=>List<Operation>[write],else=>List<Operation>[]},jumped(3)));
+  blocks=push<Block>(blocks,block(List<Operation>[read],returned(128)));
+ },mode==5||mode==6=>{
+  blocks=push<Block>(blocks,block(branch when{mode==5=>List<Operation>[write],else=>List<Operation>[]},jumped(1)));
+  blocks=push<Block>(blocks,block(List<Operation>[read,write],term("branch",List<Int>[0],List<Int>[1,2],site)));
+  blocks=push<Block>(blocks,block(List<Operation>[],returned(128)));
+ },else=>{
+  blocks=push<Block>(blocks,block(List<Operation>[read],returned(128)));
+  blocks=push<Block>(blocks,block(List<Operation>[write],jumped(0)));
+ }};
+ Body{declaration:Parent::Some(0),functionOwner:Parent::Some(0),root:0,resultType:1,slots:slots,blocks:blocks,parameters:List<Int>[0],captures:List<Int>[64],entry:0,occurrences:empty<Occurrence>(),tries:List<TrySite>[]}
+};
 let main:Function(List<String>):Int=function(args:List<String>):Int{
  var mutation:Int=0;var passed:Int=0;var rejected:Int=0;
  loop while(mutation<=10){
@@ -44,5 +69,9 @@ let main:Function(List<String>):Int=function(args:List<String>):Int{
   };mutation=mutation+1;
  };
  branch when{passed!=3||rejected!=8=>{return 3;},else=>unit};
- discard writeStdout("V160_DATAFLOW_OK valid=3 rejected=8\n");0
+ discard writeStdout("V160_DATAFLOW_OK valid=3 rejected=8\n");
+ var mode:Int=0;loop while(mode<8){let expected:Bool=mode==0||mode==3||mode==5;
+  branch on verify(wide(mode)){Result<Unit,Diagnostic>::Ok(value:Unit)=>{branch when{!expected=>{return 4;},else=>unit};},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{branch when{expected||error->phase!="internal"||error->message!="IR read before definition"=>{discard writeStdout(error->message+"\n");return 5;},else=>unit};}};mode=mode+1;
+ };
+ discard writeStdout("V160_DATAFLOW_WIDE_OK valid=3 rejected=5\n");0
 };

@@ -14,6 +14,7 @@ parser.add_argument("--seed", type=Path, required=True)
 args = parser.parse_args()
 harness = ROOT / "tests/mgnc/harnesses/v160-dataflow.mgn"
 print(json.dumps({"harness_sha256": hashlib.sha256(harness.read_bytes()).hexdigest(),
+                  "wide_valid": [0, 3, 5], "wide_rejected": [1, 2, 4, 6, 7],
                   "valid": [0, 7, 10], "rejected": [1, 2, 3, 4, 5, 6, 8, 9]}),
       flush=True)
 with tempfile.TemporaryDirectory(prefix="mgnc-v160-dataflow-") as temporary:
@@ -28,5 +29,5 @@ with tempfile.TemporaryDirectory(prefix="mgnc-v160-dataflow-") as temporary:
     result = subprocess.run([binary], capture_output=True, timeout=120)
     assert result.returncode == 0, (result.returncode, result.stdout, result.stderr)
     assert result.stderr == b"", result.stderr
-    assert result.stdout == b"V160_DATAFLOW_OK valid=3 rejected=8\n"
+    assert result.stdout == b"V160_DATAFLOW_OK valid=3 rejected=8\nV160_DATAFLOW_WIDE_OK valid=3 rejected=5\n"
     print(result.stdout.decode(), end="")

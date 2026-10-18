@@ -4,6 +4,14 @@ use Mgnc\Data\{Diagnostic};
 use Std\Io\{writeStdout};
 let test:Function():Result<Int,Diagnostic>=function():Result<Int,Diagnostic>{
  let blank:Map=create();var table:Map=blank;var count:Int=0;
+ // Independent forks from the empty snapshot exercise every radix digit and
+ // leave the other branch and adjacent missing keys unchanged.
+ var stride:Int=1;loop while(stride<1048576){var digit:Int=0;loop while(digit<4){
+  let key:Int=stride*digit;let left:Map=try put(blank,key,9223372036854775807);let right:Map=try put(blank,key,-9223372036854775808);
+  branch when{(try get(left,key))!=9223372036854775807||(try get(right,key))!= -9223372036854775808||(try get(blank,key))!= -2||(try get(left,key+1))!= -2=>{return Result<Int,Diagnostic>::Ok(12);},else=>unit};
+  digit=digit+1;
+ };stride=stride*4;};
+
  loop over(List<Int>[0,1,15,16,255,256,257,65535,65536,1048575,1048576,1152921504606846976,9223372036854775807] as key:Int){
   branch when{(try get(table,key))!= -2=>{return Result<Int,Diagnostic>::Ok(1);},else=>unit};
   let previous:Map=table;table=try put(table,key,count);branch when{(try get(previous,key))!= -2||(try get(table,key))!=count=>{return Result<Int,Diagnostic>::Ok(2);},else=>unit};count=count+1;

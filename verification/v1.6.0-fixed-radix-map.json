@@ -1,0 +1,185 @@
+{
+  "schema": 1,
+  "stage": "compiler-map-and-verifier-increment-accepted",
+  "tested_code": "823f0cda86868e89ea5bc859d7246aa0e7698cb9",
+  "rebased_head": "09f550c0eebee6a43c48089ff1620e1ac78806c8",
+  "changes": [
+    "Fixed-field persistent ten-level four-way radix tree with shared immutable blanks; exact high Int64 key fallback preserved.",
+    "Verifier-owned per-source-body instance index; complete keys still compared independently."
+  ],
+  "cumulative_suite": {
+    "groups": 242,
+    "assertions": 1889890,
+    "native_processes": 1324,
+    "failures": 0,
+    "python": "All checks through 55 path-inspection cases passed."
+  },
+  "candidate_sha256": "d27ddf0ddc3b6105c508f92b10c8ea20903dfdf58193fadb0723d85190f380ff",
+  "candidate_bootstrap_code": "1d093e7f74a29632b0641c86c4f94ddd8ade37c8",
+  "candidate_scope": "173 ordinary compiler modules from tested source plus the complete native driver harness.",
+  "internal_probe_markers": [
+    "V150_INT_MAP_OK boundaries=13 updates=2048 high_updates=64 snapshots=true",
+    "V160_METADATA_OK literals=1 loops=1 patterns=1 nested=2",
+    "V160_WHOLE_IR_OK valid=3 rejected=13",
+    "V160_DATAFLOW_OK valid=3 rejected=8",
+    "V160_DATAFLOW_WIDE_OK valid=3 rejected=5",
+    "V160_CLOSURE_OK valid=2 rejected=4",
+    "V160_CONCRETE_OK valid=2 rejected=11",
+    "V160_HELPER_CONTRACTS_OK valid=2 rejected=10",
+    "V160_NATIVE_VERIFIERS_OK valid=2 rejected=11",
+    "V160_ROOT_DIFFERENTIAL_OK graphs=152 rejected=456",
+    "V160_HANDOFF_ROOTS_OK plans=3 rejected=11",
+    "V160_RUNTIME_PLAN_OK instances=52 descriptors=76 rejected=17",
+    "V160_CAPTURE_SOURCE_OK valid=1 rejected=2"
+  ],
+  "functional_groups": [
+    {
+      "name": "extended",
+      "exit": 0
+    },
+    {
+      "name": "native",
+      "exit": 0
+    },
+    {
+      "name": "inherited",
+      "exit": 0
+    },
+    {
+      "name": "profile",
+      "exit": 0
+    },
+    {
+      "name": "faults",
+      "exit": 0
+    },
+    {
+      "name": "boundaries",
+      "exit": 0
+    },
+    {
+      "name": "isolation-24",
+      "exit": 0
+    },
+    {
+      "name": "isolation-26",
+      "exit": 0
+    },
+    {
+      "name": "lifetime",
+      "exit": 0
+    },
+    {
+      "name": "runtime",
+      "exit": 0
+    },
+    {
+      "name": "review",
+      "exit": 0
+    }
+  ],
+  "prior_failed_native_cells": [
+    {
+      "median_seconds": 36.70168381789699,
+      "max_rss_bytes": 238624768,
+      "pass": false,
+      "name": "combined-1000"
+    },
+    {
+      "median_seconds": 37.11631546204444,
+      "max_rss_bytes": 239112192,
+      "pass": false,
+      "name": "combined-long-1000"
+    },
+    {
+      "median_seconds": 36.42891822999809,
+      "max_rss_bytes": 239001600,
+      "pass": false,
+      "name": "combined-comment-1000"
+    }
+  ],
+  "exploratory_comparison": {
+    "compiler_sha256": "d27ddf0ddc3b6105c508f92b10c8ea20903dfdf58193fadb0723d85190f380ff",
+    "fixture_manifest_sha256": "a0cd19c899d7fdd43e2155adf68c59f24d3efb38779bcc7d970e20c251989182",
+    "kernel": "7.0.0-38-generic",
+    "uid_nonzero": true,
+    "warmups": 0,
+    "repeats": 1,
+    "cells": [
+      {
+        "fixture": {
+          "name": "combined-1000",
+          "family": "combined",
+          "size": 1000,
+          "bytes": 87878,
+          "scalars": 87878,
+          "sha256": "bd967ab6275af5319fc7ea31cee5b76c42bb2d9ccde27945c0177d1e40f7d1cb",
+          "argv_counts": [
+            0,
+            1,
+            3
+          ],
+          "expected": [
+            124,
+            125,
+            127
+          ],
+          "tokens": 35998,
+          "declared_bindings": 2003,
+          "block_extra_depth": 128,
+          "branch_extra_depth": 128,
+          "call_chain_depth": 128
+        },
+        "samples": [
+          {
+            "warmup": false,
+            "wall_seconds": 22.989273719023913,
+            "peak_rss_bytes": 228888576,
+            "exit": 0,
+            "timeout": false,
+            "stdout_hex": "",
+            "stderr_hex": "",
+            "artifact_sha256": "cb9d06c84a9018175dad3e7c752a66341cf416ec727c8b8197d80e574ec63145",
+            "artifact_bytes": 1275664,
+            "mode": "0o755",
+            "runtime": [
+              {
+                "argv_count": 0,
+                "exit": 124,
+                "stdout_hex": "",
+                "stderr_hex": ""
+              },
+              {
+                "argv_count": 1,
+                "exit": 125,
+                "stdout_hex": "",
+                "stderr_hex": ""
+              },
+              {
+                "argv_count": 3,
+                "exit": 127,
+                "stdout_hex": "",
+                "stderr_hex": ""
+              }
+            ],
+            "correct": true
+          }
+        ],
+        "median_seconds": 22.989273719023913,
+        "max_rss_bytes": 228888576,
+        "pass": true
+      }
+    ]
+  },
+  "rejected_experiment": "Bulk dataflow fact construction regressed progress under GC; production WholeDataflow was restored byte-for-byte to trunk. Wide dataflow regression fixtures remain.",
+  "environment_retries": "Initial full run hit tmpfs quota; a missing TMPDIR retry failed before tests, and a long disk TMPDIR retry violated AF_UNIX/publication environment assumptions. Original files and logs retained; standard tmpfs full rerun passed after moving completed task artifacts to persistent evidence storage.",
+  "logs": {
+    "mognitio-v160-fixed-map-full-r4.log": "9fdb4bd28ce49e4f2b3577fc3d07e24248d71af14205d68e8d619fc0814e1fcb",
+    "results.json": "a31fc4bb511c71438a2fbe5c4ee6ab99ac74364f4cda09bf456aa2106ad2e648",
+    "internals-stdout": "bdcd37c213fcf1f54e6cf858a94624654991e6b24e5239dc203850fb5fae2323",
+    "mognitio-v160-fixed-map-unit.log": "a9801a672d4454208e42c6e1356abaedec17a24bb584483195be4a6eb4284c84"
+  },
+  "formal_performance_accepted": false,
+  "implementation_complete": false,
+  "release_performed": false
+}

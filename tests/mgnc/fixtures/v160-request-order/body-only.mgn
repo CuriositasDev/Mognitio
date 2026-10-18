@@ -1,0 +1,6 @@
+namespace App;
+type Tag<N:Int>=product{};
+template make<N:Int,T>=function():Function():Function():Int{function():Function():Int{function():Int{let tag:Tag<N>=Tag<N>{};discard tag;let values:List<T>=List<T>[];values->length()}}};
+let left:Function():Int=function():Int{let a:Function():Int=make<1,Int>()();let b:Function():Int=make<2,String>()();let c:Function():Int=make<1,Int>()();a()+b()+c()};
+let right:Function():Int=function():Int{let a:Function():Int=make<3,List<Int>>()();a()};
+let main:Function(List<String>):Int=function(args:List<String>):Int{left()+right()};

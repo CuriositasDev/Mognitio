@@ -7,6 +7,7 @@ use Mgnc\SemanticData\{Declaration,Module,Introduction};
 use Mgnc\TypeData\{Type};
 use Mgnc\WholeIR\{Project,Body,Block,Operation};
 use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeStablePlan\{canonical};
 use Mgnc\WholeClosures\{Closures,build as closuresPlan};
 use Mgnc\WholeLayout\{Layouts,Descriptor,build as layoutsPlan,managed};
 use Mgnc\WholeFrameData\{Frame,Point};
@@ -16,7 +17,8 @@ use Mgnc\WholeLiteral\{Encoded,encode};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Facts\{fromSlots};
-public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Plan):Result<Native,Diagnostic>{
+public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic>=function(semantic:SemanticProject,source:Project,initial:Plan):Result<Native,Diagnostic>{
+ let plan:Plan=try canonical(initial);
  let span:Span=Span{start:0,end:0,line:1,column:1};let closures:Closures=try closuresPlan(plan);let layouts:Layouts=try layoutsPlan(plan,closures);let frames:Paged<Frame>=try rootsPlan(plan);
  var next:Int=256;var descriptors:Paged<Int>=empty<Int>();var variants:Paged<List<Int>>=empty<List<Int>>();
  loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){

@@ -1,0 +1,48 @@
+namespace Mgnc;
+use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\Project\{single};
+use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholeIR\{Project};
+use Mgnc\TypeData\{Type};
+use Mgnc\TypeOps\{parentEqual,argumentsEqual};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeConcrete\{Plan,Instance,same,buildWithOrder};
+use Mgnc\WholeConcreteCheck\{verify as verifyConcrete};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativePlan\{build as native};
+use Mgnc\WholeNativeCheck\{verify as verifyNative};
+use Mgnc\WholePipeline\{compile};
+use Mgnc\WholeChecks\{require};
+use Mgnc\TextUtil\{at};
+use Std\Binary\{publishFile,BinaryFileMode,BinaryOutputError};
+use Std\Io\{writeStdout};
+let test:Function(List<String>):Result<Unit,Diagnostic>=function(args:List<String>):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ let input:ProjectInput=branch on single(at(args,0)){Result<ProjectInput,InputError>::Ok(v:ProjectInput)=>v,Result<ProjectInput,InputError>::Err(e:InputError)=>{return Result<Unit,Diagnostic>::Err(e->diagnostic);}};
+ let semantic:SemanticProject=branch on analyze(input){Result<SemanticProject,InputError>::Ok(v:SemanticProject)=>v,Result<SemanticProject,InputError>::Err(e:InputError)=>{return Result<Unit,Diagnostic>::Err(e->diagnostic);}};
+ let source:Project=try lower(semantic);
+ let first:Plan=try buildWithOrder(semantic,source,false);
+ let second:Plan=try buildWithOrder(semantic,source,true);
+ try verifyConcrete(semantic,source,first);try verifyConcrete(semantic,source,second);
+ try require(first->instances->count==second->instances->count,span,"request order instance membership");
+ var changed:Bool=false;var index:Int=0;
+ loop while(index<first->instances->count){let a:Instance=try lookup<Instance>(first->instances,index);let b:Instance=try lookup<Instance>(second->instances,index);changed=changed||!same(a->key,b->key);index=index+1;};
+ try require(changed,span,"request order did not change expansion sequence");
+ try require(first->types->types->count==second->types->types->count,span,"request order type membership");
+ var interned:Bool=false;index=0;
+ loop while(index<first->types->types->count){
+  let a:Type=try lookup<Type>(first->types->types,index);let b:Type=try lookup<Type>(second->types->types,index);
+  interned=interned||a->kind!=b->kind||!parentEqual(a->owner,b->owner)||!argumentsEqual(a->arguments,b->arguments);index=index+1;
+ };
+ var ordinal:Int=0;loop over(List<Plan>[first,second] as plan:Plan){
+  let result:Native=try native(semantic,source,plan);try verifyNative(semantic,source,result);
+  let path:String=at(args,1)+branch when{ordinal==0=>"/forward",else=>"/reverse"};
+  branch on publishFile(path,try compile(result),BinaryFileMode::Executable){
+   Result<Unit,BinaryOutputError>::Ok(v:Unit)=>unit,
+   Result<Unit,BinaryOutputError>::Err(e:BinaryOutputError)=>{discard e;return Result<Unit,Diagnostic>::Err(problem("internal",span,"request order publication"));}
+  };ordinal=ordinal+1;
+ };
+ discard writeStdout("V160_REQUEST_ORDER_EXPANSION_OK types="+branch when{interned=>"1",else=>"0"}+"\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(args){Result<Unit,Diagnostic>::Ok(v:Unit)=>0,Result<Unit,Diagnostic>::Err(e:Diagnostic)=>{discard writeStdout(e->phase+": "+e->message+"\n");1}}};

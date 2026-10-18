@@ -19,7 +19,7 @@ public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Dia
   branch when{frame->next<frame->expression->children->length()=>{
    let prepared:ChildEnvironment=try child(state,tree,frame);state=prepared->state;frames=try replaceItem<Frame>(frames,active,prepared->frame);
    let allowed:Bool=rule==ruleUnaryNeg||(rule==ruleGroup&&frame->minimumAllowed);
-   let entered:Started=try start(state,tree,try item(frame->expression->children,frame->next),prepared->environment,active,allowed);
+   let entered:Started=try start(state,tree,try lookup<Int>(frame->pending,frame->next),prepared->environment,active,allowed);
    state=entered->state;active=active+1;
    frames=branch when{active<frames->count=>try replaceItem<Frame>(frames,active,entered->frame),else=>push<Frame>(frames,entered->frame)};continue;
   },else=>unit};
@@ -31,7 +31,7 @@ public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Dia
   branch when{frame->parent<0=>{return Result<Checked,Diagnostic>::Ok(checked);},else=>unit};
   active=frame->parent;let parent:Frame=try lookup<Frame>(frames,active);
   let scope:Environment=branch when{parent->expression->rule==ruleBlock&&(rule==ruleLetBinding||rule==ruleVarBinding)=>evaluated->environment,else=>parent->environment};
-  frames=try replaceItem<Frame>(frames,active,Frame{expression:parent->expression,environment:scope,annotation:parent->annotation,target:parent->target,loopTarget:parent->loopTarget,binder:parent->binder,binders:parent->binders,arguments:parent->arguments,children:parent->children->append(checked->root),mapping:parent->mapping,parent:parent->parent,next:parent->next+1,minimumAllowed:parent->minimumAllowed});
+  frames=try replaceItem<Frame>(frames,active,Frame{expression:parent->expression,pending:parent->pending,prefixNormal:parent->prefixNormal&&evaluated->value->normal,environment:scope,annotation:parent->annotation,target:parent->target,loopTarget:parent->loopTarget,binder:parent->binder,binders:parent->binders,arguments:parent->arguments,children:parent->children->append(checked->root),mapping:parent->mapping,parent:parent->parent,next:parent->next+1,minimumAllowed:parent->minimumAllowed});
  };
  panic{"body worklist did not return a result"}
 };

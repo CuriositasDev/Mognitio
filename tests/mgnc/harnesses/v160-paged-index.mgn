@@ -1,0 +1,31 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup,problem};
+use Mgnc\Tables\{replaceItem};
+use Std\Io\{writeStdout};
+let require:Function(Bool):Result<Unit,Diagnostic>=function(ok:Bool):Result<Unit,Diagnostic>{
+ branch when{ok=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"paged oracle mismatch"))}
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ var table:Paged<Int>=empty<Int>();var index:Int=0;var snapshot:Paged<Int>=empty<Int>();
+ loop while(index<65537){table=push<Int>(table,index*3+1);index=index+1;branch when{index==4097=>{snapshot=table;},else=>unit};};
+ index=0;loop while(index<65537){try require((try lookup<Int>(table,index))==index*3+1);index=index+1;};
+ let original:Paged<Int>=table;
+ loop over(List<Int>[0,1,62,63,64,65,4094,4095,4096,4097,4159,4160,8191,8192,65535,65536] as at:Int){
+  table=try replaceItem<Int>(table,at,-at-1);
+  try require((try lookup<Int>(table,at))== -at-1);
+  try require((try lookup<Int>(original,at))==at*3+1);
+ };
+ index=0;loop while(index<4097){try require((try lookup<Int>(snapshot,index))==index*3+1);index=index+1;};
+ // Both the compatibility pages and indexed reads must describe the same values.
+ index=0;loop over(table->pages as page:List<Int>){loop over(page as value:Int){try require(value==(try lookup<Int>(table,index)));index=index+1;};};
+ loop over(table->tail as value:Int){try require(value==(try lookup<Int>(table,index)));index=index+1;};
+ try require(index==table->count);
+ loop over(List<Int>[-1,65537] as at:Int){
+  branch on lookup<Int>(table,at){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false);},Result<Int,Diagnostic>::Err(error:Diagnostic)=>unit};
+  branch on replaceItem<Int>(table,at,0){Result<Paged<Int>,Diagnostic>::Ok(value:Paged<Int>)=>{try require(false);},Result<Paged<Int>,Diagnostic>::Err(error:Diagnostic)=>unit};
+ };
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_PAGED_INDEX_OK values=65537 replacements=16\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message+"\n");1}}
+};

@@ -1,5 +1,5 @@
 namespace Mgnc\ValueStart;
-use Mgnc\Data\{Diagnostic,lookup,push,problem};
+use Mgnc\Data\{Diagnostic,Paged,empty,lookup,push,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\NodeStorage\{getNode};
@@ -68,5 +68,6 @@ public let start:Function(State,SyntaxForest,Int,Environment,Int,Bool):Result<St
  branch when{rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever=>{
   loopTarget=Parent::Some(state->loops->count);state=withLoops(state,push<Loop>(state->loops,Loop{kind:rule,breaks:List<Int>[]}));
  },else=>unit};
- Result<Started,Diagnostic>::Ok(Started{state:state,frame:Frame{expression:expression,environment:environment,annotation:annotation,target:target,loopTarget:loopTarget,binder:binder,binders:List<Parent>[],arguments:arguments,children:List<Int>[],mapping:List<Int>[],parent:parent,next:0,minimumAllowed:minimumAllowed}})
+ var pending:Paged<Int>=empty<Int>();loop over(expression->children as child:Int){pending=push<Int>(pending,child);};
+ Result<Started,Diagnostic>::Ok(Started{state:state,frame:Frame{expression:expression,pending:pending,prefixNormal:true,environment:environment,annotation:annotation,target:target,loopTarget:loopTarget,binder:binder,binders:List<Parent>[],arguments:arguments,children:List<Int>[],mapping:List<Int>[],parent:parent,next:0,minimumAllowed:minimumAllowed}})
 };

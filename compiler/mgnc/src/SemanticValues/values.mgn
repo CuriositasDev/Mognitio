@@ -14,7 +14,7 @@ public type State=product{types:Store;nodes:Paged<Node>;symbols:Paged<Symbol>;gl
 public type Environment=product{file:Int;symbols:Index;reserved:List<String>;functionOwner:Parent;loopTarget:Parent;returnType:Parent;templateOwner:Parent;arguments:List<Argument>;reachable:Bool;};
 public type Checked=product{state:State;root:Int;};
 
-public type Frame=product{expression:Expression;environment:Environment;annotation:Parent;target:Parent;loopTarget:Parent;binder:Parent;binders:List<Parent>;arguments:List<Argument>;children:List<Int>;mapping:List<Int>;parent:Int;next:Int;minimumAllowed:Bool;};
+public type Frame=product{expression:Expression;pending:Paged<Int>;prefixNormal:Bool;environment:Environment;annotation:Parent;target:Parent;loopTarget:Parent;binder:Parent;binders:List<Parent>;arguments:List<Argument>;children:List<Int>;mapping:List<Int>;parent:Int;next:Int;minimumAllowed:Bool;};
 public type Started=product{state:State;frame:Frame;};
 public type ChildEnvironment=product{state:State;frame:Frame;environment:Environment;};
 public type Finished=product{state:State;root:Int;environment:Environment;};

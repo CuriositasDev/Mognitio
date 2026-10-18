@@ -1,9 +1,10 @@
 namespace Mgnc\BridgeLists;
-use Mgnc\Data\{Diagnostic};
+use Mgnc\Data\{Diagnostic,Paged,empty,push,lookup};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\Projection\{parts,item};
 public let reverse:Function(List<Int>):Result<List<Int>,Diagnostic>=function(values:List<Int>):Result<List<Int>,Diagnostic>{
- var result:List<Int>=List<Int>[];var index:Int=values->length();loop while(index>0){index=index-1;result=result->append(try item(values,index));};Result<List<Int>,Diagnostic>::Ok(result)
+ var indexed:Paged<Int>=empty<Int>();loop over(values as value:Int){indexed=push<Int>(indexed,value);};
+ var result:List<Int>=List<Int>[];var index:Int=indexed->count;loop while(index>0){index=index-1;result=result->append(try lookup<Int>(indexed,index));};Result<List<Int>,Diagnostic>::Ok(result)
 };
 public let leftList:Function(SyntaxForest,Int):Result<List<Int>,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<List<Int>,Diagnostic>{
  var current:Int=id;var values:List<Int>=List<Int>[];

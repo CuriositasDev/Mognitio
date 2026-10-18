@@ -1,21 +1,40 @@
 namespace Mgnc\Data;
 
 // The compiler owns these append-only, acyclic tables. IDs are never pointers.
+// groups indexes full pages in groups of 64; group is the unsealed last group.
+// pages remains the canonical sequential view used by table consumers.
 public type Paged<T> = product {
     pages: List<List<T>>;
+    groups: List<List<List<T>>>;
+    group: List<List<T>>;
     tail: List<T>;
     count: Int;
 };
 public template empty<T> = function(): Paged<T> {
-    Paged<T>{pages: List<List<T>>[], tail: List<T>[], count: 0}
+    Paged<T>{pages: List<List<T>>[], groups: List<List<List<T>>>[],
+        group: List<List<T>>[], tail: List<T>[], count: 0}
 };
 public template push<T> = function(table: Paged<T>, value: T): Paged<T> {
     branch when {
-        table->tail->length() == 64 => Paged<T>{
-            pages: table->pages->append(table->tail),
-            tail: List<T>[value], count: table->count + 1},
-        else => Paged<T>{pages: table->pages,
+        table->tail->length() == 64 => {
+            let seal: Bool = table->group->length() == 64;
+            Paged<T>{pages: table->pages->append(table->tail),
+                groups: branch when {seal => table->groups->append(table->group), else => table->groups},
+                group: branch when {seal => List<List<T>>[table->tail], else => table->group->append(table->tail)},
+                tail: List<T>[value], count: table->count + 1}
+        },
+        else => Paged<T>{pages: table->pages, groups: table->groups, group: table->group,
             tail: table->tail->append(value), count: table->count + 1},
+    }
+};
+public template pageAt<T> = function(table: Paged<T>, page: Int): Result<List<T>, IndexError> {
+    branch when {
+        page < 0 || page >= table->pages->length() => List<List<T>>[]->at(0),
+        page / 64 == table->groups->length() => table->group->at(page % 64),
+        else => {
+            let group: List<List<T>> = try table->groups->at(page / 64);
+            group->at(page % 64)
+        },
     }
 };
 public template item<T> = function(table: Paged<T>, index: Int): Result<T, IndexError> {
@@ -23,7 +42,7 @@ public template item<T> = function(table: Paged<T>, index: Int): Result<T, Index
         index < 0 || index >= table->count => List<T>[]->at(0),
         index / 64 == table->pages->length() => table->tail->at(index % 64),
         else => {
-            let page: List<T> = try table->pages->at(index / 64);
+            let page: List<T> = try pageAt<T>(table, index / 64);
             page->at(index % 64)
         },
     }

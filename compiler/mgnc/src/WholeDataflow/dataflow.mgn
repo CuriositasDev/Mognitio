@@ -1,6 +1,6 @@
 namespace Mgnc\WholeDataflow;
 use Std\Numeric\{Bits};
-use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
 use Mgnc\WholeChecks\{require as invariant,present};
@@ -68,19 +68,18 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
  let full:Facts=Facts{definitions:words(body->slots->count,true),guards:words(guards->count,true)};
  var boundary:List<Int>=body->parameters;loop over(body->captures as slot:Int){boundary=boundary->append(slot);};
  let entryFacts:Facts=Facts{definitions:try fromSlots(body->slots->count,boundary,span),guards:words(guards->count,false)};
- var generated:Paged<List<Bits<64>>>=empty<List<Bits<64>>>();var kills:Paged<List<Int>>=empty<List<Int>>();
+ var generated:Paged<List<Int>>=empty<List<Int>>();var kills:Paged<List<Int>>=empty<List<Int>>();
  var outgoing:Flow=Flow{values:empty<Facts>(),heads:create()};
  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
-  var writes:List<Int>=List<Int>[];loop over(block->operations as op:Operation){branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{branch when{slot<0||slot>=body->slots->count=>{return Result<Unit,Diagnostic>::Err(problem("internal",span,"definition slot bounds"));},else=>unit};writes=writes->append(slot);}};};
-  generated=push<List<Bits<64>>>(generated,try fromSlots(body->slots->count,writes,span));kills=push<List<Int>>(kills,killedBy(guards,writes));
+  var writes:List<Int>=List<Int>[];loop over(block->operations as op:Operation){branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{writes=writes->append(slot);}};};
+  generated=push<List<Int>>(generated,writes);kills=push<List<Int>>(kills,killedBy(guards,writes));
  };};
  var queue:Paged<Int>=order;var queued:Map=reachable;cursor=0;
  loop while(cursor<queue->count){
   let current:Int=try lookup<Int>(queue,cursor);queued=try put(queued,current,0);cursor=cursor+1;
   let facts:Facts=try incoming(body,current,edges,heads,reachable,outgoing,full,entryFacts,span);
-  // Set union of all writes is the same transfer as repeated single-bit
-  // insertion, with one immutable bitmap per block instead of per operation.
-  let definitions:List<Bits<64>>=try combine(facts->definitions,try lookup<List<Bits<64>>>(generated,current),true,span);
+  var definitions:List<Bits<64>>=facts->definitions;
+  loop over((try lookup<List<Int>>(generated,current)) as slot:Int){definitions=try define(definitions,slot,span);};
   let next:Facts=Facts{definitions:definitions,guards:try erase(facts->guards,try lookup<List<Int>>(kills,current),span)};
   let previous:Facts=try stateAt(outgoing,current,full);
   branch when{!(try equal(next->definitions,previous->definitions,span))||!(try equal(next->guards,previous->guards,span))=>{
@@ -91,22 +90,19 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
  loop over(order->pages->append(order->tail) as page:List<Int>){loop over(page as blockId:Int){
   let block:Block=try lookup<Block>(body->blocks,blockId);var facts:Facts=try incoming(body,blockId,edges,heads,reachable,outgoing,full,entryFacts,span);
   try invariant(block->terminator->code!="unreachable",block->terminator->origin->span,"reachable non-completion boundary");
-  // Keep incoming facts immutable. Only writes already visited in this block
-  // may satisfy a read; the block's outgoing summary must not satisfy it early.
-  var written:Map=create();
   loop over(block->operations as op:Operation){
    let at:Span=op->origin->span;try invariant(op->unavailable->length()==0,at,"reachable unavailable operand");
-   loop over(op->inputs as slot:Int){branch when{(try get(written,slot))<0=>{try require(facts->definitions,slot,at);},else=>unit};};
+   loop over(op->inputs as slot:Int){try require(facts->definitions,slot,at);};
    branch when{op->code=="sum-payload"=>{
     let guard:Int=try findGuard(guards,try atList<Int>(op->inputs,0),try present(op->target,at,"payload Sum identity"),try atList<Int>(op->mapping,0));
     try invariant(guard>=0,at,"payload has no matching subject guard");
     branch on require(facts->guards,guard,at){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try invariant(false,at,"payload variant guard not established for current subject");}};
    },else=>unit};
    branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
-    written=try put(written,slot,1);facts=Facts{definitions:facts->definitions,guards:try erase(facts->guards,killedBy(guards,List<Int>[slot]),at)};
+    facts=Facts{definitions:try define(facts->definitions,slot,at),guards:try erase(facts->guards,killedBy(guards,List<Int>[slot]),at)};
    }};
   };
-  loop over(block->terminator->inputs as slot:Int){branch when{(try get(written,slot))<0=>{try require(facts->definitions,slot,block->terminator->origin->span);},else=>unit};};
+  loop over(block->terminator->inputs as slot:Int){try require(facts->definitions,slot,block->terminator->origin->span);};
  };};
  Result<Unit,Diagnostic>::Ok(unit)
 };

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "stage": "bootstrap-checker-increment-accepted",
+  "tested_source": "1d093e7f74a29632b0641c86c4f94ddd8ade37c8",
+  "defect": "Path-local cycle detection repeatedly unfolded sibling references in a shared public type graph.",
+  "fix": "One EQUAL visited set per exposed signature; all reachable visibility checks remain independent of other declarations.",
+  "focused": {
+    "legacy_rejected_by_visit_bound": true,
+    "current_assertions": 7,
+    "private_leaf_after_shared_subtree_rejected": true,
+    "whole_proof_rechecked": true
+  },
+  "normal_suite": {
+    "groups": 243,
+    "assertions": 1889897,
+    "native_processes": 1324,
+    "failures": 0,
+    "python": "All checks through 55 path-inspection cases passed."
+  },
+  "dependent_exploratory_build": {
+    "mgn_source": "823f0cda86868e89ea5bc859d7246aa0e7698cb9",
+    "driver": "complete native driver harness",
+    "old_cutoff_seconds": 900,
+    "checked_project_seconds": 0.717007,
+    "build_completed": true,
+    "compiler_sha256": "d27ddf0ddc3b6105c508f92b10c8ea20903dfdf58193fadb0723d85190f380ff",
+    "formal_acceptance": false
+  },
+  "logs": {
+    "full.log": "dc822385d1e74ef3ee9c58bd2bb621611c1b8c7787010084c749a415d820e341",
+    "focused.log": "304825a74c0b768225276cdbd516a780dbc3d5af38ac371e49264eed532398d3",
+    "build.log": "ac6d82e58b06da226aec93efbdb004e97f794d194f78c15574583d8655f16173"
+  },
+  "implementation_complete": false,
+  "replacement_seed_accepted": false,
+  "release_performed": false
+}

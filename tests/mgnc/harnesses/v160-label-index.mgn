@@ -1,0 +1,45 @@
+namespace Mgnc;
+use Mgnc\Data\{Span,Diagnostic,empty,problem};
+use Mgnc\Machine\{Code,Record,raw,label,reference};
+use Mgnc\Encode\{encode};
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Std\Io\{writeStdout};
+let require:Function(Bool):Result<Unit,Diagnostic>=function(ok:Bool):Result<Unit,Diagnostic>{
+ branch when{ok=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"label oracle mismatch"))}
+};
+let save:Function(String,Code):Result<Unit,Diagnostic>=function(path:String,code:Code):Result<Unit,Diagnostic>{
+ let bytes:Bytes=try encode(code);
+ branch on publishFile(path,bytes,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(value:Unit)=>Result<Unit,Diagnostic>::Ok(unit),Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>Result<Unit,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"label probe publication"))}
+};
+let dense:Function(Int):Code=function(count:Int):Code{
+ var code:Code=label(Code{records:empty<Record>(),nextLabel:count*64+1,pending:List<Int>[]},0);var i:Int=0;
+ loop while(i<count){
+  code=label(code,(i+1)*64);code=raw(code,List<Int>[144]);
+  code=reference(code,2,branch when{i+1==count=>0,else=>(i+2)*64});
+  code=reference(code,5,branch when{i==0=>0,else=>i*64});i=i+1;
+ };code
+};
+let rejected:Function(Code,String):Result<Unit,Diagnostic>=function(code:Code,message:String):Result<Unit,Diagnostic>{
+ branch on encode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>require(false),Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>require(error->phase=="internal"&&error->message==message)}
+};
+let test:Function(String):Result<Unit,Diagnostic>=function(path:String):Result<Unit,Diagnostic>{
+ try save(path+"/dense-128",dense(128));try save(path+"/dense-8192",dense(8192));
+ var sparse:Code=label(Code{records:empty<Record>(),nextLabel:9223372036854775807,pending:List<Int>[]},0);
+ loop over(List<Int>[1048575,1048576,9223372036854775806] as id:Int){sparse=label(sparse,id);sparse=raw(sparse,List<Int>[144]);sparse=reference(sparse,5,id);};
+ try save(path+"/sparse",sparse);
+ let base:Code=Code{records:empty<Record>(),nextLabel:2,pending:List<Int>[]};
+ try rejected(label(label(base,0),0),"duplicate machine label");
+ try rejected(label(label(base,0),2),"machine label bounds");
+ try rejected(label(label(base,0),-1),"machine label bounds");
+ try rejected(reference(label(base,0),2,1),"undefined machine label");
+ try rejected(reference(label(base,0),5,1),"undefined machine label");
+ try rejected(reference(label(base,0),2,-1),"machine label bounds");
+ try rejected(label(raw(base,List<Int>[144]),0),"startup is not first");
+ try rejected(label(base,1),"undefined machine label");
+ try rejected(label(sparse,1048576),"duplicate machine label");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let path:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ branch on test(path){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_LABEL_INDEX_OK positive=3 rejected=9\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message+"\n");1}}
+};

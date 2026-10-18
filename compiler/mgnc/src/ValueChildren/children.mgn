@@ -50,7 +50,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   // Entering every previous block element already proved normal completion.
   // The immediate predecessor was checked above; rescanning the prefix is redundant.
  },else=>{
-  loop over(frame->children as id:Int){let previous:Node=try lookup<Node>(state->nodes,id);canReach=canReach&&previous->normal;};
+  canReach=canReach&&frame->prefixNormal;
  }};
  branch when{rule==ruleLetBinding||rule==ruleVarBinding||(rule==ruleLoopOver&&next==0)=>{
   let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"binding label invariant"));}};
@@ -63,6 +63,6 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
   scope=Environment{file:scope->file,symbols:scope->symbols,reserved:scope->reserved,functionOwner:scope->functionOwner,loopTarget:frame->loopTarget,returnType:scope->returnType,templateOwner:scope->templateOwner,arguments:scope->arguments,reachable:canReach};
   branch when{rule==ruleLoopOver=>{branch on frame->binder{Parent::Some(id:Int)=>{scope=try introduce(scope,id,(try lookup<Symbol>(state->symbols,id))->name);},Parent::None=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"loop binder invariant"));}};},else=>unit};
  },else=>unit};
- let updated:Frame=Frame{expression:expression,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,binders:binders,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed};
+ let updated:Frame=Frame{expression:expression,pending:frame->pending,prefixNormal:frame->prefixNormal,environment:frame->environment,annotation:frame->annotation,target:frame->target,loopTarget:frame->loopTarget,binder:frame->binder,binders:binders,arguments:frame->arguments,children:frame->children,mapping:mapping,parent:frame->parent,next:frame->next,minimumAllowed:frame->minimumAllowed};
  Result<ChildEnvironment,Diagnostic>::Ok(ChildEnvironment{state:state,frame:updated,environment:reachable(scope,canReach)})
 };

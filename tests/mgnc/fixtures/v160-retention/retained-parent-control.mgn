@@ -1,0 +1,9 @@
+namespace App;
+let pass:Function(Result<String,String>):Result<Int,String>=function(input:Result<String,String>):Result<Int,String>{let value:String=try input;Result<Int,String>::Ok(value->length())};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ discard args;let parent:Result<String,String>=Result<String,String>::Err("retained"+" error");
+ let returned:Result<Int,String>=pass(parent);
+ let before:Bool=branch on parent{Result<String,String>::Ok(value:String)=>false,Result<String,String>::Err(error:String)=>error=="retained error"};
+ let after:Bool=branch on returned{Result<Int,String>::Ok(value:Int)=>false,Result<Int,String>::Err(error:String)=>error=="retained error"};
+ branch when{before&&after=>0,else=>1}
+};

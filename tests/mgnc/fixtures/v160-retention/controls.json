@@ -1,0 +1,16 @@
+[
+  {
+    "name": "retained-parent-control",
+    "source_sha256": "23c1bb5efd474ff9045bcc9efb102df5e28b2138a93473997a2e4dcea31a45c3",
+    "text": "retained error",
+    "mode": "result",
+    "expected_exit": 0
+  },
+  {
+    "name": "retained-maker-control",
+    "source_sha256": "109541aca034411212f05edb13c7c753445b3d1831a8933156a9573e99892f16",
+    "text": "old value",
+    "mode": "nested",
+    "expected_exit": 0
+  }
+]

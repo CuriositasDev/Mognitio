@@ -20,7 +20,9 @@ public let frame:Function(Store,Body):Result<Frame,Diagnostic>=function(store:St
  let flow:Flow=try solveProjected(body,projection->operations,projection->terms,blank,span);
  var points:Paged<Point>=empty<Point>();var id:Int=0;
  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){let table:Paged<Instruction>=try lookup<Paged<Instruction>>(projection->operations,id);var live:List<Bits<64>>=try outgoing(flow,try lookup<List<Int>>(projection->terms,id),block->terminator->targets,blank,span);var position:Int=table->count;
-  loop while(position>0){position=position-1;let op:Operation=try atList<Operation>(block->operations,position);live=try transfer(live,try lookup<Instruction>(table,position));branch when{try allocating(store,body,op)=>{points=push<Point>(points,Point{block:id,operation:position,roots:try expand(projection->references,live,body->slots->count,span)});},else=>unit};};id=id+1;
+  loop while(position>0){position=position-1;let op:Operation=try atList<Operation>(block->operations,position);let instruction:Instruction=try lookup<Instruction>(table,position);var handoff:List<Bits<64>>=List<Bits<64>>[];
+   branch when{op->code=="call"||op->code=="field-call"=>{handoff=try expand(projection->references,try transfer(live,Instruction{output:instruction->output,inputs:List<Int>[],span:instruction->span}),body->slots->count,span);},else=>unit};
+   live=try transfer(live,instruction);branch when{try allocating(store,body,op)=>{points=push<Point>(points,Point{block:id,operation:position,roots:try expand(projection->references,live,body->slots->count,span),handoff:handoff});},else=>unit};};id=id+1;
  };};
  try require(maximum<=268435440-body->slots->count,span,"frame encoding range");Result<Frame,Diagnostic>::Ok(Frame{slots:body->slots->count,outgoing:maximum,extent:((64+body->slots->count*8+maximum*8+15)/16)*16,entry:try expand(projection->references,try incoming(flow,body->entry,blank),body->slots->count,span),points:points})
 };

@@ -28,7 +28,7 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
  };};
  loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){
   code=try bitmap(label(code,procedure->entryRoots),procedure->frame->slots,procedure->frame->entry);var pointId:Int=0;
-  loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try bitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots);pointId=pointId+1;};};
+  loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try bitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots);branch when{point->handoff->length()>0=>{code=try bitmap(label(code,(try lookup<Int>(procedure->pointLabels,pointId))+1),procedure->frame->slots,point->handoff);},else=>unit};pointId=pointId+1;};};
  };};
  code=try bitmap(label(code,globalRootsLabel),plan->globals->count,plan->globalRoots);
  code=label(code,staticTableLabel);loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){code=reference(code,5,literal->label);};};

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeCheck;
+use Mgnc\WholeFrameData\{Point};
 use Std\Numeric\{Bits};
 use Mgnc\Data\{Paged,Diagnostic,Span,lookup,empty,push};
 use Mgnc\Syntax\{Parent};
@@ -38,7 +39,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
   let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);try roots(plan->concrete->types,instance->body,procedure->frame);
   labels=try claim(labels,procedure->endLabel,plan->nextLabel,span);labels=try claim(labels,procedure->entry,plan->nextLabel,span);labels=try claim(labels,procedure->entryRoots,plan->nextLabel,span);
   try require(procedure->pointLabels->count==procedure->frame->points->count,span,"root label membership");
-  loop over(procedure->pointLabels->pages->append(procedure->pointLabels->tail) as points:List<Int>){loop over(points as point:Int){labels=try claim(labels,point,plan->nextLabel,span);};};
+  var handoffOrdinal:Int=0;loop over(procedure->pointLabels->pages->append(procedure->pointLabels->tail) as points:List<Int>){loop over(points as point:Int){labels=try claim(labels,point,plan->nextLabel,span);branch when{(try lookup<Point>(procedure->frame->points,handoffOrdinal))->handoff->length()>0=>{labels=try claim(labels,point+1,plan->nextLabel,span);},else=>unit};handoffOrdinal=handoffOrdinal+1;};};
   try require(procedure->operationLabels->count==instance->body->blocks->count&&procedure->terminatorLabels->count==instance->body->blocks->count,span,"machine source block labels");
   var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
    labels=try claim(labels,procedure->blocks+blockId,plan->nextLabel,span);var operationId:Int=0;

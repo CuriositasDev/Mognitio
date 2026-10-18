@@ -1,0 +1,1 @@
+namespace App;var value:List<String>=List<String>["old"+" value"];let reader:Function():List<String>=function():List<String>{value};let changed:Unit={value=List<String>["new"+" value"];unit};let main:Function(List<String>):Int=function(args:List<String>):Int{var n:Int=0;loop while(n<32){discard "temporary"+" value";n=n+1;};branch when{reader()->join("")=="old value"=>0,else=>1}};

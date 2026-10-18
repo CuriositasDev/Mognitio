@@ -28,7 +28,7 @@ let rootMutants:Function(Plan,Body,Frame):Result<Unit,Diagnostic>=function(plan:
  let point:Point=try lookup<Point>(frame->points,pointId);var mode:Int=0;
  loop while(mode<9){
   let roots:List<Bits<64>>=branch when{mode==3=>words(frame->slots,true),else=>words(frame->slots,false)};
-  let replacement:Point=Point{block:point->block,operation:branch when{mode==8=>-1,else=>point->operation},roots:branch when{mode==0||mode==3=>roots,else=>point->roots}};
+  let replacement:Point=Point{block:point->block,operation:branch when{mode==8=>-1,else=>point->operation},roots:branch when{mode==0||mode==3=>roots,else=>point->roots},handoff:point->handoff};
   let points:Paged<Point>=branch when{mode==1=>empty<Point>(),mode==2=>push<Point>(frame->points,point),else=>try replaceItem<Point>(frame->points,pointId,replacement)};
   let invalid:Frame=Frame{slots:branch when{mode==7=>-1,else=>frame->slots},outgoing:branch when{mode==6=>frame->outgoing+1,else=>frame->outgoing},extent:branch when{mode==5=>frame->extent+8,else=>frame->extent},entry:branch when{mode==4=>words(frame->slots,true),else=>frame->entry},points:points};
   branch on verifyRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"root mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{

@@ -28,7 +28,7 @@ let rootMutants:Function(Plan,Body,Frame):Result<Unit,Diagnostic>=function(plan:
  let point:Point=try lookup<Point>(frame->points,pointId);var mode:Int=0;
  loop while(mode<9){
   let roots:List<Bits<64>>=branch when{mode==3=>words(frame->slots,true),else=>words(frame->slots,false)};
-  let replacement:Point=Point{block:point->block,operation:branch when{mode==8=>-1,else=>point->operation},roots:branch when{mode==0||mode==3=>roots,else=>point->roots}};
+  let replacement:Point=Point{block:point->block,operation:branch when{mode==8=>-1,else=>point->operation},roots:branch when{mode==0||mode==3=>roots,else=>point->roots},handoff:point->handoff};
   let points:Paged<Point>=branch when{mode==1=>empty<Point>(),mode==2=>push<Point>(frame->points,point),else=>try replaceItem<Point>(frame->points,pointId,replacement)};
   let invalid:Frame=Frame{slots:branch when{mode==7=>-1,else=>frame->slots},outgoing:branch when{mode==6=>frame->outgoing+1,else=>frame->outgoing},extent:branch when{mode==5=>frame->extent+8,else=>frame->extent},entry:branch when{mode==4=>words(frame->slots,true),else=>frame->entry},points:points};
   branch on verifyRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"root mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
@@ -103,6 +103,34 @@ let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Resu
  discard writeStdout("V160_ROOT_DIFFERENTIAL_OK graphs="+number(scenario)+" rejected="+number(rejected)+"\n");Result<Unit,Diagnostic>::Ok(unit)
 };
 
+// Four managed slots distinguish consumed arguments, overwritten output,
+// and a caller value that must survive the call. Both independent oracles
+// reject every changed bit as well as a missing handoff bitmap.
+let handoffMutants:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let origin:Origin=Origin{node:0,file:0,span:span};var stringType:Int=-1;var typeId:Int=0;
+ loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==3=>{stringType=typeId;},else=>unit};typeId=typeId+1;};};try require(stringType>=0,span,"handoff type");
+ var slots:Paged<Slot>=empty<Slot>();var i:Int=0;loop while(i<4){slots=push<Slot>(slots,Slot{valueType:stringType,kind:0,symbol:Parent::None});i=i+1;};
+ var rejected:Int=0;
+ loop over(List<String>["call","field-call","list"] as code:String){
+  let op:Operation=Operation{code:code,output:Parent::Some(2),inputs:List<Int>[0,1],unavailable:List<Int>[],symbol:Parent::None,target:Parent::None,arguments:List<Argument>[],mapping:List<Int>[],integer:0,minimum:false,wide:List<Integer>[],text:List<TextPart>[],origin:origin};
+  let block:Block=Block{operations:List<Operation>[op],terminator:Terminator{code:"return",inputs:List<Int>[2,3],targets:List<Int>[],variants:List<Int>[],sumType:Parent::None,origin:origin}};
+  let body:Body=Body{declaration:Parent::None,functionOwner:Parent::None,root:0,resultType:stringType,slots:slots,blocks:push<Block>(empty<Block>(),block),parameters:List<Int>[],captures:List<Int>[],entry:0,occurrences:empty<Occurrence>(),tries:List<TrySite>[]};
+  let valid:Frame=try planFrame(plan->types,body);try verifyRoots(plan->types,body,valid);try referenceRoots(plan->types,body,valid);
+  let point:Point=try lookup<Point>(valid->points,0);var mode:Int=0;
+  loop while(mode<branch when{code=="list"=>1,else=>5}){
+   let changed:List<Bits<64>>=branch when{code=="list"=>words(4,false),mode==4=>List<Bits<64>>[],else=>List<Bits<64>>[(try mask(3,span))->xor(try mask(mode,span))]};
+   let replacement:Point=Point{block:point->block,operation:point->operation,roots:point->roots,handoff:changed};
+   let invalid:Frame=Frame{slots:valid->slots,outgoing:valid->outgoing,extent:valid->extent,entry:valid->entry,points:push<Point>(empty<Point>(),replacement)};
+   let expected:String=branch when{code=="list"=>"unexpected call handoff bitmap",mode==4=>"root bitmap shape",mode==3=>"missing live managed root",else=>"dead or scalar root retained"};
+   branch on verifyRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"handoff mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+    try require(error->phase=="internal"&&error->message=="whole IR: "+expected,span,"wrong handoff detector");
+    branch on referenceRoots(plan->types,body,invalid){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"reference handoff mutant accepted");},Result<Unit,Diagnostic>::Err(other:Diagnostic)=>{try require(other->message==error->message,span,"handoff detector disagreement");}};
+   }};rejected=rejected+1;mode=mode+1;
+  };
+ };
+ discard writeStdout("V160_HANDOFF_ROOTS_OK plans=3 rejected="+number(rejected)+"\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+
 let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"generic.mgn",displayPath:"generic.mgn",relativePath:"generic.mgn",expectedNamespace:"",text:"namespace App;\ntemplate make0<T>=function(value:T):Function():T{function():T{value}};\nlet main0:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make0<Int>(7);let b:Function():String=make0<String>(\"kept\"+\" text\");let c:Function():Int=make0<Int>(9);\n branch when{!(a()==7&&b()==\"kept text\"&&c()==9)=>{return 1;},else=>unit};0\n};\ntemplate make1<T>=function():Function():Int{function():Int{let values:List<T>=List<T>[];values->length()}};\nlet main1:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make1<Int>();let b:Function():Int=make1<String>();let c:Function():Int=make1<Int>();\n branch when{!(a()==0&&b()==0&&c()==0)=>{return 1;},else=>unit};0\n};\ntype Tag2<N:Int>=product{};\ntemplate make2<N:Int>=function():Function():Int{function():Int{let tag:Tag2<N>=Tag2<N>{};discard tag;7}};\nlet main2:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make2<-1>();let b:Function():Int=make2<2>();let c:Function():Int=make2<-1>();\n branch when{!(a()+b()+c()==21)=>{return 1;},else=>unit};0\n};\ntemplate size3<T>=function():Int{let values:List<T>=List<T>[];values->length()};\ntemplate make3<T>=function():Function():Int{function():Int{size3<T>()}};\nlet main3:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Int=make3<Int>();let b:Function():Int=make3<String>();branch when{!(a()==0&&b()==0)=>{return 1;},else=>unit};0\n};\ntemplate propagate4<T>=function(input:Result<T,String>):Result<Int,String>{\n let value:T=try input;Result<Int,String>::Ok(7)\n};\nlet main4:Function(List<String>):Int=function(args:List<String>):Int{\n let first:Result<Int,String>=propagate4<String>(Result<String,String>::Err(\"kept\"+\" error\"));\n let second:Result<Int,String>=propagate4<Bool>(Result<Bool,String>::Ok(true));\n branch when{!(branch on first{Result<Int,String>::Ok(value:Int)=>false,Result<Int,String>::Err(error:String)=>error==\"kept error\"})=>{return 1;},else=>unit};\n branch when{!(branch on second{Result<Int,String>::Ok(value:Int)=>value==7,Result<Int,String>::Err(error:String)=>false})=>{return 1;},else=>unit};0\n};\ntype Tag5<N:Int,T>=product{value:T;};\ntemplate make5<N:Int,T>=function(value:T):Function():Tag5<N,T>{function():Tag5<N,T>{Tag5<N,T>{value:value}}};\nlet main5:Function(List<String>):Int=function(args:List<String>):Int{\n let a:Function():Tag5<-1,Int>=make5<-1,Int>(7);let b:Function():Tag5<2,String>=make5<2,String>(\"kept\"+\" field\");\n let c:Function():Tag5<-1,Int>=make5<-1,Int>(9);\n branch when{!(a()->value==7&&b()->value==\"kept field\"&&c()->value==9)=>{return 1;},else=>unit};0\n};\nlet main:Function(List<String>):Int=function(args:List<String>):Int{main0(args)+main1(args)+main2(args)+main3(args)+main4(args)+main5(args)};\n"};
  let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
@@ -114,7 +142,7 @@ let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
   let frame:Frame=try lookup<Frame>(frames,instanceId);try verifyRoots(plan->types,instance->body,frame);try referenceRoots(plan->types,instance->body,frame);var nonempty:Bool=false;
   loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){loop over(point->roots as bits:Bits<64>){branch when{bits!=Bits<64>{0}=>{nonempty=true;},else=>unit};};};};
   branch when{nonempty&&!mutated=>{try rootMutants(plan,instance->body,frame);mutated=true;},else=>unit};instanceId=instanceId+1;
- };};try require(mutated,span,"root mutation not exercised");try differential(plan);
+ };};try require(mutated,span,"root mutation not exercised");try differential(plan);try handoffMutants(plan);
  discard writeStdout("V160_RUNTIME_PLAN_OK instances="+number(frames->count)+" descriptors="+number(layouts->descriptors->count)+" rejected=17\n");Result<Unit,Diagnostic>::Ok(unit)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

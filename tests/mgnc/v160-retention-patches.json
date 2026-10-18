@@ -1,0 +1,32 @@
+[
+  {
+    "path": "src/WholeCollect/collect.mgn",
+    "match": "code=store(code,15,sinceCollection,0);leave(code)",
+    "replacement": "code=store(code,15,sinceCollection,0);code=raw(code,List<Int>[204,14]);leave(code)",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeOperation/operation.mgn",
+    "match": "use Mgnc\\Machine\\{Code,label,jump,fresh};",
+    "replacement": "use Mgnc\\Machine\\{Code,label,jump,fresh,raw};",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeOperation/operation.mgn",
+    "match": "code=store(code,0,32,2);},\n  else",
+    "replacement": "code=store(code,0,32,2);code=raw(code,List<Int>[204,15]);},\n  else",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeConstruct/construct.mgn",
+    "match": "use Mgnc\\Machine\\{Code,label,jump,field};",
+    "replacement": "use Mgnc\\Machine\\{Code,label,jump,field,raw};",
+    "count": 1
+  },
+  {
+    "path": "src/WholeNativeConstruct/construct.mgn",
+    "match": "code=load(code,2,5,40);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);",
+    "replacement": "code=load(code,2,5,40);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);code=raw(code,List<Int>[204,16]);",
+    "count": 1
+  }
+]

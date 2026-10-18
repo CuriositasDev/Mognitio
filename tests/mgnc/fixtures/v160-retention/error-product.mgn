@@ -1,0 +1,4 @@
+namespace App;
+type Error=product{items:List<String>;};
+let pass:Function(Result<String,Error>):Result<Int,Error>=function(input:Result<String,Error>):Result<Int,Error>{let value:String=try input;Result<Int,Error>::Ok(value->length())};
+let main:Function(List<String>):Int=function(args:List<String>):Int{discard args;branch on pass(Result<String,Error>::Err(Error{items:List<String>["retained"+" error"]})){Result<Int,Error>::Ok(value:Int)=>1,Result<Int,Error>::Err(error:Error)=>branch when{error->items->join("")=="retained error"=>0,else=>2}}};

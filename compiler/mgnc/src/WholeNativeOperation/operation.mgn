@@ -37,7 +37,7 @@ public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnost
   },else=>{code=immediate(code,0,descriptor);code=store(code,4,8,0);}};
   loop over(op->inputs as input:Int){code=load(code,0,5,offset(input));code=store(code,4,start,0);start=start+8;};code=jump(code,List<Int>[232],try constructor(plan,owner,block,operation,op->origin->span));
  },
- name=="template"=>{let callee:Int=try target(instance,op->origin->node,op->origin->span);code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,callee))->entry);},
+ name=="template"=>{let callee:Int=try target(instance,op->origin->node,op->origin->span);code=immediate(code,0,0);code=store(code,4,0,0);code=store(code,4,8,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,callee))->entry);},
  name=="product"||name=="variant"=>{
   let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native aggregate descriptor");code=immediate(code,6,descriptor);
   code=immediate(code,7,branch when{name=="variant"=>40,op->inputs->length()==0=>32,else=>24+op->inputs->length()*8});code=jump(code,List<Int>[232],allocateLabel);
@@ -47,7 +47,7 @@ public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnost
  name=="field"||name=="sum-payload"=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=load(code,0,0,branch when{name=="field"=>24+(try atList<Int>(op->mapping,0))*8,else=>32});},
  name=="call"||name=="field-call"=>{
   code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));branch when{name=="field-call"=>{code=load(code,0,0,24+(try atList<Int>(op->mapping,0))*8);},else=>unit};
-  code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);var position:Int=0;loop over(op->inputs as input:Int){branch when{position>0=>{code=load(code,0,5,offset(input));code=store(code,4,position*8,0);},else=>unit};position=position+1;};code=indirect(code,11,true);
+  code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);var position:Int=0;loop over(op->inputs as input:Int){branch when{position>0=>{code=load(code,0,5,offset(input));code=store(code,4,position*8,0);},else=>unit};position=position+1;};code=symbol(code,0,(try roots(procedure,block,operation,op->origin->span))+1);code=store(code,4,position*8,0);code=indirect(code,11,true);
  },
  else=>{
   try require(op->inputs->length()>0,op->origin->span,"native operation operands");let input:Int=try atList<Int>(op->inputs,0);let shape:Type=try lookup<Type>(plan->concrete->types->types,try slotType(body,input));

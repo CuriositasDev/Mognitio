@@ -288,3 +288,21 @@ v160-wide-values.py. The former checks persistent table indexing against
 sequential values and stale-index mutants. v160-review-flow.py and
 v160-conformance.py retain the v1.5 sources with explicit N160 build migrations.
 See verification/v1.6.0-wide-front-end.md for the bounded validation scope.
+
+### v1.6 final regression and independence
+
+Run v160-inherited-performance.py with --repository CHECKOUT --compiler A
+--fixtures FROZEN_V150_FIXTURES --output NEW_EVIDENCE. It authenticates the
+unchanged v1.5 budget and 118-cell input manifest, then applies those criteria
+to the new A in fresh processes. It does not rewrite the original budget identity
+or describe the observations as the original v1.5 formal run.
+
+Run v160-whole-isolation.py with --repository CHECKOUT --compiler A
+--userland MINIMAL_UBUNTU --c0 FIXED_C0 --c1 FINAL_C1 --output NEW_EVIDENCE.
+Both whole corpora are mounted read-only; check and lower execute with only A,
+the inputs and a minimal userland. Repeat for the two supported Ubuntu userlands.
+The 900-second timeout is a functional guard, not a performance budget.
+
+Run v160-review-runtime.py with --compiler A --output NEW_EVIDENCE to exercise
+runtime-owned module captures, released parent closures and nested type/value
+specializations under normal execution and forced collection.

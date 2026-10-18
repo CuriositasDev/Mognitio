@@ -15,5 +15,5 @@ result=subprocess.run([binary],capture_output=True,timeout=120)
 assert result.returncode==0 and not result.stderr,(result.returncode,result.stdout,result.stderr)
 assert result.stdout.count(b"V160_ROOT_MUTANT ")==9 and result.stdout.count(b"V160_LAYOUT_MUTANT ")==8
 assert b"V160_RUNTIME_PLAN_OK instances=52 descriptors=76 rejected=17\n" in result.stdout
-assert b"V160_ROOT_DIFFERENTIAL_OK graphs=136 rejected=408\n" in result.stdout
+assert b"V160_ROOT_DIFFERENTIAL_OK graphs=144 rejected=432\n" in result.stdout
 (args.output/"results.log").write_bytes(result.stdout);print(result.stdout.decode(),end="")

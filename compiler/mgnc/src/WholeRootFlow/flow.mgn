@@ -34,6 +34,27 @@ let apply:Function(Summary,List<Bits<64>>,Span):Result<List<Bits<64>>,Diagnostic
  loop over(after as word:Bits<64>){live=live->append(word->and((try at(summary->defined,index,span))->not())->or(try at(summary->used,index,span)));index=index+1;};
  Result<List<Bits<64>>,Diagnostic>::Ok(live)
 };
+type Visit=product{block:Int;finish:Bool;parent:Int;};
+// A backward pass starts after successors, independent of block numbering.
+// Explicit DFS events avoid a machine-stack dependency on source CFG depth.
+let postorder:Function(Body):Result<Paged<Int>,Diagnostic>=function(body:Body):Result<Paged<Int>,Diagnostic>{
+ var result:Paged<Int>=empty<Int>();var seen:Map=create();var visits:Paged<Visit>=empty<Visit>();var root:Int= -1;
+ loop while(root<body->blocks->count){
+  let first:Int=branch when{root<0=>body->entry,else=>root};root=root+1;
+  branch when{(try get(seen,first))>=0=>{continue;},else=>unit};
+  var top:Int=visits->count;visits=push<Visit>(visits,Visit{block:first,finish:false,parent:-1});
+  loop while(top>=0){
+   let task:Visit=try lookup<Visit>(visits,top);top=task->parent;
+   branch when{task->finish=>{result=push<Int>(result,task->block);continue;},else=>unit};
+   branch when{(try get(seen,task->block))>=0=>{continue;},else=>unit};seen=try put(seen,task->block,1);
+   let parent:Int=top;top=visits->count;visits=push<Visit>(visits,Visit{block:task->block,finish:true,parent:parent});
+   let block:Block=try lookup<Block>(body->blocks,task->block);
+   loop over(block->terminator->targets as target:Int){
+    branch when{(try get(seen,target))<0=>{let prior:Int=top;top=visits->count;visits=push<Visit>(visits,Visit{block:target,finish:false,parent:prior});},else=>unit};
+   };
+  };
+ };Result<Paged<Int>,Diagnostic>::Ok(result)
+};
 // Summarize each block once, then revisit only predecessors of changed entries.
 // This is the same backward least fixed point; the verifier uses a separate
 // read-origin reachability graph and does not consume these summaries or queue.
@@ -46,8 +67,8 @@ public let solve:Function(Body,Paged<Paged<Operation>>,List<Bits<64>>,Span):Resu
    heads=try put(heads,target,predecessors->count);predecessors=push<List<Int>>(predecessors,prior->append(id));
   };id=id+1;
  };};
- var queue:Paged<Int>=empty<Int>();var pending:Map=create();id=body->blocks->count;
- loop while(id>0){id=id-1;queue=push<Int>(queue,id);pending=try put(pending,id,1);};
+ var queue:Paged<Int>=try postorder(body);var pending:Map=create();
+ loop over(queue->pages->append(queue->tail) as page:List<Int>){loop over(page as queued:Int){pending=try put(pending,queued,1);};};
  var cursor:Int=0;var flow:Flow=Flow{versions:empty<List<Bits<64>>>(),heads:create()};
  loop while(cursor<queue->count){
   id=try lookup<Int>(queue,cursor);cursor=cursor+1;pending=try put(pending,id,0);

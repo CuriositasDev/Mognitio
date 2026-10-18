@@ -1,0 +1,27 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\WholeIR\{Body,Block,Slot,Operation,Terminator,Origin,Occurrence,TrySite};
+use Mgnc\WholeRootFlow\{Flow,solve,incoming};
+use Mgnc\Facts\{words,equal};
+use Mgnc\WholeChecks\{require};
+use Std\Numeric\{Bits};
+use Std\Io\{writeStdout};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ let origin:Origin=Origin{node:0,file:0,span:span};
+ var blocks:Paged<Block>=empty<Block>();var operations:Paged<Paged<Operation>>=empty<Paged<Operation>>();var slots:Paged<Slot>=empty<Slot>();var id:Int=0;
+ loop while(id<64){
+  let targets:List<Int>=branch when{id==51=>List<Int>[],else=>List<Int>[(id+13)%64]};
+  blocks=push<Block>(blocks,Block{operations:List<Operation>[],terminator:Terminator{code:"jump",inputs:List<Int>[id],targets:targets,variants:List<Int>[],sumType:Parent::None,origin:origin}});
+  operations=push<Paged<Operation>>(operations,empty<Operation>());
+  slots=push<Slot>(slots,Slot{valueType:0,kind:0,symbol:Parent::None});id=id+1;
+ };
+ let body:Body=Body{declaration:Parent::None,functionOwner:Parent::None,root:0,resultType:0,slots:slots,blocks:blocks,parameters:List<Int>[],captures:List<Int>[],entry:0,occurrences:empty<Occurrence>(),tries:List<TrySite>[]};
+ let blank:List<Bits<64>>=words(64,false);let flow:Flow=try solve(body,operations,blank,span);
+ try require(try equal(try incoming(flow,0,blank),words(64,true),span),span,"root order lost DAG read");
+ try require(flow->versions->count==64,span,"root order repeated DAG updates");
+ discard writeStdout("V160_ROOT_ORDER_OK blocks=64 updates="+number(flow->versions->count)+"\n");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message+"\n");1}}};

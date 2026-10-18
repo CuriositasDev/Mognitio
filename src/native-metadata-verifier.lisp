@@ -50,9 +50,9 @@
                              (264 8 3 0) (272 8 1 0) (280 8 1 0))
                      (when test-p '((288 8 5 0) (296 8 5 0) (304 8 5 0)
                                     (312 8 5 0) (320 8 5 0) (328 8 4 0)))
-                     (if test-p '((336 8 1 0) (344 8 4 0) (352 128 1 0)) '((288 8 1 0) (296 8 4 0) (304 128 1 0))))))
+                     (if test-p '((336 8 1 0) (344 8 4 0) (352 128 1 0) (480 256 1 0) (736 256 0 0)) '((288 8 1 0) (296 8 4 0) (304 128 1 0) (432 256 1 0) (688 256 0 0))))))
         (record '(:runtime-context 8)
-          (append (list 8 (if test-p 1 0) (if test-p 480 432) (length rows))
+          (append (list 8 (if test-p 1 0) (if test-p 992 944) (length rows))
                   (loop for row in rows for id from 0 append (cons id row)))))
       (loop for info across (mognitio.semantic:value-context-types context)
             for id = (mognitio.semantic:type-info-id info) do

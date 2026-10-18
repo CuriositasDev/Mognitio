@@ -1,0 +1,55 @@
+{
+  "compiler_commit": "b2fea36b76a212052cde00df5b0f2a5efa6dfd2f",
+  "normal_suite": {
+    "groups": 242,
+    "assertions": 1889890,
+    "processes": 1324,
+    "python_integrations": "Passed"
+  },
+  "focused": {
+    "groups": 7,
+    "assertions": 1855746,
+    "processes": 2,
+    "failures": 0
+  },
+  "heap_snapshot": {
+    "groups": 1,
+    "assertions": 104,
+    "processes": 22,
+    "failures": 0
+  },
+  "repeated_prefix": {
+    "prefix_blocks": 256,
+    "requests": 512,
+    "cached_probe_upper_bound": 1024,
+    "uncached_probe_lower_bound_exclusive": 1024
+  },
+  "controls": [
+    "cache reuse disabled",
+    "exact-size key comparison removed",
+    "cursor-owner repair removed"
+  ],
+  "generated_compiler": {
+    "sha256": "76f852830bd8d16a449c46886a7da0aa9a3363b9c0977775d58d9352dc08c0e8",
+    "native_runtime_observations": 90,
+    "isolated_values_per_userland": 41,
+    "userlands": [
+      "Ubuntu 24.04.5",
+      "Ubuntu 26.04.1"
+    ]
+  },
+  "whole_source_lower": {
+    "files": 168,
+    "bytes": 11423390,
+    "inventory_sha256": "532ee18c24b25c1304df22b0d56d90ada60045fdbb93e8ee804cb3849a976025",
+    "driver_override": "tests/mgnc/harnesses/v160-native-driver.mgn",
+    "exit": 0,
+    "timed_out": false,
+    "elapsed_seconds": 325.70882395491935,
+    "guard_seconds": 900,
+    "measurement": "exploratory; other checks ran concurrently"
+  },
+  "new_frozen_seed": "Pending",
+  "final_candidate_acceptance": "Pending",
+  "formal_performance": "NotRun"
+}

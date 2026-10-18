@@ -10,7 +10,7 @@
   ;; Removing its containing block redirects it to that block's incoming link.
   ;; Splits and consumption preserve the original first-fit ordering.
   `((:lea-base :r10 :r15 ,(context-field-offset :fit-cursors (test-image-p)))
-    (:lea-base :rdx :r10 128) (:lea-base :rsi :r9 16)
+    (:lea-base :rdx :r10 384) (:lea-base :rsi :r9 16)
     (:label :repair-fit) (:load-word :rdi :r10 0) (:cmp-reg :rdi :rsi)
     (:jnz :next-fit) (:store-word :r10 0 :r11)
     (:label :next-fit) (:add-imm :r10 8) (:cmp-reg :r10 :rdx)
@@ -35,9 +35,19 @@
   (runtime-unit :find-free
     (append
       `((:load-word :rcx :rsp 8) (:imm-reg :r10 0)
-        (:cmp-imm :rcx 40) (:jb :head) (:cmp-imm :rcx 160) (:ja :head)
+        (:cmp-imm :rcx 40) (:jb :head) (:cmp-imm :rcx 160) (:ja :large)
         (:lea-base :r10 :r15 ,(- (context-field-offset :fit-cursors (test-image-p)) 40))
-        (:add-reg :r10 :rcx) (:load-word :r11 :r10 0)
+        (:add-reg :r10 :rcx) (:jmp :cached)
+        ;; Large requests use a bounded direct-mapped exact-size cache. A hash
+        ;; collision must invalidate the old cursor before reusing its slot.
+        (:label :large) (:mov-reg :rax :rcx) (:and-imm :rax 248)
+        (:lea-base :r8 :r15 ,(context-field-offset :large-fit-sizes (test-image-p)))
+        (:add-reg :r8 :rax)
+        (:lea-base :r10 :r15 ,(context-field-offset :large-fit-cursors (test-image-p)))
+        (:add-reg :r10 :rax) (:load-word :r11 :r8 0) (:cmp-reg :r11 :rcx)
+        (:jz :cached) (:store-word :r8 0 :rcx)
+        (:imm-reg :r11 0) (:store-word :r10 0 :r11)
+        (:label :cached) (:load-word :r11 :r10 0)
         (:cmp-imm :r11 0) (:jnz :cursor)
         (:label :head)
         (:lea-base :r11 :r15 ,(context-field-offset :free-head (test-image-p)))

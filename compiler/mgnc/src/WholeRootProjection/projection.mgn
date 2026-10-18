@@ -1,0 +1,46 @@
+namespace Mgnc\WholeRootProjection;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation};
+use Mgnc\WholeRootFlow\{Instruction};
+use Mgnc\WholeLayout\{managed};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Facts\{mask,at,fromSlots};
+use Mgnc\IntMap\{Map,create,get,put};
+public type Projection=product{references:List<Int>;operations:Paged<Paged<Instruction>>;terms:Paged<List<Int>>;};
+let selected:Function(Map,List<Int>,Int,Span):Result<List<Int>,Diagnostic>=function(ids:Map,slots:List<Int>,count:Int,span:Span):Result<List<Int>,Diagnostic>{
+ var result:List<Int>=List<Int>[];
+ loop over(slots as slot:Int){try require(slot>=0&&slot<count,span,"root projection slot bounds");let id:Int=try get(ids,slot);branch when{id>=0=>{result=result->append(id);},else=>unit};};
+ Result<List<Int>,Diagnostic>::Ok(result)
+};
+public let project:Function(Store,Body):Result<Projection,Diagnostic>=function(store:Store,body:Body):Result<Projection,Diagnostic>{
+ var references:List<Int>=List<Int>[];var ids:Map=create();var slotId:Int=0;
+ loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
+  branch when{try managed(store,slot->valueType)=>{ids=try put(ids,slotId,references->length());references=references->append(slotId);},else=>unit};slotId=slotId+1;
+ };};
+ var operations:Paged<Paged<Instruction>>=empty<Paged<Instruction>>();var terms:Paged<List<Int>>=empty<List<Int>>();
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
+  var values:Paged<Instruction>=empty<Instruction>();
+  loop over(block->operations as op:Operation){
+   var output:Parent=Parent::None;
+   branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
+    try require(slot>=0&&slot<body->slots->count,op->origin->span,"root projection output bounds");
+    let id:Int=try get(ids,slot);branch when{id>=0=>{output=Parent::Some(id);},else=>unit};
+   }};
+   values=push<Instruction>(values,Instruction{output:output,inputs:try selected(ids,op->inputs,body->slots->count,op->origin->span),span:op->origin->span});
+  };
+  operations=push<Paged<Instruction>>(operations,values);
+  terms=push<List<Int>>(terms,try selected(ids,block->terminator->inputs,body->slots->count,block->terminator->origin->span));
+ };};
+ Result<Projection,Diagnostic>::Ok(Projection{references:references,operations:operations,terms:terms})
+};
+// Projection commutes with each independent bit's use/kill transfer. Expand
+// only externally consumed frame maps; the read-origin verifier sees the full
+// original graph and slot numbers, never this compact analysis.
+public let expand:Function(List<Int>,List<Bits<64>>,Int,Span):Result<List<Bits<64>>,Diagnostic>=function(references:List<Int>,compact:List<Bits<64>>,count:Int,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ var live:List<Int>=List<Int>[];var id:Int=0;
+ loop over(references as slot:Int){branch when{(try at(compact,id/64,span))->and(try mask(id,span))!=Bits<64>{0}=>{live=live->append(slot);},else=>unit};id=id+1;};
+ fromSlots(count,live,span)
+};

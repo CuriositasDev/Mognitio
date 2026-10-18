@@ -10,17 +10,18 @@ use Mgnc\WholeLayout\{managed};
 use Mgnc\WholeChecks\{require};
 use Mgnc\Facts\{words,combine,fromSlots};
 use Mgnc\WholeFrameData\{Point,Frame};
-use Mgnc\WholeRootFlow\{Flow,incoming,outgoing,transfer,solve};
+use Mgnc\WholeRootFlow\{Flow,Instruction,incoming,outgoing,transfer,solveProjected};
+use Mgnc\WholeRootProjection\{Projection,project,expand};
+use Mgnc\Tables\{atList};
 public let frame:Function(Store,Body):Result<Frame,Diagnostic>=function(store:Store,body:Body):Result<Frame,Diagnostic>{
- let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(body->slots->count>=0&&body->slots->count<=268435440,span,"frame slot range");let blank:List<Bits<64>>=words(body->slots->count,false);
- var operations:Paged<Paged<Operation>>=empty<Paged<Operation>>();var maximum:Int=8;
- loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){var table:Paged<Operation>=empty<Operation>();loop over(block->operations as op:Operation){table=push<Operation>(table,op);branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};operations=push<Paged<Operation>>(operations,table);};};
- let flow:Flow=try solve(body,operations,blank,span);
- var references:List<Int>=List<Int>[];var slotId:Int=0;loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){branch when{try managed(store,slot->valueType)=>{references=references->append(slotId);},else=>unit};slotId=slotId+1;};};let referenceBits:List<Bits<64>>=try fromSlots(body->slots->count,references,span);
+ let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(body->slots->count>=0&&body->slots->count<=268435440,span,"frame slot range");let projection:Projection=try project(store,body);let blank:List<Bits<64>>=words(projection->references->length(),false);
+ var maximum:Int=8;
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};
+ let flow:Flow=try solveProjected(body,projection->operations,projection->terms,blank,span);
  var points:Paged<Point>=empty<Point>();var id:Int=0;
- loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){let table:Paged<Operation>=try lookup<Paged<Operation>>(operations,id);var live:List<Bits<64>>=try outgoing(flow,block,blank,span);var position:Int=table->count;
-  loop while(position>0){position=position-1;let op:Operation=try lookup<Operation>(table,position);live=try transfer(live,op);branch when{try allocating(store,body,op)=>{points=push<Point>(points,Point{block:id,operation:position,roots:try combine(live,referenceBits,false,span)});},else=>unit};};id=id+1;
+ loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){let table:Paged<Instruction>=try lookup<Paged<Instruction>>(projection->operations,id);var live:List<Bits<64>>=try outgoing(flow,try lookup<List<Int>>(projection->terms,id),block->terminator->targets,blank,span);var position:Int=table->count;
+  loop while(position>0){position=position-1;let op:Operation=try atList<Operation>(block->operations,position);live=try transfer(live,try lookup<Instruction>(table,position));branch when{try allocating(store,body,op)=>{points=push<Point>(points,Point{block:id,operation:position,roots:try expand(projection->references,live,body->slots->count,span)});},else=>unit};};id=id+1;
  };};
- try require(maximum<=268435440-body->slots->count,span,"frame encoding range");Result<Frame,Diagnostic>::Ok(Frame{slots:body->slots->count,outgoing:maximum,extent:((64+body->slots->count*8+maximum*8+15)/16)*16,entry:try combine(try incoming(flow,body->entry,blank),referenceBits,false,span),points:points})
+ try require(maximum<=268435440-body->slots->count,span,"frame encoding range");Result<Frame,Diagnostic>::Ok(Frame{slots:body->slots->count,outgoing:maximum,extent:((64+body->slots->count*8+maximum*8+15)/16)*16,entry:try expand(projection->references,try incoming(flow,body->entry,blank),body->slots->count,span),points:points})
 };
 public let build:Function(Plan):Result<Paged<Frame>,Diagnostic>=function(plan:Plan):Result<Paged<Frame>,Diagnostic>{var frames:Paged<Frame>=empty<Frame>();loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){frames=push<Frame>(frames,try frame(plan->types,item->body));};};Result<Paged<Frame>,Diagnostic>::Ok(frames)};

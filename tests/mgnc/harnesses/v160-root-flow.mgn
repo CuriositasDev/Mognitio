@@ -70,9 +70,9 @@ let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Resu
  loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==3=>{stringType=typeId;},shape->kind==1=>{intType=typeId;},else=>unit};typeId=typeId+1;};};
  try require(stringType>=0&&intType>=0,span,"differential types");
  var scenario:Int=0;var rejected:Int=0;
- loop while(scenario<144){
-  let size:Int=branch when{scenario<96=>3,scenario<128=>65,else=>130};let blockCount:Int=branch when{scenario<128=>4,else=>32};var slots:Paged<Slot>=empty<Slot>();var slotId:Int=0;
-  loop while(slotId<size){slots=push<Slot>(slots,Slot{valueType:branch when{slotId==0||slotId==1||slotId==64||scenario>=128&&slotId==129=>stringType,else=>intType},kind:0,symbol:Parent::None});slotId=slotId+1;};
+ loop while(scenario<152){
+  let size:Int=branch when{scenario<96=>3,scenario<128=>65,scenario<144=>130,scenario<148=>4097,else=>65537};let blockCount:Int=branch when{scenario<128||scenario>=144=>4,else=>32};var slots:Paged<Slot>=empty<Slot>();var slotId:Int=0;
+  loop while(slotId<size){slots=push<Slot>(slots,Slot{valueType:branch when{(scenario<144&&(slotId==0||slotId==1||slotId==64||scenario>=128&&slotId==129))||(scenario>=144&&scenario%4!=0&&(slotId==0||slotId==64||slotId==size-1))=>stringType,else=>intType},kind:0,symbol:Parent::None});slotId=slotId+1;};
   var blocks:Paged<Block>=empty<Block>();var blockId:Int=0;var state:Int=scenario+17;
   loop while(blockId<blockCount){
    var operations:List<Operation>=List<Operation>[];var position:Int=0;
@@ -84,7 +84,7 @@ let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Resu
     operations=operations->append(Operation{code:"list",output:output,inputs:reads,unavailable:List<Int>[],symbol:Parent::None,target:Parent::None,arguments:List<Argument>[],mapping:List<Int>[],integer:0,minimum:false,wide:List<Integer>[],text:List<TextPart>[],origin:origin});position=position+1;
    };
    var targets:List<Int>=List<Int>[];var target:Int=0;
-   loop while(target<blockCount){state=(state*1664525+1013904223)%2147483647;branch when{branch when{scenario<128=>state%3==0,scenario<136=>target==(blockId+1)%blockCount||scenario%2==0&&blockId==blockCount-1&&target==blockCount/2,else=>((blockId+25)*5)%32<31&&target==(blockId+13)%32||scenario%2==0&&((blockId+25)*5)%32==31&&target==7}=>{targets=targets->append(target);},else=>unit};target=target+1;};
+   loop while(target<blockCount){state=(state*1664525+1013904223)%2147483647;branch when{branch when{scenario<128||scenario>=144=>state%3==0,scenario<136=>target==(blockId+1)%blockCount||scenario%2==0&&blockId==blockCount-1&&target==blockCount/2,else=>((blockId+25)*5)%32<31&&target==(blockId+13)%32||scenario%2==0&&((blockId+25)*5)%32==31&&target==7}=>{targets=targets->append(target);},else=>unit};target=target+1;};
    let reads:List<Int>=branch when{state/3%3==0=>List<Int>[0],state/3%3==1=>List<Int>[size-1],else=>List<Int>[]};
    blocks=push<Block>(blocks,Block{operations:operations,terminator:Terminator{code:"jump",inputs:reads,targets:targets,variants:List<Int>[],sumType:Parent::None,origin:origin}});blockId=blockId+1;
   };

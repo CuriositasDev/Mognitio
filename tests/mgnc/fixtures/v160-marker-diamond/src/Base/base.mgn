@@ -1,0 +1,1 @@
+namespace App\Base;use Std\Io\{writeStdout};public let base:Int={discard writeStdout("B");1};

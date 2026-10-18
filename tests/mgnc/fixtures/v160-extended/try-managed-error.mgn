@@ -1,0 +1,4 @@
+namespace App;
+type Error=product{items:List<String>;};
+let pass:Function(Result<String,Error>):Result<Int,Error>=function(input:Result<String,Error>):Result<Int,Error>{let value:String=try input;Result<Int,Error>::Ok(value->length())};
+let main:Function(List<String>):Int=function(args:List<String>):Int{let result:Result<Int,Error>=pass(Result<String,Error>::Err(Error{items:List<String>["old"+" value"]}));var n:Int=0;loop while(n<20000){discard "new"+" garbage";n=n+1;};branch on result{Result<Int,Error>::Ok(value:Int)=>1,Result<Int,Error>::Err(error:Error)=>branch when{error->items->join("")=="old value"=>0,else=>2}}};

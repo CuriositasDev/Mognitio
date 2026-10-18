@@ -228,3 +228,23 @@ commands or establish complete native-profile acceptance.
 Use a frozen, capability-verified seed. Linux AMD64 and ptrace support are
 required for the execution and syscall fault probes. Terminal test exits are
 component harness signals; they are not public runtime diagnostic acceptance.
+
+## Full-backend acceptance runners
+
+Use the same frozen candidate with these runners; each creates a new evidence
+directory and preserves prior runs.
+
+- v160-native-scale-run.py --compiler A --fixtures DIRECTORY --output NEW_DIRECTORY
+  checks the 34 frozen native scale cases, independent ELF geometry, exact runtime
+  streams and input inventories. A failed or interrupted build remains Failed;
+  later cells remain NotRun. A --skip run is partial evidence only.
+- v160-scale-run-harness.py exercises pass, failure, timeout, changed input,
+  late inventory failure and partial selection using controlled observations.
+- v160-native-extended.py --compiler A --output NEW_DIRECTORY checks 40 control,
+  lifetime, module order, relocation, identity and publication observations.
+- v160-native-isolation.py --compiler A --userland ROOTFS --output NEW_DIRECTORY
+  builds and runs 41 values with no host toolchain or compiler sources visible.
+  It records the unchanged userland inventory and requires executable mode 0755.
+
+The scale runner's 900-second build and 120-second runtime guards only bound
+functional exploration. This runner does not adopt or measure formal budgets.

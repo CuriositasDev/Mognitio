@@ -1,0 +1,1 @@
+namespace App;use Std\Io\{writeStdout};use App\Z\{z};use App\A\{a};use App\Types\{Only};let main:Function(List<String>):Int={discard writeStdout("I");function(args:List<String>):Int{discard writeStdout("M");a+z}};

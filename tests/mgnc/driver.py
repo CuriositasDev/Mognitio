@@ -6,7 +6,9 @@ from native import ENTRY, elf
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument("--compiler",required=True,type=Path)
-    parser.add_argument("--bindfs",default="bindfs");args=parser.parse_args();compiler=args.compiler.resolve();checks=0
+    parser.add_argument("--bindfs",default="bindfs")
+    parser.add_argument("--manifest-build",action="store_true",help="Use the expanded project-build CLI contract")
+    args=parser.parse_args();compiler=args.compiler.resolve();checks=0
     with tempfile.TemporaryDirectory(prefix="mgnc-driver-") as temporary:
         root=Path(temporary);source=root/"valid.mgn";source.write_text(ENTRY+"7};")
         def invoke(argv,want,fragment=b"",**kwargs):
@@ -21,7 +23,9 @@ def main():
                      ["build","missing.mgn","--out","out"],["build","","-o","out"],
                      ["build","missing.mgn","-o",""],["build","missing.mgn","-o","out","extra"],
                      ["build","mognitio.toml","-o","out"],["build","missing.mgn","-o","out/"]]:
-            invoke(argv,2,b"cli:",cwd=root)
+            # A missing manifest reaches input acquisition once project build is supported.
+            fragment=b"io:" if args.manifest_build and argv==["build","mognitio.toml","-o","out"] else b"cli:"
+            invoke(argv,2,fragment,cwd=root)
             assert not (root/"out").exists()
         # Relative, absolute, spaces and leading hyphens are literal paths.
         for index,filename in enumerate(["relative.mgn","space input.mgn","-literal.mgn"]):

@@ -306,3 +306,10 @@ The 900-second timeout is a functional guard, not a performance budget.
 Run v160-review-runtime.py with --compiler A --output NEW_EVIDENCE to exercise
 runtime-owned module captures, released parent closures and nested type/value
 specializations under normal execution and forced collection.
+
+The v160-try-review.mgn probe targets actual TrySite Err reconstruction with
+distinct success types and String/product error payloads. It changes only the
+constructor descriptor to the operand Result, omits exactly the canonical
+allocation point (the projection of a false may-allocate claim; effects are
+derived rather than mutable IR fields), and clears only the extracted payload
+root. Both independent root validators reject the latter two corruptions.

@@ -1,0 +1,62 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,number};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholeIR\{Project,Body,Block,Operation,TrySite};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeRoots\{frame as planFrame};
+use Mgnc\WholeRootCheck\{verify as verifyRoots};
+use Mgnc\RootReference\{verify as referenceRoots};
+use Mgnc\WholeEffects\{allocating};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList,replaceItem};
+use Mgnc\Facts\{mask};
+use Mgnc\Syntax\{Parent};
+use Std\Numeric\{Bits};
+use Std\Io\{writeStdout};
+let rejected:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,expected:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"try mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+expected,span,"wrong try detector: "+error->message);}};
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let test:Function(String):Result<Unit,Diagnostic>=function(text:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"input.mgn",displayPath:"input.mgn",relativePath:"input.mgn",expectedNamespace:"",text:text};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let project:Project=try lower(semantic);try verify(semantic,project);var bodyId:Int=0;var found:Int=0;
+ loop over(project->bodies->pages->append(project->bodies->tail) as page:List<Body>){loop over(page as body:Body){
+  loop over(body->tries as site:TrySite){
+   try require(site->operandType!=site->returnType,span,"distinct try success types");
+   let blockId:Int=try present(site->err,span,"try error block");let block:Block=try lookup<Block>(body->blocks,blockId);let op:Operation=try atList<Operation>(block->operations,1);
+   try require(op->code=="variant"&&(try allocating(project->types,body,op)),span,"canonical Err allocation");
+   let wrong:Operation=Operation{code:op->code,output:op->output,inputs:op->inputs,unavailable:op->unavailable,symbol:op->symbol,target:Parent::Some(site->operandType),arguments:op->arguments,mapping:op->mapping,integer:op->integer,minimum:op->minimum,wide:op->wide,text:op->text,origin:op->origin};
+   let changed:Block=Block{operations:List<Operation>[try atList<Operation>(block->operations,0),wrong],terminator:block->terminator};
+   let altered:Body=Body{declaration:body->declaration,functionOwner:body->functionOwner,root:body->root,resultType:body->resultType,slots:body->slots,blocks:try replaceItem<Block>(body->blocks,blockId,changed),parameters:body->parameters,captures:body->captures,entry:body->entry,occurrences:body->occurrences,tries:body->tries};
+   let bad:Project=Project{types:project->types,declarations:project->declarations,bodies:try replaceItem<Body>(project->bodies,bodyId,altered),functions:project->functions,entry:project->entry,moduleOrder:project->moduleOrder,obligations:project->obligations};
+   try rejected(verify(semantic,bad),"try owner Err descriptor");
+   let frame:Frame=try planFrame(project->types,body);try verifyRoots(project->types,body,frame);try referenceRoots(project->types,body,frame);
+   let payload:Int=try present(site->payload,span,"try payload");let bit:Bits<64>=try mask(payload,span);var pointId:Int=0;var matched:Bool=false;
+   loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){
+    branch when{point->block==blockId&&point->operation==1=>{
+     // Effects are canonical derived data, not mutable IR annotations.
+     // Claiming may-allocate=false projects to omitting only this root point.
+     var noAllocation:Paged<Point>=empty<Point>();var otherId:Int=0;
+     loop over(frame->points->pages->append(frame->points->tail) as others:List<Point>){loop over(others as other:Point){branch when{otherId!=pointId=>{noAllocation=push<Point>(noAllocation,other);},else=>unit};otherId=otherId+1;};};
+     let noPoint:Frame=Frame{slots:frame->slots,outgoing:frame->outgoing,extent:frame->extent,entry:frame->entry,points:noAllocation};
+     try rejected(verifyRoots(project->types,body,noPoint),"missing allocation root point");try rejected(referenceRoots(project->types,body,noPoint),"missing allocation root point");
+     var words:List<Bits<64>>=List<Bits<64>>[];var wordId:Int=0;
+     loop over(point->roots as word:Bits<64>){branch when{wordId==payload/64=>{try require(word->and(bit)!=Bits<64>{0},span,"payload root was not live");words=words->append(word->xor(bit));},else=>{words=words->append(word);}};wordId=wordId+1;};
+     let noPayload:Point=Point{block:point->block,operation:point->operation,roots:words,handoff:point->handoff};
+     let invalid:Frame=Frame{slots:frame->slots,outgoing:frame->outgoing,extent:frame->extent,entry:frame->entry,points:try replaceItem<Point>(frame->points,pointId,noPayload)};
+     try rejected(verifyRoots(project->types,body,invalid),"missing live managed root");try rejected(referenceRoots(project->types,body,invalid),"missing live managed root");matched=true;
+    },else=>unit};pointId=pointId+1;
+   };};try require(matched,span,"Err root point not exercised");found=found+1;
+  };bodyId=bodyId+1;
+ };};try require(found==1,span,"try fixture membership");discard writeStdout("V160_TRY_REVIEW_OK descriptor=1 false_effect=1 payload_root=1 independent_root_oracles=2\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test("namespace App;let pass:Function(Result<String,String>):Result<Int,String>=function(input:Result<String,String>):Result<Int,String>{let text:String=try input;Result<Int,String>::Ok(text->length())};let main:Function(List<String>):Int=function(args:List<String>):Int{discard pass(Result<String,String>::Err(\"kept\"+\" error\"));0};"){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message+"\n");return 1;}};
+branch on test("namespace App;type Failure=product{items:List<String>;};let pass:Function(Result<String,Failure>):Result<Int,Failure>=function(input:Result<String,Failure>):Result<Int,Failure>{let text:String=try input;Result<Int,Failure>::Ok(text->length())};let main:Function(List<String>):Int=function(args:List<String>):Int{discard pass(Result<String,Failure>::Err(Failure{items:List<String>[\"kept\"+\" error\"]}));0};"){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->message+"\n");return 1;}};
+ 0
+};

@@ -7,7 +7,8 @@ use Mgnc\WholeConcrete\{Instance};
 use Mgnc\WholeNativeData\{Native,Procedure,Constructor,Global};
 use Mgnc\WholeFrameData\{Point};
 use Mgnc\WholeEffects\{allocating};
-use Mgnc\WholeHelpers\{Helper,registry,verify as helpers};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
 use Mgnc\WholeIo\{operation as ioOperation};
 use Mgnc\WholeChecks\{require};
 use Mgnc\Tables\{atList};
@@ -30,10 +31,11 @@ let fragment:Function(Code,Map,Int,Int,Span):Result<Fragment,Diagnostic>=functio
 };
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
- let entries:List<Helper>=registry();try helpers(entries);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
+ var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append(50+ioOperation(item->standard));},else=>unit};};};
+ let entries:List<Helper>=registry(io);try helpers(entries,code);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
  loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){callable=try put(callable,procedure->entry,1);};};
  loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as item:Constructor){callable=try put(callable,item->entry,1);};};
- loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{callable=try put(callable,50+ioOperation(item->standard),1);},else=>unit};};};
+
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1=>{try require(record->target>=0&&record->target<code->nextLabel&&(try get(labels,record->target))<0,span,"machine label ownership");labels=try put(labels,record->target,index);},else=>unit};index=index+1;};};
  loop over(entries as helper:Helper){try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");};
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){

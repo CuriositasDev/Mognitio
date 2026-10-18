@@ -1,0 +1,38 @@
+namespace Mgnc\WholeHelperCheck;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeHelpers\{Helper,contains,verify as contracts};
+use Mgnc\WholeChecks\{require};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Tables\{atList};
+// Runtime entries use reserved labels below 128; fixed data occupies 128..255.
+// Source entries and local labels are allocated from 256. Inspect the actual
+// emitted reference graph, separately from the declared dependency closure.
+public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(entries:List<Helper>,initial:Code):Result<Unit,Diagnostic>{
+ try contracts(entries);let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);
+ var helpers:Map=create();var labels:Map=create();var index:Int=0;
+ loop over(entries as helper:Helper){helpers=try put(helpers,helper->id,index);index=index+1;};
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
+  branch when{record->kind==1=>{labels=try put(labels,record->target,1);},else=>unit};
+ };};
+ loop over(entries as helper:Helper){
+  try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");
+  loop over(helper->roots as root:Int){try require((try get(labels,root))>=0,span,"unlinked runtime root descriptor");};
+ };
+ var owner:Int= -1;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
+  branch when{record->kind==1=>{
+   let found:Int=try get(helpers,record->target);
+   branch when{found>=0=>{owner=found;},record->target<256=>{
+    try require(record->target==0||record->target>=128,span,"unregistered runtime entry");owner= -1;
+   },else=>unit};
+  },owner>=0&&(record->kind==2||record->kind==5)=>{
+   let helper:Helper=try atList<Helper>(entries,owner);let target:Int=try get(helpers,record->target);
+   branch when{record->kind==2&&target>=0&&record->target!=helper->id=>{
+    try require(contains(helper->dependencies,record->target),span,"undeclared runtime helper dependency");
+   },record->kind==5&&record->target>=134&&record->target<=143&&record->target!=140&&record->target!=141&&record->target!=142=>{
+    try require(contains(helper->roots,record->target),span,"undeclared runtime root descriptor");
+   },else=>unit};
+  },else=>unit};
+ };};Result<Unit,Diagnostic>::Ok(unit)
+};

@@ -1,0 +1,39 @@
+namespace Mgnc;
+use Mgnc\Data\{Diagnostic,Span,empty};
+use Mgnc\WholeHelpers\{Helper,registry,verify};
+use Mgnc\WholeHelperCheck\{verify as linked};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Machine\{Code,Record,label,jump,raw,reference,flush};
+use Std\Io\{writeStdout};
+let rejected:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,expected:String):Result<Unit,Diagnostic>{
+ branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",message:"mutant accepted: "+expected,span:Span{start:0,end:0,line:1,column:1}});},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->message=="whole IR: "+expected,error->span,"wrong helper detector "+expected+": "+error->message);discard writeStdout("MUTANT "+expected+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+let change:Function(List<Helper>,Int,Int):List<Helper>=function(entries:List<Helper>,id:Int,mutation:Int):List<Helper>{
+ var result:List<Helper>=List<Helper>[];loop over(entries as h:Helper){
+ branch when{h->id==id=>{
+ branch when{mutation!=0=>{result=result->append(Helper{id:h->id,stack:h->stack,arguments:branch when{mutation==5=>List<Int>[9],else=>h->arguments},result:h->result,managedAllocation:h->managedAllocation&&mutation!=3,mayFail:h->mayFail&&mutation!=4,terminal:h->terminal,clobbers:branch when{mutation==2=>List<Int>[12],else=>h->clobbers},dependencies:branch when{mutation==7=>List<Int>[],else=>h->dependencies},roots:branch when{mutation==6=>List<Int>[127],mutation==8=>List<Int>[],mutation==9=>List<Int>[135],else=>h->roots}});},else=>unit};
+ },else=>{result=result->append(h);}};
+ };result
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let entries:List<Helper>=registry(List<Int>[50,51,52,53,54]);try verify(entries);
+ try rejected(verify(change(entries,66,0)),"missing runtime helper dependency");
+ try rejected(verify(entries->append(branch on entries->at(0){Result<Helper,IndexError>::Ok(h:Helper)=>h,Result<Helper,IndexError>::Err(e:IndexError)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",message:"empty fixture",span:Span{start:0,end:0,line:1,column:1}});}})),"duplicate runtime helper");
+ try rejected(verify(change(entries,10,2)),"runtime helper callee-save clobber");
+ try rejected(verify(change(entries,41,3)),"runtime helper allocation effect");
+ try rejected(verify(change(entries,11,4)),"runtime helper failure effect");
+ try rejected(verify(change(entries,41,5)),"runtime helper argument kind");
+ try rejected(verify(change(entries,41,6)),"runtime helper root descriptor");
+ let simple:List<Helper>=List<Helper>[
+ Helper{id:10,stack:false,arguments:List<Int>[],result:0,managedAllocation:false,mayFail:false,terminal:false,clobbers:List<Int>[],dependencies:List<Int>[11],roots:List<Int>[134]},
+ Helper{id:11,stack:false,arguments:List<Int>[],result:0,managedAllocation:false,mayFail:false,terminal:false,clobbers:List<Int>[],dependencies:List<Int>[],roots:List<Int>[]}
+ ];
+ var code:Code=Code{records:empty<Record>(),nextLabel:256,pending:List<Int>[]};
+ code=label(code,10);code=jump(code,List<Int>[232],11);code=reference(raw(code,List<Int>[72,184]),5,134);code=raw(code,List<Int>[195]);code=raw(label(code,11),List<Int>[195]);code=raw(label(code,134),List<Int>[0]);code=flush(code);
+ try linked(simple,code);
+ try rejected(linked(change(simple,10,7),code),"undeclared runtime helper dependency");
+ try rejected(linked(change(simple,10,8),code),"undeclared runtime root descriptor");
+ try rejected(linked(change(simple,10,9),code),"unlinked runtime root descriptor");
+ discard writeStdout("V160_HELPER_CONTRACTS_OK valid=2 rejected=10\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

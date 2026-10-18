@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "stage": "allocator-increment-accepted",
+  "tested_source": "a62028d0a703715722aa24b320e1680f1a82cd28",
+  "compiler_sha256": "18a804aaff92eb0ad1722afdbf0f1edb8748502c7a354615a8986ddfe413788e",
+  "candidate_source": "Unchanged 171-source label-index candidate, to isolate the allocator policy.",
+  "policy": {
+    "reserve_fraction": 8,
+    "reserve_cap_bytes": 16777216,
+    "fit_filter_above_mapped_bytes": 268435456
+  },
+  "large_list": {
+    "seconds": 319.78168770007323,
+    "peak_rss_bytes": 1379143680,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "descendant_residue": 0,
+    "unreaped_descendants": 0
+  },
+  "inherited_c1_check": {
+    "seconds": 94.58881636802107,
+    "peak_rss_bytes": 243892224,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "descendant_residue": 0,
+    "unreaped_descendants": 0
+  },
+  "rejected_unconditional_filter_c1": {
+    "seconds": 98.8922268729657,
+    "peak_rss_bytes": 300630016,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "descendant_residue": 0,
+    "unreaped_descendants": 0
+  },
+  "large_elf": {
+    "sha256": "db17edf2ce48c7da6a72da8cb23500b62930526fc045ffb696472e68589b151c",
+    "exit": 104,
+    "equals_previous_successful_label_candidate": true
+  },
+  "validation_logs": {
+    "fitting-guard-full.log": "825c6a48e2551fa1e837b0b34e90979ede560493716030f2592e26f95e19a0eb",
+    "fitting-guard-native.log": "e1eb75576dc21026eaecab270b331b5c4dcbb0b56ccc436adca0d362ab22a074",
+    "fitting-guard-levi.log": "1c56aeae4d9ebc25ba57713ccfb1367f9515b0c9d2ec576f0fadd087b4601a94",
+    "fitting-guard-levi-negative.log": "025858d502e9a1b8d8ddf13e6b8a239f095ad3d04a86d4b5e202bb179da582b5"
+  },
+  "whole_version_acceptance": false
+}

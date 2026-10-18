@@ -103,11 +103,15 @@
         ;; headroom without exceeding the inherited whole-project RSS budget.
         ;; Count only blocks that fit this request. Fragmented small holes
         ;; otherwise hide a nearly exhausted supply of large allocations.
+        ;; Restrict fragmentation-triggered growth to heaps above 256 MiB;
+        ;; smaller heaps retain the inherited RSS behavior.
         (unless (or (option :arena-unit) cap)
           `((:load-word :rax :r15 ,+mapped-bytes+) (:imm-rcx 8) (:imm-rdx 0) (:div-rcx)
             (:cmp-imm :rax 16777216) (:jbe :reserve-sized) (:imm-rax 16777216)
             (:label :reserve-sized) (:mov-reg :r8 :rax) (:imm-rax 0)
-            (:load-frame :r10 -8)
+            (:load-frame :r10 -8) (:load-word :rdx :r15 ,+mapped-bytes+)
+            (:cmp-imm :rdx 268435456) (:ja :reserve-filtered) (:imm-reg :r10 0)
+            (:label :reserve-filtered)
             (:load-word :r9 :r15 ,(context-field-offset :free-head (test-image-p)))
             (:label :reserve-block) (:cmp-reg :rax :r8) (:jae :retry)
             (:cmp-imm :r9 0) (:jz :reserve-low)

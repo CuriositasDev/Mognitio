@@ -1,0 +1,1 @@
+namespace App;var count:Int=1;let before:Function():Int=function():Int{count};let changed:Unit={count=2;unit};let after:Function():Int=function():Int{count};let main:Function(List<String>):Int=function(args:List<String>):Int{before()*10+after()};

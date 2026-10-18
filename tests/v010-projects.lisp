@@ -129,3 +129,46 @@
                                (lambda (program) (declare (ignore program)) nil))
                     (project-checked manifest))))
     (signals internal-failure (verify-checked-program checked))))
+
+
+(defun public-diamond-source (private-tail)
+  (with-output-to-string (out)
+    (format out "namespace App; public type R0=product{value:Int;};~%")
+    (loop for level from 1 to 10 do
+      (format out "public type R~D=product{a:R~D;b:R~D;c:R~D;d:R~D;};~%"
+              level (1- level) (1- level) (1- level) (1- level)))
+    (format out "public let expose:Function(R10):R10=function(value:R10):R10{value};~%")
+    (when private-tail
+      (format out "type Hidden=product{value:Int;}; public type Gate=product{good:R10;bad:Hidden;};~%"))))
+
+(deftest v160-public-signature-shared-dag
+  (dolist (private-tail '(nil t))
+    (let* ((manifest (project-fixture
+                     (list (cons "app.mgn" "namespace App;let main:Function(List<String>):Int=function(args:List<String>):Int{0};")
+                           (cons "types.mgn" (public-diamond-source private-tail)))))
+           ;; Construct a proof without the visibility walk, so the legacy
+           ;; exponential walker fails the bounded counter promptly.
+           (checked (replacing (mognitio.project::check-public-signatures
+                                 (lambda (program) (declare (ignore program)) nil))
+                      (project-checked manifest)))
+           (original (fdefinition 'mognitio.semantic:context-type))
+           (visits 0))
+      (replacing (mognitio.semantic:context-type
+                   (lambda (&rest args)
+                     (incf visits)
+                     (when (> visits 512) (error "Repeated unfolding of a shared public type graph"))
+                     (apply original args)))
+        (if private-tail
+            (handler-case
+                (progn (mognitio.project::check-public-signatures checked)
+                       (is nil "Private type hidden after a shared subtree"))
+              (source-failure (condition)
+                (same :semantic (diagnostic-phase (failure-diagnostic condition)))
+                (same "Public signature exposes a private type"
+                      (diagnostic-message (failure-diagnostic condition)))))
+            (progn (mognitio.project::check-public-signatures checked)
+                   (is (plusp visits)))))
+      (is (<= visits 512))
+      (if private-tail
+          (signals internal-failure (verify-checked-program checked))
+          (is (verify-checked-program checked))))))

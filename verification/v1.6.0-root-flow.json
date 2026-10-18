@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "stage": "root-planning-increment",
+  "tested_source_commit": "989a2121afd779a64dc0eb27a01d9dd6b2abfce6",
+  "seed_source": "76fe803d157fda13a9f7fbe7a56fcca5858a70b5",
+  "seed_archive_sha256": "fe687b41ef21c1fe4d9fe3e3994b90b300f602cf5b66fdbab10fa1778fcea47e",
+  "candidate": {
+    "sha256": "c1b9da240d2fdb2b5b41c34a7d8db0f78bb836424b715e4695a9e61267560a06",
+    "bytes": 17841952,
+    "source_files": 170,
+    "source_bytes": 11432458,
+    "source_inventory_sha256": "fa83846ccae8079253288ef5e597903a17337857487bd4ab85f7d7005ab277c4",
+    "driver_override": "tests/mgnc/harnesses/v160-native-driver.mgn"
+  },
+  "fixtures": {
+    "v160-root-flow.mgn": "517ae6e7db60099eda64e0732f7e16c06e8761e8a875337a08ee597dd50a5fac",
+    "v160-root-order.mgn": "f502ba5eb1aaf7558f36af2125a503b47b8f1924bbf0d9b9448267f08ee13f55"
+  },
+  "validation": {
+    "differential_graphs": 144,
+    "rejected_bitmap_mutations": 432,
+    "frames": 52,
+    "descriptors": 76,
+    "rejected_plan_mutations": 17,
+    "permuted_dag_blocks": 64,
+    "permuted_dag_updates": 64,
+    "rejected_numeric_order": 1,
+    "native_observations": 90,
+    "extended_observations": 40,
+    "isolated_values": {
+      "Ubuntu 24.04": 41,
+      "Ubuntu 26.04": 41
+    },
+    "normal_groups": 242,
+    "normal_assertions": 1889890,
+    "normal_native_processes": 1324,
+    "subsequent_python_integrations": "passed"
+  },
+  "closure256": {
+    "fixture_manifest_sha256": "48c363bf4150f8492c92bf448cf6b77b5847d15f429f4690ac5fccf74d4fd094",
+    "prior_candidate_sha256": "77cf0a9cf63f1ff1e643ea54ff9f13d51f41505a3ebca81212e713a1832e0b75",
+    "prior_guard_seconds": 900,
+    "prior_timed_out": true,
+    "build_exit": 0,
+    "build_seconds": 134.6134102580836,
+    "runtime_exit": 15,
+    "stdout_hex": "",
+    "stderr_hex": "",
+    "measurement_stage": "exploratory-concurrent"
+  },
+  "final_version_accepted": false,
+  "formal_budget_adopted": false
+}

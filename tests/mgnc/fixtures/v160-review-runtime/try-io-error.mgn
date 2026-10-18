@@ -1,0 +1,17 @@
+namespace App;
+use Std\Io\{readTextFile,IoError,IoOperation,IoErrorKind,IoErrorPhase};
+let propagate:Function():Result<Int,IoError>=function():Result<Int,IoError>{
+ let text:String=try readTextFile("review"+"\0path");
+ Result<Int,IoError>::Ok(text->length())
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ discard args;
+ branch on propagate(){
+  Result<Int,IoError>::Ok(value:Int)=>1,
+  Result<Int,IoError>::Err(error:IoError)=>{
+   let kind:Bool=branch on error->kind{IoErrorKind::InvalidPath=>true,IoErrorKind::InvalidEncoding=>false,IoErrorKind::NotFound=>false,IoErrorKind::PermissionDenied=>false,IoErrorKind::UnsupportedTarget=>false,IoErrorKind::BrokenPipe=>false,IoErrorKind::ResourceExhausted=>false,IoErrorKind::Other=>false};
+   let phase:Bool=branch on error->phase{IoErrorPhase::Input=>true,IoErrorPhase::Target=>false,IoErrorPhase::Body=>false,IoErrorPhase::Cleanup=>false};
+   branch when{kind&&phase&&error->subject=="review\0path"=>0,else=>2}
+  }
+ }
+};

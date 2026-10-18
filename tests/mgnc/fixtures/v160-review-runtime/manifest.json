@@ -56,5 +56,13 @@
       "V160-DR07",
       "V160-DR08"
     ]
+  },
+  {
+    "name": "try-io-error",
+    "source_sha256": "7db6695ff9caf39a2cbbbfca5a8f78eac220df9f926cdade8baf383827171ddb",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR01"
+    ]
   }
 ]

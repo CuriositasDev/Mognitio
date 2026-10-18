@@ -1308,5 +1308,17 @@
     "compiler_sha256": "11cc1efc3d9e4ebe2cfa80bc00fca8ddfce9d9f149c41a0c1be39678979d98f5",
     "reason": "Three inherited native combined cells exceeded the unchanged 30-second criterion; records retained.",
     "formal_performance_accepted": false
+  },
+  "levi": {
+    "toolchain": "ordinary mgn run/build/test; not mgnc",
+    "product_commit": "0b11655172c636bb44c856dc3469a99b33f1071c",
+    "compiler_commit": "7124fd10d65c6e19523ec08ca862ff13271497f3",
+    "records": 182,
+    "all_passed": true,
+    "negative_controls": 11,
+    "results_sha256": "704aa5defc2bc8f123763fc96498e197a039909b7b4be0d30bcf3bddd10e6be3",
+    "coverage_sha256": "645d32acdbb2359e555b3d339b52e4e921914efe3da490b20ee5801252e16117",
+    "negative_results_sha256": "0a365dad17adea3aef1bb78633ab9c053c21ec7409a7c97c0e918e0e107207c2",
+    "initial_negative_environment_failure": "Initial negative-control invocation omitted the locked runtime environment; its failing log is preserved. A fresh evidence directory with the same locked environment as the successful 182 observations passes all eleven controls."
   }
 }

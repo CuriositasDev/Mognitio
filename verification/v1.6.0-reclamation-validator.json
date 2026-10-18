@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "stage": "validator-check",
+  "budget_sha256": "7ece9dfce6f099977701595f3a2eadb52a650fe7d0824bcf5e44ff0f767c7d8e",
+  "source_sha256": {
+    "tests/mgnc/v160_reclamation.py": "b4a35bf9004117d988d2f6c1c56ba4d7cb689a3a3337b8c9275824d56143e2b3",
+    "tests/mgnc/v160-reclamation-tests.py": "dcd65698298a0162d743d54f0e3147f3f90c5854c45644ead399953e9895b60b"
+  },
+  "valid_observations": 15,
+  "series": 5,
+  "rejected_controls": 21,
+  "log_sha256": "7c8eadb393f1f3592ff6b3662cfb91df599907236e014fb433a647fbb6507e01",
+  "formal_observations": false
+}

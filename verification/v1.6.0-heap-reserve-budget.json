@@ -1,0 +1,142 @@
+{
+  "compiler_commit": "59da2c98090302c90d3e1dcbd717695ade234aad",
+  "reason": "Restore the unchanged v1.5 whole-C1 RSS criterion without removing bounded allocation reserve.",
+  "old_c1_fixture_manifest_sha256": "8e310e4d01a75deb988ce309ebef348bb693f1123c19f3c700d662c2fde4f9e8",
+  "old_c1_before": {
+    "seconds": 64.37277610390447,
+    "peak_rss_raw": 328392,
+    "peak_rss_unit": "KiB",
+    "peak_rss_bytes": 336273408,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "harness_failure": null,
+    "sample_interval_seconds": 0.01,
+    "rss_exit_grace_seconds": 0.1,
+    "last_sample": {
+      "seconds": 64.35356436297297,
+      "rss_bytes": 300195840
+    },
+    "sample_count": 6328,
+    "streams": {
+      "stdout": {
+        "file": "stdout",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "file": "stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "descendant_residue": 0,
+    "unreaped_descendants": 0,
+    "compiler_sha256": "46715436811083cf007d3dc87ef66aa18f969582f7e53ea538c2ce55afbdd886",
+    "compiler_unchanged": true
+  },
+  "old_c1_after": {
+    "seconds": 97.96478656097315,
+    "peak_rss_raw": 238020,
+    "peak_rss_unit": "KiB",
+    "peak_rss_bytes": 243732480,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "harness_failure": null,
+    "sample_interval_seconds": 0.01,
+    "rss_exit_grace_seconds": 0.1,
+    "last_sample": {
+      "seconds": 97.94441321701743,
+      "rss_bytes": 218042368
+    },
+    "sample_count": 9610,
+    "streams": {
+      "stdout": {
+        "file": "stdout",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "file": "stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "descendant_residue": 0,
+    "unreaped_descendants": 0,
+    "compiler_sha256": "fd576b8776fda0549757851f994a4392a9b8013a04a8893b480b49c0bcef7665",
+    "compiler_unchanged": true
+  },
+  "whole_c1_lower": {
+    "seconds": 556.233778857044,
+    "peak_rss_raw": 732284,
+    "peak_rss_unit": "KiB",
+    "peak_rss_bytes": 749858816,
+    "exit": 0,
+    "signal": null,
+    "cutoff": null,
+    "harness_failure": null,
+    "sample_interval_seconds": 0.01,
+    "rss_exit_grace_seconds": 0.1,
+    "last_sample": {
+      "seconds": 556.1905215909937,
+      "rss_bytes": 669417472
+    },
+    "sample_count": 54606,
+    "streams": {
+      "stdout": {
+        "file": "stdout",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "file": "stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "descendant_residue": 0,
+    "unreaped_descendants": 0,
+    "compiler_sha256": "fd576b8776fda0549757851f994a4392a9b8013a04a8893b480b49c0bcef7665",
+    "compiler_unchanged": true
+  },
+  "large_live": {
+    "allocations": 3000002,
+    "collections": 32,
+    "mapped_bytes": 112132096,
+    "fixed_control_collections": 178,
+    "fixed_control_mapped_bytes": 96468992,
+    "maximum_mapped_bytes": 134217728,
+    "maximum_collections": 48
+  },
+  "low_reserve": {
+    "collections": 5,
+    "mapped_bytes": 2097152,
+    "fixed_control_collections": 4763
+  },
+  "optional_mapping_failure": "All four injection ordinals pass; only reserve failure can reuse an existing block.",
+  "regression_negative": {
+    "baseline_source": "a376b77d930f1cbb4f32e385e32ac21cea2d83d1",
+    "outcome": "Old policy fails the tightened 128 MiB large-live assertion",
+    "raw_log_sha256": "d5c70b78c3855545b687c225be784d8ef06c981e33200064ee66106f65ed0a49"
+  },
+  "normal_suite": {
+    "groups": 242,
+    "assertions": 1889890,
+    "processes": 1324,
+    "python_integrations": "Passed",
+    "raw_log_sha256": "1791112568070289a1f5d57790f833386e751afc70b2b90d9585c64a5231a3e8"
+  },
+  "levi": {
+    "revision": "0b11655172c636bb44c856dc3469a99b33f1071c",
+    "records": 182,
+    "negative_controls": 11
+  },
+  "native_runtime": {
+    "observations": 90,
+    "compiler_sha256": "fd576b8776fda0549757851f994a4392a9b8013a04a8893b480b49c0bcef7665"
+  },
+  "new_seed": "Pending",
+  "acceptance": "Allocator increment; whole-version acceptance and complete formal regressions pending"
+}

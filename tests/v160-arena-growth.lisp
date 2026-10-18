@@ -19,7 +19,7 @@
           (flet ((word (offset)
                    (loop for i below 8 sum (ash (aref bytes (+ offset i)) (* i 8)))))
             (same 3000002 (word 32))
-            (is (<= (word 72) (* 160 1024 1024)))
+            (is (<= (word 72) (* 128 1024 1024)))
             (is (> (word 48) 0))
             (if fixed
                 (is (> (word 48) 48))

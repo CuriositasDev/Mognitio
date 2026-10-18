@@ -282,3 +282,9 @@ heap/GC/fd observations, input/compiler/artifact identities and failed/unrun
 cells. Resource leaks, unexpected exits and changed inputs fail the runner.
 v160-lifetime-harness.py tests those rejection paths with controlled observations.
 These observations do not set formal memory-growth or wall/RSS budgets.
+
+The v1.6 wide-input regressions are v160-paged-index.py and
+v160-wide-values.py. The former checks persistent table indexing against
+sequential values and stale-index mutants. v160-review-flow.py and
+v160-conformance.py retain the v1.5 sources with explicit N160 build migrations.
+See verification/v1.6.0-wide-front-end.md for the bounded validation scope.

@@ -21,25 +21,32 @@ let bindingsEqual:Function(List<Binding>,List<Binding>):Bool=function(left:List<
   branch when{item->owner!=other->owner||!argumentsEqual(item->arguments,other->arguments)=>{return false;},else=>unit};
  };true
 };
-let root:Function(Plan,Int,Span):Result<Int,Diagnostic>=function(plan:Plan,body:Int,span:Span):Result<Int,Diagnostic>{
- var found:Int= -1;var index:Int=0;loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
-  branch when{item->key->body==body&&item->key->bindings->length()==0=>{try require(found<0,span,"concrete duplicate root");found=index;},else=>unit};index=index+1;
- };};try require(found>=0,span,"concrete missing root");Result<Int,Diagnostic>::Ok(found)
+// The verifier builds its own source-body index; complete bindings are still
+// compared independently within each body, without producer canonicalization.
+let root:Function(Plan,Map,Paged<Int>,Int,Span):Result<Int,Diagnostic>=function(plan:Plan,heads:Map,previous:Paged<Int>,body:Int,span:Span):Result<Int,Diagnostic>{
+ var found:Int= -1;var index:Int=try get(heads,body);
+ loop while(index>=0){let item:Instance=try lookup<Instance>(plan->instances,index);
+  branch when{item->key->bindings->length()==0=>{try require(found<0,span,"concrete duplicate root");found=index;},else=>unit};index=try lookup<Int>(previous,index);
+ };try require(found>=0,span,"concrete missing root");Result<Int,Diagnostic>::Ok(found)
 };
 public let verify:Function(SemanticProject,Project,Plan):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Plan):Result<Unit,Diagnostic>{
  try verifyLowered(semantic,source);let span:Span=Span{start:0,end:0,line:1,column:1};try prefix(source->types,plan->types,span);
+ var heads:Map=create();var previous:Paged<Int>=empty<Int>();
+ loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
+  let prior:Int=try get(heads,item->key->body);heads=try put(heads,item->key->body,previous->count);previous=push<Int>(previous,prior);
+ };};
  var roots:Paged<Int>=empty<Int>();var position:Int=0;
  loop over(semantic->state->types->headers->order as moduleId:Int){let module:Module=try lookup<Module>(semantic->state->types->headers->modules,moduleId);branch when{module->standard=>{continue;},else=>unit};
   loop over(module->declarations as declarationId:Int){let declared:SourceDeclaration=try lookup<SourceDeclaration>(semantic->state->types->headers->declarations,declarationId);
    branch when{declared->kind==4||declared->kind==5=>{
-    let sourceBody:Int=try present((try lookup<Declaration>(source->declarations,declarationId))->body,span,"concrete initializer source");let target:Int=try root(plan,sourceBody,span);
+    let sourceBody:Int=try present((try lookup<Declaration>(source->declarations,declarationId))->body,span,"concrete initializer source");let target:Int=try root(plan,heads,previous,sourceBody,span);
     try require((try atList<Int>(plan->initializers,position))==target,span,"concrete initializer order");position=position+1;roots=push<Int>(roots,target);
    },else=>unit};
   };
  };
  try require(position==plan->initializers->length(),span,"concrete initializer count");position=0;
  loop over(semantic->state->functions->pages->append(semantic->state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){
-  branch on info->templateOwner{Parent::None=>{roots=push<Int>(roots,try root(plan,try lookup<Int>(source->functions,position),span));},Parent::Some(owner:Int)=>unit};position=position+1;
+  branch on info->templateOwner{Parent::None=>{roots=push<Int>(roots,try root(plan,heads,previous,try lookup<Int>(source->functions,position),span));},Parent::Some(owner:Int)=>unit};position=position+1;
  };};
  var instanceId:Int=0;
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
@@ -55,7 +62,7 @@ public let verify:Function(SemanticProject,Project,Plan):Result<Unit,Diagnostic>
     branch on argument{Argument::Type(typeId:Int)=>{try require(parameter->kind==0,span,"concrete binding kind");try closed(plan->types,typeId,span);},Argument::Value(term:ValueTerm)=>{try require(parameter->kind!=0&&parentEqual(term->parameter,Parent::None),span,"concrete binding kind or value");}};
    };
   }};
-  var previous:Int=0;loop while(previous<instanceId){let other:Instance=try lookup<Instance>(plan->instances,previous);try require(other->key->body!=item->key->body||!bindingsEqual(other->key->bindings,item->key->bindings),span,"concrete duplicate complete key");previous=previous+1;};
+  var prior:Int=try lookup<Int>(previous,instanceId);loop while(prior>=0){let other:Instance=try lookup<Instance>(plan->instances,prior);try require(!bindingsEqual(other->key->bindings,item->key->bindings),span,"concrete duplicate complete key");prior=try lookup<Int>(previous,prior);};
   try verifyBody(source->types,plan->types,original,item->body,item->key->bindings,span);
   var sites:Map=create();loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){
    discard try lookup<Instance>(plan->instances,target->instance);try require((try get(sites,target->node))<0,span,"concrete duplicate target site");sites=try put(sites,target->node,target->instance);

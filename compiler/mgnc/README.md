@@ -1,6 +1,7 @@
 # Experimental native compiler
 
-This source project contains the Mognitio 1.5 compiler, mgnc, and ongoing 1.6 work.
+This source project contains the Mognitio 1.6 compiler implementation, mgnc.
+Final 1.6 conformance and performance acceptance are in progress.
 It remains experimental and is not included in the regular Debian package,
 APT repository, or installer bundle. The corrected implementation and formal
 performance results are accepted for 1.5.0; see the
@@ -8,8 +9,8 @@ performance results are accepted for 1.5.0; see the
 
 ## Build
 
-Use the [replacement frozen v1.5 Lisp seed](../../verification/v1.5.0-seed2.md), whose accepted
-source revision is 860a7550cb610e3a60642e427db659df7447fcf5.
+Use the [frozen S7 Lisp seed](../../verification/v1.6.0-seed7.md), whose accepted
+source revision is 76fe803d157fda13a9f7fbe7a56fcca5858a70b5.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 
@@ -29,6 +30,7 @@ The existing frozen bundle must not be regenerated or replaced silently.
 /new/output/mgnc lower path/to/source.mgn
 /new/output/mgnc lower path/to/mognitio.toml
 /new/output/mgnc build path/to/source.mgn -o path/to/new-artifact
+/new/output/mgnc build path/to/mognitio.toml -o path/to/new-project-artifact
 path/to/new-artifact argument
 ~~~
 
@@ -51,17 +53,23 @@ single-file and project inputs as check and neither evaluates user code nor
 writes an artifact. This command is part of the ongoing 1.6 work; it does not
 establish completion of the expanded native backend or performance acceptance.
 
-Build consumes the same complete semantic result, then selects the existing
-native subset: a single file with typed scalar helpers and main, direct calls,
-blocks, mutable locals, branches, while loops, and checked signed arithmetic.
-Main takes List<String> and returns Int; direct argument-length queries are
-supported. Semantically valid features outside this subset report unsupported.
+Build lowers the complete semantic result and selects the closed native profile
+for single files and manifests. It supports Int, Bool, Unit, String, persistent
+List, nominal Product/Sum, Result, concrete templates, function values, lexical
+captures, value/control loops and the five text I/O functions readTextFile,
+writeTextFile, readStdin, writeStdout and writeStderr. Main receives ordinary
+List<String> argument values and returns Int. The generated runtime manages
+reachable values and initializes entry-reachable modules once in dependency order.
+Excluded standard identities and semantically valid features outside the native
+profile report unsupported, including in unused bodies.
+
 Contract, witness, attribute, and assertion syntax remain outside mgnc's
 experimental profile; the normal toolchain continues to support them.
 
 Successful compiler commands have exit 0 and empty output streams.
 Build publishes a new standalone Linux AMD64 ELF without replacing an existing
-output. It does not invoke a fallback compiler or run the generated program.
+output. Manifest builds also protect the next source set from new .mgn output
+members. It does not invoke a fallback compiler or run the generated program.
 The native runtime validates UTF-8 arguments and preserves primary failures
 when its diagnostic stream is unavailable.
 

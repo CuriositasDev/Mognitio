@@ -8,7 +8,6 @@ a=args.compiler;fixtures=args.fixtures;out=args.output;out.mkdir()
 if a is None:
  assert args.seed,"--seed or an observed --compiler is required"
  project=out/"compiler";shutil.copytree(ROOT/"compiler/mgnc",project)
- shutil.copyfile(HERE/"harnesses/v160-native-driver.mgn",project/"src/Driver/driver.mgn")
  patches=json.loads((HERE/"v160-native-cost-patches.json").read_text())
  for change in patches:
   path=project/change["path"];text=path.read_text()

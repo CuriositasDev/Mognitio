@@ -1164,5 +1164,72 @@
   "measurement_manifest_sha256": "5336785a45c0c570e28fed5f97bcc136ce88f42983020d498b3d96987c1914de",
   "performance_complete": false,
   "implementation_accepted": false,
-  "release_performed": false
+  "release_performed": false,
+  "project_support": [
+    {
+      "path": "README.md",
+      "bytes": 3927,
+      "sha256": "2da5a39308db1286cbd7d6fafb0b5fd0ec266efbbc9f18bb5e9ab4c5b9750f52",
+      "role": "non-executable project metadata"
+    },
+    {
+      "path": "catalog-inputs.json",
+      "bytes": 856,
+      "sha256": "559aae96b5b88fb17858679f0b9720a8b2d0742f10300ecea5b954018ee9598d",
+      "role": "non-executable project metadata"
+    }
+  ],
+  "generation_support": [
+    {
+      "path": "tests/mgnc/generate-catalog.py",
+      "bytes": 2052,
+      "sha256": "e6493fa378a851717f987d0c375c6c7d2476367f64487419afe489435daae9cf"
+    },
+    {
+      "path": "tests/mgnc/generate-int-map.py",
+      "bytes": 3869,
+      "sha256": "dd7a6edc7dcf5fa469bcc12331f05bcb3aa4945d265f1b4c66607fdc495c0b90"
+    },
+    {
+      "path": "tests/mgnc/generate-unicode.py",
+      "bytes": 1556,
+      "sha256": "354c222cea9f3c23ac76ee51eb6afb8eb7e64f701be4465181662224c94d0eff"
+    },
+    {
+      "path": "tests/mgnc/generate-width.py",
+      "bytes": 2713,
+      "sha256": "f9b067e3e7108cd11644616b87522d01078c95c813c256cca37dcde8dc18b8c9"
+    },
+    {
+      "path": "tests/mgnc/generate_grammar.py",
+      "bytes": 7629,
+      "sha256": "54574e729b2ebe9f666ad1d4cc23a169a062f2b03b8127cd09ec902cf591b8b6"
+    },
+    {
+      "path": "tests/mgnc/generate_storage.py",
+      "bytes": 4445,
+      "sha256": "85ca399306c42620e4cc8eb3efb9745981b34697332f102672525143def15741"
+    },
+    {
+      "path": "tests/mgnc/grammar.txt",
+      "bytes": 6107,
+      "sha256": "ecf021ee1fc56c68cc75cdeccb1633569bde52f0aeba7616757c803379769f18"
+    },
+    {
+      "path": "src/standard-catalog.lisp",
+      "bytes": 12306,
+      "sha256": "2510b15b12df26103df354eaacd05b20fe202bc9239d48651c46e5e905b4e71a"
+    },
+    {
+      "path": "src/numeric-catalog.lisp",
+      "bytes": 3899,
+      "sha256": "08f2b8c5383e20b6c0f29a482bcb030903a4fe5f4ded4a6265fadce94785b1f4"
+    },
+    {
+      "path": "src/binary-catalog.lisp",
+      "bytes": 8959,
+      "sha256": "19b49019cd8ac435e859b30a88a75688c3e0e1c9363639de09679b7ca557f554"
+    }
+  ],
+  "source_composition": "Compiler sources and manifest match the public checkout; non-executable README metadata retains the pre-activation description from the staged corpus."
 }

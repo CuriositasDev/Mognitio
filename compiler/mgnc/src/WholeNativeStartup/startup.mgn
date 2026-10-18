@@ -51,9 +51,9 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
   code=load(code,2,15,200);code=load(code,0,2,file*8);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],2);code=immediate(code,0,1);code=store(code,2,file*8,0);
  loop over(plan->initializers as initializer:Int){
   let instance:Instance=try lookup<Instance>(plan->concrete->instances,initializer);let declaration:Int=try present(instance->body->declaration,span,"initializer identity");branch when{(try lookup<Declaration>(plan->concrete->types->headers->declarations,declaration))->file!=file=>{continue;},else=>unit};let destination:Int=try get(plan->globalDeclarations,declaration);try require(destination>=0,span,"initializer global");
-  code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,initializer))->entry);code=load(code,2,15,globalBase);code=store(code,2,destination*8,0);
+  code=immediate(code,0,0);code=store(code,4,0,0);code=store(code,4,8,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,initializer))->entry);code=load(code,2,15,globalBase);code=store(code,2,destination*8,0);
  };code=load(code,2,15,200);code=immediate(code,0,2);code=store(code,2,file*8,0);};
- code=load(code,2,15,globalBase);code=load(code,0,2,plan->entryGlobal*8);code=store(code,5,-88,0);code=select(code,133);code=load(code,0,5,-88);code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);code=load(code,0,5,-72);code=store(code,4,8,0);code=indirect(code,11,true);
+ code=load(code,2,15,globalBase);code=load(code,0,2,plan->entryGlobal*8);code=store(code,5,-88,0);code=select(code,133);code=load(code,0,5,-88);code=load(code,11,0,24);code=load(code,2,0,32);code=store(code,4,0,2);code=load(code,0,5,-72);code=store(code,4,8,0);code=immediate(code,0,0);code=store(code,4,16,0);code=indirect(code,11,true);
  code=constant(code,7,0,255);code=jump(code,List<Int>[15,135],8);code=mov(code,7,0);code=immediate(code,0,60);code=raw(code,List<Int>[15,5]);
  loop over(List<Int>[131,132,133] as bitmap:Int){code=label(code,bitmap);code=field(code,4,3);code=field(code,4,branch when{bitmap==131=>1,bitmap==132=>3,else=>5});};Result<Code,Diagnostic>::Ok(code)
 };

@@ -1,5 +1,5 @@
 namespace Mgnc\WholeFrameData;
 use Std\Numeric\{Bits};
 use Mgnc\Data\{Paged};
-public type Point=product{block:Int;operation:Int;roots:List<Bits<64>>;};
+public type Point=product{block:Int;operation:Int;roots:List<Bits<64>>;handoff:List<Bits<64>>;};
 public type Frame=product{slots:Int;outgoing:Int;extent:Int;entry:List<Bits<64>>;points:Paged<Point>;};

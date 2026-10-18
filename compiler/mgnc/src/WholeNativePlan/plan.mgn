@@ -27,7 +27,7 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  var constructors:Paged<Constructor>=empty<Constructor>();var procedures:Paged<Procedure>=empty<Procedure>();var literals:Paged<Literal>=empty<Literal>();var instanceId:Int=0;var neededGlobals:Map=create();
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
   let frame:Frame=try lookup<Frame>(frames,instanceId);let entry:Int=next;let blocks:Int=next+1;let entryRoots:Int=blocks+instance->body->blocks->count;next=entryRoots+1;var pointLabels:Paged<Int>=empty<Int>();
-  loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){discard point;pointLabels=push<Int>(pointLabels,next);next=next+1;};};
+  loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){pointLabels=push<Int>(pointLabels,next);next=next+branch when{point->handoff->length()>0=>2,else=>1};};};
   var operationLabels:Paged<List<Int>>=empty<List<Int>>();var terminatorLabels:Paged<Int>=empty<Int>();
   loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as pages:List<Block>){loop over(pages as item:Block){
    var entries:List<Int>=List<Int>[];loop over(item->operations as op:Operation){discard op;entries=entries->append(next);next=next+1;};operationLabels=push<List<Int>>(operationLabels,entries);terminatorLabels=push<Int>(terminatorLabels,next);next=next+1;

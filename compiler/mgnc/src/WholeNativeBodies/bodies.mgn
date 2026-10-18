@@ -3,7 +3,7 @@ use Mgnc\Data\{Diagnostic,lookup};
 use Mgnc\WholeNativeData\{Native,Procedure};
 use Mgnc\WholeConcrete\{Instance};
 use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
-use Mgnc\WholeFrame\{begin,end,offset};
+use Mgnc\WholeFrame\{begin,end,offset,acceptArguments};
 use Mgnc\WholeNativeOperation\{emit as operation};
 use Mgnc\Machine\{Code,label,jump};
 use Mgnc\WholeX64\{load,alu,constant};
@@ -13,7 +13,7 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
  var code:Code=initial;var owner:Int=0;
  loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
   let body:Body=instance->body;let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);
-  code=try begin(label(code,procedure->entry),procedure->frame,body->parameters,body->captures,procedure->entryRoots);code=jump(code,List<Int>[233],procedure->blocks+body->entry);var blockId:Int=0;
+  code=try begin(label(code,procedure->entry),procedure->frame,body->parameters,body->captures,procedure->entryRoots);code=acceptArguments(code,body->parameters->length());code=jump(code,List<Int>[233],procedure->blocks+body->entry);var blockId:Int=0;
   loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
    code=label(code,procedure->blocks+blockId);var operationId:Int=0;loop over(block->operations as op:Operation){code=label(code,try atList<Int>(try lookup<List<Int>>(procedure->operationLabels,blockId),operationId));code=try operation(code,plan,owner,blockId,operationId,op);operationId=operationId+1;};
    code=label(code,try lookup<Int>(procedure->terminatorLabels,blockId));let term:Terminator=block->terminator;let name:String=term->code;

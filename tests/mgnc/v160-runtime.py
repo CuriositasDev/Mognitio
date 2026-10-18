@@ -8,7 +8,7 @@ parser=argparse.ArgumentParser();parser.add_argument("--seed",type=Path,required
 out=args.output.resolve();out.mkdir()
 project=out/"project";(project/"src").mkdir(parents=True)
 (project/"mognitio.toml").write_text('[project]\nname = "runtimeprobe"\nroot_namespace = "Mgnc"\n')
-modules=("Data","Machine","Encode","Fields","WholeX64","WholeABI","WholeArena","WholeMark","WholeSweep","WholeCollect","WholeFrame","WholeFrameData")
+modules=("Data","IntMap","Machine","Encode","Fields","WholeX64","WholeABI","WholeArena","WholeMark","WholeSweep","WholeCollect","WholeFrame","WholeFrameData")
 for module in modules:shutil.copytree(ROOT/"compiler/mgnc/src"/module,project/"src"/module)
 shutil.copyfile(ROOT/"tests/mgnc/harnesses/v160-runtime.mgn",project/"src/runtimeprobe.mgn")
 A=out/"emitter"

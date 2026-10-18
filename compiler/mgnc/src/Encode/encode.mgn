@@ -3,39 +3,18 @@ use Std\Numeric\{Bits};
 use Std\Binary\{Bytes,bytesFromBits};
 use Mgnc\Data\{Paged,empty,push,Diagnostic,problem,Span};
 use Mgnc\Machine\{Code,Record,Label,flush};
+use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Fields\{byte,i32,i64,u16,u32,u64,appendField};
-type LabelMap=product{buckets:List<List<Label>>;};
-let newMap:Function():LabelMap=function():LabelMap{
- var buckets:List<List<Label>>=List<List<Label>>[];var index:Int=0;
- loop while(index<64){buckets=buckets->append(List<Label>[]);index=index+1;};
- LabelMap{buckets:buckets}
+let locate:Function(Map,Int,Span):Result<Int,Diagnostic>=
+function(labels:Map,id:Int,span:Span):Result<Int,Diagnostic>{
+ branch when{id<0=>{return Result<Int,Diagnostic>::Err(problem("internal",span,"machine label bounds"));},else=>unit};
+ let offset:Int=try get(labels,id);
+ branch when{offset>=0=>Result<Int,Diagnostic>::Ok(offset),else=>Result<Int,Diagnostic>::Err(problem("internal",span,"undefined machine label"))}
 };
-let bucketAt:Function(LabelMap,Int,Span):Result<List<Label>,Diagnostic>=
-function(labels:LabelMap,id:Int,span:Span):Result<List<Label>,Diagnostic>{
- branch on labels->buckets->at(id%64){
-  Result<List<Label>,IndexError>::Ok(value:List<Label>)=>Result<List<Label>,Diagnostic>::Ok(value),
-  Result<List<Label>,IndexError>::Err(error:IndexError)=>Result<List<Label>,Diagnostic>::Err(problem("internal",span,"machine label bounds")),
- }
-};
-let locate:Function(LabelMap,Int,Span):Result<Int,Diagnostic>=
-function(labels:LabelMap,id:Int,span:Span):Result<Int,Diagnostic>{
- loop over((try bucketAt(labels,id,span)) as label:Label){
-  branch when{label->id==id=>{return Result<Int,Diagnostic>::Ok(label->offset);},else=>unit};
- };
- Result<Int,Diagnostic>::Err(problem("internal",span,"undefined machine label"))
-};
-let addLabel:Function(LabelMap,Label,Span):Result<LabelMap,Diagnostic>=
-function(labels:LabelMap,value:Label,span:Span):Result<LabelMap,Diagnostic>{
- let bucket:List<Label>=try bucketAt(labels,value->id,span);
- loop over(bucket as previous:Label){
-  branch when{previous->id==value->id=>{return Result<LabelMap,Diagnostic>::Err(problem("internal",span,"duplicate machine label"));},else=>unit};
- };
- var buckets:List<List<Label>>=List<List<Label>>[];var index:Int=0;
- loop over(labels->buckets as current:List<Label>){
-  buckets=buckets->append(branch when{index==value->id%64=>bucket->append(value),else=>current});
-  index=index+1;
- };
- Result<LabelMap,Diagnostic>::Ok(LabelMap{buckets:buckets})
+let addLabel:Function(Map,Label,Span):Result<Map,Diagnostic>=
+function(labels:Map,value:Label,span:Span):Result<Map,Diagnostic>{
+ branch when{(try get(labels,value->id))>=0=>{return Result<Map,Diagnostic>::Err(problem("internal",span,"duplicate machine label"));},else=>unit};
+ put(labels,value->id,value->offset)
 };
 let size:Function(Record):Int=function(record:Record):Int{
  record->bytes->length()+branch when{record->kind==0 || record->kind==1=>0,
@@ -44,7 +23,7 @@ let size:Function(Record):Int=function(record:Record):Int{
 public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code):Result<Bytes,Diagnostic>{
  let code:Code=flush(initial);
  let span:Span=Span{start:0,end:0,line:1,column:1};
- var labels:LabelMap=newMap();var length:Int=0;
+ var labels:Map=create();var length:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
   loop over(page as record:Record){
    branch when{record->kind==1=>{

@@ -1,0 +1,210 @@
+{
+  "schema": 1,
+  "stage": "replacement-bootstrap-accepted",
+  "accepted_at": "2026-10-18",
+  "seed": {
+    "schema": 1,
+    "sourceCommit": "e740e164cfea012257b6f351606751febfd89294",
+    "bundle": "lisp-e740e164cfea012257b6f351606751febfd89294.tar.gz",
+    "bytes": 30090350,
+    "sha256": "d0aa8525301b625f6eec718b507fee5a56d6afff5592832dbad9afdade57766e",
+    "manifestSha256": "43bc06c438684485aac7220b69f06d66424f745939ac54e85528e67be7c1befe"
+  },
+  "seed_components": 1215,
+  "replaces_seed_source": "76fe803d157fda13a9f7fbe7a56fcca5858a70b5",
+  "reason": "Inherited whole-project RSS budget restored with bounded default heap reserve; includes label-index and root-projection repairs.",
+  "capability_runner_revision": "e740e164cfea012257b6f351606751febfd89294",
+  "capability_fixture_sha256": "d8c72eb32a3f21fcac31633cf82dd43ac0fe06acdd9f4a0cd5bdb3fec2920be4",
+  "capability_results": [
+    {
+      "name": "module-snapshots-run",
+      "exit": 12,
+      "seconds": 0.02167396293953061,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-build",
+      "exit": 0,
+      "seconds": 0.06478162296116352,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "module-snapshots-native",
+      "exit": 12,
+      "seconds": 0.00038640305865556,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-run",
+      "exit": 1,
+      "seconds": 0.021624706918373704,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-build",
+      "exit": 0,
+      "seconds": 0.06617895606905222,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "nested-module-snapshot-native",
+      "exit": 1,
+      "seconds": 0.00029754708521068096,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-run",
+      "exit": 0,
+      "seconds": 0.02047527802642435,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-build",
+      "exit": 0,
+      "seconds": 0.0660658460110426,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "generic-capture-native",
+      "exit": 0,
+      "seconds": 0.00031778495758771896,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-run",
+      "exit": 0,
+      "seconds": 0.022045050049200654,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-build",
+      "exit": 0,
+      "seconds": 0.06343781400937587,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "result-reconstruction-native",
+      "exit": 0,
+      "seconds": 0.00030672899447381496,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-run",
+      "exit": 0,
+      "seconds": 0.02651782496832311,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-build",
+      "exit": 0,
+      "seconds": 0.06479821004904807,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "arena-and-bytes-native",
+      "exit": 0,
+      "seconds": 0.0028697520028799772,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-build",
+      "exit": 0,
+      "seconds": 171.94884987000842,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    },
+    {
+      "name": "compiler-scale-check",
+      "exit": 0,
+      "seconds": 107.89437707397155,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "passed": true
+    }
+  ],
+  "cumulative_lisp": {
+    "groups": 242,
+    "assertions": 1889890,
+    "processes": 1324,
+    "failures": 0
+  },
+  "cumulative_python": "Complete ASDF integration sequence passed, ending with 55 path-inspection checks.",
+  "restored_seed": "1215 components verified; mutation rejected; isolated run/build and independent ELF passed.",
+  "execution_capacity": {
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64,
+    "scope": "host Lisp seed process"
+  },
+  "tooling_integrations": [
+    {
+      "name": "analysis",
+      "exit": 0
+    },
+    {
+      "name": "toolchain",
+      "exit": 0
+    },
+    {
+      "name": "boundaries",
+      "exit": 0
+    },
+    {
+      "name": "projection",
+      "exit": 0
+    },
+    {
+      "name": "tokens",
+      "exit": 0
+    },
+    {
+      "name": "v150-analysis",
+      "exit": 0
+    }
+  ],
+  "dependent_probe": {
+    "source_commit": "e740e164cfea012257b6f351606751febfd89294",
+    "driver_override": "tests/mgnc/harnesses/v160-native-driver.mgn",
+    "source_files": 171,
+    "source_bytes": 11437899,
+    "source_inventory_sha256": "d5184b632deb0eb8c332cfb3675ec939629543f4ef47ae71b8f2266937fd97d3",
+    "source_inventory_format": "sorted SHA256, two spaces, compiler-project-relative path, LF",
+    "artifact_sha256": "fd576b8776fda0549757851f994a4392a9b8013a04a8893b480b49c0bcef7665",
+    "artifact_bytes": 18330512,
+    "matches_exploratory_probe": true,
+    "final_candidate_acceptance": false
+  },
+  "implementation_complete": false,
+  "runtime_acceptance_complete": false,
+  "release_performed": false
+}

@@ -1,0 +1,29 @@
+{
+  "source_commit": "06d3811738251ee7d26f0dbedae7f2cc38713761",
+  "seed_source": "76fe803d157fda13a9f7fbe7a56fcca5858a70b5",
+  "helper_contracts": {
+    "valid": 2,
+    "rejected": 10,
+    "fixture_sha256": "cdf9179b66310c713bd27a790a70c5e3321017b3703a4f2cd599bb12653f8907"
+  },
+  "native_verifiers": {
+    "valid": 2,
+    "rejected": 11
+  },
+  "native_runtime": {
+    "values": 41,
+    "io": 26,
+    "modules": 6,
+    "stress": 17
+  },
+  "generated_compiler_sha256": "03275e5a87e650d3bb010599ff1108448a7514a060d7b915d47c02e8308cfa88",
+  "normal_suite": {
+    "groups": 242,
+    "assertions": 1889890,
+    "processes": 1324,
+    "python_integrations": "Passed"
+  },
+  "public_backend_activation": false,
+  "final_candidate_acceptance": false,
+  "formal_performance": "NotRun"
+}

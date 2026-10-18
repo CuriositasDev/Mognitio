@@ -275,3 +275,10 @@ Run v160-measure-harness.py, v160-budget-harness.py and
 v160-measure-cli-harness.py (the latter takes the five fixture/seed inputs)
 before measurements. These exercise real process cleanup and controlled
 complete/partial matrices, invalid artifacts, failed warm-ups and late cutoffs.
+
+v160-native-lifetime.py --compiler A --fixtures DIRECTORY --output NEW_DIRECTORY
+records all 15 fixed-program lifetime and I/O input combinations. It preserves
+heap/GC/fd observations, input/compiler/artifact identities and failed/unrun
+cells. Resource leaks, unexpected exits and changed inputs fail the runner.
+v160-lifetime-harness.py tests those rejection paths with controlled observations.
+These observations do not set formal memory-growth or wall/RSS budgets.

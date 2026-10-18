@@ -1,0 +1,389 @@
+{
+  "schema": 1,
+  "stage": "functional-lifetime-observation",
+  "compiler_sha256": "c1b9da240d2fdb2b5b41c34a7d8db0f78bb836424b715e4695a9e61267560a06",
+  "fixture_manifest_sha256": "48c363bf4150f8492c92bf448cf6b77b5847d15f429f4690ac5fccf74d4fd094",
+  "builds": [
+    {
+      "program": "lifetime-bounded",
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "artifact_sha256": "7c6a8e904914b9d09c2c9338f70a064bc79d7703fccc7e5856a4db7381bf87af"
+    },
+    {
+      "program": "lifetime-retained",
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "artifact_sha256": "b1f163c4b1eb52570404d4f17071b93316dddfa7e8c4d4673d119da161a929e9"
+    },
+    {
+      "program": "io-resource",
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "artifact_sha256": "9d40944ead22ef6a5a0acb3486de2eaa8c384709971a1198db5ca6c89f75dbd0"
+    }
+  ],
+  "records": [
+    {
+      "program": "lifetime-bounded",
+      "arguments": [
+        "10000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 40019,
+        "collections": 2,
+        "live": 424,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 424,
+        "fds": 3
+      }
+    },
+    {
+      "program": "lifetime-bounded",
+      "arguments": [
+        "100000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 400021,
+        "collections": 17,
+        "live": 472,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 472,
+        "fds": 3
+      }
+    },
+    {
+      "program": "lifetime-bounded",
+      "arguments": [
+        "1000000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 4000023,
+        "collections": 168,
+        "live": 496,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 496,
+        "fds": 3
+      }
+    },
+    {
+      "program": "lifetime-retained",
+      "arguments": [
+        "10000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 2138112,
+        "allocations": 40019,
+        "collections": 3,
+        "live": 1048576,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 2138112,
+        "live": 1048576,
+        "fds": 3
+      }
+    },
+    {
+      "program": "lifetime-retained",
+      "arguments": [
+        "100000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 20905984,
+        "allocations": 400021,
+        "collections": 13,
+        "live": 16379800,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 20905984,
+        "live": 16379800,
+        "fds": 3
+      }
+    },
+    {
+      "program": "lifetime-retained",
+      "arguments": [
+        "1000000"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 200597504,
+        "allocations": 4000023,
+        "collections": 26,
+        "live": 176000520,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 200597504,
+        "live": 176000520,
+        "fds": 3
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "100",
+        "success"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 221,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "100",
+        "decode"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 521,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "100",
+        "read"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 521,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "1000",
+        "success"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 2023,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "1000",
+        "decode"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 5023,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "1000",
+        "read"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 5023,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "10000",
+        "success"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 20025,
+        "collections": 1,
+        "live": 0,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 0,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "10000",
+        "decode"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 50025,
+        "collections": 3,
+        "live": 696,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 696,
+        "fds": 4
+      }
+    },
+    {
+      "program": "io-resource",
+      "arguments": [
+        "10000",
+        "read"
+      ],
+      "status": "Passed",
+      "exit": 0,
+      "stdout_hex": "",
+      "stderr_hex": "",
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 50025,
+        "collections": 3,
+        "live": 544,
+        "resources": 0,
+        "primary": 0
+      },
+      "high": {
+        "mapped": 1069056,
+        "live": 544,
+        "fds": 4
+      }
+    }
+  ],
+  "formal_budget_adopted": false
+}

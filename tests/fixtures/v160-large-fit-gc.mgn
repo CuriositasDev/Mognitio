@@ -1,0 +1,7 @@
+namespace App;
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let base:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ var last:String="";var index:Int=0;
+ loop while(index<10000){last=base+base;discard last+"extra";index=index+1;};
+ branch when{last->length()==base->length()*2&&last==base+base=>0,else=>1}
+};

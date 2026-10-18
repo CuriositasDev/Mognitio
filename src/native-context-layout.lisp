@@ -10,7 +10,8 @@
                                    (:test-kind 8 5 0) (:test-site 8 5 0)
                                    (:test-exit 8 5 0) (:test-padding 8 4 0)))
                     '((:free-head 8 1 0) (:allocation-padding 8 4 0)
-                      (:fit-cursors 128 1 0))))
+                      (:fit-cursors 128 1 0) (:large-fit-cursors 256 1 0)
+                      (:large-fit-sizes 256 0 0))))
       (destructuring-bind (name size kind zero) field
         (push (list name offset size kind zero) fields) (incf offset size)))
     (make-runtime-context-layout :fields (nreverse fields) :size offset :profile (if test-p 1 0))))

@@ -1,5 +1,5 @@
 namespace Mgnc\Expressions;
-use Mgnc\Grammar\{ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssert,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Grammar\{ruleAttributedLocalLet,ruleAttributedLocalVar,ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssert,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
 use Mgnc\Data\{Span,Diagnostic};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
@@ -7,6 +7,7 @@ use Mgnc\NodeStorage\{getNode};
 use Mgnc\Projection\{parts,item,text,site,concrete,failure};
 use Mgnc\BridgeLists\{leftList,expressions,conditions,reverse};
 use Mgnc\HeaderRead\{rightList};
+use Mgnc\MetadataSyntax\{read as attributes,targets as attributeTargets};
 public type Label=product{name:String;span:Span;};
 public type Pattern=product{typeSyntax:Int;variant:Label;binder:List<Label>;annotation:List<Int>;};
 public type Expression=product{syntax:Int;cursor:Int;rule:Int;span:Span;children:List<Int>;annotations:List<Int>;labels:List<Label>;patterns:List<Pattern>;flag:Bool;text:String;};
@@ -14,6 +15,7 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
  let id:Int=try concrete(tree,root);let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
  var children:List<Int>=List<Int>[];var annotations:List<Int>=List<Int>[];var labels:List<Label>=List<Label>[];var patterns:List<Pattern>=List<Pattern>[];var flag:Bool=false;
  let rule:Int=node->rule;let spelling:String=try text(tree,id);
+ branch when{rule==ruleAttributedLocalLet||rule==ruleAttributedLocalVar=>{try attributeTargets(try attributes(tree,fields),false);},else=>unit};
  branch when{
  rule==ruleInteger||rule==ruleString||rule==ruleTrue||rule==ruleFalse||rule==ruleUnit||rule==ruleName=>unit,
  rule==ruleGenericApply=>{annotations=annotations->append(try item(fields,1));},

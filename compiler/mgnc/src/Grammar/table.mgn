@@ -11,6 +11,7 @@ use Mgnc\GrammarPart5\{extend as extend5};
 use Mgnc\GrammarPart6\{extend as extend6};
 use Mgnc\GrammarPart7\{extend as extend7};
 use Mgnc\GrammarPart8\{extend as extend8};
+use Mgnc\GrammarPart9\{extend as extend9};
 // Generated structural table. Production IDs are independent of source partitioning.
 public alias Slot=StoredSlot;
 public alias Prediction=StoredPrediction;
@@ -25,6 +26,7 @@ let makeSlots:Function():Paged<Slot>=function():Paged<Slot>{
  result=extend6(result);
  result=extend7(result);
  result=extend8(result);
+ result=extend9(result);
  result
 };
 public let slots:Paged<Slot>=makeSlots();
@@ -39,8 +41,8 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:26,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:29,first:0,second:0,nullable:true},Prediction{slot:30,first:128,second:0,nullable:false},Prediction{slot:32,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:36,first:4,second:0,nullable:false},Prediction{slot:38,first:4,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:42,first:0,second:0,nullable:true},Prediction{slot:43,first:100713984,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:46,first:50176,second:0,nullable:false},Prediction{slot:48,first:33554432,second:0,nullable:false},Prediction{slot:50,first:67108864,second:0,nullable:false},Prediction{slot:52,first:512,second:0,nullable:false},Prediction{slot:55,first:512,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:42,first:0,second:0,nullable:true},Prediction{slot:43,first:100713984,second:2,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:46,first:50176,second:0,nullable:false},Prediction{slot:48,first:33554432,second:0,nullable:false},Prediction{slot:50,first:67108864,second:0,nullable:false},Prediction{slot:52,first:512,second:0,nullable:false},Prediction{slot:55,first:512,second:0,nullable:false},Prediction{slot:543,first:0,second:2,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:58,first:1024,second:0,nullable:false},Prediction{slot:68,first:1024,second:0,nullable:false},Prediction{slot:78,first:16384,second:0,nullable:false},Prediction{slot:85,first:32768,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:92,first:0,second:0,nullable:true},Prediction{slot:93,first:65536,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:95,first:65536,second:0,nullable:false}]);
@@ -66,8 +68,8 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:229,first:0,second:0,nullable:true},Prediction{slot:230,first:128,second:0,nullable:false},Prediction{slot:232,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:236,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:240,first:32,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:245,first:0,second:0,nullable:true},Prediction{slot:246,first:299445399042129956,second:1,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:249,first:33554432,second:0,nullable:false},Prediction{slot:251,first:67108864,second:0,nullable:false},Prediction{slot:253,first:268435456,second:0,nullable:false},Prediction{slot:257,first:536870912,second:0,nullable:false},Prediction{slot:261,first:1073741824,second:0,nullable:false},Prediction{slot:264,first:1073741824,second:0,nullable:false},Prediction{slot:268,first:2147483648,second:0,nullable:false},Prediction{slot:271,first:299445394914934820,second:0,nullable:false},Prediction{slot:276,first:299445394914934820,second:0,nullable:false},Prediction{slot:539,first:0,second:1,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:245,first:0,second:0,nullable:true},Prediction{slot:246,first:299445399042129956,second:3,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:249,first:33554432,second:0,nullable:false},Prediction{slot:251,first:67108864,second:0,nullable:false},Prediction{slot:253,first:268435456,second:0,nullable:false},Prediction{slot:257,first:536870912,second:0,nullable:false},Prediction{slot:261,first:1073741824,second:0,nullable:false},Prediction{slot:264,first:1073741824,second:0,nullable:false},Prediction{slot:268,first:2147483648,second:0,nullable:false},Prediction{slot:271,first:299445394914934820,second:0,nullable:false},Prediction{slot:276,first:299445394914934820,second:0,nullable:false},Prediction{slot:539,first:0,second:1,nullable:false},Prediction{slot:568,first:0,second:2,nullable:false},Prediction{slot:573,first:0,second:2,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:279,first:0,second:0,nullable:true},Prediction{slot:280,first:299445394914934820,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:282,first:299445394914934820,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:284,first:299445394914934820,second:0,nullable:false},Prediction{slot:286,first:299445394914934820,second:0,nullable:false}]);
@@ -92,6 +94,8 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:517,first:0,second:0,nullable:true},Prediction{slot:518,first:128,second:0,nullable:false},Prediction{slot:520,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:524,first:6291456,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:528,first:6291456,second:0,nullable:false},Prediction{slot:532,first:6291456,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:548,first:0,second:0,nullable:true},Prediction{slot:549,first:0,second:2,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:553,first:50176,second:0,nullable:false},Prediction{slot:555,first:33554432,second:0,nullable:false},Prediction{slot:557,first:67108864,second:0,nullable:false},Prediction{slot:559,first:512,second:0,nullable:false},Prediction{slot:562,first:512,second:0,nullable:false},Prediction{slot:565,first:512,second:0,nullable:false}]);
  result
 };
 public let predictions:Paged<List<Prediction>>=makePredictions();
@@ -156,6 +160,8 @@ public let ntOnArms:Int=58;
 public let ntOnArmRest:Int=59;
 public let ntOnArm:Int=60;
 public let ntPattern:Int=61;
+public let ntAttributeRest:Int=62;
+public let ntAttributedDeclaration:Int=63;
 public let ruleModule:Int=0;
 public let ruleNamespace:Int=1;
 public let rulePathName:Int=2;
@@ -315,6 +321,17 @@ public let ruleOnArm:Int=155;
 public let rulePatternEmpty:Int=156;
 public let rulePatternPayload:Int=157;
 public let ruleStatementAssert:Int=158;
+public let ruleAttributedTop:Int=159;
+public let ruleAttributesEnd:Int=160;
+public let ruleAttributesMore:Int=161;
+public let ruleAttributedCompile:Int=162;
+public let ruleAttributedLet:Int=163;
+public let ruleAttributedVar:Int=164;
+public let ruleAttributedPublicCompile:Int=165;
+public let ruleAttributedPublicLet:Int=166;
+public let ruleAttributedPublicVar:Int=167;
+public let ruleAttributedLocalLet:Int=168;
+public let ruleAttributedLocalVar:Int=169;
 public let closeTerminal:Int=-18;
 public type Lookahead=product{ordinary:Int;extra:Int;high:Int;};
 public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{
@@ -382,6 +399,7 @@ public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,clo
  };
  let high:Int=branch when{
  token->text=="assert"=>1,
+ token->text=="@"=>2,
  else=>0,
  };
  let extra:Int=branch when{token->kind==1=>branch when{token->text=="Function"=>4194304,else=>2097152},close->text==">"=>131072,else=>0};
@@ -455,6 +473,7 @@ public let matches:Function(Int,Lexeme):Bool=function(symbol:Int,token:Lexeme):B
   symbol==-61=>token->text=="]",
   symbol==-62=>token->text=="::",
   symbol==-63=>token->text=="assert",
+  symbol==-64=>token->text=="@",
   else=>false,
  }
 };

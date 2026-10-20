@@ -1,0 +1,41 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,lookup,number};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\SemanticData\{Headers,Declaration,Attribute};
+use Mgnc\TypeData\{Store};
+use Mgnc\WholeIR\{Project};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let attributes:Function(Declaration,List<Attribute>):Declaration=function(item:Declaration,values:List<Attribute>):Declaration{
+ Declaration{file:item->file,ordinal:item->ordinal,kind:item->kind,name:item->name,exported:item->exported,node:item->node,annotation:item->annotation,body:item->body,parameters:item->parameters,attributes:values,span:item->span}
+};
+let mutate:Function(Project,Int):Result<Project,Diagnostic>=function(project:Project,mutation:Int):Result<Project,Diagnostic>{
+ let original:Store=project->types;let headers:Headers=original->headers;var index:Int=0;
+ loop over(headers->declarations->pages->append(headers->declarations->tail) as declarations:List<Declaration>){loop over(declarations as item:Declaration){
+  branch when{item->attributes->length()>0=>{
+   let first:Attribute=try atList<Attribute>(item->attributes,0);let span:Span=first->span;let name:Span=first->nameSpan;
+   let values:List<Attribute>=branch when{mutation==0=>List<Attribute>[],mutation==1=>List<Attribute>[first,first],else=>List<Attribute>[
+    Attribute{name:branch when{mutation==2=>"forged",else=>first->name},span:Span{start:span->start,end:span->end,line:span->line,column:span->column+branch when{mutation==3=>1,else=>0}},nameSpan:Span{start:name->start,end:name->end+branch when{mutation==4=>1,else=>0},line:name->line,column:name->column}}
+   ]};
+   let updated:Headers=Headers{input:headers->input,modules:headers->modules,declarations:try replaceItem<Declaration>(headers->declarations,index,attributes(item,values)),names:headers->names,fileNames:headers->fileNames,nameBuckets:headers->nameBuckets,order:headers->order};
+   let types:Store=Store{headers:updated,types:original->types,buckets:original->buckets,declarations:original->declarations,constraints:original->constraints};
+   return Result<Project,Diagnostic>::Ok(Project{types:types,declarations:project->declarations,bodies:project->bodies,functions:project->functions,entry:project->entry,moduleOrder:project->moduleOrder,obligations:project->obligations});
+  },else=>unit};index=index+1;
+ };};try require(false,Span{start:0,end:0,line:1,column:1},"metadata mutation target absent");Result<Project,Diagnostic>::Ok(project)
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let source:SourceUnit=SourceUnit{path:"metadata.mgn",displayPath:"metadata.mgn",relativePath:"metadata.mgn",expectedNamespace:"",text:"namespace App;alias Probe=Function():Unit;@test public let probe:Probe=function():Unit{assert true;};let main:Function(List<String>):Int=function(args:List<String>):Int{0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let project:Project=try lower(semantic);try verify(semantic,project);
+ var mutation:Int=0;loop while(mutation<5){branch on verify(semantic,try mutate(project,mutation)){
+  Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted metadata mutation");},
+  Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"metadata mutation phase");discard writeStdout("V170_METADATA_MUTANT "+number(mutation)+" rejected\n");}
+ };mutation=mutation+1;};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_METADATA_IR_OK valid=1 rejected=5\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}
+};

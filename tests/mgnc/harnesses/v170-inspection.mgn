@@ -1,0 +1,54 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeInspectionMachine\{verify as inspection};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeStandardProof\{helper as standardProof};
+use Mgnc\Tables\{replaceItem,atList};
+use Mgnc\WholeLayout\{Layouts,Descriptor,argumentType};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\TypeData\{Type};
+use Mgnc\IntMap\{get};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+message,span,"wrong binary detector: "+error->message);discard writeStdout("V170_INSPECTION_MUTANT "+message+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+
+
+
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){let other:Int=branch on right->at(index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
+let changed:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code,index:Int,item:Record):Result<Code,Diagnostic>{Result<Code,Diagnostic>::Ok(Code{records:try replaceItem<Record>(code->records,index,item),nextLabel:code->nextLabel,pending:code->pending})};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"inspection.mgn",displayPath:"inspection.mgn",relativePath:"inspection.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{inspectPath};let main:Function(List<String>):Int=function(args:List<String>):Int{discard inspectPath(\".\");0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);
+ var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
+ branch when{
+  owner==76&&item->kind==3&&item->value==584=>{message="inspection frame and callee saves";replacement=Record{kind:item->kind,bytes:item->bytes,value:576,target:item->target};},
+  owner==76&&item->kind==4&&item->value==262&&same(item->bytes,List<Int>[72,184])=>{message="inspection syscall set";replacement=Record{kind:item->kind,bytes:item->bytes,value:263,target:item->target};},
+  owner==76&&item->kind==4&&item->value==256&&same(item->bytes,List<Int>[73,186])=>{message="inspection stat ABI and nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:0,target:item->target};},
+  owner==76&&item->kind==3&&item->value==256&&same(item->bytes,List<Int>[72,141,148,36])=>{message="inspection stat ABI and nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:248,target:item->target};},
+  owner==76&&item->kind==3&&(item->value==256||item->value==264)&&same(item->bytes,List<Int>[72,139,148,36])=>{message="inspection identity snapshot transport";replacement=Record{kind:item->kind,bytes:item->bytes,value:272,target:item->target};},
+  owner==76&&item->kind==3&&item->value==8&&same(item->bytes,List<Int>[72,137,131])=>{message="inspection absent file descriptor";replacement=Record{kind:item->kind,bytes:item->bytes,value:16,target:item->target};},
+  owner==76&&item->kind==3&&item->value==168&&same(item->bytes,List<Int>[73,137,159])=>{message="inspection map registration";replacement=Record{kind:item->kind,bytes:item->bytes,value:176,target:item->target};},
+  owner==76&&item->kind==3&&item->value==168&&same(item->bytes,List<Int>[73,137,135])=>{message="inspection result allocates while owning resources";replacement=Record{kind:item->kind,bytes:item->bytes,value:160,target:item->target};},
+  owner==76&&item->kind==2&&item->target==61=>{message="inspection result allocates while owning resources";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:10};},
+  owner==76&&item->kind==3&&item->value==16&&same(item->bytes,List<Int>[72,137,131])=>{message="inspection map registration";replacement=Record{kind:item->kind,bytes:item->bytes,value:48,target:item->target};},
+  owner==76&&item->kind==4&&same(item->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==2&&following->target==10=>{message="binary Function allocation descriptors";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value+1,target:item->target};all=true;},else=>unit};},
+  owner==172&&item->kind==4&&item->value==4=>{message="inspection helper bitmap";replacement=Record{kind:item->kind,bytes:item->bytes,value:3,target:item->target};all=true;},
+  owner==172&&item->kind==4&&item->value==15=>{message="inspection helper bitmap";replacement=Record{kind:item->kind,bytes:item->bytes,value:7,target:item->target};all=true;},
+  owner==76&&item->kind==5&&item->target==172=>{message="binary Function root selections";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:173};all=true;},else=>unit};
+ branch when{message!=""=>{discard writeStdout("V170_INSPECTION_TARGET "+message+"\n");let mutated:Code=try changed(code,ordinal,replacement);try reject(branch when{all=>machine(plan,mutated),else=>inspection(plan,mutated)},message);seen=seen+1;},else=>unit};ordinal=ordinal+1;
+ };};try require(seen>=16,span,"inspection mutation count");
+ var identity:Int= -1;ordinal=0;loop over(plan->concrete->types->types->pages->append(plan->concrete->types->types->tail) as page:List<Type>){loop over(page as item:Type){branch when{item->kind==26=>{try require(identity<0,span,"inspection unique identity type");identity=ordinal;},else=>unit};ordinal=ordinal+1;};};try require(identity>=0,span,"inspection identity type");let descriptorId:Int=try get(plan->layouts->types,identity);let descriptor:Descriptor=try lookup<Descriptor>(plan->layouts->descriptors,descriptorId);var mode:Int=0;loop while(mode<2){let altered:Descriptor=Descriptor{mode:descriptor->mode,size:branch when{mode==0=>32,else=>descriptor->size},references:branch when{mode==1=>List<Int>[24],else=>descriptor->references},variants:descriptor->variants,elementManaged:descriptor->elementManaged};let table:Layouts=Layouts{descriptors:try replaceItem<Descriptor>(plan->layouts->descriptors,descriptorId,altered),types:plan->layouts->types,environments:plan->layouts->environments,buffers:plan->layouts->buffers};try reject(layouts(plan->concrete,table),"fixed descriptor layout");mode=mode+1;};
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard=="inspectPath"=>{mode=0;loop while(mode<2){let altered:Global=Global{symbol:item->symbol,declaration:item->declaration,valueType:branch when{mode==0=>1,else=>item->valueType},standard:branch when{mode==1=>"joinPath",else=>item->standard}};branch on standardProof(plan,altered){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false,span,"accepted inspection signature mutation");},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{try reject(Result<Unit,Diagnostic>::Err(error),branch when{mode==0=>"inspection Function signature",else=>"standard Function origin"});}};mode=mode+1;};},else=>unit};};};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_INSPECTION_IR_OK valid=1\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

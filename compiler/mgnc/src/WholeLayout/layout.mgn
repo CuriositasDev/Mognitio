@@ -25,7 +25,7 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
   loop over(item->body->slots->pages->append(item->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){pending=push<Int>(pending,slot->valueType);};};
   loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){loop over(op->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{pending=push<Int>(pending,id);},Argument::Value(term:ValueTerm)=>unit};};};};};
  };};
- var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let shape:Type=try lookup<Type>(plan->types->types,id);try require(shape->kind<22||shape->kind==23||shape->kind==24||shape->kind==25||shape->kind==27||shape->kind==28,span,"layout symbolic or unsupported type");
+ var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let shape:Type=try lookup<Type>(plan->types->types,id);try require(shape->kind<22||shape->kind==23||shape->kind==24||shape->kind==25||shape->kind==26||shape->kind==27||shape->kind==28,span,"layout symbolic or unsupported type");
   loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"layout symbolic value");}};};
   loop over(shape->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};
  };
@@ -37,7 +37,7 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
  var descriptors:Paged<Descriptor>=empty<Descriptor>();var types:Map=create();var buffers:Map=create();
  loop over(entries->pages->append(entries->tail) as entriesPage:List<Entry>){loop over(entriesPage as entry:Entry){let id:Int=entry->id;
   let shape:Type=try lookup<Type>(plan->types->types,id);var descriptor:Descriptor=fixed(32,List<Int>[]);
-  branch when{shape->kind==25=>{descriptor=Descriptor{mode:3,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},shape->kind==3=>{descriptor=Descriptor{mode:0,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},
+  branch when{shape->kind==26=>{descriptor=fixed(40,List<Int>[]);},shape->kind==25=>{descriptor=Descriptor{mode:3,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},shape->kind==3=>{descriptor=Descriptor{mode:0,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},
    shape->kind==10=>{var references:List<Int>=List<Int>[32];branch when{try managed(plan->types,try argumentType(shape,0,span))=>{references=references->append(40);},else=>unit};descriptor=fixed(48,references);},
    shape->kind==12=>{descriptor=fixed(40,List<Int>[32]);},
    shape->kind==11||shape->kind==21=>{

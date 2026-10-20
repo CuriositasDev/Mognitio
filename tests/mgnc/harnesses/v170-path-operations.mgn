@@ -1,0 +1,55 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholePathMachine\{verify as pathMachine};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeStandardProof\{helper as standardProof};
+use Mgnc\Tables\{replaceItem,atList};
+use Mgnc\WholeLayout\{Layouts,Descriptor,argumentType};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\TypeData\{Type};
+use Mgnc\IntMap\{get};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"wrong path diagnostic phase: "+error->message);discard writeStdout("V170_PATH_MUTANT "+message+" ["+error->message+"]\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+
+
+
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){let other:Int=branch on right->at(index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
+let changed:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code,index:Int,item:Record):Result<Code,Diagnostic>{Result<Code,Diagnostic>::Ok(Code{records:try replaceItem<Record>(code->records,index,item),nextLabel:code->nextLabel,pending:code->pending})};
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"paths.mgn",displayPath:"paths.mgn",relativePath:"paths.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{joinPath,createDirectory};let main:Function(List<String>):Int=function(args:List<String>):Int{discard joinPath(\"a\",\"b\");discard createDirectory(\".\");0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);
+ var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
+ branch when{
+  (owner==77||owner==78)&&item->kind==3&&(item->value==136||item->value==584)&& (same(item->bytes,List<Int>[85,72,137,229,83,65,84,65,85,65,86,65,87,72,129,236])||same(item->bytes,List<Int>[72,129,196]))=>{message="path frame";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value-8,target:item->target};},
+  owner==78&&item->kind==4&&(item->value==262||item->value==258)&&same(item->bytes,List<Int>[72,184])=>{message="creation syscall set";replacement=Record{kind:item->kind,bytes:item->bytes,value:263,target:item->target};},
+  owner==78&&item->kind==4&&item->value==256&&same(item->bytes,List<Int>[73,186])=>{message="creation nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:0,target:item->target};},
+  owner==78&&item->kind==4&&item->value==511&&same(item->bytes,List<Int>[72,186])=>{message="creation mode";replacement=Record{kind:item->kind,bytes:item->bytes,value:493,target:item->target};},
+  owner==78&&item->kind==3&&item->value==256&&same(item->bytes,List<Int>[72,141,148,36])=>{message="creation stat buffer";replacement=Record{kind:item->kind,bytes:item->bytes,value:248,target:item->target};},
+  owner==78&&item->kind==3&&item->value==8&&same(item->bytes,List<Int>[72,137,131])=>{message="creation absent fd";replacement=Record{kind:item->kind,bytes:item->bytes,value:16,target:item->target};},
+  owner==78&&item->kind==3&&item->value==168&&(same(item->bytes,List<Int>[73,137,159])||same(item->bytes,List<Int>[73,137,135]))=>{message="creation resource lifetime";replacement=Record{kind:item->kind,bytes:item->bytes,value:176,target:item->target};},
+  owner==78&&item->kind==3&&item->value==16&&same(item->bytes,List<Int>[72,137,131])=>{message="creation map ownership";replacement=Record{kind:item->kind,bytes:item->bytes,value:48,target:item->target};},
+  owner==78&&item->kind==2&&item->target==61=>{message="creation cleanup";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:10};},
+  (owner==77||owner==78)&&item->kind==3&&item->value== -64&&same(item->bytes,List<Int>[72,139,149])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==3&&following->value==0&&same(following->bytes,List<Int>[73,137,151])=>{message="path root restore";replacement=Record{kind:item->kind,bytes:item->bytes,value: -72,target:item->target};},else=>unit};},
+  (owner==77||owner==78)&&item->kind==4&&same(item->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==2&&following->target==10=>{message="path allocation descriptor";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value+1,target:item->target};all=true;},else=>unit};},
+  (owner==173||owner==174)&&item->kind==4&&(item->value==6||item->value==63)=>{message="path root bitmap";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value-1,target:item->target};all=true;},
+  (owner==77||owner==78)&&item->kind==5&&(item->target==173||item->target==174)=>{message="path root selection";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:172};all=true;},
+  owner==84&&item->kind==4&&item->value==34&&same(item->bytes,List<Int>[73,186])=>{message="directory mapping flags";replacement=Record{kind:item->kind,bytes:item->bytes,value:2,target:item->target};},
+  owner==84&&item->kind==4&&item->value==9&&same(item->bytes,List<Int>[72,184])=>{message="directory mapping syscall";replacement=Record{kind:item->kind,bytes:item->bytes,value:11,target:item->target};},else=>unit};
+ branch when{message!=""=>{let altered:Code=try changed(code,ordinal,replacement);try reject(branch when{all=>machine(plan,altered),else=>pathMachine(plan,altered)},message);seen=seen+1;},else=>unit};ordinal=ordinal+1;
+ };};try require(seen>=30,span,"path mutation count");
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard=="joinPath"||item->standard=="createDirectory"=>{let altered:Global=Global{symbol:item->symbol,declaration:item->declaration,valueType:1,standard:item->standard};branch on standardProof(plan,altered){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false,span,"accepted path signature mutation");},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{try reject(Result<Unit,Diagnostic>::Err(error),"path Function signature");}};},else=>unit};};};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_PATH_IR_OK valid=1\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

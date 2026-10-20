@@ -2,15 +2,15 @@
 
 Mognitio is a typed language with immutable data, persistent lists, explicit
 contracts and generic templates, and first-class functions with snapshot captures.
-Version 1.5.0 adds complete project semantics to the experimental
-[mgnc compiler](compiler/mgnc/README.md). Check and build share one semantic
-result, covering declarations, nominal and generic types, constraints, captures,
-and every required body. Build selects the inherited scalar native subset.
-The compiler is built explicitly from source with the accepted, frozen 1.5 Lisp
-seed. Debian packages, APT installations and offline bundles contain the normal
-toolchain; mgnc remains source-built and does not replace its backend.
-The [1.5 acceptance and release record](verification/v1.5.0-release.md) links
-functional, independence and formal performance evidence.
+Version 1.6.0 adds complete typed lowering and a managed native backend to the
+experimental [mgnc compiler](compiler/mgnc/README.md). The closed native profile
+supports aggregate values, concrete templates, closures, persistent lists, text
+I/O and deterministic module initialization. Independent verification and formal
+performance acceptance cover the complete compiler corpus and required workloads.
+Build mgnc explicitly with the accepted, frozen S10 Lisp seed. Debian packages,
+APT installations and offline bundles contain the normal toolchain; mgnc remains
+source-built and does not replace its backend. See the
+[1.6 acceptance and release record](verification/v1.6.0-release.md).
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -29,10 +29,10 @@ for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runt
 a host SBCL installation is required only for source development.
 The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=mognitio.mognitio)
 is versioned independently. Use a client version whose compatibility table
-explicitly includes the 1.5.0 server;
+explicitly includes the 1.6.0 server;
 a compatible extension update is a separate project.
 
-## Version 1.5 capabilities
+## Inherited version 1.5 capabilities
 
 The normal toolchain adds explicit
 `Std\Io\{inspectPath,FileIdentity,PathInfo,PathInfoError}` imports.
@@ -52,11 +52,11 @@ budgets and all version 1.5 implementation stages are accepted.
 
 - [Examples](examples/): executable projects, including [multiple modules](examples/modules/).
 - [Test coverage](tests/README.md): current project cases and internal regression oracles.
-- [Release validation](verification/v1.5.0-release.md): accepted 1.5.0 identities and distribution gates.
+- [Release validation](verification/v1.6.0-release.md): accepted 1.6.0 identities and distribution gates.
 - [Language tests](examples/testing/README.md): `@test`, `assert`, and `mgn test`.
 - [File converter](examples/file-converter/README.md): arguments and text I/O.
 - [Directory converter](examples/directory-converter/README.md): explicit tree traversal.
-- [Implementation verification](verification/v1.5.0-review-flow.md): corrected compiler evidence and limits.
+- [Implementation verification](verification/v1.6.0-final-acceptance.md): complete compiler evidence and limits.
 - [Verification commands](verification/README.md): reproduce the checks.
 - [Toolchain distribution](packaging/README.md): pinned builds, APT staging, and offline installation.
 - [Compatibility policy](COMPATIBILITY.md): backward compatibility within a major version.

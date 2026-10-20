@@ -1,0 +1,25 @@
+namespace Mgnc\WholePublication;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\TypeData\{Type,Member};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\IntMap\{get};
+use Mgnc\WholePubPrograms\{emit as program};
+use Mgnc\WholePubFrame\{frame};
+use Mgnc\WholeFrame\{begin,acceptArguments};
+use Mgnc\WholeABI\{enter};
+use Mgnc\Machine\{Code,label,field,raw};
+use Mgnc\WholeX64\{mov,load,store,immediate,constant};
+let descriptor:Function(Native,Int):Result<Int,Diagnostic>=function(plan:Native,id:Int):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,Span{start:0,end:0,line:1,column:1},"publication descriptor");Result<Int,Diagnostic>::Ok(found)};
+let operation:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let signature:Type=try lookup<Type>(plan->concrete->types->types,global->valueType);let resultId:Int=try argumentType(signature,3,span);let result:Type=try lookup<Type>(plan->concrete->types->types,resultId);let errorId:Int=try argumentType(result,1,span);let error:Type=try lookup<Type>(plan->concrete->types->types,errorId);var descriptors:List<Int>=List<Int>[try descriptor(plan,try argumentType(signature,1,span))];loop over(List<Int>[0,2,3] as index:Int){let member:Member=try atList<Member>(error->members,index);descriptors=descriptors->append(try descriptor(plan,try present(member->value,span,"publication enum type")));};descriptors=descriptors->append(try descriptor(plan,errorId))->append(try descriptor(plan,resultId));
+ var code:Code=try begin(label(initial,75),frame,List<Int>[0,1,6],List<Int>[],171);code=acceptArguments(code,3);code=immediate(code,0,0);code=mov(code,7,4);code=immediate(code,1,192);code=raw(code,List<Int>[243,72,171]);program(code,75,descriptors)
+};
+let rawHelper:Function(Code,Int,Int):Result<Code,Diagnostic>=function(initial:Code,owner:Int,scratch:Int):Result<Code,Diagnostic>{
+ var code:Code=label(initial,owner);branch when{scratch>0=>{code=enter(code);code=mov(code,12,7);code=constant(code,5,4,scratch);code=immediate(code,0,0);code=mov(code,7,4);code=immediate(code,1,scratch/8);code=raw(code,List<Int>[243,72,171]);},else=>unit};program(code,owner,List<Int>[])
+};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ var code:Code=initial;var selected:Bool=false;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{global->standard=="publishFile"=>{try require(!selected,Span{start:0,end:0,line:1,column:1},"duplicate publication wrapper");selected=true;code=try operation(code,plan,global);},else=>unit};};};code=try rawHelper(code,80,512);branch when{selected=>{code=try rawHelper(code,81,5120);code=try rawHelper(code,82,0);},else=>unit};code=label(code,171);code=field(code,4,7);code=field(code,4,127);Result<Code,Diagnostic>::Ok(code)
+};

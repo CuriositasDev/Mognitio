@@ -1,4 +1,4 @@
 namespace Mgnc\WholeStandard;
 public let entry:Function(String):Int=function(name:String):Int{
- branch when{name=="readTextFile"=>50,name=="writeTextFile"=>51,name=="readStdin"=>52,name=="writeStdout"=>53,name=="writeStderr"=>54,name=="bytesFromInts"=>73,name=="bytesFromBits"=>74,else=>-1}
+ branch when{name=="readTextFile"=>50,name=="writeTextFile"=>51,name=="readStdin"=>52,name=="writeStdout"=>53,name=="writeStderr"=>54,name=="bytesFromInts"=>73,name=="bytesFromBits"=>74,name=="publishFile"=>75,else=>-1}
 };

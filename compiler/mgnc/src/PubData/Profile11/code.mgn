@@ -1,0 +1,8 @@
+namespace Mgnc\PubData\Profile11;
+use Mgnc\WholePubStep\{Step};
+// Adapted publication instructions; regenerate from the checked legacy adapter.
+public let rows:Function():List<Step>=function():List<Step>{List<Step>[
+ Step{op:6,a:2,b:0,c:0,d:0},
+ Step{op:0,a:28,b:0,c:0,d:0},
+ Step{op:15,a:0,b:0,c:0,d:0}
+]};

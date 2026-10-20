@@ -1,0 +1,28 @@
+namespace Mgnc\WholePubStep;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+use Mgnc\Machine\{Code,label,jump,raw,fresh};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteLoad,byteStore,shift,unary};
+use Mgnc\WholeFrame\{end as frameEnd};
+use Mgnc\WholePubFrame\{frame};
+use Mgnc\WholeABI\{leave};
+// Source instruction rows retain registers, displacements and labels explicitly.
+// Opcodes 16..19 construct only the typed publication result after cleanup.
+public type Step=product{op:Int;a:Int;b:Int;c:Int;d:Int;};
+public let emit:Function(Code,List<Step>,Int,Int,List<Int>,Int):Result<Code,Diagnostic>=function(initial:Code,steps:List<Step>,base:Int,owner:Int,descriptors:List<Int>,scratch:Int):Result<Code,Diagnostic>{
+ var code:Code=initial;let span:Span=Span{start:0,end:0,line:1,column:1};
+ loop over(steps as row:Step){
+  branch when{row->op==0=>{code=label(code,base+row->a);},row->op==1=>{code=jump(code,branch when{row->a==233=>List<Int>[233],else=>List<Int>[15,row->a]},branch when{row->b<0=>-row->b,else=>base+row->b});},
+  row->op==2=>{code=mov(code,row->a,row->b);},row->op==3=>{code=load(code,row->a,row->b,row->c);},row->op==4=>{code=store(code,row->a,row->b,row->c);},row->op==5=>{code=address(code,row->a,row->b,row->c);},row->op==6=>{code=immediate(code,row->a,row->b);},row->op==7=>{code=alu(code,row->a,row->b,row->c);},row->op==8=>{code=constant(code,row->a,row->b,row->c);},row->op==9=>{code=byteLoad(code,row->a,row->b,row->c);},row->op==10=>{code=byteStore(code,row->a,row->b,row->c);},row->op==11=>{code=shift(code,row->a,row->b,row->c);},
+  row->op==12=>{code=immediate(code,0,row->a);code=raw(code,List<Int>[15,5]);branch when{row->c==1=>{code=constant(code,7,0,0);branch when{owner==80=>{let ready:Int=code->nextLabel;code=fresh(code,1);code=jump(code,List<Int>[15,142],ready);code=immediate(code,0,1);code=store(code,5,-88,0);code=immediate(code,0,-5);code=label(code,ready);},else=>{code=jump(code,List<Int>[15,143],2);}};},else=>unit};},
+  row->op==13=>{
+   branch when{row->a==10=>{try require(owner==75,span,"publication private allocation owner");code=load(code,7,4,0);code=constant(code,0,7,24);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,try atList<Int>(descriptors,0));},row->a==60||row->a==80||row->a==81=>{code=load(code,7,4,0);},else=>{try require(row->a==82,span,"publication helper call");}};
+   code=jump(code,List<Int>[232],row->a);branch when{row->a==10=>{code=mov(code,2,0);},else=>unit};
+  },row->op==14=>{code=unary(code,4,row->a);},row->op==15=>{branch when{owner==75=>{code=frameEnd(code,frame);},scratch>0=>{code=constant(code,0,4,scratch);code=leave(code);},else=>{code=raw(code,List<Int>[195]);}};},
+  row->op==16=>{try require(owner==75,span,"publication enum owner");code=load(code,13,5,row->b);code=constant(code,7,13,row->d);code=jump(code,List<Int>[15,131],2);code=immediate(code,7,40);code=immediate(code,6,try atList<Int>(descriptors,row->a));code=jump(code,List<Int>[232],10);code=store(code,0,24,13);code=immediate(code,2,0);code=store(code,0,32,2);code=store(code,5,row->c,0);},
+  row->op==17=>{try require(owner==75,span,"publication error owner");code=immediate(code,7,56);code=immediate(code,6,try atList<Int>(descriptors,4));code=jump(code,List<Int>[232],10);var ordinal:Int=0;loop over(List<Int>[-88,-72,-96,-104] as slot:Int){code=load(code,2,5,slot);code=store(code,0,24+ordinal*8,2);ordinal=ordinal+1;};code=store(code,5,-112,0);code=immediate(code,13,1);},
+  row->op==18=>{try require(owner==75,span,"publication success owner");code=immediate(code,0,0);code=store(code,5,-112,0);code=immediate(code,13,0);},
+  row->op==19=>{try require(owner==75,span,"publication Result owner");code=immediate(code,7,40);code=immediate(code,6,try atList<Int>(descriptors,5));code=jump(code,List<Int>[232],10);code=store(code,0,24,13);code=load(code,2,5,-112);code=store(code,0,32,2);},else=>{try require(false,span,"publication instruction opcode");}};
+ };Result<Code,Diagnostic>::Ok(code)
+};

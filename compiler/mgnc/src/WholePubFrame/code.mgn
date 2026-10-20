@@ -1,0 +1,5 @@
+namespace Mgnc\WholePubFrame;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{empty};
+use Mgnc\WholeFrameData\{Frame,Point};
+public let frame:Frame=Frame{slots:7,outgoing:192,extent:1664,entry:List<Bits<64>>[Bits<64>{127}],points:empty<Point>()};

@@ -1,0 +1,20 @@
+namespace Mgnc\WholePublicationProof;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\TypeData\{Store,Type,Member};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\Tables\{atList};
+use Mgnc\TypeOps\{parentEqual};
+let nominal:Function(Store,Int,String,Int,Span):Result<Type,Diagnostic>=function(store:Store,id:Int,name:String,kind:Int,span:Span):Result<Type,Diagnostic>{
+ let value:Type=try lookup<Type>(store->types,id);let owner:Declaration=try lookup<Declaration>(store->headers->declarations,try present(value->owner,span,"publication nominal owner"));let module:Module=try lookup<Module>(store->headers->modules,owner->file);try require(value->kind==kind&&value->arguments->length()==0&&module->standard&&module->nameSpace=="Std\\Binary"&&owner->name==name,span,"publication nominal identity");Result<Type,Diagnostic>::Ok(value)
+};
+let enumeration:Function(Store,Int,String,List<String>,Span):Result<Unit,Diagnostic>=function(store:Store,id:Int,name:String,names:List<String>,span:Span):Result<Unit,Diagnostic>{
+ let value:Type=try nominal(store,id,name,21,span);try require(value->members->length()==names->length(),span,"publication enum count");var ordinal:Int=0;loop over(value->members as member:Member){try require(member->name==(try atList<String>(names,ordinal))&&parentEqual(member->value,Parent::None),span,"publication enum ordinals");ordinal=ordinal+1;};Result<Unit,Diagnostic>::Ok(unit)
+};
+public let signature:Function(Native,Global):Result<Int,Diagnostic>=function(plan:Native,value:Global):Result<Int,Diagnostic>{
+ let store:Store=plan->concrete->types;let span:Span=Span{start:0,end:0,line:1,column:1};let functionType:Type=try lookup<Type>(store->types,value->valueType);try require(functionType->kind==12&&functionType->arguments->length()==4&&(try argumentType(functionType,0,span))==3,span,"publication Function signature");discard try nominal(store,try argumentType(functionType,1,span),"Bytes",25,span);try enumeration(store,try argumentType(functionType,2,span),"BinaryFileMode",List<String>["Data","Executable"],span);
+ let result:Type=try lookup<Type>(store->types,try argumentType(functionType,3,span));try require(result->kind==11&&result->arguments->length()==2&&(try argumentType(result,0,span))==0,span,"publication Unit Result");let error:Type=try nominal(store,try argumentType(result,1,span),"BinaryOutputError",20,span);try require(error->members->length()==4,span,"publication error fields");var ordinal:Int=0;loop over(error->members as member:Member){try require(member->name==(try atList<String>(List<String>["kind","subject","phase","publication"],ordinal)),span,"publication error field names");let id:Int=try present(member->value,span,"publication error field type");branch when{ordinal==0=>{try enumeration(store,id,"BinaryOutputErrorKind",List<String>["InvalidPath","AlreadyExists","NotFound","PermissionDenied","UnsupportedTarget","ResourceExhausted","Other"],span);},ordinal==1=>{try require(id==3,span,"publication subject String");},ordinal==2=>{try enumeration(store,id,"BinaryOutputPhase",List<String>["Input","Target","Body","Publish","Cleanup"],span);},else=>{try enumeration(store,id,"BinaryPublicationState",List<String>["NotPublished","Published","Unknown"],span);}};ordinal=ordinal+1;};Result<Int,Diagnostic>::Ok(75)
+};

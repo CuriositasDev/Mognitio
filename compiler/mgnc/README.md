@@ -2,7 +2,8 @@
 
 This source project extends the accepted Mognitio 1.6 experimental compiler
 toward 1.7. The current increments add native assertions, normal-build `@test`
-metadata, and named witness checking with typed whole IR; complete 1.7
+metadata, named witness checking with typed whole IR, and fixed-width scalar
+arithmetic; complete 1.7
 implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
@@ -65,6 +66,13 @@ List<String> argument values and returns Int. The generated runtime manages
 reachable values and initializes entry-reachable modules once in dependency order.
 Excluded standard identities and semantically valid features outside the native
 profile report unsupported, including in unused bodies.
+
+Fixed-width integers and Bits use raw scalar words, including the unsigned
+upper half at width 64. Checked arithmetic preserves width and signedness;
+bitwise operations, length and integer/bit reinterpretation preserve canonical
+words across calls, captures and containers. Signed/Unsigned marker values keep
+their ordinary Product representation. Numeric conversion, checked shift/at,
+Bytes and filesystem additions remain gated until their runtime paths are ready.
 
 Assertions require Bool on normally completing operands and preserve non-completing
 control transfers. A failed assertion exits 5 with the original statement location;

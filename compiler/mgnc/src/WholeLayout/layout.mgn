@@ -1,4 +1,5 @@
 namespace Mgnc\WholeLayout;
+use Mgnc\RepresentationInfo\{describe};
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\TypeData\{Store,Type,Argument,Member,ValueTerm};
@@ -13,7 +14,7 @@ use Mgnc\IntMap\{Map,create,get,put};
 // All offsets are bytes from the object base. Modes: fixed, variant, buffer.
 public type Descriptor=product{mode:Int;size:Int;references:List<Int>;variants:List<List<Int>>;elementManaged:Bool;};
 public type Layouts=product{descriptors:Paged<Descriptor>;types:Map;environments:Paged<Int>;buffers:Map;};
-public let managed:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{let shape:Type=try lookup<Type>(store->types,id);Result<Bool,Diagnostic>::Ok(shape->kind!=0&&shape->kind!=1&&shape->kind!=2)};
+public let managed:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{Result<Bool,Diagnostic>::Ok((try describe(store,id))->reference)};
 public let argumentType:Function(Type,Int,Span):Result<Int,Diagnostic>=function(shape:Type,index:Int,span:Span):Result<Int,Diagnostic>{
  branch on try atList<Argument>(shape->arguments,index){Argument::Type(value:Int)=>Result<Int,Diagnostic>::Ok(value),Argument::Value(term:ValueTerm)=>{try require(false,span,"layout type argument");Result<Int,Diagnostic>::Ok(0)}}
 };
@@ -24,7 +25,7 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
   loop over(item->body->slots->pages->append(item->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){pending=push<Int>(pending,slot->valueType);};};
   loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){loop over(op->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{pending=push<Int>(pending,id);},Argument::Value(term:ValueTerm)=>unit};};};};};
  };};
- var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let shape:Type=try lookup<Type>(plan->types->types,id);try require(shape->kind<22,span,"layout symbolic or unsupported type");
+ var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let shape:Type=try lookup<Type>(plan->types->types,id);try require(shape->kind<22||shape->kind==23||shape->kind==24||shape->kind==27||shape->kind==28,span,"layout symbolic or unsupported type");
   loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"layout symbolic value");}};};
   loop over(shape->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};
  };
@@ -44,7 +45,7 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
     branch when{shape->kind==11=>{var ordinal:Int=0;loop while(ordinal<2){variants=variants->append(branch when{try managed(plan->types,try argumentType(shape,ordinal,span))=>List<Int>[32],else=>List<Int>[]});ordinal=ordinal+1;};},else=>{
      loop over(shape->members as member:Member){variants=variants->append(branch on member->value{Parent::None=>List<Int>[],Parent::Some(typeId:Int)=>branch when{try managed(plan->types,typeId)=>List<Int>[32],else=>List<Int>[]}});};
     }};descriptor=Descriptor{mode:1,size:40,references:List<Int>[],variants:variants,elementManaged:false};
-   },shape->kind==4||shape->kind==5||shape->kind==20=>{
+   },shape->kind==4||shape->kind==5||shape->kind==20||shape->kind==27||shape->kind==28=>{
     var references:List<Int>=List<Int>[];var ordinal:Int=0;loop over(shape->members as member:Member){let typeId:Int=try present(member->value,span,"product field type");branch when{try managed(plan->types,typeId)=>{references=references->append(24+ordinal*8);},else=>unit};ordinal=ordinal+1;};descriptor=fixed(24+ordinal*8,references);
    },else=>{try require(false,span,"unknown native layout kind");}};
   types=try put(types,id,descriptors->count);descriptors=push<Descriptor>(descriptors,descriptor);

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeCollections;
+use Mgnc\WholeLayout\{managed};
 use Mgnc\Data\{Diagnostic,lookup,problem};
 use Mgnc\WholeNativeData\{Native};
 use Mgnc\WholeIR\{Body,Operation};
@@ -35,7 +36,7 @@ public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>
   loop over(op->inputs as slot:Int){code=load(code,0,5,offset(slot));code=store(code,4,position*8,0);position=position+1;};code=immediate(code,0,descriptor);code=store(code,4,position*8,0);position=position+1;
   let errorDescriptor:Int=try get(plan->layouts->types,branch when{name=="method:at"=>4,else=>5});try require(errorDescriptor>=0,op->origin->span,"native bounds error descriptor");code=immediate(code,0,errorDescriptor);code=store(code,4,position*8,0);position=position+1;
   branch when{name=="method:at"=>{
-   let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,op->origin->span,"native list element");0}};let elementKind:Int=(try lookup<Type>(plan->concrete->types->types,element))->kind;code=immediate(code,0,branch when{elementKind>=3=>1,else=>0});
+   let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,op->origin->span,"native list element");0}};let elementKind:Int=(try lookup<Type>(plan->concrete->types->types,element))->kind;code=immediate(code,0,branch when{try managed(plan->concrete->types,element)=>1,else=>0});
   },else=>{code=immediate(code,0,try get(plan->layouts->types,3));}};code=store(code,4,position*8,0);code=jump(code,List<Int>[232],branch when{name=="method:at"=>41,else=>42});
  },
  name=="iterator-init"=>{

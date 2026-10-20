@@ -1,0 +1,16 @@
+namespace Mgnc\NumericShape;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Store,Type,Argument,ValueTerm};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+public type Scalar=product{width:Int;signed:Bool;bits:Bool;};
+public let read:Function(Store,Int,Span):Result<Scalar,Diagnostic>=function(store:Store,id:Int,span:Span):Result<Scalar,Diagnostic>{
+ let shape:Type=try lookup<Type>(store->types,id);branch when{shape->kind==1=>{return Result<Scalar,Diagnostic>::Ok(Scalar{width:64,signed:true,bits:false});},else=>unit};
+ try require(shape->kind==23||shape->kind==24,span,"numeric scalar family");
+ let term:ValueTerm=branch on try atList<Argument>(shape->arguments,0){Argument::Value(value:ValueTerm)=>value,Argument::Type(value:Int)=>{try require(false,span,"numeric width argument");return Result<Scalar,Diagnostic>::Ok(Scalar{width:0,signed:false,bits:false});}};
+ branch on term->parameter{Parent::None=>unit,Parent::Some(ordinal:Int)=>{try require(false,span,"symbolic numeric width");}};
+ try require(term->value>=1&&term->value<=64,span,"numeric width range");var signed:Bool=false;
+ branch when{shape->kind==23=>{let sign:Int=branch on try atList<Argument>(shape->arguments,1){Argument::Type(value:Int)=>value,Argument::Value(value:ValueTerm)=>{try require(false,span,"numeric sign argument");0}};let kind:Int=(try lookup<Type>(store->types,sign))->kind;try require(kind==27||kind==28,span,"numeric signedness");signed=kind==27;},else=>unit};
+ Result<Scalar,Diagnostic>::Ok(Scalar{width:term->value,signed:signed,bits:shape->kind==24})
+};

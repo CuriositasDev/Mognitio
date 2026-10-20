@@ -1,0 +1,15 @@
+namespace Mgnc\WholeNumericProof;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\MathValue\{Integer};
+use Mgnc\TextUtil\{code,scalar};
+use Mgnc\WholeChecks\{require};
+// Base-256 long division is independent of the emitter's fixed-integer path.
+public let bytes:Function(Integer,Span):Result<List<Int>,Diagnostic>=function(value:Integer,span:Span):Result<List<Int>,Diagnostic>{
+ var digits:String=value->digits;var result:List<Int>=List<Int>[];var ordinal:Int=0;
+ loop while(ordinal<8){var quotient:String="";var remainder:Int=0;var leading:Bool=true;
+  loop over(digits->scalars() as digit:String){let decimal:Int=code(digit)-48;try require(decimal>=0&&decimal<=9,span,"numeric proof decimal digit");let next:Int=remainder*10+decimal;let part:Int=next/256;remainder=next%256;branch when{part!=0||!leading=>{quotient=quotient+scalar(48+part);leading=false;},else=>unit};};
+  digits=branch when{quotient==""=>"0",else=>quotient};result=result->append(remainder);ordinal=ordinal+1;
+ };try require(digits=="0",span,"numeric proof machine-word range");
+ branch when{value->negative=>{var changed:List<Int>=List<Int>[];var carry:Int=1;loop over(result as octet:Int){let next:Int=255-octet+carry;changed=changed->append(next%256);carry=next/256;};result=changed;},else=>unit};
+ Result<List<Int>,Diagnostic>::Ok(result)
+};

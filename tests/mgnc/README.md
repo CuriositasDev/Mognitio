@@ -240,3 +240,14 @@ report unsupported from Build and preserve an existing output.
 Run v170-contract-ir.py --seed SEED --output NEW_DIRECTORY to reject independent
 evidence owner, pair, method-order, package, dispatch and capture mutations.
 These checks establish the frontend increment, not native dispatch acceptance.
+
+## Fixed-width scalar increment
+
+Run v170-numeric-scalars.py --compiler COMPILER --output NEW_DIRECTORY for all
+widths 1..64 and both signednesses, mathematical arithmetic/comparison oracles,
+fixed instruction words, runtime failures, generic instances, direct scalar
+capture and container retention under stress collection. Checked-result numeric
+methods still report unsupported from Build and preserve existing outputs.
+Run v170-numeric-ir.py --seed SEED --output NEW_DIRECTORY to reject scalar and
+marker root misclassification, invalid descriptors and literal-word mutations.
+The encoder and its machine verifier use independent numerical algorithms.

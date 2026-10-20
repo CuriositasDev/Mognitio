@@ -69,6 +69,9 @@ try:
      elif rule["action"]=="stat_words":
       assert event["call"]==262 and signed(registers.rax)==0;raw=struct.pack("<QQ",rule["dev"],rule["inode"]);assert os.pwrite(mem,raw,event["arguments"][2])==16;event["controlled_identity_words"]=[rule["dev"],rule["inode"]]
       if rule.get("stress"):assert os.pwrite(mem,struct.pack("<Q",1),registers.r15+152)==8
+     elif rule["action"]=="unlink_after_stat":
+      assert event["call"]==262 and signed(registers.rax)==0;Path(event["path"]).unlink();event["removed_observed_path"]=event["path"]
+
 
      continue
 

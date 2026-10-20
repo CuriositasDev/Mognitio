@@ -19,7 +19,7 @@ use Mgnc\TypeData\{Type};
 use Mgnc\IntMap\{get};
 use Std\Io\{writeStdout};
 let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+message,span,"wrong binary detector: "+error->message);discard writeStdout("V170_INSPECTION_MUTANT "+message+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"wrong inspection diagnostic phase: "+error->message);discard writeStdout("V170_INSPECTION_MUTANT "+message+" ["+error->message+"]\n");}};Result<Unit,Diagnostic>::Ok(unit)
 };
 
 
@@ -40,6 +40,7 @@ let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
   owner==76&&item->kind==3&&item->value==8&&same(item->bytes,List<Int>[72,137,131])=>{message="inspection absent file descriptor";replacement=Record{kind:item->kind,bytes:item->bytes,value:16,target:item->target};},
   owner==76&&item->kind==3&&item->value==168&&same(item->bytes,List<Int>[73,137,159])=>{message="inspection map registration";replacement=Record{kind:item->kind,bytes:item->bytes,value:176,target:item->target};},
   owner==76&&item->kind==3&&item->value==168&&same(item->bytes,List<Int>[73,137,135])=>{message="inspection result allocates while owning resources";replacement=Record{kind:item->kind,bytes:item->bytes,value:160,target:item->target};},
+  owner==76&&item->kind==3&&item->value== -64&&same(item->bytes,List<Int>[72,139,149])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==3&&following->value==0&&same(following->bytes,List<Int>[73,137,151])=>{message="inspection root frame restore";replacement=Record{kind:item->kind,bytes:item->bytes,value: -72,target:item->target};},else=>unit};},
   owner==76&&item->kind==2&&item->target==61=>{message="inspection result allocates while owning resources";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:10};},
   owner==76&&item->kind==3&&item->value==16&&same(item->bytes,List<Int>[72,137,131])=>{message="inspection map registration";replacement=Record{kind:item->kind,bytes:item->bytes,value:48,target:item->target};},
   owner==76&&item->kind==4&&same(item->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==2&&following->target==10=>{message="binary Function allocation descriptors";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value+1,target:item->target};all=true;},else=>unit};},

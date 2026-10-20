@@ -12,7 +12,7 @@ use Mgnc\WholeFrame\{begin,end,acceptArguments};
 use Mgnc\WholeABI\{resources};
 use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteLoad,byteStore};
-let frame:Frame=Frame{slots:4,outgoing:64,extent:624,entry:List<Bits<64>>[Bits<64>{15}],points:empty<Point>()};
+let frame:Frame=Frame{slots:4,outgoing:64,extent:608,entry:List<Bits<64>>[Bits<64>{15}],points:empty<Point>()};
 let descriptor:Function(Native,Int):Result<Int,Diagnostic>=function(plan:Native,id:Int):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,Span{start:0,end:0,line:1,column:1},"inspection descriptor");Result<Int,Diagnostic>::Ok(found)};
 let allocate:Function(Code,Int,Int):Code=function(initial:Code,size:Int,desc:Int):Code{jump(immediate(immediate(initial,7,size),6,desc),List<Int>[232],10)};
 let operation:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{

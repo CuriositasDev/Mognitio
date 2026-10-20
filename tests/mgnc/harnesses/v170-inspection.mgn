@@ -32,7 +32,7 @@ let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
  var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
  branch when{
-  owner==76&&item->kind==3&&item->value==584=>{message="inspection frame and callee saves";replacement=Record{kind:item->kind,bytes:item->bytes,value:576,target:item->target};},
+  owner==76&&item->kind==3&&item->value==568=>{message="inspection frame and callee saves";replacement=Record{kind:item->kind,bytes:item->bytes,value:560,target:item->target};},
   owner==76&&item->kind==4&&item->value==262&&same(item->bytes,List<Int>[72,184])=>{message="inspection syscall set";replacement=Record{kind:item->kind,bytes:item->bytes,value:263,target:item->target};},
   owner==76&&item->kind==4&&item->value==256&&same(item->bytes,List<Int>[73,186])=>{message="inspection stat ABI and nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:0,target:item->target};},
   owner==76&&item->kind==3&&item->value==256&&same(item->bytes,List<Int>[72,141,148,36])=>{message="inspection stat ABI and nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:248,target:item->target};},

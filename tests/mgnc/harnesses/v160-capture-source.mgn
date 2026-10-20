@@ -1,0 +1,73 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholeIR\{Project,Body,Block,Operation,Slot};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeConcrete\{Plan,build};
+use Mgnc\WholeClosures\{Closures,build as captures};
+use Mgnc\WholeClosureCheck\{verify as checkCaptures};
+use Mgnc\WholeDataflow\{verify as checkFlow};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let withProject:Function(Project,Paged<Body>):Project=function(original:Project,bodies:Paged<Body>):Project{Project{types:original->types,declarations:original->declarations,bodies:bodies,functions:original->functions,entry:original->entry,moduleOrder:original->moduleOrder,obligations:original->obligations}};
+let withBody:Function(Body,Paged<Slot>,Paged<Block>):Body=function(original:Body,slots:Paged<Slot>,blocks:Paged<Block>):Body{Body{declaration:original->declaration,functionOwner:original->functionOwner,root:original->root,resultType:original->resultType,slots:slots,blocks:blocks,parameters:original->parameters,captures:original->captures,entry:original->entry,occurrences:original->occurrences,tries:original->tries}};
+let withInputs:Function(Operation,List<Int>):Operation=function(original:Operation,inputs:List<Int>):Operation{Operation{code:original->code,output:original->output,inputs:inputs,unavailable:original->unavailable,symbol:original->symbol,target:original->target,arguments:original->arguments,mapping:original->mapping,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+let globalLoad:Function(Operation,Int,Int):Operation=function(original:Operation,symbol:Int,output:Int):Operation{Operation{code:"global-load",output:Parent::Some(output),inputs:List<Int>[],unavailable:original->unavailable,symbol:Parent::Some(symbol),target:original->target,arguments:original->arguments,mapping:original->mapping,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
+
+let mutate:Function(Project,Bool):Result<Project,Diagnostic>=function(project:Project,nested:Bool):Result<Project,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var bodyId:Int=0;
+ loop over(project->bodies->pages->append(project->bodies->tail) as bodies:List<Body>){loop over(bodies as body:Body){
+  var blockId:Int=0;
+  loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   var position:Int=0;
+   loop over(block->operations as op:Operation){
+    branch when{((!nested&&op->code=="copy")||(nested&&op->code=="function"))&&op->inputs->length()>0=>{
+     let input:Int=try atList<Int>(op->inputs,0);let slot:Slot=try lookup<Slot>(body->slots,input);
+     branch when{slot->kind==3=>{
+      let symbol:Int=try present(slot->symbol,op->origin->span,"mutation capture symbol");var updated:Paged<Slot>=body->slots;
+      var operations:List<Operation>=List<Operation>[];var ordinal:Int=0;
+      loop over(block->operations as current:Operation){
+       branch when{ordinal==position=>{
+        branch when{nested=>{
+         let added:Int=updated->count;updated=push<Slot>(updated,Slot{valueType:slot->valueType,kind:0,symbol:Parent::None});
+         operations=operations->append(globalLoad(op,symbol,added));
+         var inputs:List<Int>=List<Int>[];var at:Int=0;loop over(op->inputs as value:Int){inputs=inputs->append(branch when{at==0=>added,else=>value});at=at+1;};
+         operations=operations->append(withInputs(op,inputs));
+        },else=>{operations=operations->append(globalLoad(op,symbol,try present(op->output,span,"mutation destination")));}};
+       },else=>{operations=operations->append(current);}};ordinal=ordinal+1;
+      };
+      let changed:Body=withBody(body,updated,try replaceItem<Block>(body->blocks,blockId,Block{operations:operations,terminator:block->terminator}));
+      // Both substitutions preserve initialized, same-typed dataflow.
+      try checkFlow(changed);
+      return Result<Project,Diagnostic>::Ok(withProject(project,try replaceItem<Body>(project->bodies,bodyId,changed)));
+     },else=>unit};
+    },else=>unit};position=position+1;
+   };blockId=blockId+1;
+  };};bodyId=bodyId+1;
+ };};
+ Result<Project,Diagnostic>::Err(problem("internal",span,"capture mutation site missing"))
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ let source:SourceUnit=SourceUnit{path:"capture.mgn",displayPath:"capture.mgn",relativePath:"capture.mgn",expectedNamespace:"",text:"namespace App;\nvar value:Int=1;\nlet maker:Function():Function():Int=function():Function():Int{function():Int{value}};\nlet main:Function(List<String>):Int=function(args:List<String>):Int{maker()()-1};\n"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let original:Project=try lower(semantic);try verify(semantic,original);
+ loop over(List<Bool>[false,true] as nested:Bool){
+  let changed:Project=try mutate(original,nested);
+  let plan:Plan=try build(semantic,changed);let annotation:Closures=try captures(plan);
+  // Rebuilding annotations from the corrupted inputs cannot legitimize them.
+  try checkCaptures(plan,annotation);
+  branch on verify(semantic,changed){
+   Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted capture-to-global substitution");},
+   Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{
+    try require(error->phase=="internal"&&error->message=="whole IR: global access crossed source function boundary",span,"wrong capture source detector");
+    discard writeStdout("V160_CAPTURE_SOURCE_REJECT "+branch when{nested=>"nested",else=>"direct"}+" dataflow=valid annotations=consistent\n");
+   }
+  };
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V160_CAPTURE_SOURCE_OK valid=1 rejected=2\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

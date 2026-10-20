@@ -9,7 +9,6 @@ compiler=a.compiler
 if compiler is None:
  assert a.seed,"--compiler or --seed is required"
  project=a.output/"compiler";shutil.copytree(ROOT/"compiler/mgnc",project)
- shutil.copyfile(HERE/"harnesses/v160-native-driver.mgn",project/"src/Driver/driver.mgn")
  compiler=a.output/"a"
  r=subprocess.run([a.seed,"build",project/"mognitio.toml","-o",compiler],capture_output=True,timeout=900)
  assert (r.returncode,r.stdout,r.stderr)==(0,b"",b""),(r.returncode,r.stdout,r.stderr)

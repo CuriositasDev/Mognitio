@@ -25,7 +25,7 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--output",type=Path,required=True)
     parser.add_argument("--compiler",type=Path)
-    parser.add_argument("--mode",choices=["check","profile","build"],default="build")
+    parser.add_argument("--mode",choices=["check","lower","profile","build"],default="build")
     args=parser.parse_args()
     args.output.mkdir(parents=True,exist_ok=False)
     identity=hashlib.sha256(json.dumps(CASES,sort_keys=True,separators=(",",":")).encode()).hexdigest()
@@ -38,7 +38,7 @@ def main():
             output=args.output/(name+".elf");cmd=[str(args.compiler),"check" if args.mode=="profile" else args.mode,str(path)]
             if args.mode=="build":cmd+=["-o",str(output)]
             result=subprocess.run(cmd,capture_output=True,timeout=120)
-            expected=0 if args.mode=="check" or fixture["native"] else 1
+            expected=0 if args.mode in ("check","lower") or fixture["native"] else 1
             assert result.returncode==expected,(name,result.returncode,result.stdout,result.stderr)
             assert result.stdout==b"",(name,result.stdout)
             if expected==0:assert result.stderr==b"",(name,result.stderr)

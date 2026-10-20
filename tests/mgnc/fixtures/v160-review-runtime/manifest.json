@@ -1,0 +1,68 @@
+[
+  {
+    "name": "module-int-snapshot",
+    "source_sha256": "8e87dceca776ddca389b97fac947806443f10fd14bc3b199c6dada7e23cdc205",
+    "expected_exit": 12,
+    "design_cells": [
+      "V160-DR13"
+    ]
+  },
+  {
+    "name": "direct-text",
+    "source_sha256": "a66f6b582e8f9cf4ded76dcb0cc3e1f8b2b5bdc96c1d43aa5cf21bac23cf4011",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR14"
+    ]
+  },
+  {
+    "name": "nested-text",
+    "source_sha256": "0406fe635347389c34c8f816201e35c9fab558bc6230eaddef3137061c9375e0",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR15"
+    ]
+  },
+  {
+    "name": "direct-container",
+    "source_sha256": "7e6166c9fd9281d74024a76ead46b4ee75ba81b21bf9e5c77a777e81559c2002",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR14"
+    ]
+  },
+  {
+    "name": "nested-container",
+    "source_sha256": "47faa76d975afcaeb22d26823b82936737ef19901e0542b8d915e8235377cd95",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR15"
+    ]
+  },
+  {
+    "name": "nested-type-bindings",
+    "source_sha256": "1ad4f55acc45e839c512b49ddf74f0f0f372aec6ea5add03b096598322898a2e",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR06",
+      "V160-DR08"
+    ]
+  },
+  {
+    "name": "nested-value-bindings",
+    "source_sha256": "cdbb227aa352df885112909354474421d6ad16f763476bbff3ac45f446977a67",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR07",
+      "V160-DR08"
+    ]
+  },
+  {
+    "name": "try-io-error",
+    "source_sha256": "7db6695ff9caf39a2cbbbfca5a8f78eac220df9f926cdade8baf383827171ddb",
+    "expected_exit": 0,
+    "design_cells": [
+      "V160-DR01"
+    ]
+  }
+]

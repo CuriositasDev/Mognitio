@@ -4,9 +4,8 @@ This source project contains the Mognitio 1.6 compiler implementation, mgnc.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
 It remains experimental and is not included in the regular Debian package,
-APT repository, or installer bundle. The corrected implementation and formal
-performance results are accepted for 1.5.0; see the
-[acceptance and release record](../../verification/v1.5.0-release.md).
+APT repository, or installer bundle. All 1.6 implementation and performance stages are accepted; see the
+[acceptance and release record](../../verification/v1.6.0-release.md).
 
 ## Build
 

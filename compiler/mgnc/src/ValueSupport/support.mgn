@@ -2,6 +2,7 @@ namespace Mgnc\ValueSupport;
 use Mgnc\NameIndex\{insert};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\TypeData\{Store,Structure,Obligation};
 use Mgnc\SemanticValues\{Node,Symbol,FunctionInfo,Loop,BodyState,State,Environment,Checked};
 use Mgnc\SemanticData\{Module,Declaration,Introduction};
@@ -24,12 +25,12 @@ public let initialize:Function(Store):Result<State,Diagnostic>=function(types:St
  var bodies:Paged<BodyState>=empty<BodyState>();var index:Int=0;
  loop while(index<types->headers->declarations->count){
   let declared:Declaration=try lookup<Declaration>(types->headers->declarations,index);let module:Module=try lookup<Module>(types->headers->modules,declared->file);
-  bodies=push<BodyState>(bodies,branch when{declared->kind<3||module->standard=>BodyState::NotRequired,else=>BodyState::Pending});index=index+1;
+  bodies=push<BodyState>(bodies,branch when{typeDeclaration(declared->kind)||module->standard=>BodyState::NotRequired,else=>BodyState::Pending});index=index+1;
  };
  var symbols:Paged<Symbol>=empty<Symbol>();var globals:Paged<Parent>=empty<Parent>();index=0;
  loop while(index<types->headers->names->count){
   let introduction:Introduction=try lookup<Introduction>(types->headers->names,index);let declared:Declaration=try lookup<Declaration>(types->headers->declarations,introduction->declaration);
-  branch when{declared->kind>=4=>{
+  branch when{runtimeDeclaration(declared->kind)=>{
    let valueType:Int=branch on try lookup<Parent>(types->declarations,introduction->declaration){Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",introduction->span,"runtime signature is incomplete"));}};
    globals=push<Parent>(globals,Parent::Some(symbols->count));symbols=push<Symbol>(symbols,Symbol{file:introduction->file,name:introduction->name,valueType:valueType,mutable:declared->kind==5,functionOwner:Parent::None,declaration:Parent::Some(introduction->declaration),span:introduction->span});
   },else=>{globals=push<Parent>(globals,Parent::None);}};index=index+1;

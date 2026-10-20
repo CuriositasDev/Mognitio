@@ -7,9 +7,9 @@ use Mgnc\Projection\{item};
 use Mgnc\Expressions\{Expression,Label};
 use Mgnc\SemanticValues\{State,Environment,Node,Frame,Evaluated};
 use Mgnc\TypeData\{Type,Structure,Member,Argument};
-use Mgnc\TypeOps\{productKind,indexKind,sliceKind,signedKind,unsignedKind,listKind,functionKind};
+use Mgnc\TypeOps\{productKind,indexKind,sliceKind,signedKind,unsignedKind,listKind,functionKind,contractKind};
 use Mgnc\ValueSupport\{known,expect,withTypes};
-use Mgnc\ValueFactory\{node as makeNode,withMapping,withArguments};
+use Mgnc\ValueFactory\{node as makeNode,withMapping,withArguments,withTarget};
 use Mgnc\VariantSupport\{memberType,variants,ordinal,at as memberAt};
 use Mgnc\GenericApplication\{Applied,arguments as applyArguments};
 use Mgnc\Methods\{Signature,genericKinds,resolve as methodSignature};
@@ -72,6 +72,14 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
     let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);
     valueType=branch on member->value{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",label->span,"field type invariant"));}};
     frame=withMapping(frame,List<Int>[selected]);operation="field";
+   },shape->kind==contractKind=>{
+    branch when{expression->annotations->length()>0=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"contract methods do not take generic arguments"));},else=>unit};
+    let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);
+    let signatureType:Int=branch on member->value{Parent::Some(found:Int)=>found,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",label->span,"contract member signature missing"));}};
+    let signature:Type=try lookup<Type>(state->types->types,signatureType);
+    branch when{frame->children->length()!=signature->arguments->length()=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",label->span,"contract method argument arity mismatch"));},else=>unit};
+    var index:Int=1;loop while(index<frame->children->length()){try expect(try lookup<Node>(state->nodes,try item(frame->children,index)),try memberType(signature->arguments,index-1,label->span));index=index+1;};
+    valueType=try memberType(signature->arguments,signature->arguments->length()-1,label->span);frame=withTarget(withMapping(frame,List<Int>[selected]),Parent::Some(receiverType));operation="dispatch";
    },isProduct(shape)=>{
     branch when{expression->annotations->length()>0=>{return Result<Evaluated,Diagnostic>::Err(problem("type",label->span,"Function field does not take generic arguments"));},else=>unit};
     let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);

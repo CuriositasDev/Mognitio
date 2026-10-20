@@ -2,6 +2,7 @@ namespace Mgnc\ValueNames;
 use Mgnc\NameIndex\{Index,candidates};
 use Mgnc\Data\{Diagnostic,Span,lookup,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{compileDeclaration};
 use Mgnc\SemanticValues\{State,Environment,Symbol,FunctionInfo};
 use Mgnc\SemanticData\{Introduction,Declaration,Module};
 use Mgnc\TypeData\{Argument,ValueTerm};
@@ -18,7 +19,7 @@ public let introduction:Function(State,Environment,String,Int):Result<Parent,Dia
   let entry:Introduction=try lookup<Introduction>(state->types->headers->names,index);
   branch when{entry->file==environment->file&&entry->name==name=>{
    let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,entry->declaration);
-   branch when{declared->kind<4=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},
+   branch when{compileDeclaration(declared->kind)=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},
     isolated=>{return Result<Parent,Diagnostic>::Ok(Parent::None);},
     entry->imported=>{return Result<Parent,Diagnostic>::Ok(Parent::Some(index));},else=>unit};
    let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);

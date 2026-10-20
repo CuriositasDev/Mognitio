@@ -1,0 +1,11 @@
+namespace Mgnc\WitnessStore;
+use Mgnc\Data\{Paged};
+use Mgnc\SemanticData\{Headers,Declaration,Evidence};
+use Mgnc\TypeData\{Store};
+public let declarations:Function(Store,Paged<Declaration>):Store=function(store:Store,values:Paged<Declaration>):Store{
+ let headers:Headers=store->headers;let changed:Headers=Headers{input:headers->input,modules:headers->modules,declarations:values,names:headers->names,fileNames:headers->fileNames,nameBuckets:headers->nameBuckets,order:headers->order};
+ Store{headers:changed,types:store->types,buckets:store->buckets,declarations:store->declarations,constraints:store->constraints}
+};
+public let definition:Function(Declaration,Evidence):Declaration=function(item:Declaration,evidence:Evidence):Declaration{
+ Declaration{file:item->file,ordinal:item->ordinal,kind:item->kind,name:item->name,exported:item->exported,node:item->node,annotation:item->annotation,body:item->body,parameters:item->parameters,attributes:item->attributes,evidence:List<Evidence>[evidence],span:item->span}
+};

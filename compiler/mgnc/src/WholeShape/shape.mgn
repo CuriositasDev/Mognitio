@@ -22,7 +22,7 @@ public let textEqual:Function(List<TextPart>,List<TextPart>):Result<Bool,Diagnos
  };Result<Bool,Diagnostic>::Ok(true)
 };
 public let sourceOperation:Function(String):Bool=function(code:String):Bool{
- code=="integer"||code=="boolean"||code=="unit"||code=="string"||code=="typed-integer"||code=="value-parameter"||code=="template"||code=="product"||code=="list"||code=="variant"||code=="call"||code=="field"||code=="field-call"||code=="neg"||code=="not"||code=="add"||code=="sub"||code=="mul"||code=="div"||code=="rem"||code=="lt"||code=="le"||code=="gt"||code=="ge"||code=="eq"||code=="ne"||code=="method:length"||code=="method:append"||code=="method:at"||code=="method:join"||code=="method:slice"||code=="method:scalars"||code=="method:convertTo"||code=="method:toBits"||code=="method:and"||code=="method:or"||code=="method:xor"||code=="method:not"||code=="method:shiftLeft"||code=="method:shiftRight"||code=="method:asInteger"||code=="method:toBytes"||code=="method:concat"
+ code=="package"||code=="dispatch"||code=="integer"||code=="boolean"||code=="unit"||code=="string"||code=="typed-integer"||code=="value-parameter"||code=="template"||code=="product"||code=="list"||code=="variant"||code=="call"||code=="field"||code=="field-call"||code=="neg"||code=="not"||code=="add"||code=="sub"||code=="mul"||code=="div"||code=="rem"||code=="lt"||code=="le"||code=="gt"||code=="ge"||code=="eq"||code=="ne"||code=="method:length"||code=="method:append"||code=="method:at"||code=="method:join"||code=="method:slice"||code=="method:scalars"||code=="method:convertTo"||code=="method:toBits"||code=="method:and"||code=="method:or"||code=="method:xor"||code=="method:not"||code=="method:shiftLeft"||code=="method:shiftRight"||code=="method:asInteger"||code=="method:toBytes"||code=="method:concat"
 };
 public let operation:Function(State,Body,Map,Operation):Result<Unit,Diagnostic>=function(state:State,body:Body,index:Map,op:Operation):Result<Unit,Diagnostic>{
  let node:Node=try lookup<Node>(state->nodes,op->origin->node);let span:Span=node->span;let source:Occurrence=try occurrence(body,index,op->origin->node);
@@ -50,7 +50,7 @@ public let operation:Function(State,Body,Map,Operation):Result<Unit,Diagnostic>=
   try require((try slotType(body,destination))==branch when{op->code=="unit"=>0,else=>2},span,"constant helper type");
   try require(parentEqual(op->output,source->output),span,"constant helper output");
   branch when{op->code=="boolean"=>{try require((node->operation=="and"&&op->integer==0)||(node->operation=="or"&&op->integer==1),span,"short-circuit constant");},else=>{
-   try require(node->operation=="declare"||node->operation=="assign"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"||node->operation=="assert"||node->operation=="while"||node->operation=="over",span,"Unit helper origin");
+   try require(node->operation=="declare"||node->operation=="assign"||node->operation=="witness"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"||node->operation=="assert"||node->operation=="while"||node->operation=="over",span,"Unit helper origin");
   }};
  },op->code=="global-load"||op->code=="global-store"=>{
   let symbolId:Int=try present(op->symbol,span,"global identity");let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);

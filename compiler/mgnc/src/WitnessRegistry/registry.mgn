@@ -1,0 +1,77 @@
+namespace Mgnc\WitnessRegistry;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{InputError};
+use Mgnc\Headers\{sourceError};
+use Mgnc\SemanticData\{Declaration,Module,Evidence};
+use Mgnc\TypeData\{Store,Type,Argument,Member,ValueTerm,Formed};
+use Mgnc\TypeOps\{contractKind,parameterKind,argumentEqual};
+use Mgnc\TypeForm\{form};
+use Mgnc\Signatures\{FunctionType,Formal,functionType};
+use Mgnc\WitnessNames\{evidence};
+use Mgnc\WitnessStore\{declarations as withDeclarations,definition};
+use Mgnc\WitnessSyntax\{extent};
+use Mgnc\Projection\{parts,item,text,site};
+use Mgnc\BridgeLists\{leftList};
+use Mgnc\HeaderRead\{rightList};
+use Mgnc\Tables\{atList,replaceItem};
+use Mgnc\IntMap\{Map,create,get,put};
+type Prepared=product{store:Store;value:Evidence;span:Span;};
+let closed:Function(Store,Int,Span):Result<Unit,Diagnostic>=function(store:Store,root:Int,span:Span):Result<Unit,Diagnostic>{
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var seen:Map=create();var cursor:Int=0;
+ loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);
+  let shape:Type=try lookup<Type>(store->types,id);branch when{shape->kind==parameterKind=>{return Result<Unit,Diagnostic>::Err(problem("semantic",span,"implementation requires a completed value type"));},else=>unit};
+  loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(value:ValueTerm)=>{branch on value->parameter{Parent::None=>unit,Parent::Some(ordinal:Int)=>{return Result<Unit,Diagnostic>::Err(problem("semantic",span,"implementation requires a completed value type"));}};}};};
+  loop over(shape->members as member:Member){branch on member->value{Parent::None=>unit,Parent::Some(child:Int)=>{pending=push<Int>(pending,child);}};};
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let prepare:Function(Store,Int):Result<Prepared,Diagnostic>=function(initial:Store,id:Int):Result<Prepared,Diagnostic>{
+ let declared:Declaration=try lookup<Declaration>(initial->headers->declarations,id);let module:Module=try lookup<Module>(initial->headers->modules,declared->file);let span:Span=try extent(module->tree,declared->node);
+ let concrete:Formed=try form(initial,declared->file,module->tree,declared->annotation,Parent::None,List<Argument>[]);
+ let target:Formed=try form(concrete->store,declared->file,module->tree,declared->body,Parent::None,List<Argument>[]);let store:Store=target->store;
+ branch when{(try lookup<Type>(store->types,target->value))->kind!=contractKind=>{return Result<Prepared,Diagnostic>::Err(problem("semantic",span,"implementation requires a completed value type and a contract"));},else=>unit};
+ try closed(store,concrete->value,span);try closed(store,target->value,span);
+ let fields:List<Int>=try parts(module->tree,declared->node);let methods:List<Int>=try leftList(module->tree,try item(fields,7));
+ Result<Prepared,Diagnostic>::Ok(Prepared{store:store,value:Evidence{declaration:id,concreteType:concrete->value,contractType:target->value,methods:methods},span:span})
+};
+let validate:Function(Store,Int):Result<Store,Diagnostic>=function(initial:Store,id:Int):Result<Store,Diagnostic>{
+ var store:Store=initial;let declared:Declaration=try lookup<Declaration>(store->headers->declarations,id);let module:Module=try lookup<Module>(store->headers->modules,declared->file);let proof:Evidence=try evidence(store->headers,id);
+ let shape:Type=try lookup<Type>(store->types,proof->contractType);var names:List<String>=List<String>[];
+ loop over(proof->methods as method:Int){
+  let fields:List<Int>=try parts(module->tree,method);let name:String=try text(module->tree,try item(fields,0));let span:Span=try extent(module->tree,method);
+  loop over(names as previous:String){branch when{previous==name=>{return Result<Store,Diagnostic>::Err(problem("semantic",span,"duplicate witness method"));},else=>unit};};names=names->append(name);
+  let params:List<Int>=try rightList(module->tree,try item(fields,2));branch when{params->length()==0=>{return Result<Store,Diagnostic>::Err(problem("semantic",span,"missing witness receiver"));},else=>unit};
+  let signature:FunctionType=try functionType(store,declared->file,module->tree,method,Parent::Some(id),List<Argument>[]);store=signature->store;
+  let receiver:Formal=try atList<Formal>(signature->parameters,0);
+  branch when{receiver->valueType!=proof->concreteType=>{let values:List<Int>=try parts(module->tree,try item(params,0));return Result<Store,Diagnostic>::Err(problem("type",try extent(module->tree,try item(values,2)),"receiver type mismatch"));},else=>unit};
+  var required:Parent=Parent::None;
+  loop over(shape->members as member:Member){branch when{member->name==name=>{required=member->value;},else=>unit};};
+  let expected:Int=branch on required{Parent::Some(found:Int)=>found,Parent::None=>{return Result<Store,Diagnostic>::Err(problem("type",span,"method does not match contract"));}};
+  let actual:Type=try lookup<Type>(store->types,signature->value);let wanted:Type=try lookup<Type>(store->types,expected);
+  branch when{actual->arguments->length()!=wanted->arguments->length()+1=>{return Result<Store,Diagnostic>::Err(problem("type",span,"method does not match contract"));},else=>unit};
+  var ordinal:Int=0;loop over(wanted->arguments as argument:Argument){branch when{!argumentEqual(argument,try atList<Argument>(actual->arguments,ordinal+1))=>{return Result<Store,Diagnostic>::Err(problem("type",span,"method does not match contract"));},else=>unit};ordinal=ordinal+1;};
+ };
+ branch when{proof->methods->length()!=shape->members->length()=>{return Result<Store,Diagnostic>::Err(problem("semantic",try extent(module->tree,declared->node),"missing witness method"));},else=>unit};
+ var ordered:List<Int>=List<Int>[];
+ loop over(shape->members as member:Member){loop over(proof->methods as method:Int){let fields:List<Int>=try parts(module->tree,method);branch when{(try text(module->tree,try item(fields,0)))==member->name=>{ordered=ordered->append(method);break;},else=>unit};};};
+ let value:Evidence=Evidence{declaration:id,concreteType:proof->concreteType,contractType:proof->contractType,methods:ordered};
+ Result<Store,Diagnostic>::Ok(withDeclarations(store,try replaceItem<Declaration>(store->headers->declarations,id,definition(declared,value))))
+};
+public let collect:Function(Store):Result<Store,InputError>=function(initial:Store):Result<Store,InputError>{
+ var store:Store=initial;var proofs:List<Evidence>=List<Evidence>[];var id:Int=0;
+ loop while(id<store->headers->declarations->count){
+  let declared:Declaration=branch on lookup<Declaration>(store->headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"witness declaration arena invariant"}};
+  branch when{declared->kind==7=>{
+   let module:Module=branch on lookup<Module>(store->headers->modules,declared->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"witness module arena invariant"}};
+   let prepared:Prepared=branch on prepare(store,id){Result<Prepared,Diagnostic>::Ok(value:Prepared)=>value,Result<Prepared,Diagnostic>::Err(error:Diagnostic)=>{return Result<Store,InputError>::Err(sourceError(module->source,error));}};
+   let proof:Evidence=prepared->value;store=prepared->store;
+   loop over(proofs as previous:Evidence){branch when{previous->concreteType==proof->concreteType&&previous->contractType==proof->contractType=>{return Result<Store,InputError>::Err(sourceError(module->source,problem("semantic",prepared->span,"duplicate implementation pair")));},else=>unit};};proofs=proofs->append(proof);
+   store=branch on replaceItem<Declaration>(store->headers->declarations,id,definition(declared,proof)){Result<Paged<Declaration>,Diagnostic>::Ok(values:Paged<Declaration>)=>withDeclarations(store,values),Result<Paged<Declaration>,Diagnostic>::Err(error:Diagnostic)=>{return Result<Store,InputError>::Err(sourceError(module->source,error));}};
+  },else=>unit};id=id+1;
+ };
+ loop over(proofs as proof:Evidence){
+  let declared:Declaration=branch on lookup<Declaration>(store->headers->declarations,proof->declaration){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"witness declaration arena invariant"}};
+  let module:Module=branch on lookup<Module>(store->headers->modules,declared->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"witness module arena invariant"}};
+  store=branch on validate(store,proof->declaration){Result<Store,Diagnostic>::Ok(value:Store)=>value,Result<Store,Diagnostic>::Err(error:Diagnostic)=>{return Result<Store,InputError>::Err(sourceError(module->source,error));}};
+ };Result<Store,InputError>::Ok(store)
+};

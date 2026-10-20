@@ -1,5 +1,5 @@
 namespace Mgnc\BodyCheck;
-use Mgnc\Grammar\{ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleField,ruleGenericMethod,ruleGroup,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementReturn,ruleUnaryNeg,ruleUnaryTry,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Grammar\{rulePackage,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleField,ruleGenericMethod,ruleGroup,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementReturn,ruleUnaryNeg,ruleUnaryTry,ruleVarBinding,ruleVariant,ruleVariantPayload};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\SemanticValues\{State,Environment,Frame,Started,ChildEnvironment,Evaluated,Checked};
@@ -9,6 +9,7 @@ use Mgnc\ValueSupport\{emit};
 use Mgnc\FinishBasic\{finish as basic};
 use Mgnc\FinishControl\{finish as control};
 use Mgnc\FinishConstruct\{finish as construct};
+use Mgnc\FinishPackage\{finish as package};
 use Mgnc\Projection\{item};
 use Mgnc\Tables\{replaceItem};
 public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Diagnostic>=function(initial:State,tree:SyntaxForest,root:Int,environment:Environment):Result<Checked,Diagnostic>{
@@ -24,6 +25,7 @@ public let check:Function(State,SyntaxForest,Int,Environment):Result<Checked,Dia
    frames=branch when{active<frames->count=>try replaceItem<Frame>(frames,active,entered->frame),else=>push<Frame>(frames,entered->frame)};continue;
   },else=>unit};
   let evaluated:Evaluated=branch when{
+   rule==rulePackage=>try package(state,frame),
    rule==rulePanic||rule==ruleStatementReturn||rule==ruleStatementBreak||rule==ruleStatementBreakValue||rule==ruleStatementContinue||rule==ruleUnaryTry||rule==ruleLoopWhile||rule==ruleLoopOver||rule==ruleLoopForever||rule==ruleBranchWhen||rule==ruleBranchOn=>try control(state,frame),
    rule==ruleProduct||rule==ruleList||rule==ruleVariant||rule==ruleVariantPayload||rule==ruleScalarLiteral||rule==ruleCall||rule==ruleField||rule==ruleMethod||rule==ruleGenericMethod=>try construct(state,tree,frame),
    else=>try basic(state,tree,frame)};

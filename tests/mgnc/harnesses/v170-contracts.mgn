@@ -1,0 +1,51 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,lookup,number};
+use Mgnc\Syntax\{Parent};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\SemanticData\{Headers,Declaration,Evidence};
+use Mgnc\SemanticValues\{State,Node,FunctionInfo,Symbol};
+use Mgnc\TypeData\{Store,Argument};
+use Mgnc\WholeIR\{Project};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify as verifyIR};
+use Mgnc\WitnessVerification\{verify as verifyEvidence};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let mutate:Function(State,Int):Result<State,Diagnostic>=function(state:State,mutation:Int):Result<State,Diagnostic>{
+ let original:Store=state->types;let headers:Headers=original->headers;var declarations:Paged<Declaration>=headers->declarations;var nodes:Paged<Node>=state->nodes;var functions:Paged<FunctionInfo>=state->functions;var index:Int=0;
+ branch when{mutation<5=>{
+  loop over(headers->declarations->pages->append(headers->declarations->tail) as page:List<Declaration>){loop over(page as declared:Declaration){branch when{declared->kind==7=>{
+   let proof:Evidence=try atList<Evidence>(declared->evidence,0);
+   let altered:Evidence=Evidence{declaration:proof->declaration+branch when{mutation==2=>1,else=>0},concreteType:branch when{mutation==1=>2,else=>proof->concreteType},contractType:proof->contractType,methods:branch when{mutation==3=>List<Int>[try atList<Int>(proof->methods,1),try atList<Int>(proof->methods,0)],mutation==4=>List<Int>[try atList<Int>(proof->methods,0),try atList<Int>(proof->methods,0)],else=>proof->methods}};
+   let values:List<Evidence>=branch when{mutation==0=>List<Evidence>[],else=>List<Evidence>[altered]};
+   declarations=try replaceItem<Declaration>(declarations,index,Declaration{file:declared->file,ordinal:declared->ordinal,kind:declared->kind,name:declared->name,exported:declared->exported,node:declared->node,annotation:declared->annotation,body:declared->body,parameters:declared->parameters,attributes:declared->attributes,evidence:values,span:declared->span});break;
+  },else=>unit};index=index+1;};};
+ },mutation<8=>{
+  loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as value:Node){branch when{(mutation==5||mutation==6)&&value->operation=="package"||mutation==7&&value->operation=="dispatch"=>{
+   let target:Parent=branch when{mutation==5=>Parent::None,else=>value->target};let arguments:List<Argument>=branch when{mutation==6=>List<Argument>[Argument::Type(2),try atList<Argument>(value->arguments,1)],else=>value->arguments};let mapping:List<Int>=branch when{mutation==7=>List<Int>[0],else=>value->mapping};
+   nodes=try replaceItem<Node>(nodes,index,Node{file:value->file,cursor:value->cursor,rule:value->rule,flag:value->flag,structure:value->structure,normal:value->normal,operation:value->operation,binding:value->binding,target:target,children:value->children,span:value->span,integer:value->integer,minimum:value->minimum,literal:value->literal,text:value->text,binder:value->binder,binders:value->binders,functionOwner:value->functionOwner,mapping:mapping,arguments:arguments});break;
+  },else=>unit};index=index+1;};};
+ },mutation==8=>{
+  loop over(state->functions->pages->append(state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){branch on info->templateOwner{Parent::None=>unit,Parent::Some(owner:Int)=>{functions=try replaceItem<FunctionInfo>(functions,index,FunctionInfo{file:info->file,cursor:info->cursor,valueType:info->valueType,parameters:info->parameters,body:info->body,captures:info->parameters,parent:info->parent,templateOwner:info->templateOwner});break;}};index=index+1;};};
+ },else=>{
+  var external:Int= -1;var symbolIndex:Int=0;loop over(state->symbols->pages->append(state->symbols->tail) as page:List<Symbol>){loop over(page as item:Symbol){branch when{item->name=="args"=>{external=symbolIndex;},else=>unit};symbolIndex=symbolIndex+1;};};
+  try require(external>=0,Span{start:0,end:0,line:1,column:1},"external binding fixture");
+  loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as value:Node){branch when{value->operation=="binding"=>{nodes=try replaceItem<Node>(nodes,index,Node{file:value->file,cursor:value->cursor,rule:value->rule,flag:value->flag,structure:value->structure,normal:value->normal,operation:value->operation,binding:Parent::Some(external),target:value->target,children:value->children,span:value->span,integer:value->integer,minimum:value->minimum,literal:value->literal,text:value->text,binder:value->binder,binders:value->binders,functionOwner:value->functionOwner,mapping:value->mapping,arguments:value->arguments});break;},else=>unit};index=index+1;};};
+ }};
+ let updated:Headers=Headers{input:headers->input,modules:headers->modules,declarations:declarations,names:headers->names,fileNames:headers->fileNames,nameBuckets:headers->nameBuckets,order:headers->order};let types:Store=Store{headers:updated,types:original->types,buckets:original->buckets,declarations:original->declarations,constraints:original->constraints};Result<State,Diagnostic>::Ok(State{types:types,nodes:nodes,symbols:state->symbols,globals:state->globals,functions:functions,loops:state->loops,obligations:state->obligations,bodies:state->bodies})
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let source:SourceUnit=SourceUnit{path:"contracts.mgn",displayPath:"contracts.mgn",relativePath:"contracts.mgn",expectedNamespace:"",text:"namespace App;contract Show{first(value:Self):Int;second(value:Self,x:Int):Int;}witness Proof=Int implements Show{second(value:Self,x:Int):Int{value+x}first(value:Self):Int{value}}let main:Function(List<String>):Int=function(args:List<String>):Int{Show(1)->second(2)};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let project:Project=try lower(semantic);try verifyIR(semantic,project);
+ var mutation:Int=0;loop while(mutation<10){let altered:State=try mutate(semantic->state,mutation);branch on verifyEvidence(altered){
+  Result<Unit,InputError>::Ok(value:Unit)=>{try require(false,span,"accepted semantic evidence mutation");},Result<Unit,InputError>::Err(error:InputError)=>{try require(error->diagnostic->phase=="internal",span,"evidence mutation phase");discard writeStdout("V170_CONTRACT_MUTANT "+number(mutation)+" rejected\n");}
+ };
+  branch when{mutation<5=>{let changed:Project=Project{types:altered->types,declarations:project->declarations,bodies:project->bodies,functions:project->functions,entry:project->entry,moduleOrder:project->moduleOrder,obligations:project->obligations};branch on verifyIR(semantic,changed){Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted IR evidence mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"IR evidence mutation phase");}};},else=>unit};mutation=mutation+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_CONTRACT_IR_OK valid=1 semantic_rejected=10 ir_rejected=5\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}
+};

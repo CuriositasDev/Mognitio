@@ -1,0 +1,30 @@
+namespace Mgnc\WitnessBodies;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\NameIndex\{create};
+use Mgnc\SemanticData\{Declaration,Module,Evidence};
+use Mgnc\SemanticValues\{State,Environment,Node,Checked,BodyState,FunctionInfo};
+use Mgnc\TypeData\{Structure,Argument};
+use Mgnc\MathValue\{Integer};
+use Mgnc\WitnessNames\{evidence};
+use Mgnc\SemanticClassification\{BindingIndex,classifyPrepared};
+use Mgnc\BodyCheck\{check as checkBody};
+use Mgnc\ValueSupport\{withBodies,emit};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Grammar\{ruleWitnessDeclaration};
+public let check:Function(State,Int,BindingIndex):Result<State,Diagnostic>=function(initial:State,id:Int,bindings:BindingIndex):Result<State,Diagnostic>{
+ var state:State=initial;let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,id);let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);let proof:Evidence=try evidence(state->types->headers,id);
+ state=withBodies(state,try replaceItem<BodyState>(state->bodies,id,BodyState::Checking));var roots:List<Int>=List<Int>[];
+ let environment:Environment=Environment{file:declared->file,symbols:create(),reserved:List<String>[],functionOwner:Parent::None,loopTarget:Parent::None,returnType:Parent::None,templateOwner:Parent::Some(id),arguments:List<Argument>[],reachable:true};
+ loop over(proof->methods as method:Int){
+  let tree:SyntaxForest=try classifyPrepared(state->types->headers,declared->file,method,Parent::Some(id),bindings);
+  let checked:Checked=try checkBody(state,tree,tree->root,environment);state=checked->state;roots=roots->append(checked->root);
+  let node:Node=try lookup<Node>(state->nodes,checked->root);let owner:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",node->span,"witness method function missing"));}};
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);branch when{info->captures->length()!=0=>{return Result<State,Diagnostic>::Err(problem("internal",node->span,"witness method captured an outer runtime value"));},else=>unit};
+ };
+ let value:Node=Node{file:declared->file,cursor:(try getNode(module->tree->nodes,declared->node))->start,rule:ruleWitnessDeclaration,flag:false,structure:Structure::Known(0),normal:true,operation:"witness",binding:Parent::None,target:Parent::None,children:roots,span:declared->span,integer:0,minimum:false,literal:List<Integer>[],text:"",binder:Parent::None,binders:List<Parent>[],functionOwner:Parent::None,mapping:List<Int>[],arguments:List<Argument>[]};
+ let emitted:Checked=emit(state,value);state=emitted->state;
+ Result<State,Diagnostic>::Ok(withBodies(state,try replaceItem<BodyState>(state->bodies,id,BodyState::Complete(emitted->root))))
+};

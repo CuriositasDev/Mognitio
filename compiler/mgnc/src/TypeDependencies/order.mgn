@@ -2,6 +2,7 @@ namespace Mgnc\TypeDependencies;
 use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{typeDeclaration};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter};
 use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{getNode};
@@ -14,7 +15,7 @@ public let graph:Function(Headers):Result<Graph,Diagnostic>=function(headers:Hea
  var edges:List<Edge>=List<Edge>[];var pending:List<Int>=List<Int>[];var id:Int=0;
  loop while(id<headers->declarations->count){
   let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
-  branch when{declared->kind<3=>{
+  branch when{typeDeclaration(declared->kind)=>{
    pending=pending->append(id);let module:Module=try lookup<Module>(headers->modules,declared->file);
    var seen:IntMap=createMap();var index:Int=0;
    var work:Paged<Int>=push<Int>(empty<Int>(),declared->annotation);
@@ -29,7 +30,7 @@ public let graph:Function(Headers):Result<Graph,Diagnostic>=function(headers:Hea
       let found:Parent=try declaration(headers,declared->file,name);
       branch on found{Parent::None=>unit,Parent::Some(target:Int)=>{
        let definition:Declaration=try lookup<Declaration>(headers->declarations,target);
-       branch when{definition->kind<3=>{edges=edges->append(Edge{owner:id,target:target,file:declared->file,span:try site(module->tree,current)});},else=>unit};
+       branch when{typeDeclaration(definition->kind)=>{edges=edges->append(Edge{owner:id,target:target,file:declared->file,span:try site(module->tree,current)});},else=>unit};
       }};
      }};
     },else=>unit};

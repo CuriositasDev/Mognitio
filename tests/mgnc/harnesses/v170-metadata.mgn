@@ -11,7 +11,7 @@ use Mgnc\WholeChecks\{require};
 use Mgnc\Tables\{atList,replaceItem};
 use Std\Io\{writeStdout};
 let attributes:Function(Declaration,List<Attribute>):Declaration=function(item:Declaration,values:List<Attribute>):Declaration{
- Declaration{file:item->file,ordinal:item->ordinal,kind:item->kind,name:item->name,exported:item->exported,node:item->node,annotation:item->annotation,body:item->body,parameters:item->parameters,attributes:values,span:item->span}
+ Declaration{file:item->file,ordinal:item->ordinal,kind:item->kind,name:item->name,exported:item->exported,node:item->node,annotation:item->annotation,body:item->body,parameters:item->parameters,attributes:values,evidence:item->evidence,span:item->span}
 };
 let mutate:Function(Project,Int):Result<Project,Diagnostic>=function(project:Project,mutation:Int):Result<Project,Diagnostic>{
  let original:Store=project->types;let headers:Headers=original->headers;var index:Int=0;

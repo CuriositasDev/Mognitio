@@ -33,7 +33,7 @@ let ordinaryCopies:Function(State,Body,Map,Node,Occurrence,Block):Result<Unit,Di
  branch when{node->operation=="binding"=>{
   try require(exit->operations->length()==1,span,"binding load count");let load:Operation=try atList<Operation>(exit->operations,0);try require(parentEqual(load->output,current->output),span,"binding load destination");
   branch when{load->code=="copy"=>{let slot:Slot=try lookup<Slot>(body->slots,try atList<Int>(load->inputs,0));try require(parentEqual(slot->symbol,node->binding),span,"resolved binding slot");},else=>{try require(load->code=="global-load"&&parentEqual(load->symbol,node->binding),span,"resolved global binding");}};
- },node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
+ },node->operation=="witness"||node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
   try require(exit->operations->length()==branch when{node->normal=>1,else=>0},span,"wrapper lowering count");
   branch when{node->normal&&(node->operation=="group"||(node->operation=="block"&&node->flag))=>{
    let tail:Occurrence=try child(body,index,node,node->children->length()-1);let op:Operation=try atList<Operation>(exit->operations,0);

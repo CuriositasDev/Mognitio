@@ -1,0 +1,28 @@
+namespace Mgnc\FinishPackage;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Expressions\{Expression};
+use Mgnc\SemanticData\{Introduction,Declaration,Evidence};
+use Mgnc\SemanticValues\{State,Frame,Node,Evaluated};
+use Mgnc\TypeData\{Type,Structure,Argument};
+use Mgnc\TypeOps\{contractKind};
+use Mgnc\ValueSupport\{known};
+use Mgnc\ValueFactory\{node as makeNode,withTarget,withArguments};
+use Mgnc\Tables\{atList};
+public let finish:Function(State,Frame):Result<Evaluated,Diagnostic>=function(state:State,original:Frame):Result<Evaluated,Diagnostic>{
+ var frame:Frame=original;let expression:Expression=frame->expression;
+ let valueType:Int=branch on frame->annotation{Parent::Some(found:Int)=>found,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"package annotation missing"));}};
+ branch when{(try lookup<Type>(state->types->types,valueType))->kind!=contractKind=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"explicit packaging requires a contract type"));},else=>unit};
+ let child:Node=try lookup<Node>(state->nodes,try atList<Int>(frame->children,0));var arguments:List<Argument>=List<Argument>[];var selected:Parent=Parent::None;
+ let concrete:Int=branch on child->structure{Structure::Known(value:Int)=>value,Structure::Unknown=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"no visible implementation evidence for packaging"));}};
+ {
+  loop over((try lookup<List<Int>>(state->types->headers->fileNames,frame->environment->file)) as index:Int){
+   let introduction:Introduction=try lookup<Introduction>(state->types->headers->names,index);let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,introduction->declaration);
+   branch when{declared->kind==7=>{loop over(declared->evidence as proof:Evidence){branch when{proof->concreteType==concrete&&proof->contractType==valueType=>{selected=Parent::Some(introduction->declaration);},else=>unit};};},else=>unit};
+  };
+  branch on selected{Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",expression->span,"no visible implementation evidence for packaging"));},Parent::Some(found:Int)=>unit};
+  arguments=arguments->append(Argument::Type(concrete));
+ };
+ arguments=arguments->append(Argument::Type(valueType));frame=withTarget(withArguments(frame,arguments),selected);
+ Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:makeNode(frame,Structure::Known(valueType),child->normal,"package",Parent::None,0,false),environment:frame->environment})
+};

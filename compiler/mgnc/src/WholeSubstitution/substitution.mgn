@@ -44,7 +44,7 @@ public let body:Function(Store,Body,List<Binding>):Result<Applied,Diagnostic>=fu
   loop over(block->operations as operation:Operation){
    let replaced:Arguments=try arguments(store,operation->arguments,bindings,operation->origin->span);store=replaced->store;
    var target:Parent=operation->target;
-   branch when{operation->code=="sum-payload"||operation->code=="iterator-init"||operation->code=="variant"=>{
+   branch when{operation->code=="dispatch"||operation->code=="payload-box"||operation->code=="sum-payload"||operation->code=="iterator-init"||operation->code=="variant"=>{
     branch on target{Parent::None=>unit,Parent::Some(typeId:Int)=>{
      let formed:Formed=try shape(store,typeId,bindings,operation->origin->span);store=formed->store;target=Parent::Some(formed->value);
     }};

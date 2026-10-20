@@ -1,7 +1,8 @@
 # Experimental native compiler
 
 This source project extends the accepted Mognitio 1.6 experimental compiler
-toward 1.7. The current increments add native assertions and normal-build `@test` metadata; complete 1.7
+toward 1.7. The current increments add native assertions, normal-build `@test`
+metadata, and named witness checking with typed whole IR; complete 1.7
 implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
@@ -72,8 +73,13 @@ ordinary return 5 is silent, and an operand panic retains its panic diagnostic.
 initializer executes once in each reachable module; the test body is not called
 automatically and no test command or summary is added. Unknown, duplicate,
 misplaced or incorrectly typed attributes are rejected by shared checking.
-Contract and witness syntax remain outside this increment's native profile;
-the normal toolchain continues to support them.
+Named contracts and witnesses are checked throughout the project, including unused
+and unreachable files. Packaging requires a local witness declaration or an
+explicitly imported public witness; dispatch of a packed value requires neither
+the concrete type nor its witness import. Witness bodies remain isolated from
+outer runtime values. Check and lower preserve these bindings and method order.
+Build reports unsupported for contracts and witnesses until native package and
+dispatch support is complete.
 
 Successful compiler commands have exit 0 and empty output streams.
 Build publishes a new standalone Linux AMD64 ELF without replacing an existing

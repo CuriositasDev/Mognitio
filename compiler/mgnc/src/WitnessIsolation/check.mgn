@@ -1,0 +1,17 @@
+namespace Mgnc\WitnessIsolation;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
+use Mgnc\WitnessVerifier\{require};
+public let verify:Function(State,Int,Int):Result<Unit,Diagnostic>=function(state:State,root:Int,method:Int):Result<Unit,Diagnostic>{
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var cursor:Int=0;
+ loop while(cursor<pending->count){let value:Node=try lookup<Node>(state->nodes,try lookup<Int>(pending,cursor));cursor=cursor+1;
+  branch on value->binding{Parent::None=>unit,Parent::Some(id:Int)=>{
+   let symbol:Symbol=try lookup<Symbol>(state->symbols,id);branch on symbol->declaration{Parent::None=>unit,Parent::Some(declared:Int)=>{try require(false,value->span,"outer runtime value in witness body");}};
+   var owner:Parent=symbol->functionOwner;var valid:Bool=false;var depth:Int=0;
+   loop while(depth<=state->functions->count){branch on owner{Parent::None=>{break;},Parent::Some(ownerId:Int)=>{branch when{ownerId==method=>{valid=true;break;},else=>unit};owner=(try lookup<FunctionInfo>(state->functions,ownerId))->parent;}};depth=depth+1;};
+   try require(valid,value->span,"runtime binding crossed witness method scope");
+  }};
+  loop over(value->children as child:Int){pending=push<Int>(pending,child);};
+ };Result<Unit,Diagnostic>::Ok(unit)
+};

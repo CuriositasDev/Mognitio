@@ -1,0 +1,52 @@
+namespace Mgnc\WitnessVerifier;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node,FunctionInfo};
+use Mgnc\SemanticData\{Module};
+use Mgnc\TypeData\{Store,Type,Argument,Member,Structure,ValueTerm,Formed};
+use Mgnc\TypeForm\{form};
+use Mgnc\TypeDeclarations\{Parameters,parameters};
+use Mgnc\SemanticClassification\{classify};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{text};
+use Mgnc\WitnessSyntax\{extent};
+use Mgnc\Grammar\{ntType,ruleTypeName};
+use Mgnc\IntMap\{Map,create,get,put};
+public type SourceExpression=product{tree:SyntaxForest;owner:Parent;arguments:List<Argument>;};
+public let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(valid:Bool,span:Span,message:String):Result<Unit,Diagnostic>{
+ branch when{valid=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(problem("internal",span,"witness verification: "+message))}
+};
+public let nodeType:Function(Node):Result<Int,Diagnostic>=function(node:Node):Result<Int,Diagnostic>{
+ branch on node->structure{Structure::Known(value:Int)=>Result<Int,Diagnostic>::Ok(value),Structure::Unknown=>Result<Int,Diagnostic>::Err(problem("internal",node->span,"witness verification: missing known value structure"))}
+};
+public let closed:Function(Store,Int,Span):Result<Unit,Diagnostic>=function(store:Store,root:Int,span:Span):Result<Unit,Diagnostic>{
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var seen:Map=create();var cursor:Int=0;
+ loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);
+  let shape:Type=try lookup<Type>(store->types,id);let kind:Int=shape->kind;
+  try require(kind>=0&&(kind<=5||kind==10||kind==11||kind==12||kind==20||kind==21||kind>=23&&kind<=29),span,"incomplete or invalid evidence type");
+  loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(value:ValueTerm)=>{branch on value->parameter{Parent::None=>unit,Parent::Some(ordinal:Int)=>{try require(false,span,"symbolic evidence value");}};}};};
+  loop over(shape->members as member:Member){branch on member->value{Parent::None=>unit,Parent::Some(child:Int)=>{pending=push<Int>(pending,child);}};};
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+public let selfUsage:Function(SyntaxForest,Int,Int):Result<Unit,Diagnostic>=function(tree:SyntaxForest,root:Int,allowed:Int):Result<Unit,Diagnostic>{
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var seen:Map=create();var cursor:Int=0;
+ loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let node:ForestNode=try getNode(tree->nodes,id);
+  branch when{node->symbol==ntType&&node->rule==ruleTypeName&&(try text(tree,id))=="Self"=>{try require(id==allowed,try extent(tree,id),"Self escaped its receiver annotation");},else=>unit};
+  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0=>{pending=push<Int>(pending,child);},else=>unit};};
+ };Result<Unit,Diagnostic>::Ok(unit)
+};
+public let formed:Function(Store,Int,SyntaxForest,Int,Parent,List<Argument>):Result<Int,Diagnostic>=function(store:Store,file:Int,tree:SyntaxForest,id:Int,owner:Parent,arguments:List<Argument>):Result<Int,Diagnostic>{
+ let value:Formed=try form(store,file,tree,id,owner,arguments);try require(value->store->types->count==store->types->count,try extent(tree,id),"source type was not checked");Result<Int,Diagnostic>::Ok(value->value)
+};
+public let expression:Function(State,Node):Result<SourceExpression,Diagnostic>=function(state:State,node:Node):Result<SourceExpression,Diagnostic>{
+ let module:Module=try lookup<Module>(state->types->headers->modules,node->file);var selected:Int= -1;var count:Int=0;var cursor:Int=0;
+ loop while(cursor<module->tree->nodes->count){let syntax:ForestNode=try getNode(module->tree->nodes,cursor);
+  branch when{syntax->symbol>0&&syntax->rule==node->rule&&syntax->start==node->cursor&&(try extent(module->tree,cursor))->end==node->span->end=>{selected=cursor;count=count+1;},else=>unit};cursor=cursor+1;
+ };try require(count==1,node->span,"source expression identity");
+ var owner:Parent=Parent::None;branch on node->functionOwner{Parent::None=>unit,Parent::Some(id:Int)=>{owner=(try lookup<FunctionInfo>(state->functions,id))->templateOwner;}};
+ var arguments:List<Argument>=List<Argument>[];branch on owner{Parent::None=>unit,Parent::Some(id:Int)=>{let generic:Parameters=try parameters(state->types,id);try require(generic->store->types->count==state->types->types->count,node->span,"generic source owner");arguments=generic->arguments;}};
+ let tree:SyntaxForest=try classify(state->types->headers,node->file,selected,owner);
+ Result<SourceExpression,Diagnostic>::Ok(SourceExpression{tree:tree,owner:owner,arguments:arguments})
+};

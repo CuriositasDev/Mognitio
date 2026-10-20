@@ -1,0 +1,41 @@
+namespace Mgnc\EvidenceChecked;
+use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State,Node};
+use Mgnc\SemanticData\{Declaration,Evidence,Introduction};
+use Mgnc\TypeData\{Type,Argument,Member};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\WitnessVerifier\{SourceExpression,require,nodeType,expression,formed};
+use Mgnc\Projection\{parts,item,text};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Tables\{atList};
+use Mgnc\Grammar\{rulePackage,ruleMethod};
+public let node:Function(State,Node):Result<Unit,Diagnostic>=function(state:State,value:Node):Result<Unit,Diagnostic>{
+ branch when{value->operation!="package"&&value->operation!="dispatch"=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};
+ let source:SourceExpression=try expression(state,value);let fields:List<Int>=try parts(source->tree,source->tree->root);let result:Int=try nodeType(value);
+ branch when{value->operation=="package"=>{
+  try require(value->rule==rulePackage&&value->children->length()==1&&value->mapping->length()==0,value->span,"package source shape");
+  let target:Int=try formed(state->types,value->file,source->tree,try item(fields,0),source->owner,source->arguments);
+  try require((try lookup<Type>(state->types->types,target))->kind==29&&target==result,value->span,"package target contractType");
+  let child:Node=try lookup<Node>(state->nodes,try atList<Int>(value->children,0));try require(child->normal==value->normal,value->span,"package completion");
+  {
+   try require(value->arguments->length()==2&&(try memberType(value->arguments,0,value->span))==(try nodeType(child))&&(try memberType(value->arguments,1,value->span))==target,value->span,"package type evidence");
+   let selected:Int=branch on value->target{Parent::Some(id:Int)=>id,Parent::None=>{try require(false,value->span,"package evidence missing");return Result<Unit,Diagnostic>::Ok(unit);}};
+   let implementation:Declaration=try lookup<Declaration>(state->types->headers->declarations,selected);try require(implementation->kind==7&&implementation->evidence->length()==1,value->span,"package implementation declaration");let proof:Evidence=try atList<Evidence>(implementation->evidence,0);
+   try require(proof->declaration==selected&&proof->concreteType==(try nodeType(child))&&proof->contractType==target,value->span,"package implementation pair");
+   var visible:Bool=false;loop over((try lookup<List<Int>>(state->types->headers->fileNames,value->file)) as index:Int){let introduction:Introduction=try lookup<Introduction>(state->types->headers->names,index);
+    branch when{introduction->declaration==selected&&introduction->file==value->file=>{visible=visible||(!introduction->imported&&implementation->file==value->file)||(introduction->imported&&implementation->exported);},else=>unit};
+   };try require(visible,value->span,"package implementation visibility");
+  };
+ },else=>{
+  try require(value->rule==ruleMethod&&value->children->length()>0&&value->mapping->length()==1&&value->arguments->length()==0,value->span,"dispatch source shape");
+  let receiver:Node=try lookup<Node>(state->nodes,try atList<Int>(value->children,0));let receiverType:Int=try nodeType(receiver);let contractType:Type=try lookup<Type>(state->types->types,receiverType);
+  try require(contractType->kind==29&&parentEqual(value->target,Parent::Some(receiverType)),value->span,"dispatch contractType");
+  let member:Member=try atList<Member>(contractType->members,try atList<Int>(value->mapping,0));try require(member->name==(try text(source->tree,try item(fields,2))),value->span,"dispatch source member");
+  let signatureType:Int=branch on member->value{Parent::Some(id:Int)=>id,Parent::None=>{try require(false,value->span,"dispatch signature missing");return Result<Unit,Diagnostic>::Ok(unit);}};let signature:Type=try lookup<Type>(state->types->types,signatureType);
+  try require(signature->kind==12&&signature->arguments->length()==value->children->length()&&(try memberType(signature->arguments,signature->arguments->length()-1,value->span))==result,value->span,"dispatch signature");
+  var ordinal:Int=0;var normal:Bool=true;loop over(value->children as childId:Int){let child:Node=try lookup<Node>(state->nodes,childId);normal=normal&&child->normal;
+   branch when{ordinal>0&&child->normal=>{try require((try nodeType(child))==(try memberType(signature->arguments,ordinal-1,value->span)),value->span,"dispatch argument type");},else=>unit};ordinal=ordinal+1;
+  };try require(normal==value->normal,value->span,"dispatch completion");
+ }};Result<Unit,Diagnostic>::Ok(unit)
+};

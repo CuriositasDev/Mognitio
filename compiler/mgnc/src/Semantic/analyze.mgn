@@ -1,8 +1,10 @@
 namespace Mgnc\Semantic;
+use Mgnc\WitnessVerification\{verify as verifyWitnesses};
 use Mgnc\NameIndex\{create as createIndex};
 use Mgnc\InputDiagnostics\{escapePath};
 use Mgnc\Data\{Diagnostic,lookup,problem,Span,Paged,empty,push};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
 use Mgnc\SemanticData\{Headers,Module,Declaration};
 use Mgnc\Headers\{collect,sourceError};
@@ -16,6 +18,8 @@ use Mgnc\TypeOps\{initialize as initializeTypes,functionKind,listKind};
 use Mgnc\TypeDeclarations\{define,Parameters,parameters};
 use Mgnc\Signatures\{declaration as signature,publicSignature};
 use Mgnc\MetadataTypes\{validate as metadataType};
+use Mgnc\WitnessRegistry\{collect as collectWitnesses};
+use Mgnc\WitnessBodies\{check as witnessBody};
 use Mgnc\SemanticValues\{State,Environment,Node,FunctionInfo,BodyState,Checked};
 use Mgnc\ValueSupport\{initialize as initializeValues,withTypes,withBodies,expect};
 use Mgnc\SemanticClassification\{BindingIndex,prepare,classifyPrepared};
@@ -96,6 +100,7 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   types=branch on signature(types,index){Result<Store,Diagnostic>::Ok(value:Store)=>value,Result<Store,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
   index=index+1;
  };
+ types=try collectWitnesses(types);
  index=0;loop while(index<headers->declarations->count){
   branch on metadataType(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
   branch on publicSignature(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};index=index+1;
@@ -114,6 +119,13 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   let bindings:BindingIndex=branch on lookup<BindingIndex>(templateContexts,declared->file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};};
+ index=0;loop while(index<headers->declarations->count){
+  let declared:Declaration=branch on lookup<Declaration>(state->types->headers->declarations,index){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+  branch when{declared->kind==7=>{
+   let bindings:BindingIndex=branch on lookup<BindingIndex>(templateContexts,declared->file){Result<BindingIndex,Diagnostic>::Ok(value:BindingIndex)=>value,Result<BindingIndex,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
+   state=branch on witnessBody(state,index,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
+  },else=>unit};index=index+1;
+ };
  loop over(headers->order as file:Int){
   let module:Module=branch on lookup<Module>(headers->modules,file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
   branch when{module->standard=>{continue;},else=>unit};
@@ -121,7 +133,7 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   var reachable:Bool=true;
   loop over(module->declarations as id:Int){
    let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
-   branch when{declared->kind>=4=>{
+   branch when{runtimeDeclaration(declared->kind)=>{
     branch when{!reachable=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,problem("semantic",declared->span,"unreachable module declaration")));},else=>unit};
     state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,id,error));}};
     let completed:BodyState=branch on lookup<BodyState>(state->bodies,id){Result<BodyState,Diagnostic>::Ok(value:BodyState)=>value,Result<BodyState,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
@@ -139,6 +151,7 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   branch when{!complete=>{return Result<SemanticProject,InputError>::Err(internal(problem("internal",Span{start:0,end:0,line:1,column:1},"incomplete body")));},else=>unit};
   index=index+1;
  };
+ try verifyWitnesses(state);
  let selected:Int=try entry(state);
  Result<SemanticProject,InputError>::Ok(SemanticProject{state:state,entry:selected})
 };

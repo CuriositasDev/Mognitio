@@ -1,11 +1,11 @@
 namespace Mgnc\WholeTables;
 use Mgnc\Data\{Diagnostic,Span,lookup};
 use Mgnc\Semantic\{SemanticProject};
-use Mgnc\SemanticData\{Introduction,Module,Declaration,Attribute};
+use Mgnc\SemanticData\{Introduction,Module,Declaration,Attribute,Evidence};
 use Mgnc\TypeData\{Store,Type,Member,Obligation};
 use Mgnc\TypeOps\{parentEqual,argumentsEqual};
 use Mgnc\WholeIR\{Project};
-use Mgnc\WholeChecks\{require};
+use Mgnc\WholeChecks\{require,integers};
 use Mgnc\Tables\{atList};
 public let obligations:Function(List<Obligation>,List<Obligation>,Span):Result<Unit,Diagnostic>=function(actual:List<Obligation>,expected:List<Obligation>,span:Span):Result<Unit,Diagnostic>{
  try require(actual->length()==expected->length(),span,"symbolic obligation count");var index:Int=0;
@@ -26,6 +26,10 @@ public let verify:Function(SemanticProject,Project):Result<Unit,Diagnostic>=func
  try require(actual->headers->declarations->count==expected->headers->declarations->count,span,"declaration metadata membership");
  index=0;loop over(actual->headers->declarations->pages->append(actual->headers->declarations->tail) as declarations:List<Declaration>){loop over(declarations as item:Declaration){let other:Declaration=try lookup<Declaration>(expected->headers->declarations,index);index=index+1;
   try require(item->file==other->file&&item->ordinal==other->ordinal&&item->name==other->name&&item->kind==other->kind&&item->exported==other->exported&&item->attributes->length()==other->attributes->length(),span,"declaration metadata owner");
+  try require(item->evidence->length()==other->evidence->length(),span,"witness evidence membership");
+  var evidenceIndex:Int=0;loop over(item->evidence as proof:Evidence){let original:Evidence=try atList<Evidence>(other->evidence,evidenceIndex);evidenceIndex=evidenceIndex+1;
+   try require(proof->declaration==original->declaration&&proof->concreteType==original->concreteType&&proof->contractType==original->contractType,span,"witness evidence identity");try require(integers(proof->methods,original->methods),span,"witness method order");
+  };
   var position:Int=0;loop over(item->attributes as attribute:Attribute){let original:Attribute=try atList<Attribute>(other->attributes,position);position=position+1;
    try require(attribute->name==original->name&&attribute->span->start==original->span->start&&attribute->span->end==original->span->end&&attribute->span->line==original->span->line&&attribute->span->column==original->span->column&&attribute->nameSpan->start==original->nameSpan->start&&attribute->nameSpan->end==original->nameSpan->end&&attribute->nameSpan->line==original->nameSpan->line&&attribute->nameSpan->column==original->nameSpan->column,span,"declaration metadata source order");
   };

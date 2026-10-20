@@ -3,6 +3,7 @@ use Mgnc\NameHash\{hash};
 use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Introduction,Parameter};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
@@ -12,7 +13,7 @@ use Mgnc\HeaderRead\{rightList};
 use Mgnc\BridgeLists\{expressions as callArguments};
 use Mgnc\Tables\{replaceItem};
 use Mgnc\Classification\{prune};
-use Mgnc\Grammar\{ruleArgumentType,ruleArgumentValue,ruleCall,ruleVariant,ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleOnArm,ruleGenericApply,ruleName,ruleTypeName,ruleTypeApply,ruleConstructName,ruleConstructGeneric,ruleValueReference};
+use Mgnc\Grammar\{ruleWitnessMethod,rulePackage,ruleArgumentType,ruleArgumentValue,ruleCall,ruleVariant,ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleOnArm,ruleGenericApply,ruleName,ruleTypeName,ruleTypeApply,ruleConstructName,ruleConstructGeneric,ruleValueReference};
 public type Binding=product{name:String;kind:Int;after:Int;until:Int;};
 public type BindingIndex=product{slots:IntMap;buckets:Paged<List<Binding>>;required:Bool;};
 let introduce:Function(BindingIndex,Binding):Result<BindingIndex,Diagnostic>=function(index:BindingIndex,binding:Binding):Result<BindingIndex,Diagnostic>{
@@ -33,7 +34,7 @@ public let prepare:Function(Headers,Int,Bool):Result<BindingIndex,Diagnostic>=fu
  // Only expression-choice guards require a separate forest classification pass.
  // All declarations and bodies still undergo the same semantic checker.
  var required:Bool=false;
- loop over(module->declarations as id:Int){branch when{(try lookup<Declaration>(headers->declarations,id))->kind<4=>{required=true;break;},else=>unit};};
+ loop over(module->declarations as id:Int){branch when{compileDeclaration((try lookup<Declaration>(headers->declarations,id))->kind)=>{required=true;break;},else=>unit};};
  var nodeId:Int=0;
  loop while(!required&&nodeId<module->tree->nodes->count){
   let node:ForestNode=try getNode(module->tree->nodes,nodeId);
@@ -48,9 +49,9 @@ public let prepare:Function(Headers,Int,Bool):Result<BindingIndex,Diagnostic>=fu
   let introduction:Introduction=try lookup<Introduction>(headers->names,nameIndex);
   branch when{introduction->file!=file=>{continue;},else=>unit};
   let declared:Declaration=try lookup<Declaration>(headers->declarations,introduction->declaration);
-  branch when{isolated&&declared->kind>=4=>{continue;},else=>unit};
+  branch when{isolated&&runtimeDeclaration(declared->kind)=>{continue;},else=>unit};
   let node:ForestNode=try getNode((try lookup<Module>(headers->modules,declared->file))->tree->nodes,declared->node);
-  bindings=try introduce(bindings,Binding{name:introduction->name,kind:declared->kind,after:branch when{declared->kind<4||introduction->imported=>0,else=>node->end},until:boundary->end});
+  bindings=try introduce(bindings,Binding{name:introduction->name,kind:branch when{declared->kind==6=>0,else=>declared->kind},after:branch when{compileDeclaration(declared->kind)||introduction->imported=>0,else=>node->end},until:boundary->end});
  };
  Result<BindingIndex,Diagnostic>::Ok(bindings)
 };
@@ -74,11 +75,11 @@ public let classifyPrepared:Function(Headers,Int,Int,Parent,BindingIndex):Result
   },else=>unit};
   let block:Int=branch when{node->symbol>0&&node->rule==ruleBlock=>visitId,else=>visitBlock};
   branch when{node->symbol>0=>{
-   branch when{node->rule==ruleCall||node->rule==ruleGenericApply||node->rule==ruleName||node->rule==ruleTypeName||node->rule==ruleTypeApply||node->rule==ruleConstructName||node->rule==ruleConstructGeneric||node->rule==ruleValueReference||node->alternatives>=0=>{candidates=push<Int>(candidates,visitId);},else=>unit};
+   branch when{node->rule==rulePackage||node->rule==ruleCall||node->rule==ruleGenericApply||node->rule==ruleName||node->rule==ruleTypeName||node->rule==ruleTypeApply||node->rule==ruleConstructName||node->rule==ruleConstructGeneric||node->rule==ruleValueReference||node->alternatives>=0=>{candidates=push<Int>(candidates,visitId);},else=>unit};
    branch when{node->rule==ruleLetBinding||node->rule==ruleVarBinding=>{
     let fields:List<Int>=try parts(tree,visitId);let scope:ForestNode=try getNode(tree->nodes,block);
     bindings=try introduce(bindings,Binding{name:try text(tree,try item(fields,1)),kind:4,after:node->end,until:scope->end});
-   },node->rule==ruleFunction=>{
+   },node->rule==ruleFunction||node->rule==ruleWitnessMethod=>{
     let fields:List<Int>=try parts(tree,visitId);let body:ForestNode=try getNode(tree->nodes,try item(fields,6));
     loop over((try rightList(tree,try item(fields,2))) as param:Int){let values:List<Int>=try parts(tree,param);
      bindings=try introduce(bindings,Binding{name:try text(tree,try item(values,0)),kind:4,after:body->start,until:body->end});};
@@ -109,6 +110,10 @@ public let classifyPrepared:Function(Headers,Int,Int,Parent,BindingIndex):Result
     let fields:List<Int>=try selected(tree,id,ruleCall);
     let callee:Int=try concrete(tree,try item(fields,0));let calleeNode:ForestNode=try getNode(tree->nodes,callee);
     branch when{calleeNode->rule==ruleVariant&&(try callArguments(tree,try item(fields,2)))->length()==1=>{rejected=rejected->append(family);},else=>unit};
+   },choice->rule==rulePackage=>{
+    let fields:List<Int>=try selected(tree,id,rulePackage);let annotation:Int=try item(fields,0);
+    let kind:Int=try kindAt(bindings,try text(tree,annotation),choice->start);
+    branch when{kind<0||kind>=3=>{rejected=rejected->append(family);},else=>unit};
    },else=>unit};family=choice->alternatives;
   };
   let generic:Bool=node->rule==ruleGenericApply;let runtime:Bool=node->rule==ruleName;
@@ -120,8 +125,8 @@ public let classifyPrepared:Function(Headers,Int,Int,Parent,BindingIndex):Result
     return Result<SyntaxForest,Diagnostic>::Err(problem("semantic",try site(tree,id),"name is not visible for syntax classification"));
    },else=>unit};
    branch when{kind>=0=>{
-    reject=(generic&&kind!=3)||(runtime&&kind<4)||(typeName&&kind==6)||(valueName&&kind!=6);
-    branch when{generic&&kind>=4=>{runtimeGeneric=Parent::Some(id);},else=>unit};
+    reject=(generic&&kind!=3)||(runtime&&(kind<4||kind==7))||(typeName&&(kind==6||kind==7))||(valueName&&kind!=6);
+    branch when{generic&&(kind==4||kind==5)=>{runtimeGeneric=Parent::Some(id);},else=>unit};
    },else=>unit};
    branch when{reject=>{rejected=rejected->append(id);},else=>unit};
   },else=>unit};

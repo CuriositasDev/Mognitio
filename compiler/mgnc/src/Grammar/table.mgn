@@ -41,9 +41,9 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:26,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:29,first:0,second:0,nullable:true},Prediction{slot:30,first:128,second:0,nullable:false},Prediction{slot:32,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:36,first:4,second:0,nullable:false},Prediction{slot:38,first:4,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:42,first:0,second:0,nullable:true},Prediction{slot:43,first:100713984,second:2,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:46,first:50176,second:0,nullable:false},Prediction{slot:48,first:33554432,second:0,nullable:false},Prediction{slot:50,first:67108864,second:0,nullable:false},Prediction{slot:52,first:512,second:0,nullable:false},Prediction{slot:55,first:512,second:0,nullable:false},Prediction{slot:543,first:0,second:2,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:58,first:1024,second:0,nullable:false},Prediction{slot:68,first:1024,second:0,nullable:false},Prediction{slot:78,first:16384,second:0,nullable:false},Prediction{slot:85,first:32768,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:42,first:0,second:0,nullable:true},Prediction{slot:43,first:100713984,second:14,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:46,first:50176,second:12,nullable:false},Prediction{slot:48,first:33554432,second:0,nullable:false},Prediction{slot:50,first:67108864,second:0,nullable:false},Prediction{slot:52,first:512,second:0,nullable:false},Prediction{slot:55,first:512,second:0,nullable:false},Prediction{slot:543,first:0,second:2,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:58,first:1024,second:0,nullable:false},Prediction{slot:68,first:1024,second:0,nullable:false},Prediction{slot:78,first:16384,second:0,nullable:false},Prediction{slot:85,first:32768,second:0,nullable:false},Prediction{slot:578,first:0,second:4,nullable:false},Prediction{slot:584,first:0,second:8,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:92,first:0,second:0,nullable:true},Prediction{slot:93,first:65536,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:95,first:65536,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:99,first:4,second:0,nullable:false}]);
@@ -68,34 +68,38 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:229,first:0,second:0,nullable:true},Prediction{slot:230,first:128,second:0,nullable:false},Prediction{slot:232,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:236,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:240,first:32,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:245,first:0,second:0,nullable:true},Prediction{slot:246,first:299445399042129956,second:3,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:249,first:33554432,second:0,nullable:false},Prediction{slot:251,first:67108864,second:0,nullable:false},Prediction{slot:253,first:268435456,second:0,nullable:false},Prediction{slot:257,first:536870912,second:0,nullable:false},Prediction{slot:261,first:1073741824,second:0,nullable:false},Prediction{slot:264,first:1073741824,second:0,nullable:false},Prediction{slot:268,first:2147483648,second:0,nullable:false},Prediction{slot:271,first:299445394914934820,second:0,nullable:false},Prediction{slot:276,first:299445394914934820,second:0,nullable:false},Prediction{slot:539,first:0,second:1,nullable:false},Prediction{slot:568,first:0,second:2,nullable:false},Prediction{slot:573,first:0,second:2,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:279,first:0,second:0,nullable:true},Prediction{slot:280,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:282,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:284,first:299445394914934820,second:0,nullable:false},Prediction{slot:286,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:290,first:299445394914934820,second:0,nullable:false},Prediction{slot:292,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:296,first:299445394914934820,second:0,nullable:false},Prediction{slot:298,first:299445394914934820,second:0,nullable:false},Prediction{slot:302,first:299445394914934820,second:0,nullable:false},Prediction{slot:306,first:299445394914934820,second:0,nullable:false},Prediction{slot:310,first:299445394914934820,second:0,nullable:false},Prediction{slot:314,first:299445394914934820,second:0,nullable:false},Prediction{slot:318,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:322,first:299445394914934820,second:0,nullable:false},Prediction{slot:324,first:299445394914934820,second:0,nullable:false},Prediction{slot:328,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:332,first:299445394914934820,second:0,nullable:false},Prediction{slot:334,first:299445394914934820,second:0,nullable:false},Prediction{slot:338,first:299445394914934820,second:0,nullable:false},Prediction{slot:342,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:346,first:299419006619090980,second:0,nullable:false},Prediction{slot:348,first:16777216,second:0,nullable:false},Prediction{slot:351,first:8796093022208,second:0,nullable:false},Prediction{slot:354,first:17592186044416,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:357,first:299419006619090980,second:0,nullable:false},Prediction{slot:366,first:299419006619090980,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:359,first:299419006619090980,second:0,nullable:false},Prediction{slot:361,first:299419006619090980,second:0,nullable:false},Prediction{slot:370,first:299419006619090980,second:0,nullable:false},Prediction{slot:377,first:299419006619090980,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:385,first:0,second:0,nullable:true},Prediction{slot:386,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:389,first:299445394914934820,second:0,nullable:false},Prediction{slot:391,first:299445394914934820,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:395,first:8388608,second:0,nullable:false},Prediction{slot:397,first:70368744177664,second:0,nullable:false},Prediction{slot:399,first:140737488355328,second:0,nullable:false},Prediction{slot:401,first:281474976710656,second:0,nullable:false},Prediction{slot:403,first:562949953421312,second:0,nullable:false},Prediction{slot:405,first:4,second:0,nullable:false},Prediction{slot:407,first:524288,second:0,nullable:false},Prediction{slot:411,first:32,second:0,nullable:false},Prediction{slot:413,first:134217728,second:0,nullable:false},Prediction{slot:415,first:1125899906842624,second:0,nullable:false},Prediction{slot:418,first:1125899906842624,second:0,nullable:false},Prediction{slot:425,first:1125899906842624,second:0,nullable:false},Prediction{slot:434,first:9007199254740992,second:0,nullable:false},Prediction{slot:444,first:9007199254740992,second:0,nullable:false},Prediction{slot:451,first:288230376151711744,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:245,first:0,second:0,nullable:true},Prediction{slot:246,first:299445399048421412,second:3,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:249,first:33554432,second:0,nullable:false},Prediction{slot:251,first:67108864,second:0,nullable:false},Prediction{slot:253,first:268435456,second:0,nullable:false},Prediction{slot:257,first:536870912,second:0,nullable:false},Prediction{slot:261,first:1073741824,second:0,nullable:false},Prediction{slot:264,first:1073741824,second:0,nullable:false},Prediction{slot:268,first:2147483648,second:0,nullable:false},Prediction{slot:271,first:299445394921226276,second:0,nullable:false},Prediction{slot:276,first:299445394921226276,second:0,nullable:false},Prediction{slot:539,first:0,second:1,nullable:false},Prediction{slot:568,first:0,second:2,nullable:false},Prediction{slot:573,first:0,second:2,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:279,first:0,second:0,nullable:true},Prediction{slot:280,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:282,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:284,first:299445394921226276,second:0,nullable:false},Prediction{slot:286,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:290,first:299445394921226276,second:0,nullable:false},Prediction{slot:292,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:296,first:299445394921226276,second:0,nullable:false},Prediction{slot:298,first:299445394921226276,second:0,nullable:false},Prediction{slot:302,first:299445394921226276,second:0,nullable:false},Prediction{slot:306,first:299445394921226276,second:0,nullable:false},Prediction{slot:310,first:299445394921226276,second:0,nullable:false},Prediction{slot:314,first:299445394921226276,second:0,nullable:false},Prediction{slot:318,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:322,first:299445394921226276,second:0,nullable:false},Prediction{slot:324,first:299445394921226276,second:0,nullable:false},Prediction{slot:328,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:332,first:299445394921226276,second:0,nullable:false},Prediction{slot:334,first:299445394921226276,second:0,nullable:false},Prediction{slot:338,first:299445394921226276,second:0,nullable:false},Prediction{slot:342,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:346,first:299419006625382436,second:0,nullable:false},Prediction{slot:348,first:16777216,second:0,nullable:false},Prediction{slot:351,first:8796093022208,second:0,nullable:false},Prediction{slot:354,first:17592186044416,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:357,first:299419006625382436,second:0,nullable:false},Prediction{slot:366,first:299419006625382436,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:359,first:299419006625382436,second:0,nullable:false},Prediction{slot:361,first:299419006625382436,second:0,nullable:false},Prediction{slot:370,first:299419006625382436,second:0,nullable:false},Prediction{slot:377,first:299419006625382436,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:385,first:0,second:0,nullable:true},Prediction{slot:386,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:389,first:299445394921226276,second:0,nullable:false},Prediction{slot:391,first:299445394921226276,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:395,first:8388608,second:0,nullable:false},Prediction{slot:397,first:70368744177664,second:0,nullable:false},Prediction{slot:399,first:140737488355328,second:0,nullable:false},Prediction{slot:401,first:281474976710656,second:0,nullable:false},Prediction{slot:403,first:562949953421312,second:0,nullable:false},Prediction{slot:405,first:4,second:0,nullable:false},Prediction{slot:407,first:524288,second:0,nullable:false},Prediction{slot:411,first:32,second:0,nullable:false},Prediction{slot:413,first:134217728,second:0,nullable:false},Prediction{slot:415,first:1125899906842624,second:0,nullable:false},Prediction{slot:418,first:1125899906842624,second:0,nullable:false},Prediction{slot:425,first:1125899906842624,second:0,nullable:false},Prediction{slot:434,first:9007199254740992,second:0,nullable:false},Prediction{slot:444,first:9007199254740992,second:0,nullable:false},Prediction{slot:451,first:288230376151711744,second:0,nullable:false},Prediction{slot:618,first:6291456,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:454,first:4,second:0,nullable:false},Prediction{slot:456,first:4,second:0,nullable:false},Prediction{slot:459,first:4,second:0,nullable:false},Prediction{slot:464,first:4,second:0,nullable:false},Prediction{slot:469,first:4,second:0,nullable:false},Prediction{slot:474,first:4,second:0,nullable:false},Prediction{slot:478,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:485,first:4,second:0,nullable:false},Prediction{slot:487,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:490,first:0,second:0,nullable:true},Prediction{slot:491,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:494,first:4,second:0,nullable:false},Prediction{slot:496,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:500,first:4,second:0,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:504,first:0,second:0,nullable:true},Prediction{slot:505,first:299445394914934820,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:504,first:0,second:0,nullable:true},Prediction{slot:505,first:299445394921226276,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:511,first:0,second:0,nullable:true},Prediction{slot:512,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:514,first:6291456,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:517,first:0,second:0,nullable:true},Prediction{slot:518,first:128,second:0,nullable:false},Prediction{slot:520,first:128,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:524,first:6291456,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:528,first:6291456,second:0,nullable:false},Prediction{slot:532,first:6291456,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:548,first:0,second:0,nullable:true},Prediction{slot:549,first:0,second:2,nullable:false}]);
- result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:553,first:50176,second:0,nullable:false},Prediction{slot:555,first:33554432,second:0,nullable:false},Prediction{slot:557,first:67108864,second:0,nullable:false},Prediction{slot:559,first:512,second:0,nullable:false},Prediction{slot:562,first:512,second:0,nullable:false},Prediction{slot:565,first:512,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:553,first:50176,second:12,nullable:false},Prediction{slot:555,first:33554432,second:0,nullable:false},Prediction{slot:557,first:67108864,second:0,nullable:false},Prediction{slot:559,first:512,second:0,nullable:false},Prediction{slot:562,first:512,second:0,nullable:false},Prediction{slot:565,first:512,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:594,first:0,second:0,nullable:true},Prediction{slot:595,first:4,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:598,first:4,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:606,first:0,second:0,nullable:true},Prediction{slot:607,first:4,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:610,first:4,second:0,nullable:false}]);
  result
 };
 public let predictions:Paged<List<Prediction>>=makePredictions();
@@ -162,6 +166,10 @@ public let ntOnArm:Int=60;
 public let ntPattern:Int=61;
 public let ntAttributeRest:Int=62;
 public let ntAttributedDeclaration:Int=63;
+public let ntContractMethods:Int=64;
+public let ntContractMethod:Int=65;
+public let ntWitnessMethods:Int=66;
+public let ntWitnessMethod:Int=67;
 public let ruleModule:Int=0;
 public let ruleNamespace:Int=1;
 public let rulePathName:Int=2;
@@ -332,6 +340,15 @@ public let ruleAttributedPublicLet:Int=166;
 public let ruleAttributedPublicVar:Int=167;
 public let ruleAttributedLocalLet:Int=168;
 public let ruleAttributedLocalVar:Int=169;
+public let ruleContractDeclaration:Int=170;
+public let ruleWitnessDeclaration:Int=171;
+public let ruleContractMethodsEmpty:Int=172;
+public let ruleContractMethodsAppend:Int=173;
+public let ruleContractMethod:Int=174;
+public let ruleWitnessMethodsEmpty:Int=175;
+public let ruleWitnessMethodsAppend:Int=176;
+public let ruleWitnessMethod:Int=177;
+public let rulePackage:Int=178;
 public let closeTerminal:Int=-18;
 public type Lookahead=product{ordinary:Int;extra:Int;high:Int;};
 public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{
@@ -400,6 +417,9 @@ public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,clo
  let high:Int=branch when{
  token->text=="assert"=>1,
  token->text=="@"=>2,
+ token->text=="contract"=>4,
+ token->text=="witness"=>8,
+ token->text=="implements"=>16,
  else=>0,
  };
  let extra:Int=branch when{token->kind==1=>branch when{token->text=="Function"=>4194304,else=>2097152},close->text==">"=>131072,else=>0};
@@ -474,6 +494,9 @@ public let matches:Function(Int,Lexeme):Bool=function(symbol:Int,token:Lexeme):B
   symbol==-62=>token->text=="::",
   symbol==-63=>token->text=="assert",
   symbol==-64=>token->text=="@",
+  symbol==-65=>token->text=="contract",
+  symbol==-66=>token->text=="witness",
+  symbol==-67=>token->text=="implements",
   else=>false,
  }
 };

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeLayout;
+use Mgnc\WholeEmissionTypes\{collect as emissionTypes};
 use Mgnc\RepresentationInfo\{describe};
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
@@ -20,15 +21,7 @@ public let argumentType:Function(Type,Int,Span):Result<Int,Diagnostic>=function(
 };
 public let fixed:Function(Int,List<Int>):Descriptor=function(bytes:Int,references:List<Int>):Descriptor{Descriptor{mode:0,size:branch when{bytes<32=>32,else=>bytes},references:references,variants:List<List<Int>>[],elementManaged:false}};
 public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(plan:Plan,closures:Closures):Result<Layouts,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};var pending:Paged<Int>=empty<Int>();var seen:Map=create();
- loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){pending=push<Int>(pending,item->body->resultType);
-  loop over(item->body->slots->pages->append(item->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){pending=push<Int>(pending,slot->valueType);};};
-  loop over(item->body->blocks->pages->append(item->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){loop over(op->arguments as arg:Argument){branch on arg{Argument::Type(id:Int)=>{pending=push<Int>(pending,id);},Argument::Value(term:ValueTerm)=>unit};};};};};
- };};
- var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);let shape:Type=try lookup<Type>(plan->types->types,id);try require(shape->kind<22||shape->kind==23||shape->kind==24||shape->kind==25||shape->kind==26||shape->kind==27||shape->kind==28,span,"layout symbolic or unsupported type");
-  loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"layout symbolic value");}};};
-  loop over(shape->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};
- };
+ let span:Span=Span{start:0,end:0,line:1,column:1};let completed:Paged<Int>=try emissionTypes(plan);var seen:Map=create();loop over(completed->pages->append(completed->tail) as page:List<Int>){loop over(page as id:Int){seen=try put(seen,id,1);};};
  // Descriptor order follows structural type identity, independent of interning order.
  var entries:Paged<Entry>=empty<Entry>();var typeCursor:Int=0;
  loop while(typeCursor<plan->types->types->count){

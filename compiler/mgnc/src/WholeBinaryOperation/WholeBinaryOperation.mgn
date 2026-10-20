@@ -1,0 +1,31 @@
+namespace Mgnc\WholeBinaryOperation;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeIR\{Body,Operation};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\WholeChecks\{require,slotType};
+use Mgnc\WholeFrame\{offset};
+use Mgnc\NumericShape\{read};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\IntMap\{get};
+use Mgnc\Tables\{atList};
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{load,store,mov,address,immediate,constant,alu,condition,byteLoad,byteStore};
+use Mgnc\WholeABI\{allocateLabel};
+public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation,output:Int):Result<Code,Diagnostic>{
+ var code:Code=initial;let span:Span=op->origin->span;let name:String=op->code;let input:Int=try atList<Int>(op->inputs,0);let source:Int=try slotType(body,input);let shape:Type=try lookup<Type>(plan->concrete->types->types,source);let resultType:Int=try slotType(body,output);code=load(code,12,5,offset(input));
+ branch when{name=="method:toBytes"||name=="method:toBits"=>{
+  let result:Type=try lookup<Type>(plan->concrete->types->types,resultType);try require(result->kind==11,span,"binary encoding Result");let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);
+  let width:Int=branch when{name=="method:toBytes"=>(try read(plan->concrete->types,source,span))->width,else=>(try read(plan->concrete->types,payload,span))->width};code=immediate(code,0,0);code=store(code,4,0,0);code=store(code,4,8,12);code=immediate(code,0,width);code=store(code,4,16,0);code=load(code,0,5,offset(try atList<Int>(op->inputs,1)));code=load(code,0,0,24);code=store(code,4,24,0);var position:Int=32;
+  branch when{name=="method:toBytes"=>{code=immediate(code,0,try get(plan->layouts->types,payload));code=store(code,4,position,0);position=position+8;},else=>unit};code=immediate(code,0,try get(plan->layouts->types,resultType));code=store(code,4,position,0);code=immediate(code,0,try get(plan->layouts->types,error));code=store(code,4,position+8,0);code=jump(code,List<Int>[232],branch when{name=="method:toBytes"=>69,else=>70});
+ },name=="method:length"=>{code=load(code,0,12,24);},
+ name=="method:at"=>{
+  let invalid:Int=code->nextLabel;let ready:Int=invalid+1;code=fresh(code,2);code=load(code,14,12,24);code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));code=alu(code,57,13,14);code=jump(code,List<Int>[15,131],invalid);code=alu(code,1,12,13);code=byteLoad(code,0,12,32);code=immediate(code,2,0);code=jump(code,List<Int>[233],ready);code=label(code,invalid);code=immediate(code,0,0);code=immediate(code,2,1);code=label(code,ready);code=store(code,4,8,0);code=store(code,4,16,2);code=store(code,4,24,13);code=store(code,4,32,14);code=immediate(code,0,try get(plan->layouts->types,resultType));code=store(code,4,40,0);code=immediate(code,0,try get(plan->layouts->types,4));code=store(code,4,48,0);code=immediate(code,0,2);code=store(code,4,56,0);code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],68);
+ },name=="method:slice"=>{
+  code=immediate(code,0,0);code=store(code,4,0,0);var position:Int=8;loop over(op->inputs as slot:Int){code=load(code,0,5,offset(slot));code=store(code,4,position,0);position=position+8;};loop over(List<Int>[resultType,5,source] as id:Int){code=immediate(code,0,try get(plan->layouts->types,id));code=store(code,4,position,0);position=position+8;};code=jump(code,List<Int>[232],71);
+ },name=="method:append"||name=="method:concat"=>{
+  code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));code=load(code,14,12,24);branch when{name=="method:append"=>{code=constant(code,0,14,1);},else=>{code=load(code,0,13,24);code=alu(code,1,14,0);}};code=jump(code,List<Int>[15,128],72);code=mov(code,7,14);code=constant(code,0,7,32);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,try get(plan->layouts->types,source));code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=address(code,7,0,32);code=address(code,6,12,32);code=load(code,1,12,24);code=raw(code,List<Int>[243,164]);branch when{name=="method:append"=>{code=byteStore(code,7,0,13);},else=>{code=address(code,6,13,32);code=load(code,1,13,24);code=raw(code,List<Int>[243,164]);}};
+ },name=="eq"||name=="ne"=>{
+  let unequal:Int=code->nextLabel;let done:Int=unequal+1;code=fresh(code,2);code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));code=load(code,1,12,24);code=load(code,2,13,24);code=alu(code,57,1,2);code=jump(code,List<Int>[15,133],unequal);code=address(code,7,12,32);code=address(code,6,13,32);code=alu(code,57,1,1);code=raw(code,List<Int>[243,166]);code=condition(code,branch when{name=="eq"=>4,else=>5},0);code=jump(code,List<Int>[233],done);code=label(code,unequal);code=immediate(code,0,branch when{name=="eq"=>0,else=>1});code=label(code,done);
+ },else=>{try require(false,span,"unknown binary operation");}};Result<Code,Diagnostic>::Ok(code)
+};

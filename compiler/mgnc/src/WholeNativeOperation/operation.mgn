@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeOperation;
+use Mgnc\WholeBinaryOperation\{emit as binaryOperation};
 use Mgnc\WholeNumericChecked\{emit as numericChecked,supported as checkedNumeric};
 use Mgnc\WholeNumericLiteral\{emit as numericLiteral};
 use Mgnc\WholeNumericScalar\{emit as numericScalar};
@@ -56,7 +57,7 @@ public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnost
  },
  else=>{
   try require(op->inputs->length()>0,op->origin->span,"native operation operands");let input:Int=try atList<Int>(op->inputs,0);let shape:Type=try lookup<Type>(plan->concrete->types->types,try slotType(body,input));
-  branch when{(shape->kind==1||shape->kind==23||shape->kind==24)&&checkedNumeric(name)=>{code=try numericChecked(code,plan,body,op);},shape->kind==23||shape->kind==24||shape->kind==1&&name=="method:toBits"=>{code=try numericScalar(code,plan->concrete->types,body,op);},shape->kind>=3=>{code=try collection(code,plan,body,op,output);},else=>{
+  branch when{shape->kind==25||shape->kind==24&&name=="method:toBytes"=>{code=try binaryOperation(code,plan,body,op,output);},(shape->kind==1||shape->kind==23||shape->kind==24)&&checkedNumeric(name)=>{code=try numericChecked(code,plan,body,op);},shape->kind==23||shape->kind==24||shape->kind==1&&name=="method:toBits"=>{code=try numericScalar(code,plan->concrete->types,body,op);},shape->kind>=3=>{code=try collection(code,plan,body,op,output);},else=>{
   code=load(code,0,5,offset(input));branch when{op->inputs->length()>1=>{code=load(code,1,5,offset(try atList<Int>(op->inputs,1)));},else=>unit};code=try scalar(code,op);}};
  }};
  branch when{output>=0=>{code=store(code,5,offset(output),0);},else=>unit};Result<Code,Diagnostic>::Ok(code)

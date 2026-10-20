@@ -1,4 +1,5 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeBinaryProof\{Proof,selected as checkedBinary,expected as binaryExpected};
 use Mgnc\WholeNumericResultCheck\{Expected,selected as checkedNumeric,expected as numericExpected};
 use Mgnc\WholeNumericProof\{bytes as numericBytes};
 use Mgnc\MathValue\{Integer};
@@ -40,6 +41,9 @@ let numeric:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic
  let expected:Expected=try numericExpected(plan,body,op);var position:Int=0;loop over(List<Int>[expected->resultDescriptor,expected->errorDescriptor,expected->fields] as value:Int){let prefix:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(40+position*8,4));try require(occurrences(part->bytes,prefix)==1,span,"numeric Result helper metadata");position=position+1;};
  var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==68,span,"numeric Result helper target");},else=>unit};};try require(calls==1,span,"numeric Result helper call count");Result<Unit,Diagnostic>::Ok(unit)
 };
+let binary:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
+ let proof:Proof=try binaryExpected(plan,body,op);var position:Int=proof->start;loop over(proof->metadata as value:Int){let pattern:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(position,4));try require(occurrences(part->bytes,pattern)==1,span,"binary helper descriptor metadata");position=position+8;};var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==proof->helper,span,"binary helper target");},else=>unit};};try require(calls==1,span,"binary helper call count");Result<Unit,Diagnostic>::Ok(unit)
+};
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append(50+ioOperation(item->standard));},else=>unit};};};
@@ -63,6 +67,7 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
    loop over(block->operations as op:Operation){
     let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};
     let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);
+    branch when{try checkedBinary(plan->concrete->types,body,op)=>{try binary(plan,body,op,part,span);},else=>unit};
     branch when{try checkedNumeric(plan->concrete->types,body,op)=>{try numeric(plan,body,op,part,span);},else=>unit};
      branch when{op->code=="typed-integer"=>{try require(op->wide->length()==1&&part->references->length()==0&&part->bytes->length()==17,span,"numeric literal instruction shape");let expected:List<Int>=append(List<Int>[72,184],try numericBytes(try atList<Integer>(op->wide,0),op->origin->span));try require(same(range(part->bytes,0,10),expected),span,"numeric literal word encoding");},else=>unit};let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
     branch when{op->unavailable->length()==0=>{

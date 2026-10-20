@@ -19,6 +19,7 @@ let standard:Function(Headers,Int,Int,Span):Result<Unit,InputError>=function(hea
  branch when{!owner->standard=>{return Result<Unit,InputError>::Ok(unit);},else=>unit};
  let name:String=declared->name;
  branch when{owner->nameSpace=="Std\\Io"&&(name=="readTextFile"||name=="writeTextFile"||name=="readStdin"||name=="writeStdout"||name=="writeStderr"||name=="IoError"||name=="IoOperation"||name=="IoErrorKind"||name=="IoErrorPhase")=>Result<Unit,InputError>::Ok(unit),
+ owner->nameSpace=="Std\\Binary"&&(name=="Bytes"||name=="ByteOrder"||name=="BitWidthError"||name=="BinaryDecodeError")=>Result<Unit,InputError>::Ok(unit),
  owner->nameSpace=="Std\\Numeric"&&(name=="Bits"||name=="Signed"||name=="Unsigned"||name=="IntegerConversionError"||name=="BitShiftError")=>Result<Unit,InputError>::Ok(unit),
  else=>Result<Unit,InputError>::Err(failure(headers,file,span,"standard symbol is outside the native profile: "+owner->nameSpace+"\\"+name))}
 };
@@ -50,7 +51,6 @@ public let validate:Function(SemanticProject):Result<Unit,InputError>=function(s
   branch when{!module->standard=>{work=push<Use>(work,Use{typeId:symbol->valueType,file:symbol->file,span:symbol->span});},else=>unit};
  };};
  loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
-  branch when{node->operation=="method:toBytes"=>{return Result<Unit,InputError>::Err(failure(headers,node->file,node->span,"binary encoding generation is not enabled in this increment"));},else=>unit};
   branch on node->structure{Structure::Unknown=>unit,Structure::Known(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});}};
   loop over(node->arguments as argument:Argument){branch on argument{
    Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});},Argument::Value(term:ValueTerm)=>unit
@@ -65,7 +65,7 @@ public let validate:Function(SemanticProject):Result<Unit,InputError>=function(s
   branch when{(try checked<Int>(get(seen,site->typeId),headers,site->file,site->span))>=0=>{continue;},else=>unit};
   seen=try checked<Map>(put(seen,site->typeId,1),headers,site->file,site->span);
   let shape:Type=try checked<Type>(lookup<Type>(state->types->types,site->typeId),headers,site->file,site->span);
-  branch when{shape->kind==25||shape->kind==26=>{return Result<Unit,InputError>::Err(failure(headers,site->file,site->span,"type family is outside the native profile"));},else=>unit};
+  branch when{shape->kind==26=>{return Result<Unit,InputError>::Err(failure(headers,site->file,site->span,"type family is outside the native profile"));},else=>unit};
   branch on shape->owner{Parent::None=>unit,Parent::Some(owner:Int)=>{try standard(headers,owner,site->file,site->span);}};
   loop over(shape->arguments as argument:Argument){branch on argument{
    Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:site->file,span:site->span});},Argument::Value(term:ValueTerm)=>unit

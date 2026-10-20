@@ -1,0 +1,9 @@
+namespace Mgnc\WholePathFunctions;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholePathJoin\{emit as join};
+use Mgnc\WholePathCreate\{emit as create};
+use Mgnc\WholePathResource\{emit as resources};
+use Mgnc\Machine\{Code,label,field};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{var code:Code=initial;var joined:Bool=false;var created:Bool=false;let span:Span=Span{start:0,end:0,line:1,column:1};loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{global->standard=="joinPath"=>{try require(!joined,span,"duplicate join wrapper");joined=true;code=try join(code,plan,global);},global->standard=="createDirectory"=>{try require(!created,span,"duplicate creation wrapper");created=true;code=try create(code,plan,global);},else=>unit};};};branch when{created=>{code=resources(code);},else=>unit};loop over(List<Int>[173,174] as root:Int){code=label(code,root);code=field(code,4,6);code=field(code,4,63);};Result<Code,Diagnostic>::Ok(code)};

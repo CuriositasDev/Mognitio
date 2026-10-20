@@ -1,0 +1,23 @@
+namespace Mgnc\WholePathCommon;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,Span,empty,lookup};
+use Mgnc\TypeData\{Type,Member};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{get};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{end};
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteLoad};
+public type Types=product{result:Int;error:Int;operation:Int;kind:Int;phase:Int;string:Int;};
+public let frame:Function(Bool):Frame=function(create:Bool):Frame{let outgoing:Int=branch when{create=>64,else=>8};Frame{slots:6,outgoing:outgoing,extent:((64+6*8+outgoing*8+15)/16)*16,entry:List<Bits<64>>[Bits<64>{63}],points:empty<Point>()}};
+let lookupDescriptor:Function(Native,Int):Result<Int,Diagnostic>=function(plan:Native,id:Int):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,Span{start:0,end:0,line:1,column:1},"path operation descriptor");Result<Int,Diagnostic>::Ok(found)};
+public let readTypes:Function(Native,Global):Result<Types,Diagnostic>=function(plan:Native,global:Global):Result<Types,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let signature:Type=try lookup<Type>(plan->concrete->types->types,global->valueType);let resultId:Int=try argumentType(signature,signature->arguments->length()-1,span);let result:Type=try lookup<Type>(plan->concrete->types->types,resultId);let errorId:Int=try argumentType(result,1,span);let error:Type=try lookup<Type>(plan->concrete->types->types,errorId);Result<Types,Diagnostic>::Ok(Types{result:try lookupDescriptor(plan,resultId),error:try lookupDescriptor(plan,errorId),operation:try lookupDescriptor(plan,try present((try atList<Member>(error->members,0))->value,span,"path operation type")),kind:try lookupDescriptor(plan,try present((try atList<Member>(error->members,1))->value,span,"path kind type")),phase:try lookupDescriptor(plan,try present((try atList<Member>(error->members,3))->value,span,"path phase type")),string:try lookupDescriptor(plan,3)})};
+public let allocate:Function(Code,Int,Int):Code=function(initial:Code,size:Int,descriptor:Int):Code{jump(immediate(immediate(initial,7,size),6,descriptor),List<Int>[232],10)};
+public let validate:Function(Code,Int,Bool,Int):Code=function(initial:Code,slot:Int,relative:Bool,invalid:Int):Code{var code:Code=load(initial,6,5,slot);code=load(code,1,6,24);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],invalid);code=constant(code,0,6,40);branch when{relative=>{code=byteLoad(code,0,6,0);code=constant(code,7,0,47);code=jump(code,List<Int>[15,132],invalid);},else=>unit};let loopLabel:Int=code->nextLabel;code=fresh(code,1);code=label(code,loopLabel);code=byteLoad(code,0,6,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],invalid);code=constant(code,0,6,1);code=constant(code,5,1,1);jump(code,List<Int>[15,133],loopLabel)};
+let variant:Function(Code,Int,Int,Int):Code=function(initial:Code,descriptor:Int,tag:Int,slot:Int):Code{var code:Code=allocate(initial,40,descriptor);code=store(code,0,24,tag);code=immediate(code,2,0);code=store(code,0,32,2);store(code,5,slot,0)};
+// R12 is the selected error kind or -1; R13 is the phase. All ownership is
+// released before this function constructs managed output/error values.
+public let finish:Function(Code,Types,Bool):Code=function(initial:Code,types:Types,create:Bool):Code{var code:Code=initial;let ok:Int=code->nextLabel;let result:Int=ok+1;code=fresh(code,2);code=constant(code,7,12,-1);code=jump(code,List<Int>[15,132],ok);code=immediate(code,14,branch when{create=>7,else=>5});code=variant(code,types->operation,14,-96);code=variant(code,types->kind,12,-104);code=variant(code,types->phase,13,-112);code=allocate(code,56,types->error);var index:Int=0;loop over(List<Int>[-96,-104,-72,-112] as slot:Int){code=load(code,2,5,slot);code=store(code,0,24+index*8,2);index=index+1;};code=store(code,5,-88,0);code=immediate(code,14,1);code=jump(code,List<Int>[233],result);code=label(code,ok);branch when{create=>{code=immediate(code,0,0);code=store(code,5,-88,0);},else=>unit};code=immediate(code,14,0);code=label(code,result);code=allocate(code,40,types->result);code=store(code,0,24,14);code=load(code,2,5,-88);code=store(code,0,32,2);end(code,frame(create))};

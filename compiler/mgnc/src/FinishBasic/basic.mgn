@@ -1,5 +1,5 @@
 namespace Mgnc\FinishBasic;
-use Mgnc\Grammar\{ruleBlock,ruleFalse,ruleFunction,ruleGenericApply,ruleGroup,ruleInteger,ruleLetBinding,ruleName,ruleStatementAssign,ruleStatementDiscard,ruleStatementExpression,ruleString,ruleTrue,ruleUnaryNeg,ruleUnit,ruleVarBinding};
+use Mgnc\Grammar\{ruleBlock,ruleFalse,ruleFunction,ruleGenericApply,ruleGroup,ruleInteger,ruleLetBinding,ruleName,ruleStatementAssert,ruleStatementAssign,ruleStatementDiscard,ruleStatementExpression,ruleString,ruleTrue,ruleUnaryNeg,ruleUnit,ruleVarBinding};
 use Mgnc\Data\{Diagnostic,lookup,push,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Forest\{SyntaxForest};
@@ -58,6 +58,9 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   let symbol:Symbol=try lookup<Symbol>(state->symbols,id);
   branch when{!symbol->mutable||!parentEqual(symbol->functionOwner,environment->functionOwner)=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",left->span,"cannot assign an immutable or captured binding"));},else=>unit};
   try expect(right,symbol->valueType);binding=Parent::Some(id);structure=Structure::Known(0);operation="assign";
+ },rule==ruleStatementAssert=>{
+  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));try expect(child,2);
+  structure=branch when{normal=>Structure::Known(0),else=>Structure::Unknown};operation="assert";
  },rule==ruleStatementExpression||rule==ruleStatementDiscard=>{
   let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
   branch when{rule==ruleStatementDiscard=>{

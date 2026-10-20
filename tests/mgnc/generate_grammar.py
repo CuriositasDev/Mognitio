@@ -61,19 +61,22 @@ def mgn(data,reverse_predictions=False):
  for nt in data['nonterminals'].values():
   values=[]
   for i,r in enumerate(data['rules']):
-   if r['lhs']==nt:values.append('Prediction{slot:'+str(data['starts'][i])+',first:'+str(sum(1<<(-x-1) for x in data['first'][i] if x<0))+',nullable:'+str(0 in data['first'][i]).lower()+'}')
+   if r['lhs']==nt:values.append('Prediction{slot:'+str(data['starts'][i])+',first:'+str(sum(1<<(-x-1) for x in data['first'][i] if x<0 and -x<=62))+',second:'+str(sum(1<<(-x-63) for x in data['first'][i] if x< -62))+',nullable:'+str(0 in data['first'][i]).lower()+'}')
   if reverse_predictions:values.reverse()
   lines.append(' result=push<List<Prediction>>(result,List<Prediction>['+','.join(values)+']);')
  lines+=[' result','};','public let predictions:Paged<List<Prediction>>=makePredictions();']
  for name,ident in data['nonterminals'].items():lines.append('public let nt'+name+':Int='+str(ident)+';')
  for i,r in enumerate(data['rules']):lines.append('public let rule'+''.join(x.title() for x in r['name'].split('_'))+':Int='+str(i)+';')
  lines+=['public let closeTerminal:Int='+str(data['terminals']['#close'])+';']
- assert len(data['terminals'])<=62,'extend the fixed grammar lookahead word before adding terminals'
+ assert len(data['terminals'])<=124,'extend the two-word grammar lookahead before adding terminals'
  def power(name):return str(1<<(-data['terminals'][name]-1))
- lines+=['public type Lookahead=product{ordinary:Int;extra:Int;};','public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{',' let ordinary:Int=branch when{',' token->kind==1=>'+power('#id')+',',' token->kind==2=>'+power('#number')+',',' token->kind==5=>'+power('#string')+',']
+ lines+=['public type Lookahead=product{ordinary:Int;extra:Int;high:Int;};','public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{',' let ordinary:Int=branch when{',' token->kind==1=>'+power('#id')+',',' token->kind==2=>'+power('#number')+',',' token->kind==5=>'+power('#string')+',']
  for term,ident in data['terminals'].items():
-  if not term.startswith('#'):lines.append(' token->text=='+json.dumps(term)+'=>'+power(term)+',')
- lines+=[' else=>0,',' };',' let extra:Int=branch when{token->kind==1=>branch when{token->text=="Function"=>'+power('#function')+',else=>'+power('#typeid')+'},close->text==">"=>'+power('#close')+',else=>0};',' Lookahead{ordinary:ordinary,extra:extra}','};','public let possible:Function(Prediction,Lookahead):Bool=function(prediction:Prediction,ahead:Lookahead):Bool{',' prediction->nullable||(ahead->ordinary>0&&(prediction->first/ahead->ordinary)%2==1)||(ahead->extra>0&&(prediction->first/ahead->extra)%2==1)','};']
+  if not term.startswith('#') and -ident<=62:lines.append(' token->text=='+json.dumps(term)+'=>'+power(term)+',')
+ lines+=[' else=>0,',' };',' let high:Int=branch when{']
+ for term,ident in data['terminals'].items():
+  if -ident>62:lines.append(' token->text=='+json.dumps(term)+'=>'+str(1<<(-ident-63))+',')
+ lines+=[' else=>0,',' };',' let extra:Int=branch when{token->kind==1=>branch when{token->text=="Function"=>'+power('#function')+',else=>'+power('#typeid')+'},close->text==">"=>'+power('#close')+',else=>0};',' Lookahead{ordinary:ordinary,extra:extra,high:high}','};','public let possible:Function(Prediction,Lookahead):Bool=function(prediction:Prediction,ahead:Lookahead):Bool{',' prediction->nullable||(ahead->ordinary>0&&(prediction->first/ahead->ordinary)%2==1)||(ahead->extra>0&&(prediction->first/ahead->extra)%2==1)||(ahead->high>0&&(prediction->second/ahead->high)%2==1)','};']
 
  lines+=['public let matches:Function(Int,Lexeme):Bool=function(symbol:Int,token:Lexeme):Bool{',' branch when{']
  for term,ident in data['terminals'].items():
@@ -90,7 +93,7 @@ def sources(data):
  result={'Grammar/table.mgn':mgn(data)}
  result['GrammarData/types.mgn']=r"""namespace Mgnc\GrammarData;
 public type Slot=product{lhs:Int;rule:Int;dot:Int;next:Int;};
-public type Prediction=product{slot:Int;first:Int;nullable:Bool;};
+public type Prediction=product{slot:Int;first:Int;second:Int;nullable:Bool;};
 """
  for page,start in enumerate(range(0,len(data['slots']),64)):
   lines=['namespace Mgnc\\GrammarPart'+str(page)+';',r'use Mgnc\Data\{Paged,push};',r'use Mgnc\GrammarData\{Slot};',

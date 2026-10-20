@@ -212,3 +212,12 @@ its replacement candidate and affected verification separately.
 See the [v1.6 verification guide](v160-verification.md) for whole-IR components,
 full-backend runners, the formal measurement matrix and independent acceptance
 checks. Keep the fixed candidate and separate evidence directories throughout.
+
+## Native assertion increment
+
+Run v170-assertions.py --compiler COMPILER --output NEW_DIRECTORY for static,
+lowering and standalone observations, including Unicode/CRLF locations,
+non-completion, stress collection, closed stderr and isolated execution.
+Run v170-assert-ir.py --seed SEED --output NEW_DIRECTORY for independent
+rejection of inverted, missing and malformed assertion control-flow edges.
+Both runners preserve their inputs and raw results in fresh evidence directories.

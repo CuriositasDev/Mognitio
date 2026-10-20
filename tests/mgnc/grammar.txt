@@ -156,3 +156,4 @@ OnArmRest | on_arms_more | , OnArm OnArmRest
 OnArm | on_arm | Pattern => Expr
 Pattern | pattern_empty | Type :: #id
 Pattern | pattern_payload | Type :: #id ( Param )
+Statement | statement_assert | assert Expr ;

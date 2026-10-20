@@ -50,7 +50,7 @@ public let operation:Function(State,Body,Map,Operation):Result<Unit,Diagnostic>=
   try require((try slotType(body,destination))==branch when{op->code=="unit"=>0,else=>2},span,"constant helper type");
   try require(parentEqual(op->output,source->output),span,"constant helper output");
   branch when{op->code=="boolean"=>{try require((node->operation=="and"&&op->integer==0)||(node->operation=="or"&&op->integer==1),span,"short-circuit constant");},else=>{
-   try require(node->operation=="declare"||node->operation=="assign"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"||node->operation=="while"||node->operation=="over",span,"Unit helper origin");
+   try require(node->operation=="declare"||node->operation=="assign"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"||node->operation=="assert"||node->operation=="while"||node->operation=="over",span,"Unit helper origin");
   }};
  },op->code=="global-load"||op->code=="global-store"=>{
   let symbolId:Int=try present(op->symbol,span,"global identity");let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);
@@ -108,6 +108,7 @@ public let terminator:Function(State,Body,Terminator):Result<Unit,Diagnostic>=fu
  },value->code=="return"||value->code=="panic"=>{
   try require(value->inputs->length()==1&&value->targets->length()==0,span,"terminal arity");
   try require((try slotType(body,try atList<Int>(value->inputs,0)))==branch when{value->code=="return"=>body->resultType,else=>3},span,"terminal value type");
+ },value->code=="assertion"=>{try require(node->operation=="assert"&&node->normal&&value->inputs->length()==0&&value->targets->length()==0,span,"assertion terminal source");
  },value->code=="unreachable"=>{try require(value->inputs->length()==0&&value->targets->length()==0,span,"unreachable arity");},else=>{try require(false,span,"unknown terminator");}};
  Result<Unit,Diagnostic>::Ok(unit)
 };

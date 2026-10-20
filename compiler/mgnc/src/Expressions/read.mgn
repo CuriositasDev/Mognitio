@@ -1,5 +1,5 @@
 namespace Mgnc\Expressions;
-use Mgnc\Grammar\{ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Grammar\{ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssert,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
 use Mgnc\Data\{Span,Diagnostic};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
@@ -18,7 +18,7 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
  rule==ruleInteger||rule==ruleString||rule==ruleTrue||rule==ruleFalse||rule==ruleUnit||rule==ruleName=>unit,
  rule==ruleGenericApply=>{annotations=annotations->append(try item(fields,1));},
  rule==ruleGroup=>{children=children->append(try item(fields,1));},
- rule==ruleUnaryNeg||rule==ruleUnaryNot||rule==ruleUnaryTry||rule==ruleStatementReturn||rule==ruleStatementDiscard||rule==ruleStatementBreakValue=>{
+ rule==ruleUnaryNeg||rule==ruleUnaryNot||rule==ruleUnaryTry||rule==ruleStatementReturn||rule==ruleStatementAssert||rule==ruleStatementDiscard||rule==ruleStatementBreakValue=>{
   children=children->append(try item(fields,1));
  },
  rule==ruleStatementBreak||rule==ruleStatementContinue=>unit,
@@ -82,5 +82,6 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
   };
  },
  else=>{return Result<Expression,Diagnostic>::Err(try failure(tree,id,"internal","unhandled classified expression production"));}};
- Result<Expression,Diagnostic>::Ok(Expression{syntax:id,cursor:node->start,rule:rule,span:try site(tree,id),children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
+ let first:Span=try site(tree,id);let span:Span=branch when{rule==ruleStatementAssert=>Span{start:first->start,end:(try site(tree,try item(fields,2)))->end,line:first->line,column:first->column},else=>first};
+ Result<Expression,Diagnostic>::Ok(Expression{syntax:id,cursor:node->start,rule:rule,span:span,children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
 };

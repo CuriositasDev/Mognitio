@@ -1,3 +1,3 @@
 namespace Mgnc\GrammarData;
 public type Slot=product{lhs:Int;rule:Int;dot:Int;next:Int;};
-public type Prediction=product{slot:Int;first:Int;nullable:Bool;};
+public type Prediction=product{slot:Int;first:Int;second:Int;nullable:Bool;};

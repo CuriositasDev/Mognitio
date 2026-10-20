@@ -25,6 +25,13 @@ public let lower:Function(State,Int,Parent,Parent,Int,Paged<List<Int>>):Result<B
     branch when{node->operation=="return"||node->operation=="panic"=>{
      let operand:Plan=try child(builder,node,0);
      builder=try setBlock(builder,current->exit,List<Operation>[],branch on operand->output{Parent::Some(slot:Int)=>term(node->operation,List<Int>[slot],List<Int>[],at),Parent::None=>failure(at)});
+    },node->operation=="assert"=>{
+     branch when{node->normal=>{
+      let operand:Plan=try child(builder,node,0);let passed:Int=builder->blockCount;builder=reserveBlock(builder,at);let failed:Int=builder->blockCount;builder=reserveBlock(builder,at);
+      builder=try setBlock(builder,current->exit,List<Operation>[],term("branch",List<Int>[try output(operand,node->span)],List<Int>[passed,failed],at));
+      builder=try setBlock(builder,passed,List<Operation>[operation("unit",current->output,List<Int>[],at)],jump(current->continuation,at));
+      builder=try setBlock(builder,failed,List<Operation>[],term("assertion",List<Int>[],List<Int>[],at));
+     },else=>{builder=try setBlock(builder,current->exit,List<Operation>[],failure(at));}};
     },node->operation=="break"||node->operation=="continue"=>{
      let loopId:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<Body,Diagnostic>::Err(problem("internal",node->span,"whole lowering: transfer target"));}};
      let target:Plan=try lookup<Plan>(builder->plans,try get(builder->loops,loopId));var operations:List<Operation>=List<Operation>[];var arrives:Bool=true;

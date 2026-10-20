@@ -6,7 +6,9 @@ use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
 use Mgnc\WholeFrame\{begin,end,offset,acceptArguments};
 use Mgnc\WholeNativeOperation\{emit as operation};
 use Mgnc\Machine\{Code,label,jump};
-use Mgnc\WholeX64\{load,alu,constant};
+use Mgnc\WholeX64\{load,alu,constant,symbol};
+use Mgnc\WholeNativeLookup\{literal};
+use Mgnc\WholeABI\{assertionFailure};
 use Mgnc\WholeChecks\{require};
 use Mgnc\Tables\{atList};
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
@@ -21,6 +23,7 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
     name=="branch"=>{code=load(code,0,5,offset(try atList<Int>(term->inputs,0)));code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],procedure->blocks+(try atList<Int>(term->targets,0)));code=jump(code,List<Int>[233],procedure->blocks+(try atList<Int>(term->targets,1)));},
     name=="switch"=>{code=load(code,0,5,offset(try atList<Int>(term->inputs,0)));code=load(code,0,0,24);var position:Int=0;loop over(term->variants as variant:Int){code=constant(code,7,0,variant);code=jump(code,List<Int>[15,132],procedure->blocks+(try atList<Int>(term->targets,position)));position=position+1;};code=jump(code,List<Int>[233],2);},
     name=="return"=>{code=load(code,0,5,offset(try atList<Int>(term->inputs,0)));code=end(code,procedure->frame);},
+    name=="assertion"=>{code=symbol(code,7,try literal(plan,owner,blockId,-1,term->origin->span));code=jump(code,List<Int>[233],assertionFailure);},
     name=="panic"=>{code=load(code,7,5,offset(try atList<Int>(term->inputs,0)));code=jump(code,List<Int>[233],3);},
     else=>{try require(name=="unreachable",term->origin->span,"native terminator");code=jump(code,List<Int>[233],2);}
    };blockId=blockId+1;

@@ -44,7 +44,7 @@ public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=func
     // Only recognized 1.x families at a reached declaration/statement boundary.
     let topContext:Bool=shape->next==ntDeclarations||shape->next==ntTop||shape->next==ntCompile;
     let statementContext:Bool=shape->next==ntStatements||shape->next==ntStatement;
-    branch when{(topContext&&(word=="contract"||word=="witness"||word=="@"))||(statementContext&&(word=="assert"||word=="@"))||(shape->lhs==ntCompile&&shape->dot>=2&&word=="implements")=>{outside=cursor;},else=>unit};
+    branch when{(topContext&&(word=="contract"||word=="witness"||word=="@"))||(statementContext&&word=="@")||(shape->lhs==ntCompile&&shape->dot>=2&&word=="implements")=>{outside=cursor;},else=>unit};
     branch when{
      shape->next<0=>{
       let terminal:Terminal=branch when{shape->next==closeTerminal=>close,else=>ordinary};

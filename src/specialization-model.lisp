@@ -177,6 +177,12 @@
                  (or (gethash key instances)
                      (let ((instance (make-function-instance :key key :declaration declaration :arguments arguments :environment env)))
                        (setf (gethash key instances) instance) (push instance pending) instance)))))
+      ;; The concrete dispatch table preserves every checked implementation,
+      ;; including witnesses that are imported or declared but never packaged.
+      ;; Its pair identities must belong to the same closed type map as bodies.
+      (loop for implementation across (value-context-implementations (checked-program-values checked)) do
+        (note-type (implementation-info-concrete implementation))
+        (note-type (implementation-info-contract implementation)))
       (loop for signature across (checked-program-signatures checked) when (initial-function-root-p checked signature)
             do (request (signature-id signature) nil nil))
       (loop while pending for instance = (pop pending) for environment = (function-instance-environment instance)

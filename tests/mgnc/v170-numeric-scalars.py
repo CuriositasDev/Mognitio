@@ -93,10 +93,8 @@ def main():
         for verb in ['check','lower','build']:
             command=[compiler,verb,path]+(['-o',artifact] if verb=='build' else []);call('invalid-'+str(ordinal)+'-'+verb,command,1,phase=phase)
             assert artifact.read_bytes()==b'preserved'
-    unsupported=['Int<8,Signed>{1}->convertTo<Int>()','Bits<8>{1}->shiftLeft(0)','Bits<8>{1}->shiftRight(1)','Bits<8>{1}->at(0)']
-    for ordinal,expression in enumerate(unsupported):
-        folder=args.output/('unsupported-'+str(ordinal));folder.mkdir();path=folder/'input.mgn';path.write_text(source('discard '+expression+';0'));artifact=folder/'program';artifact.write_bytes(b'preserved')
-        for verb in ['check','lower']:call('unsupported-'+str(ordinal)+'-'+verb,[compiler,verb,path])
-        call('unsupported-'+str(ordinal)+'-build',[compiler,'build',path,'-o',artifact],1,phase='unsupported');assert artifact.read_bytes()==b'preserved'
-    print(f'V170_NUMERIC_SCALARS_OK widths=128 oracle_assertions={assertions} fixed_vectors={len(vectors)} runtime_failures={len(failures)} containers=4 generic=3 checked_result_gates=4 negative={len(invalid)} observations={len(rows)}')
+    checked=['Int<8,Signed>{1}->convertTo<Int>()','Bits<8>{1}->shiftLeft(0)','Bits<8>{1}->shiftRight(1)','Bits<8>{1}->at(0)']
+    for ordinal,expression in enumerate(checked):
+        artifact=build('checked-'+str(ordinal),source('discard '+expression+';0'));call('checked-'+str(ordinal)+'-native',[artifact])
+    print(f'V170_NUMERIC_SCALARS_OK widths=128 oracle_assertions={assertions} fixed_vectors={len(vectors)} runtime_failures={len(failures)} containers=4 generic=3 checked_results=4 negative={len(invalid)} observations={len(rows)}')
 if __name__=='__main__':main()

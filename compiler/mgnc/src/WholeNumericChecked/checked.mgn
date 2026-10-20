@@ -1,0 +1,32 @@
+namespace Mgnc\WholeNumericChecked;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Type};
+use Mgnc\WholeIR\{Body,Operation};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\NumericShape\{Scalar,read};
+use Mgnc\WholeNumericScalar\{normalize};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\WholeFrame\{offset};
+use Mgnc\WholeChecks\{require,present,slotType};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{get};
+use Mgnc\Machine\{Code,label,jump,fresh};
+use Mgnc\WholeX64\{load,store,mov,immediate,alu,constant,shiftCl};
+public let supported:Function(String):Bool=function(name:String):Bool{name=="method:convertTo"||name=="method:shiftLeft"||name=="method:shiftRight"||name=="method:at"};
+public let emit:Function(Code,Native,Body,Operation):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let span:Span=op->origin->span;
+ let shape:Scalar=try read(plan->concrete->types,try slotType(body,try atList<Int>(op->inputs,0)),span);let resultType:Int=try slotType(body,try present(op->output,span,"numeric Result destination"));let result:Type=try lookup<Type>(plan->concrete->types->types,resultType);try require(result->kind==11,span,"numeric checked Result type");
+ let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);let resultDescriptor:Int=try get(plan->layouts->types,resultType);let errorDescriptor:Int=try get(plan->layouts->types,error);try require(resultDescriptor>=0&&errorDescriptor>=0,span,"numeric checked descriptors");
+ let invalid:Int=code->nextLabel;let ready:Int=invalid+1;code=fresh(code,2);code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=immediate(code,12,0);code=immediate(code,14,0);code=immediate(code,13,0);
+ branch when{op->code=="method:convertTo"=>{
+  try require(!shape->bits,span,"numeric conversion receiver");let target:Scalar=try read(plan->concrete->types,payload,span);try require(!target->bits,span,"numeric conversion target");code=mov(code,2,0);
+  branch when{shape->signed!=target->signed=>{code=alu(code,133,0,0);code=jump(code,List<Int>[15,136],invalid);},else=>unit};code=normalize(code,target,0);code=alu(code,57,0,2);code=jump(code,List<Int>[15,133],invalid);
+ },else=>{
+  try require(shape->bits,span,"checked bit receiver");code=load(code,1,5,offset(try atList<Int>(op->inputs,1)));code=mov(code,12,1);code=immediate(code,14,shape->width);code=constant(code,7,1,shape->width);code=jump(code,List<Int>[15,131],invalid);
+  branch when{op->code=="method:at"=>{try require(payload==2&&error==4,span,"bit-at checked signature");code=shiftCl(code,5,0);code=constant(code,4,0,1);},else=>{try require(op->code=="method:shiftLeft"||op->code=="method:shiftRight",span,"checked bit operation");code=shiftCl(code,branch when{op->code=="method:shiftLeft"=>4,else=>5},0);code=normalize(code,shape,0);}};
+ }};
+ code=jump(code,List<Int>[233],ready);code=label(code,invalid);code=immediate(code,13,1);code=immediate(code,0,0);code=label(code,ready);
+ code=store(code,4,8,0);code=store(code,4,16,13);code=store(code,4,24,12);code=store(code,4,32,14);code=immediate(code,0,0);code=store(code,4,0,0);code=immediate(code,0,resultDescriptor);code=store(code,4,40,0);code=immediate(code,0,errorDescriptor);code=store(code,4,48,0);code=immediate(code,0,branch when{op->code=="method:convertTo"=>0,else=>2});code=store(code,4,56,0);code=jump(code,List<Int>[232],68);
+ Result<Code,Diagnostic>::Ok(code)
+};

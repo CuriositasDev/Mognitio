@@ -1,0 +1,21 @@
+namespace Mgnc\WholeNumericResult;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,empty};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end,select};
+use Mgnc\Machine\{Code,label,jump,fresh,field};
+use Mgnc\WholeX64\{load,store,immediate,alu,constant};
+use Mgnc\WholeABI\{allocateLabel};
+// Arguments: raw value, error flag, two error fields, Result descriptor,
+// error descriptor, error field count (zero or two). All inputs are scalars.
+let frame:Frame=Frame{slots:1,outgoing:8,extent:144,entry:List<Bits<64>>[Bits<64>{0}],points:empty<Point>()};
+public let emit:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ var code:Code=try begin(label(initial,68),frame,List<Int>[],List<Int>[],144);
+ let ok:Int=code->nextLabel;let errorSize:Int=ok+1;let errorFields:Int=ok+2;let result:Int=ok+3;let done:Int=ok+4;code=fresh(code,5);
+ code=load(code,13,5,32);code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],ok);
+ code=immediate(code,7,32);code=load(code,0,5,72);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],errorSize);code=immediate(code,7,40);code=label(code,errorSize);
+ code=load(code,6,5,64);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,72);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],errorFields);code=load(code,2,5,40);code=store(code,0,24,2);code=load(code,2,5,48);code=store(code,0,32,2);code=label(code,errorFields);code=store(code,5,-72,0);code=select(code,145);code=jump(code,List<Int>[233],result);
+ code=label(code,ok);code=load(code,0,5,24);code=store(code,5,-72,0);code=select(code,144);
+ code=label(code,result);code=immediate(code,7,40);code=load(code,6,5,56);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=load(code,2,5,-72);code=store(code,0,32,2);code=label(code,done);code=end(code,frame);
+ code=label(code,144);code=field(code,4,1);code=field(code,4,0);code=label(code,145);code=field(code,4,1);code=field(code,4,1);Result<Code,Diagnostic>::Ok(code)
+};

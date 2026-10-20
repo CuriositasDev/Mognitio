@@ -1,0 +1,33 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{replaceItem};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted numeric Result mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+message,span,"wrong numeric Result detector: "+error->message);discard writeStdout("V170_NUMERIC_RESULT_MUTANT "+message+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"numeric-results.mgn",displayPath:"numeric-results.mgn",relativePath:"numeric-results.mgn",expectedNamespace:"",text:"namespace App;use Std\\Numeric\\{Unsigned,IntegerConversionError};let main:Function(List<String>):Int=function(args:List<String>):Int{discard Int<64,Unsigned>{18446744073709551615}->convertTo<Int>();0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);let entries:List<Helper>=registry(List<Int>[]);var mode:Int=0;
+ loop while(mode<2){var changed:List<Helper>=List<Helper>[];loop over(entries as item:Helper){branch when{item->id==68=>{let arguments:List<Int>=branch when{mode==1=>List<Int>[0,0,0,0,0,3,0],else=>item->arguments};changed=changed->append(Helper{id:item->id,stack:branch when{mode==0=>false,else=>item->stack},arguments:arguments,result:item->result,managedAllocation:item->managedAllocation,mayFail:item->mayFail,terminal:item->terminal,clobbers:item->clobbers,dependencies:item->dependencies,roots:item->roots});},else=>{changed=changed->append(item);}};};try reject(helpers(changed,code),branch when{mode==0=>"numeric Result helper signature",else=>"numeric Result helper argument kinds"});mode=mode+1;};
+ var root:Int= -1;var call:Int= -1;var result:Int= -1;var error:Int= -1;var fields:Int= -1;var ordinal:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){
+  branch when{item->kind==1&&item->target==145=>{root=ordinal+2;},item->kind==2&&item->target==68=>{call=ordinal;},item->kind==4&&item->bytes->length()>=2=>{
+   let next:Record=try lookup<Record>(code->records,ordinal+1);branch when{next->kind==3&&next->bytes->length()==4=>{branch on next->bytes->at(0){Result<Int,IndexError>::Ok(first:Int)=>{branch when{first==72&&next->value==40=>{result=ordinal;},first==72&&next->value==48=>{error=ordinal;},first==72&&next->value==56=>{fields=ordinal;},else=>unit};},Result<Int,IndexError>::Err(failure:IndexError)=>unit};},else=>unit};
+  },else=>unit};ordinal=ordinal+1;
+ };};result=call-6;error=call-4;fields=call-2;try require(root>=0&&call>=0&&result>=0&&error>=0&&fields>=0,span,"numeric Result machine targets");
+ loop over(List<Int>[root,result,error,fields,call] as index:Int){let item:Record=try lookup<Record>(code->records,index);let altered:Record=Record{kind:item->kind,bytes:item->bytes,value:branch when{index==root=>0,index==call=>item->value,else=>item->value+1},target:branch when{index==call=>41,else=>item->target}};let changed:Code=Code{records:try replaceItem<Record>(code->records,index,altered),nextLabel:code->nextLabel,pending:code->pending};try reject(machine(plan,changed),branch when{index==root=>"numeric helper root descriptor",index==call=>"numeric Result helper target",else=>"numeric Result helper metadata"});};
+ let first:Record=try lookup<Record>(code->records,root-1);let altered:Record=Record{kind:first->kind,bytes:first->bytes,value:0,target:first->target};try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,root-1,altered),nextLabel:code->nextLabel,pending:code->pending}),"numeric helper root descriptor");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_NUMERIC_RESULT_IR_OK valid=1 rejected=8\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

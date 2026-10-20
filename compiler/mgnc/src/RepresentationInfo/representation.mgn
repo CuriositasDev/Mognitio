@@ -1,0 +1,10 @@
+namespace Mgnc\RepresentationInfo;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\TypeData\{Store,Type};
+use Mgnc\WholeChecks\{require};
+public type Info=product{family:Int;reference:Bool;};
+public let describe:Function(Store,Int):Result<Info,Diagnostic>=function(store:Store,id:Int):Result<Info,Diagnostic>{
+ let kind:Int=(try lookup<Type>(store->types,id))->kind;
+ try require(kind==0||kind==1||kind==2||kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==23||kind==24||kind==25||kind==26||kind==27||kind==28||kind==29,Span{start:0,end:0,line:1,column:1},"representation requires a completed value family");
+ Result<Info,Diagnostic>::Ok(Info{family:kind,reference:kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29})
+};

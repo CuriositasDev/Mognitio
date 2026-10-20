@@ -1,4 +1,6 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeNumericProof\{bytes as numericBytes};
+use Mgnc\MathValue\{Integer};
 use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Machine\{Code,Record,flush};
@@ -51,7 +53,8 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
    let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);let terminal:Int=try lookup<Int>(procedure->terminatorLabels,blockId);var position:Int=0;
    loop over(block->operations as op:Operation){
     let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};
-    let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
+    let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);
+     branch when{op->code=="typed-integer"=>{try require(op->wide->length()==1&&part->references->length()==0&&part->bytes->length()==17,span,"numeric literal instruction shape");let expected:List<Int>=append(List<Int>[72,184],try numericBytes(try atList<Integer>(op->wide,0),op->origin->span));try require(same(range(part->bytes,0,10),expected),span,"numeric literal word encoding");},else=>unit};let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
     branch when{op->unavailable->length()==0=>{
      branch when{try allocating(plan->concrete->types,body,op)=>{
       var bitmap:Int= -1;var pointId:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){branch when{point->block==blockId&&point->operation==position=>{bitmap=try lookup<Int>(procedure->pointLabels,pointId);},else=>unit};pointId=pointId+1;};};

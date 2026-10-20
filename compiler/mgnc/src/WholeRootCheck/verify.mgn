@@ -35,8 +35,8 @@ let buildGraph:Function(Body):Result<Graph,Diagnostic>=function(body:Body):Resul
 let indexUses:Function(Store,Body,Graph):Result<Paged<Uses>,Diagnostic>=function(store:Store,body:Body,graph:Graph):Result<Paged<Uses>,Diagnostic>{
  let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;var result:Paged<Uses>=empty<Uses>();var slotId:Int=0;
  loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
-  let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;var reached:Map=create();
-  branch when{kind>=3=>{
+  let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;let reference:Bool=kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29;var reached:Map=create();
+  branch when{reference=>{
    var queue:Paged<Int>=empty<Int>();var id:Int=0;
    loop over(graph->nodes->pages->append(graph->nodes->tail) as pages:List<Node>){loop over(pages as node:Node){branch when{contains(node->reads,slotId)=>{queue=push<Int>(queue,id);},else=>unit};id=id+1;};};
    var cursor:Int=0;loop while(cursor<queue->count){
@@ -45,7 +45,7 @@ let indexUses:Function(Store,Body,Graph):Result<Paged<Uses>,Diagnostic>=function
     loop over(node->previous as previous:Int){let prior:Node=try lookup<Node>(graph->nodes,previous);branch when{prior->write!=slotId&&(try get(reached,previous))<0=>{queue=push<Int>(queue,previous);},else=>unit};};
    };
   },else=>unit};
-  result=push<Uses>(result,Uses{reached:reached,reference:kind>=3,bit:try mask(slotId,span)});slotId=slotId+1;
+  result=push<Uses>(result,Uses{reached:reached,reference:reference,bit:try mask(slotId,span)});slotId=slotId+1;
  };};Result<Paged<Uses>,Diagnostic>::Ok(result)
 };
 let roots:Function(Body,Paged<Uses>,Int,Int,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(body:Body,uses:Paged<Uses>,position:Int,ignored:Int,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{

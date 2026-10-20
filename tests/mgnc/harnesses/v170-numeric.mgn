@@ -1,0 +1,45 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,lookup,number};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\WholeIR\{Body,Slot,Block,Operation};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeNativeData\{Native,Procedure};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as verifyMachine};
+use Mgnc\WholeRootCheck\{verify as verifyRoots};
+use Mgnc\WholeLayoutCheck\{verify as verifyLayout};
+use Mgnc\WholeLayout\{Layouts,Descriptor};
+use Mgnc\WholeFrameData\{Frame};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{replaceItem,atList};
+use Mgnc\IntMap\{Map,get,put};
+use Mgnc\Facts\{words,fromSlots};
+use Mgnc\Syntax\{Parent};
+use Std\Numeric\{Bits};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,expected:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"numeric mutant accepted");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+expected,span,"wrong numeric detector: "+error->message);discard writeStdout("V170_NUMERIC_MUTANT "+expected+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"numeric.mgn",displayPath:"numeric.mgn",relativePath:"numeric.mgn",expectedNamespace:"",text:"namespace App;use Std\\Numeric\\{Bits,Signed,Unsigned};let relay:Function(Int<64,Unsigned>):Int<64,Unsigned>=function(value:Int<64,Unsigned>):Int<64,Unsigned>{value};let marker:Function(Signed):Signed=function(value:Signed):Signed{value};let main:Function(List<String>):Int=function(args:List<String>):Int{let values:List<Int<64,Unsigned>>=List<Int<64,Unsigned>>[Int<64,Unsigned>{18446744073709551615}];discard marker(Signed{});assert relay(Int<64,Unsigned>{18446744073709551615})==Int<64,Unsigned>{18446744073709551615};discard values;0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try verifyMachine(plan,code);
+ var scalarType:Int= -1;var markerType:Int= -1;var listType:Int= -1;var typeId:Int=0;
+ loop over(plan->concrete->types->types->pages->append(plan->concrete->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==23=>{scalarType=typeId;},shape->kind==27=>{markerType=typeId;},shape->kind==10=>{let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(value:Int)=>value,Argument::Value(value:ValueTerm)=>-1};branch when{element>=0&&(try lookup<Type>(plan->concrete->types->types,element))->kind==23=>{listType=typeId;},else=>unit};},else=>unit};typeId=typeId+1;};};
+ try require(scalarType>=0&&markerType>=0&&listType>=0,span,"numeric plan families");var scalarChecked:Bool=false;var markerChecked:Bool=false;var instanceId:Int=0;
+ loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){let frame:Frame=(try lookup<Procedure>(plan->procedures,instanceId))->frame;var slotId:Int=0;
+  loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){branch when{slot->valueType==scalarType&&!scalarChecked=>{let entry:List<Bits<64>>=try fromSlots(frame->slots,List<Int>[slotId],span);try reject(verifyRoots(plan->concrete->types,instance->body,Frame{slots:frame->slots,outgoing:frame->outgoing,extent:frame->extent,entry:entry,points:frame->points}),"dead or scalar root retained");scalarChecked=true;},slot->valueType==markerType&&!markerChecked=>{let entry:List<Bits<64>>=words(frame->slots,false);branch when{slot->kind==2=>{try reject(verifyRoots(plan->concrete->types,instance->body,Frame{slots:frame->slots,outgoing:frame->outgoing,extent:frame->extent,entry:entry,points:frame->points}),"missing live managed root");markerChecked=true;},else=>unit};},else=>unit};slotId=slotId+1;};};instanceId=instanceId+1;
+ };};try require(scalarChecked&&markerChecked,span,"numeric root mutations");
+ let layouts:Layouts=plan->layouts;var types:Map=try put(layouts->types,scalarType,0);var descriptors:Paged<Descriptor>=layouts->descriptors;try reject(verifyLayout(plan->concrete,Layouts{descriptors:descriptors,types:types,environments:layouts->environments,buffers:layouts->buffers}),"descriptor type membership");
+ types=try put(layouts->types,markerType,-1);try reject(verifyLayout(plan->concrete,Layouts{descriptors:descriptors,types:types,environments:layouts->environments,buffers:layouts->buffers}),"descriptor type membership");
+ types=layouts->types;let buffer:Int=try get(layouts->buffers,listType);let original:Descriptor=try lookup<Descriptor>(layouts->descriptors,buffer);descriptors=try replaceItem<Descriptor>(layouts->descriptors,buffer,Descriptor{mode:original->mode,size:original->size,references:original->references,variants:original->variants,elementManaged:true});try reject(verifyLayout(plan->concrete,Layouts{descriptors:descriptors,types:types,environments:layouts->environments,buffers:layouts->buffers}),"iteration buffer descriptor");
+ var label:Int= -1;instanceId=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){let procedure:Procedure=try lookup<Procedure>(plan->procedures,instanceId);var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){var ordinal:Int=0;loop over(block->operations as op:Operation){branch when{label<0&&op->code=="typed-integer"=>{label=try atList<Int>(try lookup<List<Int>>(procedure->operationLabels,blockId),ordinal);},else=>unit};ordinal=ordinal+1;};blockId=blockId+1;};};instanceId=instanceId+1;};};
+ try require(label>=0,span,"numeric literal region");var recordId:Int=0;var target:Int= -1;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1&&record->target==label=>{target=recordId+1;},else=>unit};recordId=recordId+1;};};let record:Record=try lookup<Record>(code->records,target);try require(record->bytes->length()>=10,span,"numeric literal record");var mode:Int=0;
+ loop while(mode<2){var data:List<Int>=List<Int>[];var ordinal:Int=0;loop over(record->bytes as octet:Int){data=data->append(branch when{ordinal==2+mode=>branch when{octet==255=>254,else=>octet+1},else=>octet});ordinal=ordinal+1;};let altered:Record=Record{kind:record->kind,bytes:data,value:record->value,target:record->target};try reject(verifyMachine(plan,Code{records:try replaceItem<Record>(code->records,target,altered),nextLabel:code->nextLabel,pending:code->pending}),"numeric literal word encoding");mode=mode+1;};
+ Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_NUMERIC_IR_OK valid=1 rejected=7\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

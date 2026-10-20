@@ -1,0 +1,18 @@
+namespace Mgnc\WholeNumericLiteral;
+use Std\Numeric\{Bits,Unsigned,IntegerConversionError};
+use Std\Binary\{Bytes,ByteOrder,BitWidthError};
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\MathValue\{Integer,fits};
+use Mgnc\TextUtil\{code};
+use Mgnc\Machine\{Code,raw};
+use Mgnc\WholeChecks\{require};
+public let emit:Function(Code,Integer,Span):Result<Code,Diagnostic>=function(initial:Code,value:Integer,span:Span):Result<Code,Diagnostic>{
+ try require(fits(value,64,value->negative),span,"numeric literal exceeds a machine word");
+ var magnitude:Int<64,Unsigned>=Int<64,Unsigned>{0};
+ loop over(value->digits->scalars() as digit:String){let decimal:Int=code(digit)-48;try require(decimal>=0&&decimal<=9,span,"numeric literal digit");let converted:Int<64,Unsigned>=branch on decimal->convertTo<Int<64,Unsigned>>(){Result<Int<64,Unsigned>,IntegerConversionError>::Ok(found:Int<64,Unsigned>)=>found,Result<Int<64,Unsigned>,IntegerConversionError>::Err(error:IntegerConversionError)=>{try require(false,span,"numeric literal digit conversion");Int<64,Unsigned>{0}}};magnitude=magnitude*Int<64,Unsigned>{10}+converted;};
+ let word:Int<64,Unsigned>=branch when{value->negative=>magnitude->toBits()->not()->asInteger<Unsigned>()+Int<64,Unsigned>{1},else=>magnitude};
+ let bytes:Bytes=branch on word->toBits()->toBytes(ByteOrder::LittleEndian){Result<Bytes,BitWidthError>::Ok(found:Bytes)=>found,Result<Bytes,BitWidthError>::Err(error:BitWidthError)=>{try require(false,span,"numeric literal encoding width");return Result<Code,Diagnostic>::Ok(initial);}};
+ var result:Code=raw(initial,List<Int>[72,184]);var index:Int=0;
+ loop while(index<8){let octet:Int=branch on bytes->at(index){Result<Bits<8>,IndexError>::Ok(found:Bits<8>)=>branch on found->asInteger<Unsigned>()->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(number:Int)=>number,Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{try require(false,span,"numeric encoding octet conversion");0}},Result<Bits<8>,IndexError>::Err(error:IndexError)=>{try require(false,span,"numeric encoding octet bounds");0}};result=raw(result,List<Int>[octet]);index=index+1;};
+ Result<Code,Diagnostic>::Ok(result)
+};

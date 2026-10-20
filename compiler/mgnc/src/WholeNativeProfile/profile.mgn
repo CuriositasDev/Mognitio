@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeProfile;
+use Mgnc\Tables\{atList};
 use Mgnc\Data\{Paged,Span,Diagnostic,lookup,empty,push,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Semantic\{SemanticProject};
@@ -18,6 +19,7 @@ let standard:Function(Headers,Int,Int,Span):Result<Unit,InputError>=function(hea
  branch when{!owner->standard=>{return Result<Unit,InputError>::Ok(unit);},else=>unit};
  let name:String=declared->name;
  branch when{owner->nameSpace=="Std\\Io"&&(name=="readTextFile"||name=="writeTextFile"||name=="readStdin"||name=="writeStdout"||name=="writeStderr"||name=="IoError"||name=="IoOperation"||name=="IoErrorKind"||name=="IoErrorPhase")=>Result<Unit,InputError>::Ok(unit),
+ owner->nameSpace=="Std\\Numeric"&&(name=="Bits"||name=="Signed"||name=="Unsigned")=>Result<Unit,InputError>::Ok(unit),
  else=>Result<Unit,InputError>::Err(failure(headers,file,span,"standard symbol is outside the native profile: "+owner->nameSpace+"\\"+name))}
 };
 template checked<T>=function(value:Result<T,Diagnostic>,headers:Headers,file:Int,span:Span):Result<T,InputError>{
@@ -48,6 +50,10 @@ public let validate:Function(SemanticProject):Result<Unit,InputError>=function(s
   branch when{!module->standard=>{work=push<Use>(work,Use{typeId:symbol->valueType,file:symbol->file,span:symbol->span});},else=>unit};
  };};
  loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
+  branch when{node->operation=="method:convertTo"||node->operation=="method:shiftLeft"||node->operation=="method:shiftRight"||node->operation=="method:toBytes"||node->operation=="method:at"=>{
+   let childId:Int=try checked<Int>(atList<Int>(node->children,0),headers,node->file,node->span);let child:Node=try checked<Node>(lookup<Node>(state->nodes,childId),headers,node->file,node->span);
+   branch on child->structure{Structure::Unknown=>unit,Structure::Known(typeId:Int)=>{let receiver:Type=try checked<Type>(lookup<Type>(state->types->types,typeId),headers,node->file,node->span);branch when{receiver->kind==1||receiver->kind==23||receiver->kind==24=>{return Result<Unit,InputError>::Err(failure(headers,node->file,node->span,"numeric checked-result generation is not enabled in this increment"));},else=>unit};}};
+  },else=>unit};
   branch on node->structure{Structure::Unknown=>unit,Structure::Known(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});}};
   loop over(node->arguments as argument:Argument){branch on argument{
    Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:node->file,span:node->span});},Argument::Value(term:ValueTerm)=>unit
@@ -62,7 +68,7 @@ public let validate:Function(SemanticProject):Result<Unit,InputError>=function(s
   branch when{(try checked<Int>(get(seen,site->typeId),headers,site->file,site->span))>=0=>{continue;},else=>unit};
   seen=try checked<Map>(put(seen,site->typeId,1),headers,site->file,site->span);
   let shape:Type=try checked<Type>(lookup<Type>(state->types->types,site->typeId),headers,site->file,site->span);
-  branch when{shape->kind>=23&&shape->kind<=28=>{return Result<Unit,InputError>::Err(failure(headers,site->file,site->span,"type family is outside the native profile"));},else=>unit};
+  branch when{shape->kind==25||shape->kind==26=>{return Result<Unit,InputError>::Err(failure(headers,site->file,site->span,"type family is outside the native profile"));},else=>unit};
   branch on shape->owner{Parent::None=>unit,Parent::Some(owner:Int)=>{try standard(headers,owner,site->file,site->span);}};
   loop over(shape->arguments as argument:Argument){branch on argument{
    Argument::Type(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:site->file,span:site->span});},Argument::Value(term:ValueTerm)=>unit

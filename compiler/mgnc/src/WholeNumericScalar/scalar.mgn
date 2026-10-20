@@ -1,0 +1,51 @@
+namespace Mgnc\WholeNumericScalar;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\TypeData\{Store};
+use Mgnc\WholeIR\{Body,Operation};
+use Mgnc\NumericShape\{Scalar,read};
+use Mgnc\Machine\{Code,raw,label,jump,fresh};
+use Mgnc\WholeX64\{immediate,load,mov,alu,constant,shift,multiply,unary,condition};
+use Mgnc\WholeFrame\{offset};
+use Mgnc\WholeChecks\{require,present,slotType};
+use Mgnc\Tables\{atList};
+public let normalize:Function(Code,Scalar,Int):Code=function(initial:Code,shape:Scalar,register:Int):Code{
+ branch when{shape->width==64=>initial,else=>shift(shift(initial,4,register,64-shape->width),branch when{shape->signed=>7,else=>5},register,64-shape->width)}
+};
+let range:Function(Code,Scalar):Code=function(initial:Code,shape:Scalar):Code{
+ branch when{shape->width==64=>initial,else=>{var result:Code=mov(initial,2,0);result=normalize(result,shape,0);result=alu(result,57,0,2);jump(result,List<Int>[15,133],4)}}
+};
+let minimum:Function(Int):Int=function(width:Int):Int{
+ branch when{width==64=>-9223372036854775808,else=>{var value:Int=1;var index:Int=1;loop while(index<width){value=value*2;index=index+1;};-value}}
+};
+public let emit:Function(Code,Store,Body,Operation):Result<Code,Diagnostic>=function(initial:Code,store:Store,body:Body,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let name:String=op->code;let input:Int=try atList<Int>(op->inputs,0);let shape:Scalar=try read(store,try slotType(body,input),op->origin->span);
+ code=load(code,0,5,offset(input));branch when{op->inputs->length()>1=>{code=load(code,1,5,offset(try atList<Int>(op->inputs,1)));},else=>unit};
+ branch when{name=="method:toBits"||name=="method:asInteger"=>{
+  let output:Scalar=try read(store,try slotType(body,try present(op->output,op->origin->span,"numeric reinterpretation destination")),op->origin->span);
+  try require(output->width==shape->width,op->origin->span,"numeric reinterpretation width");code=normalize(code,output,0);
+ },name=="method:length"=>{try require(shape->bits,op->origin->span,"numeric length receiver");code=immediate(code,0,shape->width);},
+ name=="method:and"||name=="method:or"||name=="method:xor"||name=="method:not"=>{
+  try require(shape->bits,op->origin->span,"bitwise receiver");
+  branch when{name=="method:not"=>{code=unary(code,2,0);},else=>{code=alu(code,branch when{name=="method:and"=>33,name=="method:or"=>9,else=>49},0,1);}};code=normalize(code,shape,0);
+ },name=="neg"=>{
+  try require(!shape->bits,op->origin->span,"numeric negation receiver");
+  branch when{shape->signed=>{code=unary(code,3,0);code=jump(code,List<Int>[15,128],4);code=range(code,shape);},else=>{code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],4);}};
+ },name=="add"||name=="sub"||name=="mul"=>{
+  try require(!shape->bits,op->origin->span,"numeric arithmetic receiver");
+  branch when{name=="mul"=>{
+   branch when{shape->signed=>{code=multiply(code,0,1);code=jump(code,List<Int>[15,128],4);},else=>{code=unary(code,4,1);code=alu(code,133,2,2);code=jump(code,List<Int>[15,133],4);}};
+  },else=>{code=alu(code,branch when{name=="add"=>1,else=>41},0,1);code=jump(code,List<Int>[15,branch when{shape->signed=>128,else=>130}],4);}};code=range(code,shape);
+ },name=="div"||name=="rem"=>{
+  try require(!shape->bits,op->origin->span,"numeric division receiver");
+  code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],5);
+  branch when{shape->signed=>{
+   let normal:Int=code->nextLabel;let done:Int=normal+1;code=fresh(code,2);code=immediate(code,2,minimum(shape->width));code=alu(code,57,0,2);code=jump(code,List<Int>[15,133],normal);code=constant(code,7,1,-1);code=jump(code,List<Int>[15,133],normal);
+   branch when{name=="div"=>{code=jump(code,List<Int>[233],4);},else=>{code=immediate(code,0,0);code=jump(code,List<Int>[233],done);}};
+   code=label(code,normal);code=raw(code,List<Int>[72,153]);code=unary(code,7,1);branch when{name=="rem"=>{code=mov(code,0,2);},else=>unit};code=label(code,done);
+  },else=>{code=immediate(code,2,0);code=unary(code,6,1);branch when{name=="rem"=>{code=mov(code,0,2);},else=>unit};}};
+ },else=>{
+  try require(name=="eq"||name=="ne"||name=="lt"||name=="le"||name=="gt"||name=="ge",op->origin->span,"unknown numeric scalar operation");
+  try require(!shape->bits||name=="eq"||name=="ne",op->origin->span,"bit comparison operation");
+  code=alu(code,57,0,1);let comparison:Int=branch when{name=="eq"=>4,name=="ne"=>5,name=="lt"=>branch when{shape->signed=>12,else=>2},name=="le"=>branch when{shape->signed=>14,else=>6},name=="gt"=>branch when{shape->signed=>15,else=>7},else=>branch when{shape->signed=>13,else=>3}};code=condition(code,comparison,0);
+ }};Result<Code,Diagnostic>::Ok(code)
+};

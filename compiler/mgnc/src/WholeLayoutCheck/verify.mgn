@@ -8,7 +8,7 @@ use Mgnc\WholeLayout\{Layouts,Descriptor};
 use Mgnc\WholeChecks\{require,present,integers};
 use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Tables\{atList};
-let reference:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{let value:Type=try lookup<Type>(store->types,id);Result<Bool,Diagnostic>::Ok(value->kind!=0&&value->kind!=1&&value->kind!=2)};
+let reference:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{let kind:Int=(try lookup<Type>(store->types,id))->kind;try require(kind==0||kind==1||kind==2||kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==23||kind==24||kind==25||kind==26||kind==27||kind==28||kind==29,Span{start:0,end:0,line:1,column:1},"independent representation family");Result<Bool,Diagnostic>::Ok(kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29)};
 let argument:Function(Type,Int,Span):Result<Int,Diagnostic>=function(value:Type,index:Int,span:Span):Result<Int,Diagnostic>{branch on try atList<Argument>(value->arguments,index){Argument::Type(id:Int)=>Result<Int,Diagnostic>::Ok(id),Argument::Value(term:ValueTerm)=>{try require(false,span,"descriptor type argument");Result<Int,Diagnostic>::Ok(0)}}};
 let claim:Function(Map,Int,Span):Result<Map,Diagnostic>=function(seen:Map,id:Int,span:Span):Result<Map,Diagnostic>{try require(id>=0,span,"missing descriptor");try require((try get(seen,id))<0,span,"descriptor identity shared");put(seen,id,1)};
 let fixed:Function(Descriptor,Int,List<Int>,Span):Result<Unit,Diagnostic>=function(descriptor:Descriptor,size:Int,refs:List<Int>,span:Span):Result<Unit,Diagnostic>{
@@ -32,7 +32,7 @@ public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:P
     let element:Int=try argument(value,0,span);let traced:Bool=try reference(plan->types,element);try fixed(descriptor,48,branch when{traced=>List<Int>[32,40],else=>List<Int>[32]},span);
     let bufferId:Int=try get(layouts->buffers,typeId);used=try claim(used,bufferId,span);count=count+1;let buffer:Descriptor=try lookup<Descriptor>(layouts->descriptors,bufferId);
     try require(buffer->mode==2&&buffer->size==0&&buffer->references->length()==0&&buffer->variants->length()==0&&buffer->elementManaged==traced,span,"iteration buffer descriptor");
-   },value->kind==4||value->kind==5||value->kind==20=>{
+   },value->kind==4||value->kind==5||value->kind==20||value->kind==27||value->kind==28=>{
     var expected:List<Int>=List<Int>[];var position:Int=0;loop over(value->members as member:Member){branch when{try reference(plan->types,try present(member->value,span,"descriptor field type"))=>{expected=expected->append(24+position*8);},else=>unit};position=position+1;};
     try fixed(descriptor,branch when{position==0=>32,else=>24+position*8},expected,span);
    },value->kind==11||value->kind==21=>{

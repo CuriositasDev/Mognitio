@@ -28,7 +28,7 @@ public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:P
   try require((id>=0)==wanted,span,"descriptor type membership");
   branch when{wanted=>{
    used=try claim(used,id,span);count=count+1;let descriptor:Descriptor=try lookup<Descriptor>(layouts->descriptors,id);
-   branch when{value->kind==25=>{try require(descriptor->mode==3&&descriptor->size==0&&descriptor->references->length()==0&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"Bytes variable leaf descriptor");},value->kind==3=>{try fixed(descriptor,0,List<Int>[],span);},value->kind==12=>{try fixed(descriptor,40,List<Int>[32],span);},value->kind==10=>{
+   branch when{value->kind==26=>{try fixed(descriptor,40,List<Int>[],span);},value->kind==25=>{try require(descriptor->mode==3&&descriptor->size==0&&descriptor->references->length()==0&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"Bytes variable leaf descriptor");},value->kind==3=>{try fixed(descriptor,0,List<Int>[],span);},value->kind==12=>{try fixed(descriptor,40,List<Int>[32],span);},value->kind==10=>{
     let element:Int=try argument(value,0,span);let traced:Bool=try reference(plan->types,element);try fixed(descriptor,48,branch when{traced=>List<Int>[32,40],else=>List<Int>[32]},span);
     let bufferId:Int=try get(layouts->buffers,typeId);used=try claim(used,bufferId,span);count=count+1;let buffer:Descriptor=try lookup<Descriptor>(layouts->descriptors,bufferId);
     try require(buffer->mode==2&&buffer->size==0&&buffer->references->length()==0&&buffer->variants->length()==0&&buffer->elementManaged==traced,span,"iteration buffer descriptor");

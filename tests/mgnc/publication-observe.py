@@ -22,7 +22,7 @@ def ownership(registers):
  if not read(context,256):return None
  record=word(context+168)
  if not record:return {"record":0,"primary":word(context+176)}
- if signed(word(record+8))!=-2:return {"record":record,"tag":signed(word(record+8))}
+ if signed(word(record+8))!=-2:return {"record":record,"tag":signed(word(record+8)),"fd":signed(word(record+8)),"maps":[word(record+i) for i in (16,32,48)],"sizes":[word(record+i) for i in (24,40,56)],"primary":word(context+176)}
  return {"record":record,"tag":-2,"parent":signed(word(record+16)),"file":signed(word(record+24)),"path_map":word(record+32),"path_size":word(record+40),"temp_owned":word(record+48),"temp_name":text(word(record+56)),"probe":signed(word(record+80)),"identity_known":word(record+88),"certified":word(record+112),"primary":word(context+176)}
 def fds():
  result={}
@@ -66,6 +66,13 @@ try:
     if rule.get("action"):
      if rule["action"]=="zero_random":
       assert signed(registers.rax)==16;assert os.pwrite(mem,bytes(16),event["arguments"][0])==16;event["controlled_random_hex"]=bytes(16).hex()
+     elif rule["action"]=="stat_words":
+      assert event["call"]==262 and signed(registers.rax)==0;raw=struct.pack("<QQ",rule["dev"],rule["inode"]);assert os.pwrite(mem,raw,event["arguments"][2])==16;event["controlled_identity_words"]=[rule["dev"],rule["inode"]]
+      if rule.get("stress"):assert os.pwrite(mem,struct.pack("<Q",1),registers.r15+152)==8
+     elif rule["action"]=="unlink_after_stat":
+      assert event["call"]==262 and signed(registers.rax)==0;Path(event["path"]).unlink();event["removed_observed_path"]=event["path"]
+
+
      continue
 
     if rule.get("allocation_failure",False):

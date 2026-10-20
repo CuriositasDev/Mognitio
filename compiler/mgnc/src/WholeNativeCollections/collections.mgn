@@ -51,6 +51,9 @@ public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>
  name=="iterator-next"=>{
   code=load(code,1,12,32);code=load(code,2,12,24);code=alu(code,57,1,2);code=jump(code,List<Int>[15,131],2);code=mov(code,9,1);code=shift(code,4,9,3);code=alu(code,1,9,12);code=load(code,0,9,40);code=immediate(code,2,0);code=store(code,9,40,2);code=constant(code,0,1,1);code=store(code,12,32,1);
  },
+ (name=="eq"||name=="ne")&&shape->kind==26=>{
+  let unequal:Int=code->nextLabel;let done:Int=unequal+1;code=fresh(code,2);code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));loop over(List<Int>[24,32] as field:Int){code=load(code,0,12,field);code=load(code,1,13,field);code=alu(code,57,0,1);code=jump(code,List<Int>[15,133],unequal);};code=immediate(code,0,branch when{name=="eq"=>1,else=>0});code=jump(code,List<Int>[233],done);code=label(code,unequal);code=immediate(code,0,branch when{name=="eq"=>0,else=>1});code=label(code,done);
+ },
  (name=="eq"||name=="ne")&&shape->kind==3=>{
   let unequal:Int=code->nextLabel;let done:Int=unequal+1;code=fresh(code,2);code=load(code,13,5,offset(try atList<Int>(op->inputs,1)));
   code=load(code,1,12,24);code=load(code,2,13,24);code=alu(code,57,1,2);code=jump(code,List<Int>[15,133],unequal);code=address(code,7,12,40);code=address(code,6,13,40);code=alu(code,57,1,1);code=raw(code,List<Int>[243,166]);code=condition(code,branch when{name=="eq"=>4,else=>5},0);code=jump(code,List<Int>[233],done);

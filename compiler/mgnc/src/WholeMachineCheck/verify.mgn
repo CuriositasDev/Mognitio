@@ -1,4 +1,5 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeNumericResultCheck\{Expected,selected as checkedNumeric,expected as numericExpected};
 use Mgnc\WholeNumericProof\{bytes as numericBytes};
 use Mgnc\MathValue\{Integer};
 use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
@@ -31,6 +32,14 @@ let fragment:Function(Code,Map,Int,Int,Span):Result<Fragment,Diagnostic>=functio
  loop while(cursor<limit){let record:Record=try lookup<Record>(code->records,cursor);data=append(data,record->bytes);branch when{record->kind==2||record->kind==5=>{refs=refs->append(Reference{offset:data->length(),kind:record->kind,target:record->target});data=append(data,bytes(0,branch when{record->kind==2=>4,else=>8}));},record->kind==3||record->kind==4=>{data=append(data,bytes(record->value,branch when{record->kind==3=>4,else=>8}));},else=>unit};cursor=cursor+1;
  };Result<Fragment,Diagnostic>::Ok(Fragment{bytes:data,references:refs})
 };
+let occurrences:Function(List<Int>,List<Int>):Int=function(data:List<Int>,pattern:List<Int>):Int{
+ var count:Int=0;var window:List<Int>=List<Int>[];
+ loop over(data as octet:Int){window=window->append(octet);branch when{window->length()>pattern->length()=>{var changed:List<Int>=List<Int>[];var ordinal:Int=0;loop over(window as value:Int){branch when{ordinal>0=>{changed=changed->append(value);},else=>unit};ordinal=ordinal+1;};window=changed;},else=>unit};branch when{same(window,pattern)=>{count=count+1;},else=>unit};};count
+};
+let numeric:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
+ let expected:Expected=try numericExpected(plan,body,op);var position:Int=0;loop over(List<Int>[expected->resultDescriptor,expected->errorDescriptor,expected->fields] as value:Int){let prefix:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(40+position*8,4));try require(occurrences(part->bytes,prefix)==1,span,"numeric Result helper metadata");position=position+1;};
+ var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==68,span,"numeric Result helper target");},else=>unit};};try require(calls==1,span,"numeric Result helper call count");Result<Unit,Diagnostic>::Ok(unit)
+};
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append(50+ioOperation(item->standard));},else=>unit};};};
@@ -54,6 +63,7 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
    loop over(block->operations as op:Operation){
     let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};
     let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);
+    branch when{try checkedNumeric(plan->concrete->types,body,op)=>{try numeric(plan,body,op,part,span);},else=>unit};
      branch when{op->code=="typed-integer"=>{try require(op->wide->length()==1&&part->references->length()==0&&part->bytes->length()==17,span,"numeric literal instruction shape");let expected:List<Int>=append(List<Int>[72,184],try numericBytes(try atList<Integer>(op->wide,0),op->origin->span));try require(same(range(part->bytes,0,10),expected),span,"numeric literal word encoding");},else=>unit};let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
     branch when{op->unavailable->length()==0=>{
      branch when{try allocating(plan->concrete->types,body,op)=>{

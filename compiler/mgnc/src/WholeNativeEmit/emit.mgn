@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeEmit;
+use Mgnc\WholeNumericResult\{emit as numericResult};
 use Mgnc\Data\{Diagnostic,empty};
 use Mgnc\Machine\{Code,Record};
 use Mgnc\WholeNativeData\{Native};
@@ -20,5 +21,5 @@ use Mgnc\WholeTerminal\{emit as terminal};
 // Terminal handlers are supplied by the runtime linker.
 public let emit:Function(Native):Result<Code,Diagnostic>=function(plan:Native):Result<Code,Diagnostic>{
  var code:Code=Code{records:empty<Record>(),nextLabel:plan->nextLabel,pending:List<Int>[]};
- code=try startup(code,plan);code=try bodies(code,plan);code=try constructors(code,plan);code=try text(try bounds(code));code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code),plan)
+ code=try startup(code,plan);code=try bodies(code,plan);code=try constructors(code,plan);code=try numericResult(try text(try bounds(code)));code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code),plan)
 };

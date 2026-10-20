@@ -3,7 +3,7 @@
 This source project extends the accepted Mognitio 1.6 experimental compiler
 toward 1.7. The current increments add native assertions, normal-build `@test`
 metadata, named witness checking with typed whole IR, and fixed-width scalar
-arithmetic; complete 1.7
+arithmetic and numeric Result generation; complete 1.7
 implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
@@ -71,8 +71,10 @@ Fixed-width integers and Bits use raw scalar words, including the unsigned
 upper half at width 64. Checked arithmetic preserves width and signedness;
 bitwise operations, length and integer/bit reinterpretation preserve canonical
 words across calls, captures and containers. Signed/Unsigned marker values keep
-their ordinary Product representation. Numeric conversion, checked shift/at,
-Bytes and filesystem additions remain gated until their runtime paths are ready.
+their ordinary Product representation. Conversion, checked bit shifts and bit access return ordinary typed Results;
+errors preserve their nominal type and count/width fields. Their error object
+remains rooted while the enclosing Result is allocated. Bytes and filesystem
+additions remain gated until their runtime paths are ready.
 
 Assertions require Bool on normally completing operands and preserve non-completing
 control transfers. A failed assertion exits 5 with the original statement location;

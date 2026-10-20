@@ -246,8 +246,17 @@ These checks establish the frontend increment, not native dispatch acceptance.
 Run v170-numeric-scalars.py --compiler COMPILER --output NEW_DIRECTORY for all
 widths 1..64 and both signednesses, mathematical arithmetic/comparison oracles,
 fixed instruction words, runtime failures, generic instances, direct scalar
-capture and container retention under stress collection. Checked-result numeric
-methods still report unsupported from Build and preserve existing outputs.
+capture and container retention under stress collection. Numeric checked-result methods are also executed as ordinary programs.
 Run v170-numeric-ir.py --seed SEED --output NEW_DIRECTORY to reject scalar and
 marker root misclassification, invalid descriptors and literal-word mutations.
 The encoder and its machine verifier use independent numerical algorithms.
+
+## Numeric Result increment
+
+Run v170-numeric-results.py --compiler COMPILER --output NEW_DIRECTORY for
+conversion and bit-access/shift mathematical oracles, exact error fields, single
+evaluation, retained Results and errors, stress collection and isolated execution.
+Run v170-numeric-result-ir.py --seed SEED --output NEW_DIRECTORY to reject helper
+ABI, descriptor/field-count, call-target and helper root-data mutations.
+The inherited v160-helper-contracts.py runner continues to check restricted
+helper subsets independently of the full generated runtime.

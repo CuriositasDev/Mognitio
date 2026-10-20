@@ -3,7 +3,7 @@
 This source project extends the accepted Mognitio 1.6 experimental compiler
 toward 1.7. The current increments add native assertions, normal-build `@test`
 metadata, named witness checking with typed whole IR, and fixed-width scalar
-arithmetic, numeric Result generation, and Bytes methods/encoding; complete 1.7
+arithmetic, numeric Result generation, and Bytes methods/encoding, and standard Bytes construction; complete 1.7
 implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
@@ -75,8 +75,12 @@ their ordinary Product representation. Conversion, checked bit shifts and bit ac
 errors preserve their nominal type and count/width fields. Their error object
 remains rooted while the enclosing Result is allocated. Bytes length, access, append, concat, slice, equality and both byte orders are
 generated natively. Bytes payloads are opaque bytes, with a distinct variable-leaf
-descriptor and collector bounds check. Standard Binary construction/publication
-functions and filesystem additions remain gated until their runtime paths are ready.
+descriptor and collector bounds check. Standard Binary construction functions use ordinary Function wrappers, including
+renamed imports, re-exports, captures and indirect calls. The first invalid Int
+preserves its original index/value. Independent checks validate standard origin,
+Function signatures, code pointers, allocation descriptors and root selections.
+Binary publication and filesystem additions remain gated until their runtime paths
+are ready.
 
 Assertions require Bool on normally completing operands and preserve non-completing
 control transfers. A failed assertion exits 5 with the original statement location;

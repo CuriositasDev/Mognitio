@@ -271,3 +271,13 @@ Run v170-binary-ir.py --seed SEED --output NEW_DIRECTORY to reject thirteen
 helper ABI, bitmap, descriptor, call-target and active-variant mutations.
 The Bytes variable-leaf mode is checked separately from String's scalar-count
 layout. Standard Binary construction/publication functions remain pending.
+
+## Standard Bytes construction increment
+
+Run v170-binary-functions.py --compiler COMPILER --output NEW_DIRECTORY for
+empty and large Lists, every byte value, first-invalid index/value, Function
+values, captures, re-exports, user names, operand return, retained errors, stress
+collection, isolation and invalid-source preservation. Run
+v170-binary-function-ir.py --seed SEED --output NEW_DIRECTORY to reject twenty
+ABI, bitmap, standard-identity, code-pointer, descriptor and root-selection
+mutations. publishFile remains pending.

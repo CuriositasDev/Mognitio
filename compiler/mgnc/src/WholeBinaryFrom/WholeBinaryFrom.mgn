@@ -1,0 +1,37 @@
+namespace Mgnc\WholeBinaryFrom;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,Span,lookup,empty};
+use Mgnc\TypeData\{Type};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end,select,acceptArguments};
+use Mgnc\WholeChecks\{require};
+use Mgnc\IntMap\{get};
+use Mgnc\WholeStandard\{entry};
+use Mgnc\Machine\{Code,label,jump,fresh,field};
+use Mgnc\WholeX64\{load,store,mov,immediate,constant,alu,shift,byteStore};
+use Mgnc\WholeABI\{allocateLabel};
+let descriptor:Function(Native,Int,Span):Result<Int,Diagnostic>=function(plan:Native,id:Int,span:Span):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,span,"binary Function descriptor");Result<Int,Diagnostic>::Ok(found)};
+let helper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let checked:Bool=global->standard=="bytesFromInts";let signature:Type=try lookup<Type>(plan->concrete->types->types,global->valueType);try require(signature->kind==12&&signature->arguments->length()==2,span,"binary Function signature");let input:Int=try argumentType(signature,0,span);let resultId:Int=try argumentType(signature,1,span);let result:Type=try lookup<Type>(plan->concrete->types->types,resultId);let byteId:Int=branch when{checked=>try argumentType(result,0,span),else=>resultId};let bytesDescriptor:Int=try descriptor(plan,byteId,span);let resultDescriptor:Int=try descriptor(plan,resultId,span);let errorDescriptor:Int=branch when{checked=>try descriptor(plan,try argumentType(result,1,span),span),else=>0};let bufferDescriptor:Int=try get(plan->layouts->buffers,input);try require(bufferDescriptor>=0,span,"binary input buffer descriptor");
+ let frame:Frame=Frame{slots:branch when{checked=>3,else=>1},outgoing:8,extent:branch when{checked=>160,else=>144},entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};var code:Code=try begin(label(initial,entry(global->standard)),frame,List<Int>[0],List<Int>[],branch when{checked=>167,else=>170});code=acceptArguments(code,1);
+ let length:Int=code->nextLabel;let fill:Int=length+1;let filled:Int=length+2;let scan:Int=length+3;let invalid:Int=length+4;let success:Int=length+5;let copy:Int=length+6;let copied:Int=length+7;let resultLabel:Int=length+8;code=fresh(code,9);code=load(code,3,5,-72);code=immediate(code,13,0);code=alu(code,133,3,3);code=jump(code,List<Int>[15,132],length);code=load(code,13,3,24);code=label(code,length);
+ branch when{checked=>{
+  // Materialize forward indices before checking the first invalid value.
+  code=immediate(code,0,1152921504606846969);code=alu(code,57,13,0);code=jump(code,List<Int>[15,135],1);code=mov(code,7,13);code=shift(code,4,7,3);code=constant(code,0,7,40);code=immediate(code,6,bufferDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,12,0);code=store(code,12,24,13);code=immediate(code,0,0);code=store(code,12,32,0);code=mov(code,14,13);
+  code=label(code,fill);code=alu(code,133,14,14);code=jump(code,List<Int>[15,132],filled);code=constant(code,5,14,1);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,3,40);code=store(code,2,40,0);code=load(code,3,3,32);code=jump(code,List<Int>[233],fill);
+  code=label(code,filled);code=store(code,5,-80,12);code=select(code,168);code=immediate(code,14,0);
+  code=label(code,scan);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],success);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=constant(code,7,0,255);code=jump(code,List<Int>[15,135],invalid);code=constant(code,0,14,1);code=jump(code,List<Int>[233],scan);
+  code=label(code,invalid);code=mov(code,3,0);code=immediate(code,7,40);code=immediate(code,6,errorDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=store(code,0,32,3);code=store(code,5,-88,0);code=immediate(code,13,1);code=jump(code,List<Int>[233],resultLabel);
+  code=label(code,success);code=mov(code,7,13);code=constant(code,0,7,32);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,bytesDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,3,0);code=store(code,3,24,13);code=immediate(code,14,0);
+  code=label(code,copy);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],copied);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=mov(code,2,3);code=alu(code,1,2,14);code=byteStore(code,2,32,0);code=constant(code,0,14,1);code=jump(code,List<Int>[233],copy);
+  code=label(code,copied);code=store(code,5,-88,3);code=immediate(code,13,0);code=label(code,resultLabel);code=select(code,169);code=immediate(code,7,40);code=immediate(code,6,resultDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=load(code,2,5,-88);code=store(code,0,32,2);
+ },else=>{
+  code=mov(code,7,13);code=constant(code,0,7,32);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,bytesDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,14,0);code=store(code,14,24,13);
+  code=label(code,fill);code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],filled);code=constant(code,5,13,1);code=load(code,0,3,40);code=mov(code,2,14);code=alu(code,1,2,13);code=byteStore(code,2,32,0);code=load(code,3,3,32);code=jump(code,List<Int>[233],fill);code=label(code,filled);code=mov(code,0,14);
+ }};Result<Code,Diagnostic>::Ok(end(code,frame))
+};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
+ var code:Code=initial;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{entry(global->standard)==73||entry(global->standard)==74=>{code=try helper(code,plan,global);},else=>unit};};};loop over(List<Int>[167,168,169,170] as root:Int){code=label(code,root);code=field(code,4,branch when{root==170=>1,else=>3});code=field(code,4,branch when{root==168=>2,root==169=>4,else=>1});};Result<Code,Diagnostic>::Ok(code)
+};

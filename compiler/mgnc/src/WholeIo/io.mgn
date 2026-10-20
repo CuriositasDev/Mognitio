@@ -87,6 +87,6 @@ let helper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial
  code=label(code,internal);code=jump(code,List<Int>[233],2);Result<Code,Diagnostic>::Ok(code)
 };
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
- var code:Code=initial;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{global->standard!=""=>{code=try helper(code,plan,global);},else=>unit};};};
+ var code:Code=initial;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{operation(global->standard)>=0=>{code=try helper(code,plan,global);},else=>unit};};};
  code=label(code,143);code=field(code,4,6);code=field(code,4,63);Result<Code,Diagnostic>::Ok(code)
 };

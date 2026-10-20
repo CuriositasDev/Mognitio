@@ -8,7 +8,7 @@ use Mgnc\WholeConcrete\{Instance};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\IntMap\{get};
 use Mgnc\SemanticData\{Declaration};
-use Mgnc\WholeIo\{operation};
+use Mgnc\WholeStandard\{entry as operation};
 use Mgnc\TypeData\{Type,Argument,ValueTerm};
 use Mgnc\Tables\{atList};
 use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
@@ -44,7 +44,7 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
  var globalId:Int=0;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){
   branch when{global->standard!=""=>{
    let number:Int=operation(global->standard);let descriptor:Int=try get(plan->layouts->types,global->valueType);try require(number>=0&&descriptor>=0,span,"standard Function value");
-   code=immediate(code,7,40);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=symbol(code,2,50+number);code=store(code,0,24,2);code=immediate(code,2,0);code=store(code,0,32,2);code=load(code,2,15,globalBase);code=store(code,2,globalId*8,0);
+   code=immediate(code,7,40);code=immediate(code,6,descriptor);code=jump(code,List<Int>[232],allocateLabel);code=symbol(code,2,number);code=store(code,0,24,2);code=immediate(code,2,0);code=store(code,0,32,2);code=load(code,2,15,globalBase);code=store(code,2,globalId*8,0);
   },else=>unit};globalId=globalId+1;
  };};
  loop over(plan->modules as file:Int){

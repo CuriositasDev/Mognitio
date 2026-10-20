@@ -168,3 +168,12 @@ AttributedDeclaration | attributed_public_let | public Let
 AttributedDeclaration | attributed_public_var | public Var
 Statement | attributed_local_let | @ #id AttributeRest Let
 Statement | attributed_local_var | @ #id AttributeRest Var
+Compile | contract_declaration | contract #id { ContractMethods }
+Compile | witness_declaration | witness #id = Type implements Type { WitnessMethods }
+ContractMethods | contract_methods_empty |
+ContractMethods | contract_methods_append | ContractMethods ContractMethod
+ContractMethod | contract_method | #id ( ParamsOpt ) : Type ;
+WitnessMethods | witness_methods_empty |
+WitnessMethods | witness_methods_append | WitnessMethods WitnessMethod
+WitnessMethod | witness_method | #id ( ParamsOpt ) : Type Block
+Primary | package | Type ( Expr )

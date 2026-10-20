@@ -1,5 +1,5 @@
 namespace Mgnc\Expressions;
-use Mgnc\Grammar\{ruleAttributedLocalLet,ruleAttributedLocalVar,ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssert,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
+use Mgnc\Grammar\{rulePackage,ruleWitnessMethod,ruleAttributedLocalLet,ruleAttributedLocalVar,ruleBinaryAdd,ruleBinaryAnd,ruleBinaryDiv,ruleBinaryLt,ruleBinaryMul,ruleBinaryNe,ruleBinaryOr,ruleBinaryRem,ruleBinarySub,ruleBlock,ruleBranchOn,ruleBranchWhen,ruleCall,ruleFalse,ruleField,ruleFunction,ruleGenericApply,ruleGenericMethod,ruleGroup,ruleInteger,ruleLetBinding,ruleList,ruleLoopForever,ruleLoopOver,ruleLoopWhile,ruleMethod,ruleName,rulePanic,ruleProduct,ruleScalarLiteral,ruleStatementAssert,ruleStatementAssign,ruleStatementBreak,ruleStatementBreakValue,ruleStatementContinue,ruleStatementDiscard,ruleStatementExpression,ruleStatementReturn,ruleString,ruleTrue,ruleUnaryNeg,ruleUnaryNot,ruleUnaryTry,ruleUnit,ruleVarBinding,ruleVariant,ruleVariantPayload};
 use Mgnc\Data\{Span,Diagnostic};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
@@ -7,6 +7,7 @@ use Mgnc\NodeStorage\{getNode};
 use Mgnc\Projection\{parts,item,text,site,concrete,failure};
 use Mgnc\BridgeLists\{leftList,expressions,conditions,reverse};
 use Mgnc\HeaderRead\{rightList};
+use Mgnc\WitnessSyntax\{extent};
 use Mgnc\MetadataSyntax\{read as attributes,targets as attributeTargets};
 public type Label=product{name:String;span:Span;};
 public type Pattern=product{typeSyntax:Int;variant:Label;binder:List<Label>;annotation:List<Int>;};
@@ -36,7 +37,8 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
   let name:Int=try item(fields,1);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});
   annotations=annotations->append(try item(fields,3));children=children->append(try item(fields,5));flag=rule==ruleVarBinding;
  },
- rule==ruleFunction=>{children=children->append(try item(fields,6));},
+ rule==ruleFunction||rule==ruleWitnessMethod=>{children=children->append(try item(fields,6));},
+ rule==rulePackage=>{annotations=annotations->append(try item(fields,0));children=children->append(try item(fields,2));},
  rule==ruleCall=>{children=children->append(try item(fields,0));loop over((try expressions(tree,try item(fields,2))) as child:Int){children=children->append(child);};},
  rule==ruleField||rule==ruleMethod||rule==ruleGenericMethod=>{
   children=children->append(try item(fields,0));let name:Int=try item(fields,2);labels=labels->append(Label{name:try text(tree,name),span:try site(tree,name)});
@@ -84,6 +86,6 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
   };
  },
  else=>{return Result<Expression,Diagnostic>::Err(try failure(tree,id,"internal","unhandled classified expression production"));}};
- let first:Span=try site(tree,id);let span:Span=branch when{rule==ruleStatementAssert=>Span{start:first->start,end:(try site(tree,try item(fields,2)))->end,line:first->line,column:first->column},else=>first};
- Result<Expression,Diagnostic>::Ok(Expression{syntax:id,cursor:node->start,rule:rule,span:span,children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
+ let first:Span=try site(tree,id);let span:Span=branch when{rule==rulePackage||rule==ruleMethod||rule==ruleGenericMethod=>try extent(tree,id),rule==ruleStatementAssert=>Span{start:first->start,end:(try site(tree,try item(fields,2)))->end,line:first->line,column:first->column},else=>first};
+ Result<Expression,Diagnostic>::Ok(Expression{syntax:id,cursor:node->start,rule:branch when{rule==ruleWitnessMethod=>ruleFunction,else=>rule},span:span,children:children,annotations:annotations,labels:labels,patterns:patterns,flag:flag,text:spelling})
 };

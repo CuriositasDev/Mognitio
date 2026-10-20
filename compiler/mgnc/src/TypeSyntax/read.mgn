@@ -59,7 +59,8 @@ public let request:Function(Store,Int,SyntaxForest,Int,Parent,List<Argument>):Re
   declared=try declaration(store->headers,file,name);
   branch on declared{Parent::None=>{return Result<Request,Diagnostic>::Err(problem("semantic",span,"type name is not visible"));},Parent::Some(target:Int)=>{
    let definition:Declaration=try lookup<Declaration>(store->headers->declarations,target);
-   branch when{definition->kind>=3=>{return Result<Request,Diagnostic>::Err(problem("type",span,"declaration is not a type"));},else=>unit};
+   branch when{definition->kind==7=>{return Result<Request,Diagnostic>::Err(problem("semantic",span,"witness is not a type"));},else=>unit};
+   branch when{definition->kind>=3&&definition->kind!=6=>{return Result<Request,Diagnostic>::Err(problem("type",span,"declaration is not a type"));},else=>unit};
    loop over(definition->parameters as param:Parameter){kinds=kinds->append(param->kind);};
   }};
  }};

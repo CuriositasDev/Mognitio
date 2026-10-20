@@ -1,0 +1,46 @@
+namespace Mgnc\ContractDeclarations;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\TypeData\{Store,Type,Argument,Member,Formed,Obligation};
+use Mgnc\TypeOps\{intern,functionKind,contractKind};
+use Mgnc\TypeForm\{form};
+use Mgnc\Projection\{parts,item,text,site,concrete};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\BridgeLists\{leftList};
+use Mgnc\HeaderRead\{rightList};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\Grammar\{ruleTypeName};
+use Mgnc\WitnessSyntax\{extent};
+use Mgnc\TypeNames\{declaration as lookupDeclaration};
+use Mgnc\Imports\{reserved};
+use Mgnc\DeclarationKinds\{compileDeclaration};
+public let define:Function(Store,Int):Result<Store,Diagnostic>=function(initial:Store,id:Int):Result<Store,Diagnostic>{
+ var store:Store=initial;let declared:Declaration=try lookup<Declaration>(store->headers->declarations,id);let module:Module=try lookup<Module>(store->headers->modules,declared->file);
+ var members:List<Member>=List<Member>[];var obligations:List<Obligation>=List<Obligation>[];
+ loop over((try leftList(module->tree,declared->annotation)) as method:Int){
+  let fields:List<Int>=try parts(module->tree,method);let name:Int=try item(fields,0);let spelling:String=try text(module->tree,name);
+  loop over(members as previous:Member){branch when{previous->name==spelling=>{return Result<Store,Diagnostic>::Err(problem("semantic",try site(module->tree,name),"duplicate contract member"));},else=>unit};};
+  let params:List<Int>=try rightList(module->tree,try item(fields,2));
+  branch when{params->length()==0=>{return Result<Store,Diagnostic>::Err(problem("semantic",try extent(module->tree,method),"contract method requires a receiver"));},else=>unit};
+  let receiver:List<Int>=try parts(module->tree,try item(params,0));let annotation:Int=try concrete(module->tree,try item(receiver,2));
+  branch when{(try getNode(module->tree->nodes,annotation))->rule!=ruleTypeName||(try text(module->tree,annotation))!="Self"=>{return Result<Store,Diagnostic>::Err(problem("semantic",try extent(module->tree,method),"contract receiver must be Self"));},else=>unit};
+  var names:List<String>=List<String>[];
+  loop over(params as param:Int){let values:List<Int>=try parts(module->tree,param);let parameterName:String=try text(module->tree,try item(values,0));var conflict:Bool=reserved(parameterName);
+   loop over(names as previous:String){conflict=conflict||previous==parameterName;};
+   branch on try lookupDeclaration(store->headers,declared->file,parameterName){Parent::None=>unit,Parent::Some(visible:Int)=>{conflict=conflict||compileDeclaration((try lookup<Declaration>(store->headers->declarations,visible))->kind);}};
+   branch when{conflict=>{return Result<Store,Diagnostic>::Err(problem("semantic",try extent(module->tree,param),"receiver or parameter name conflicts"));},else=>unit};names=names->append(parameterName);
+  };
+  var arguments:List<Argument>=List<Argument>[];var ordinal:Int=0;
+  loop over(params as param:Int){branch when{ordinal>0=>{
+   let values:List<Int>=try parts(module->tree,param);let formed:Formed=try form(store,declared->file,module->tree,try item(values,2),Parent::None,List<Argument>[]);store=formed->store;arguments=arguments->append(Argument::Type(formed->value));
+   loop over(formed->obligations as obligation:Obligation){obligations=obligations->append(obligation);};
+  },else=>unit};ordinal=ordinal+1;};
+  let result:Formed=try form(store,declared->file,module->tree,try item(fields,5),Parent::None,List<Argument>[]);store=result->store;
+  loop over(result->obligations as obligation:Obligation){obligations=obligations->append(obligation);};
+  let signature:Formed=try intern(store,Type{kind:functionKind,owner:Parent::None,arguments:arguments->append(Argument::Type(result->value)),members:List<Member>[]});store=signature->store;
+  members=members->append(Member{name:spelling,value:Parent::Some(signature->value),span:try site(module->tree,name)});
+ };
+ let formed:Formed=try intern(store,Type{kind:contractKind,owner:Parent::Some(id),arguments:List<Argument>[],members:members});store=formed->store;
+ Result<Store,Diagnostic>::Ok(Store{headers:store->headers,types:store->types,buckets:store->buckets,declarations:try replaceItem<Parent>(store->declarations,id,Parent::Some(formed->value)),constraints:try replaceItem<List<Obligation>>(store->constraints,id,obligations)})
+};

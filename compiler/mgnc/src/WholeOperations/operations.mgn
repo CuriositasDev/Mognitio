@@ -36,7 +36,7 @@ public let ordinary:Function(Builder,Plan,Node,Origin):Result<Emitted,Diagnostic
    }};
    operations=operations->append(operation("unit",current->output,List<Int>[],site));
   },else=>unit};
- },node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
+ },node->operation=="witness"||node->operation=="group"||node->operation=="block"||node->operation=="statement"||node->operation=="discard"=>{
   branch when{node->normal=>{
    let carries:Bool=node->operation=="group"||(node->operation=="block"&&node->flag);
    operations=operations->append(branch when{carries=>operation("copy",current->output,List<Int>[try atList<Int>(inputs,inputs->length()-1)],site),else=>operation("unit",current->output,List<Int>[],site)});

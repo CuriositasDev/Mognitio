@@ -23,6 +23,7 @@ public let bytesKind:Int=25;
 public let identityKind:Int=26;
 public let signedKind:Int=27;
 public let unsignedKind:Int=28;
+public let contractKind:Int=29;
 public let parentEqual:Function(Parent,Parent):Bool=function(a:Parent,b:Parent):Bool{
  branch on a{Parent::None=>branch on b{Parent::None=>true,Parent::Some(value:Int)=>false},
  Parent::Some(left:Int)=>branch on b{Parent::None=>false,Parent::Some(right:Int)=>left==right}}

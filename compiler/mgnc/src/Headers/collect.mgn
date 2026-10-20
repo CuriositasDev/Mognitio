@@ -2,7 +2,7 @@ namespace Mgnc\Headers;
 use Mgnc\NameIndex\{Index,create as createIndex,insert,candidates};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
-use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction,Attribute};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction,Attribute,Evidence};
 use Mgnc\MetadataSyntax\{read as attributes,targets as attributeTargets};
 use Mgnc\Structural\{analyzeSyntax};
 use Mgnc\Forest\{SyntaxForest};
@@ -12,7 +12,7 @@ use Mgnc\Projection\{parts,item,text,site,concrete};
 use Mgnc\BridgeLists\{leftList};
 use Mgnc\HeaderRead\{path,parameters,imports};
 use Mgnc\TextUtil\{starts};
-use Mgnc\Grammar\{rulePublicCompile,rulePublicLet,ruleAttributedTop,ruleAttributedPublicCompile,ruleAttributedPublicLet,ruleAttributedPublicVar,ruleTypeProduct,ruleTypeSum,ruleAlias,ruleTemplate,ruleLetBinding};
+use Mgnc\Grammar\{ruleContractDeclaration,ruleWitnessDeclaration,rulePublicCompile,rulePublicLet,ruleAttributedTop,ruleAttributedPublicCompile,ruleAttributedPublicLet,ruleAttributedPublicVar,ruleTypeProduct,ruleTypeSum,ruleAlias,ruleTemplate,ruleLetBinding};
 public let sourceError:Function(SourceUnit,Diagnostic):InputError=function(source:SourceUnit,error:Diagnostic):InputError{
  InputError{status:branch when{error->phase=="internal"=>3,else=>1},path:source->displayPath,diagnostic:error,positionKnown:true,operation:"",kind:"",ioPhase:""}
 };
@@ -35,12 +35,12 @@ public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Int
   let id:Int=try concrete(tree,try item(topFields,branch when{exported=>1,else=>0}));
   let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
   let nameNode:Int=try item(fields,1);let name:String=try text(tree,nameNode);
-  let kind:Int=branch when{node->rule==ruleTypeProduct=>0,node->rule==ruleTypeSum=>1,node->rule==ruleAlias=>2,node->rule==ruleTemplate=>3,node->rule==ruleLetBinding=>4,else=>5};
+  let kind:Int=branch when{node->rule==ruleTypeProduct=>0,node->rule==ruleTypeSum=>1,node->rule==ruleAlias=>2,node->rule==ruleTemplate=>3,node->rule==ruleLetBinding=>4,node->rule==ruleContractDeclaration=>6,node->rule==ruleWitnessDeclaration=>7,else=>5};
   try attributeTargets(metadata,kind==4);
   let generic:List<Parameter>=branch when{kind<4=>try parameters(tree,try item(fields,2),kind!=3),else=>List<Parameter>[]};
-  let annotation:Int=branch when{kind<2=>try item(fields,6),kind==2=>try item(fields,4),kind==3=>try item(fields,4),else=>try item(fields,3)};
-  let body:Int=branch when{kind==3=>annotation,kind>=4=>try item(fields,5),else=>annotation};
-  let declaration:Declaration=Declaration{file:previousModules->count,ordinal:owned->length(),kind:kind,name:name,exported:exported,node:id,annotation:annotation,body:body,parameters:generic,attributes:metadata,span:try site(tree,nameNode)};
+  let annotation:Int=branch when{kind>=6=>try item(fields,3),kind<2=>try item(fields,6),kind==2=>try item(fields,4),kind==3=>try item(fields,4),else=>try item(fields,3)};
+  let body:Int=branch when{kind==7=>try item(fields,5),kind==6=>annotation,kind==3=>annotation,kind>=4=>try item(fields,5),else=>annotation};
+  let declaration:Declaration=Declaration{file:previousModules->count,ordinal:owned->length(),kind:kind,name:name,exported:exported,node:id,annotation:annotation,body:body,parameters:generic,attributes:metadata,evidence:List<Evidence>[],span:try site(tree,nameNode)};
   loop over((try candidates(declaredNames,name)) as earlier:Int){let previous:Declaration=try lookup<Declaration>(declarations,earlier);
    branch when{previous->name==name=>{return Result<Headers,Diagnostic>::Err(problem("semantic",declaration->span,"duplicate declaration name"));},else=>unit};};
   names=push<Introduction>(names,Introduction{file:previousModules->count,name:name,declaration:declarations->count,imported:false,span:declaration->span});

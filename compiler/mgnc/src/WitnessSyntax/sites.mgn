@@ -1,0 +1,13 @@
+namespace Mgnc\WitnessSyntax;
+use Mgnc\Data\{Span,Diagnostic};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{site};
+use Mgnc\Cursor\{Terminal,scanAt};
+public let extent:Function(SyntaxForest,Int):Result<Span,Diagnostic>=function(tree:SyntaxForest,id:Int):Result<Span,Diagnostic>{
+ let first:Span=try site(tree,id);let node:ForestNode=try getNode(tree->nodes,id);
+ branch when{node->end<=node->start=>{return Result<Span,Diagnostic>::Ok(first);},else=>unit};
+ let half:Bool=node->end%2==1;let last:Terminal=try scanAt(tree->source,node->end-branch when{half=>1,else=>2},half);
+ Result<Span,Diagnostic>::Ok(Span{start:first->start,end:last->token->end,line:first->line,column:first->column})
+};

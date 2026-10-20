@@ -1,10 +1,12 @@
 namespace Mgnc\TypeDeclarations;
 use Mgnc\Data\{Paged,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\DeclarationKinds\{compileDeclaration};
 use Mgnc\SemanticData\{Declaration,Parameter,Module};
 use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
 use Mgnc\TypeOps\{intern,concreteValue,parameterKind,productKind,sumKind,bitsKind,bytesKind,identityKind,signedKind,unsignedKind};
 use Mgnc\TypeForm\{form,widthRequirements};
+use Mgnc\ContractDeclarations\{define as defineContract};
 use Mgnc\Projection\{parts,item,text,site};
 use Mgnc\BridgeLists\{reverse};
 use Mgnc\Tables\{replaceItem};
@@ -18,7 +20,7 @@ public let parameters:Function(Store,Int):Result<Parameters,Diagnostic>=function
   let visible:Parent=try lookupDeclaration(store->headers,declared->file,param->name);
   branch on visible{Parent::None=>unit,Parent::Some(target:Int)=>{
    let conflicting:Declaration=try lookup<Declaration>(store->headers->declarations,target);
-   branch when{conflicting->kind<4=>{return Result<Parameters,Diagnostic>::Err(problem("semantic",param->span,"generic parameter shadows a visible compile-time name"));},else=>unit};
+   branch when{compileDeclaration(conflicting->kind)=>{return Result<Parameters,Diagnostic>::Err(problem("semantic",param->span,"generic parameter shadows a visible compile-time name"));},else=>unit};
   }};
   branch when{param->kind==0=>{
    let formed:Formed=try intern(store,Type{kind:parameterKind,owner:Parent::Some(id),arguments:List<Argument>[Argument::Value(concreteValue(ordinal))],members:List<Member>[]});
@@ -34,6 +36,7 @@ public let parameters:Function(Store,Int):Result<Parameters,Diagnostic>=function
 public let define:Function(Store,Int):Result<Store,Diagnostic>=function(initial:Store,id:Int):Result<Store,Diagnostic>{
  let declared:Declaration=try lookup<Declaration>(initial->headers->declarations,id);
  let module:Module=try lookup<Module>(initial->headers->modules,declared->file);
+ branch when{declared->kind==6=>{return defineContract(initial,id);},else=>unit};
  let generic:Parameters=try parameters(initial,id);var store:Store=generic->store;
  var obligations:List<Obligation>=generic->obligations;var value:Int=0;
  branch when{declared->kind==2=>{

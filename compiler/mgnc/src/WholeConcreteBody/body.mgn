@@ -32,7 +32,7 @@ public let verify:Function(Store,Store,Body,Body,List<Binding>,Span):Result<Unit
    try require(op->wide->length()==replacement->wide->length()&&(try textEqual(op->text,replacement->text)),span,"concrete literal correspondence");var wideIndex:Int=0;
    loop over(op->wide as number:Integer){let actualNumber:Integer=try atList<Integer>(replacement->wide,wideIndex);wideIndex=wideIndex+1;try require(number->negative==actualNumber->negative&&number->digits==actualNumber->digits,span,"concrete wide literal");};
    try arguments(source,actual,op->arguments,replacement->arguments,bindings,span);
-   branch when{op->code=="sum-payload"||op->code=="iterator-init"||op->code=="variant"=>{try optional(source,actual,op->target,replacement->target,bindings,span);},else=>{try require(parentEqual(op->target,replacement->target),span,"concrete target identity");}};
+   branch when{op->code=="dispatch"||op->code=="payload-box"||op->code=="sum-payload"||op->code=="iterator-init"||op->code=="variant"=>{try optional(source,actual,op->target,replacement->target,bindings,span);},else=>{try require(parentEqual(op->target,replacement->target),span,"concrete target identity");}};
   };
  };};
  index=0;loop over(original->tries as item:TrySite){let other:TrySite=try atList<TrySite>(result->tries,index);index=index+1;

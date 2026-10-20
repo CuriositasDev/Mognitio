@@ -1,0 +1,9 @@
+namespace Mgnc\WitnessNames;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\SemanticData\{Headers,Declaration,Evidence};
+use Mgnc\Tables\{atList};
+public let evidence:Function(Headers,Int):Result<Evidence,Diagnostic>=function(headers:Headers,id:Int):Result<Evidence,Diagnostic>{
+ let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+ branch when{declared->kind!=7||declared->evidence->length()!=1=>{return Result<Evidence,Diagnostic>::Err(problem("internal",declared->span,"witness evidence identity is incomplete"));},else=>unit};
+ atList<Evidence>(declared->evidence,0)
+};

@@ -230,3 +230,13 @@ unreachable modules, visibility, signature and invalid-target observations.
 Run v170-metadata-ir.py --seed SEED --output NEW_DIRECTORY to reject lost,
 duplicated, renamed and position-corrupted declaration metadata. These checks
 do not introduce test discovery or execute an implicit test runner.
+
+## Named witness frontend increment
+
+Run v170-contracts.py --compiler COMPILER --output NEW_DIRECTORY for positive
+and negative project checks, typed lowering, evidence visibility, pair uniqueness,
+receiver signatures and isolated method bodies. Valid contract programs still
+report unsupported from Build and preserve an existing output.
+Run v170-contract-ir.py --seed SEED --output NEW_DIRECTORY to reject independent
+evidence owner, pair, method-order, package, dispatch and capture mutations.
+These checks establish the frontend increment, not native dispatch acceptance.

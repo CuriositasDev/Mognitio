@@ -1,0 +1,20 @@
+namespace Mgnc\WitnessVerification;
+use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\InputData\{InputError};
+use Mgnc\SemanticValues\{State,Node};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\Headers\{sourceError};
+use Mgnc\WitnessChecked\{declaration as checkWitness};
+use Mgnc\ContractChecked\{declaration as checkContract};
+use Mgnc\EvidenceChecked\{node as evidence};
+let checked:Function(State,Int):Result<Unit,Diagnostic>=function(state:State,id:Int):Result<Unit,Diagnostic>{try checkWitness(state,id);try checkContract(state,id);Result<Unit,Diagnostic>::Ok(unit)};
+public let verify:Function(State):Result<Unit,InputError>=function(state:State):Result<Unit,InputError>{
+ var index:Int=0;loop over(state->types->headers->declarations->pages->append(state->types->headers->declarations->tail) as page:List<Declaration>){loop over(page as declared:Declaration){
+  let module:Module=branch on lookup<Module>(state->types->headers->modules,declared->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"checkWitness module invariant"}};
+  branch on checked(state,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<Unit,InputError>::Err(sourceError(module->source,error));}};index=index+1;
+ };};
+ loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as value:Node){branch when{value->operation=="package"||value->operation=="dispatch"=>{
+  let module:Module=branch on lookup<Module>(state->types->headers->modules,value->file){Result<Module,Diagnostic>::Ok(found:Module)=>found,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"checkWitness module invariant"}};
+  branch on evidence(state,value){Result<Unit,Diagnostic>::Ok(found:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<Unit,InputError>::Err(sourceError(module->source,error));}};
+ },else=>unit};};};Result<Unit,InputError>::Ok(unit)
+};

@@ -1,0 +1,28 @@
+namespace Mgnc\ContractChecked;
+use Mgnc\Data\{Diagnostic,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticValues\{State};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\TypeData\{Type,Argument,Member};
+use Mgnc\TypeOps\{parentEqual};
+use Mgnc\WitnessVerifier\{require,formed,selfUsage};
+use Mgnc\Projection\{parts,item,text,concrete};
+use Mgnc\HeaderRead\{rightList};
+use Mgnc\BridgeLists\{leftList};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Grammar\{ruleTypeName};
+use Mgnc\Tables\{atList};
+public let declaration:Function(State,Int):Result<Unit,Diagnostic>=function(state:State,id:Int):Result<Unit,Diagnostic>{
+ let declared:Declaration=try lookup<Declaration>(state->types->headers->declarations,id);branch when{declared->kind!=6=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};let module:Module=try lookup<Module>(state->types->headers->modules,declared->file);
+ let valueType:Int=branch on try lookup<Parent>(state->types->declarations,id){Parent::Some(value:Int)=>value,Parent::None=>{try require(false,declared->span,"contract type missing");return Result<Unit,Diagnostic>::Ok(unit);}};let shape:Type=try lookup<Type>(state->types->types,valueType);
+ let methods:List<Int>=try leftList(module->tree,declared->annotation);try require(shape->kind==29&&parentEqual(shape->owner,Parent::Some(id))&&shape->arguments->length()==0&&shape->members->length()==methods->length(),declared->span,"contract type ownership");
+ var ordinal:Int=0;loop over(methods as method:Int){let fields:List<Int>=try parts(module->tree,method);let params:List<Int>=try rightList(module->tree,try item(fields,2));let member:Member=try atList<Member>(shape->members,ordinal);
+  try require((try text(module->tree,try item(fields,0)))==member->name&&params->length()>0,declared->span,"contract method source order");let receiver:List<Int>=try parts(module->tree,try item(params,0));let annotation:Int=try concrete(module->tree,try item(receiver,2));
+  try require((try getNode(module->tree->nodes,annotation))->rule==ruleTypeName&&(try text(module->tree,annotation))=="Self",declared->span,"contract receiver source");try selfUsage(module->tree,method,annotation);
+  let signatureType:Int=branch on member->value{Parent::Some(value:Int)=>value,Parent::None=>{try require(false,declared->span,"contract member type missing");return Result<Unit,Diagnostic>::Ok(unit);}};let signature:Type=try lookup<Type>(state->types->types,signatureType);
+  try require(signature->kind==12&&signature->arguments->length()==params->length(),declared->span,"contract signature arity");var position:Int=0;
+  loop over(params as param:Int){branch when{position>0=>{let values:List<Int>=try parts(module->tree,param);try require((try formed(state->types,declared->file,module->tree,try item(values,2),Parent::None,List<Argument>[]))==(try memberType(signature->arguments,position-1,declared->span)),declared->span,"contract parameter source");},else=>unit};position=position+1;};
+  try require((try formed(state->types,declared->file,module->tree,try item(fields,5),Parent::None,List<Argument>[]))==(try memberType(signature->arguments,position-1,declared->span)),declared->span,"contract result source");ordinal=ordinal+1;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};

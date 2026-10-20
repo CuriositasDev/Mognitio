@@ -14,7 +14,7 @@ public let emit:Function(Code):Code=function(initial:Code):Code{
  code=mov(code,2,7);code=load(code,7,2,8);code=constant(code,7,7,0);code=jump(code,List<Int>[15,140],absent);
  code=immediate(code,0,-1);code=store(code,2,8,0);code=immediate(code,0,2);code=store(code,2,96,0);code=immediate(code,0,3);code=raw(code,List<Int>[15,5]);code=raw(code,List<Int>[195]);
  code=label(code,absent);code=immediate(code,0,0);code=raw(code,List<Int>[195]);
- code=enter(label(code,61));code=mov(code,12,7);code=immediate(code,13,0);code=immediate(code,14,0);code=jump(code,List<Int>[232],62);
+ code=label(code,61);code=load(code,0,7,8);code=constant(code,7,0,-2);code=jump(code,List<Int>[15,132],80);code=enter(code);code=mov(code,12,7);code=immediate(code,13,0);code=immediate(code,14,0);code=jump(code,List<Int>[232],62);
  let closeOk:Int=code->nextLabel;code=fresh(code,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],closeOk);code=mov(code,13,0);code=constant(code,7,0,-9);let closeKnown:Int=code->nextLabel;code=fresh(code,1);code=jump(code,List<Int>[15,133],closeKnown);code=immediate(code,14,1);code=label(code,closeKnown);code=label(code,closeOk);
  loop over(List<Int>[16,32,48] as offset:Int){
   let absentMap:Int=code->nextLabel;let kept:Int=absentMap+1;code=fresh(code,2);

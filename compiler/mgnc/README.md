@@ -1,7 +1,8 @@
 # Experimental native compiler
 
 This source project contains the Mognitio 1.6 compiler implementation, mgnc.
-Final 1.6 conformance and performance acceptance are in progress.
+Final 1.6 conformance and performance acceptance are complete; see the
+[acceptance record](../../verification/v1.6.0-final-acceptance.md).
 It remains experimental and is not included in the regular Debian package,
 APT repository, or installer bundle. The corrected implementation and formal
 performance results are accepted for 1.5.0; see the
@@ -9,8 +10,8 @@ performance results are accepted for 1.5.0; see the
 
 ## Build
 
-Use the [frozen S7 Lisp seed](../../verification/v1.6.0-seed7.md), whose accepted
-source revision is 76fe803d157fda13a9f7fbe7a56fcca5858a70b5.
+Use the [frozen S10 Lisp seed](../../verification/v1.6.0-seed10.md), whose accepted
+source revision is 1751e69dd21048d91f7f91578496cc1ad9a15f03.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 
@@ -50,8 +51,8 @@ unreachable operands. Independent checks cover source membership, resolved
 identities, operand order, lexical captures, definite assignment, current-value
 variant guards and owner-typed Result reconstruction. Lower accepts the same
 single-file and project inputs as check and neither evaluates user code nor
-writes an artifact. This command is part of the ongoing 1.6 work; it does not
-establish completion of the expanded native backend or performance acceptance.
+writes an artifact. The [final acceptance record](../../verification/v1.6.0-final-acceptance.md)
+records complete-corpus, native backend and performance validation separately.
 
 Build lowers the complete semantic result and selects the closed native profile
 for single files and manifests. It supports Int, Bool, Unit, String, persistent

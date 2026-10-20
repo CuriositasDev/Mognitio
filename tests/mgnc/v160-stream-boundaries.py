@@ -30,6 +30,11 @@ sources = {
  Result<Unit,IoError>::Err(error:IoError)=>code(error)}
 };""",
 }
+sources["list-streams"] = prefix + """let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let writers:List<Function(String):Result<Unit,IoError>>=List<Function(String):Result<Unit,IoError>>[writeStdout,writeStderr];
+ loop over(writers as writer:Function(String):Result<Unit,IoError>){discard writer("list");};0
+};
+"""
 records = []
 for name, text in sources.items():
     source = a.output / (name + ".mgn")
@@ -65,6 +70,21 @@ for stream in ("stdout", "stderr"):
     assert result.returncode == 103 and path.read_bytes() == b"abcd" and other == b"", (stream, result)
     records.append(dict(name="short-" + stream + "-then-failure", exit=result.returncode,
                         prefix_hex=path.read_bytes().hex(), other_hex=other.hex(), passed=True))
+for stress in (False, True):
+    command = [a.output / "list-streams"]
+    observation = a.output / "list-streams-stress.json"
+    if stress:
+        command = [sys.executable, here / "v160-native-observe.py", "--stress",
+                   "--report", observation, "--", *command]
+    result = subprocess.run(command, capture_output=True, timeout=120)
+    assert (result.returncode, result.stdout, result.stderr) == (0, b"list", b"list"), result
+    state = json.loads(observation.read_text()) if stress else None
+    if stress:
+        assert state["stress"] and state["heap"]["collections"] > 0 and state["heap"]["primary"] == 0
+    records.append(dict(name="stream-functions-in-list", stress=stress, exit=result.returncode,
+                        stdout_hex=result.stdout.hex(), stderr_hex=result.stderr.hex(),
+                        observation=state, passed=True))
+
 (a.output / "results.json").write_text(json.dumps(dict(
     compiler_sha256=hashlib.sha256(a.compiler.read_bytes()).hexdigest(), records=records), indent=2) + "\n")
-print("V160_STREAM_BOUNDARIES_OK checks=3")
+print("V160_STREAM_BOUNDARIES_OK checks=5")

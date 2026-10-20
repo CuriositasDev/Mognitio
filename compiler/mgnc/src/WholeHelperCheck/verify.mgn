@@ -21,12 +21,14 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
   branch when{helper->id>=69&&helper->id<=71=>{
    let expected:List<Int>=branch when{helper->id==69=>List<Int>[0,0,0,3,3,3],helper->id==70=>List<Int>[1,0,0,3,3],else=>List<Int>[1,0,0,3,3,3]};try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==expected->length(),span,"binary helper signature");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==(try atList<Int>(expected,ordinal)),span,"binary helper argument kinds");ordinal=ordinal+1;};
   },else=>unit};
+  branch when{helper->id==73||helper->id==74=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==1&&(try atList<Int>(helper->arguments,0))==1,span,"binary Function helper signature");},else=>unit};
   branch when{helper->id==68=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==7&&helper->roots->length()==2&&contains(helper->roots,144)&&contains(helper->roots,145),span,"numeric Result helper signature");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==branch when{ordinal==4||ordinal==5=>3,else=>0},span,"numeric Result helper argument kinds");ordinal=ordinal+1;};},else=>unit};
  };
  branch when{(try get(helpers,68))>=0=>{
  loop over(List<Int>[144,145] as root:Int){let rootPosition:Int=try get(labels,root);try require(rootPosition>=0,span,"numeric helper root descriptor");let size:Record=try lookup<Record>(code->records,rootPosition+1);let bits:Record=try lookup<Record>(code->records,rootPosition+2);let next:Record=try lookup<Record>(code->records,rootPosition+3);try require(size->kind==4&&size->bytes->length()==0&&size->value==1&&bits->kind==4&&bits->bytes->length()==0&&bits->value==root-144&&next->kind==1,span,"numeric helper root descriptor");};
  },else=>unit};
  loop over(List<Int>[160,161,162,163,164] as root:Int){let helper:Int=branch when{root<=161=>69,root<=163=>71,else=>70};branch when{(try get(helpers,helper))>=0=>{let position:Int=try get(labels,root);try require(position>=0,span,"binary helper bitmap");let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(count->kind==4&&count->bytes->length()==0&&count->value==branch when{root==162||root==163=>2,else=>1}&&bits->kind==4&&bits->bytes->length()==0&&bits->value==branch when{root==160=>0,root==163=>2,else=>1}&&next->kind==1,span,"binary helper bitmap");},else=>unit};};
+ loop over(List<Int>[167,168,169,170] as root:Int){let helper:Int=branch when{root==170=>74,else=>73};branch when{(try get(helpers,helper))>=0=>{let position:Int=try get(labels,root);try require(position>=0,span,"binary Function bitmap");let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(count->kind==4&&count->bytes->length()==0&&count->value==branch when{root==170=>1,else=>3}&&bits->kind==4&&bits->bytes->length()==0&&bits->value==branch when{root==168=>2,root==169=>4,else=>1}&&next->kind==1,span,"binary Function bitmap");},else=>unit};};
  var owner:Int= -1;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
   branch when{record->kind==1=>{
@@ -38,7 +40,7 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
    let helper:Helper=try atList<Helper>(entries,owner);let target:Int=try get(helpers,record->target);
    branch when{record->kind==2&&target>=0&&record->target!=helper->id=>{
     try require(contains(helper->dependencies,record->target),span,"undeclared runtime helper dependency");
-   },record->kind==5&&record->target>=134&&(record->target<=145||record->target>=160&&record->target<=164)&&record->target!=140&&record->target!=141&&record->target!=142=>{
+   },record->kind==5&&record->target>=134&&(record->target<=145||record->target>=160&&record->target<=164||record->target>=167&&record->target<=170)&&record->target!=140&&record->target!=141&&record->target!=142=>{
     try require(contains(helper->roots,record->target),span,"undeclared runtime root descriptor");
    },else=>unit};
   },else=>unit};

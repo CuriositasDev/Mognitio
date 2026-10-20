@@ -1,0 +1,39 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeStandardProof\{helper as standardProof};
+use Mgnc\Tables\{replaceItem,atList};
+use Mgnc\WholeLayout\{Layouts,Descriptor,argumentType};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\TypeData\{Type};
+use Mgnc\IntMap\{get};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+message,span,"wrong binary detector: "+error->message);discard writeStdout("V170_BINARY_FUNCTION_MUTANT "+message+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"binary-functions.mgn",displayPath:"binary-functions.mgn",relativePath:"binary-functions.mgn",expectedNamespace:"",text:"namespace App;use Std\\Numeric\\{Bits};use Std\\Binary\\{bytesFromInts,bytesFromBits};let main:Function(List<String>):Int=function(args:List<String>):Int{discard bytesFromInts(List<Int>[0,255]);discard bytesFromBits(List<Bits<8>>[Bits<8>{0}]);0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);let entries:List<Helper>=registry(List<Int>[73,74]);
+ loop over(List<Int>[73,74] as id:Int){var mode:Int=0;loop while(mode<2){var changed:List<Helper>=List<Helper>[];loop over(entries as item:Helper){branch when{item->id==id=>{changed=changed->append(Helper{id:item->id,stack:branch when{mode==0=>false,else=>item->stack},arguments:branch when{mode==1=>List<Int>[0],else=>item->arguments},result:item->result,managedAllocation:item->managedAllocation,mayFail:item->mayFail,terminal:item->terminal,clobbers:item->clobbers,dependencies:item->dependencies,roots:item->roots});},else=>{changed=changed->append(item);}};};try reject(helpers(changed,code),"binary Function helper signature");mode=mode+1;};};
+ var owner:Int= -1;var ordinal:Int=0;var pointer:Int= -1;var allocations:List<Int>=List<Int>[];var selections:List<Int>=List<Int>[];var bitmaps:List<Int>=List<Int>[];
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=branch when{item->target<128=>item->target,else=>-1};branch when{item->target>=167&&item->target<=170=>{bitmaps=bitmaps->append(ordinal+2);},else=>unit};},item->kind==5&&item->target==73&&pointer<0=>{pointer=ordinal;},item->kind==4&&(owner==73||owner==74)&&item->bytes->length()==2&&(try atList<Int>(item->bytes,0))==72=>{branch on item->bytes->at(1){Result<Int,IndexError>::Ok(last:Int)=>{branch when{last==190=>{allocations=allocations->append(ordinal);},else=>unit};},Result<Int,IndexError>::Err(error:IndexError)=>unit};},item->kind==5&&owner==73&&(item->target==167||item->target==168)=>{selections=selections->append(ordinal);},else=>unit};ordinal=ordinal+1;};};try require(pointer>=0&&allocations->length()==5&&selections->length()==2&&bitmaps->length()==4,span,"binary Function mutation targets");
+ loop over(bitmaps as index:Int){let item:Record=try lookup<Record>(code->records,index);let changed:Record=Record{kind:item->kind,bytes:item->bytes,value:0,target:item->target};try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,index,changed),nextLabel:code->nextLabel,pending:code->pending}),"binary Function bitmap");};let bitmap:Int=branch on bitmaps->at(0){Result<Int,IndexError>::Ok(value:Int)=>value-1,Result<Int,IndexError>::Err(error:IndexError)=>0};let count:Record=try lookup<Record>(code->records,bitmap);try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,bitmap,Record{kind:count->kind,bytes:count->bytes,value:1,target:count->target}),nextLabel:code->nextLabel,pending:code->pending}),"binary Function bitmap");
+ let pointed:Record=try lookup<Record>(code->records,pointer);var mode:Int=0;loop while(mode<2){let changed:Record=Record{kind:pointed->kind,bytes:branch when{mode==1=>List<Int>[72,184],else=>pointed->bytes},value:pointed->value,target:branch when{mode==0=>74,else=>pointed->target}};try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,pointer,changed),nextLabel:code->nextLabel,pending:code->pending}),branch when{mode==0=>"standard Function code pointer identity",else=>"standard Function code pointer register"});mode=mode+1;};
+ loop over(allocations as index:Int){let item:Record=try lookup<Record>(code->records,index);try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,index,Record{kind:item->kind,bytes:item->bytes,value:item->value+1,target:item->target}),nextLabel:code->nextLabel,pending:code->pending}),"binary Function allocation descriptors");};
+ loop over(selections as index:Int){let item:Record=try lookup<Record>(code->records,index);try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,index,Record{kind:item->kind,bytes:item->bytes,value:item->value,target:item->target+1}),nextLabel:code->nextLabel,pending:code->pending}),"binary Function root selections");};
+ var integers:Int= -1;var bits:Int= -1;ordinal=0;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard=="bytesFromInts"=>{integers=ordinal;},value->standard=="bytesFromBits"=>{bits=ordinal;},else=>unit};ordinal=ordinal+1;};};try require(integers>=0&&bits>=0,span,"binary Function globals");let first:Global=try lookup<Global>(plan->globals,integers);let other:Global=try lookup<Global>(plan->globals,bits);
+ branch on standardProof(plan,Global{symbol:first->symbol,declaration:first->declaration,valueType:other->valueType,standard:first->standard}){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false,span,"accepted altered Function signature");},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{try reject(Result<Unit,Diagnostic>::Err(error),"bytesFromInts element");}};
+ branch on standardProof(plan,Global{symbol:first->symbol,declaration:first->declaration,valueType:first->valueType,standard:"bytesFromBits"}){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false,span,"accepted altered Function origin");},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{try reject(Result<Unit,Diagnostic>::Err(error),"standard Function origin");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_BINARY_FUNCTION_IR_OK valid=1 rejected=20\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

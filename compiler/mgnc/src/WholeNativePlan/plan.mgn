@@ -52,7 +52,7 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
    let existing:Int=try get(globalDeclarations,declarationId);branch when{existing>=0=>{globalSymbols=try put(globalSymbols,symbolId,existing);symbolId=symbolId+1;continue;},else=>unit};
    let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,declarationId);let module:Module=try lookup<Module>(plan->types->headers->modules,declaration->file);
    let standard:String=branch when{module->standard=>declaration->name,else=>""};
-   try require(!module->standard||(module->nameSpace=="Std\\Io"&&(standard=="readTextFile"||standard=="writeTextFile"||standard=="readStdin"||standard=="writeStdout"||standard=="writeStderr")),span,"native global standard identity");
+   try require(!module->standard||(module->nameSpace=="Std\\Io"&&(standard=="readTextFile"||standard=="writeTextFile"||standard=="readStdin"||standard=="writeStdout"||standard=="writeStderr")||module->nameSpace=="Std\\Binary"&&(standard=="bytesFromInts"||standard=="bytesFromBits")),span,"native global standard identity");
    branch when{try managed(plan->types,symbol->valueType)=>{references=references->append(globals->count);},else=>unit};
    globalSymbols=try put(globalSymbols,symbolId,globals->count);globalDeclarations=try put(globalDeclarations,declarationId,globals->count);globals=push<Global>(globals,Global{symbol:symbolId,declaration:declarationId,valueType:symbol->valueType,standard:standard});
   },else=>unit};symbolId=symbolId+1;

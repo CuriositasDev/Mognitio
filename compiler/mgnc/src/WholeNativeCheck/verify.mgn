@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeCheck;
+use Mgnc\WholeStandardProof\{helper as standardHelper};
 use Mgnc\WholeBinaryProof\{selected as checkedBinary,expected as binaryExpected};
 use Mgnc\WholeNumericResultCheck\{selected as checkedNumeric,expected as numericExpected};
 use Mgnc\WholeFrameData\{Point};
@@ -98,7 +99,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
  loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){
   try require((try get(used,index))>=0&&(try get(declarations,value->declaration))<0,span,"extra or duplicated global cell");declarations=try put(declarations,value->declaration,index);
   try require((try global(semantic,plan,value->symbol,span))==index,span,"global representative symbol");let declaration:Declaration=try lookup<Declaration>(headers->declarations,value->declaration);let module:Module=try lookup<Module>(headers->modules,declaration->file);try require(value->standard==branch when{module->standard=>declaration->name,else=>""},span,"global standard origin");
-  let kind:Int=(try lookup<Type>(plan->concrete->types->types,value->valueType))->kind;let selected:Bool=(try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))!=Bits<64>{0};try require(selected==(kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29),span,"global root type");index=index+1;
+  branch when{value->standard!=""=>{discard try standardHelper(plan,value);},else=>unit};let kind:Int=(try lookup<Type>(plan->concrete->types->types,value->valueType))->kind;let selected:Bool=(try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))!=Bits<64>{0};try require(selected==(kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29),span,"global root type");index=index+1;
  };};
  loop while(index<plan->globalRoots->length()*64){try require((try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))==Bits<64>{0},span,"global root padding");index=index+1;};
  try require(plan->entryGlobal>=0&&(try lookup<Global>(plan->globals,plan->entryGlobal))->declaration==semantic->entry&&source->entry==semantic->entry,span,"native main identity");

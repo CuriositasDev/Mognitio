@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeCheck;
+use Mgnc\WholeBinaryProof\{selected as checkedBinary,expected as binaryExpected};
 use Mgnc\WholeNumericResultCheck\{selected as checkedNumeric,expected as numericExpected};
 use Mgnc\WholeFrameData\{Point};
 use Std\Numeric\{Bits};
@@ -48,6 +49,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
    let operationLabels:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);try require(operationLabels->length()==block->operations->length(),span,"machine source operation labels");loop over(operationLabels as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};labels=try claim(labels,try lookup<Int>(procedure->terminatorLabels,blockId),plan->nextLabel,span);
 
    loop over(block->operations as op:Operation){
+    branch when{try checkedBinary(plan->concrete->types,instance->body,op)=>{discard try binaryExpected(plan,instance->body,op);},else=>unit};
     branch when{try checkedNumeric(plan->concrete->types,instance->body,op)=>{discard try numericExpected(plan,instance->body,op);},else=>unit};
     branch when{op->code=="global-load"||op->code=="global-store"=>{let id:Int=try global(semantic,plan,try present(op->symbol,span,"global operation"),span);used=try put(used,id,1);},else=>unit};
     branch when{op->code=="string"=>{

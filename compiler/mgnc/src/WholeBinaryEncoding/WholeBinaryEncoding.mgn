@@ -1,0 +1,37 @@
+namespace Mgnc\WholeBinaryEncoding;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,empty};
+use Mgnc\WholeFrameData\{Frame,Point};
+use Mgnc\WholeFrame\{begin,end,select};
+use Mgnc\WholeABI\{allocateLabel};
+use Mgnc\Machine\{Code,label,jump,fresh,field};
+use Mgnc\WholeX64\{load,store,mov,address,immediate,constant,alu,shift,shiftCl,byteLoad,byteStore};
+let frame:Frame=Frame{slots:1,outgoing:8,extent:144,entry:List<Bits<64>>[Bits<64>{0}],points:empty<Point>()};
+// Direct intrinsic arguments: scalar bits, width, order tag, Bytes descriptor,
+// Result descriptor, BitWidthError descriptor. Fill contains no safepoints.
+let encode:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ var code:Code=try begin(label(initial,69),frame,List<Int>[],List<Int>[],160);
+ let invalid:Int=code->nextLabel;let loopLabel:Int=invalid+1;let little:Int=invalid+2;let copy:Int=invalid+3;let ready:Int=invalid+4;let result:Int=invalid+5;code=fresh(code,6);
+ code=load(code,12,5,24);code=load(code,13,5,32);code=mov(code,0,13);code=constant(code,4,0,7);code=jump(code,List<Int>[15,133],invalid);code=shift(code,5,13,3);
+ code=mov(code,7,13);code=constant(code,0,7,32);code=load(code,6,5,48);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=mov(code,14,0);code=immediate(code,8,0);
+ code=label(code,loopLabel);code=alu(code,57,8,13);code=jump(code,List<Int>[15,131],ready);code=mov(code,1,8);code=load(code,2,5,40);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],little);code=mov(code,1,13);code=constant(code,5,1,1);code=alu(code,41,1,8);
+ code=label(code,little);code=shift(code,4,1,3);code=mov(code,0,12);code=shiftCl(code,5,0);code=mov(code,2,14);code=alu(code,1,2,8);code=byteStore(code,2,32,0);code=constant(code,0,8,1);code=jump(code,List<Int>[233],loopLabel);
+ code=label(code,ready);code=store(code,5,-72,14);code=immediate(code,13,0);code=jump(code,List<Int>[233],result);
+ code=label(code,invalid);code=immediate(code,7,32);code=load(code,6,5,64);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,32);code=store(code,0,24,2);code=store(code,5,-72,0);code=immediate(code,13,1);
+ code=label(code,result);code=select(code,161);code=immediate(code,7,40);code=load(code,6,5,56);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=load(code,2,5,-72);code=store(code,0,32,2);Result<Code,Diagnostic>::Ok(end(code,frame))
+};
+// Bytes, width, order tag, Result descriptor, BinaryDecodeError descriptor.
+// The receiver remains rooted until the numeric Result helper owns its payload.
+let decode:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ let decodeFrame:Frame=Frame{slots:1,outgoing:8,extent:144,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};var code:Code=try begin(label(initial,70),decodeFrame,List<Int>[0],List<Int>[],164);
+ let invalid:Int=code->nextLabel;let scan:Int=invalid+1;let little:Int=invalid+2;let ready:Int=invalid+3;code=fresh(code,4);
+ code=load(code,3,5,-72);code=load(code,13,5,32);code=load(code,14,3,24);code=mov(code,0,13);code=constant(code,4,0,7);code=jump(code,List<Int>[15,133],invalid);code=mov(code,0,13);code=shift(code,5,0,3);code=alu(code,57,0,14);code=jump(code,List<Int>[15,133],invalid);code=immediate(code,12,0);code=immediate(code,8,0);
+ code=label(code,scan);code=alu(code,57,8,14);code=jump(code,List<Int>[15,131],ready);code=mov(code,2,3);code=alu(code,1,2,8);code=byteLoad(code,0,2,32);code=mov(code,1,8);code=load(code,2,5,40);code=alu(code,133,2,2);code=jump(code,List<Int>[15,132],little);code=mov(code,1,14);code=constant(code,5,1,1);code=alu(code,41,1,8);
+ code=label(code,little);code=shift(code,4,1,3);code=shiftCl(code,4,0);code=alu(code,9,12,0);code=constant(code,0,8,1);code=jump(code,List<Int>[233],scan);
+ code=label(code,ready);code=immediate(code,2,0);code=jump(code,List<Int>[233],ready+1);
+ code=label(code,invalid);code=immediate(code,12,0);code=immediate(code,2,1);code=label(code,ready+1);code=fresh(code,1);
+ code=store(code,4,16,2);code=store(code,4,8,12);code=store(code,4,24,13);code=store(code,4,32,14);code=load(code,0,5,48);code=store(code,4,40,0);code=load(code,0,5,56);code=store(code,4,48,0);code=immediate(code,0,2);code=store(code,4,56,0);code=immediate(code,0,0);code=store(code,4,0,0);code=jump(code,List<Int>[232],68);Result<Code,Diagnostic>::Ok(end(code,decodeFrame))
+};
+public let emit:Function(Code):Result<Code,Diagnostic>=function(initial:Code):Result<Code,Diagnostic>{
+ var code:Code=try decode(try encode(initial));loop over(List<Int>[160,161,164] as id:Int){code=label(code,id);code=field(code,4,1);code=field(code,4,branch when{id==160=>0,else=>1});};Result<Code,Diagnostic>::Ok(code)
+};

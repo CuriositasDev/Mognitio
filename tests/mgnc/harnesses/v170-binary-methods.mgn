@@ -1,0 +1,34 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{replaceItem};
+use Mgnc\WholeLayout\{Layouts,Descriptor,argumentType};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\TypeData\{Type};
+use Mgnc\IntMap\{get};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="whole IR: "+message,span,"wrong binary detector: "+error->message);discard writeStdout("V170_BINARY_MUTANT "+message+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"binary.mgn",displayPath:"binary.mgn",relativePath:"binary.mgn",expectedNamespace:"",text:"namespace App;use Std\\Numeric\\{Bits};use Std\\Binary\\{ByteOrder};let main:Function(List<String>):Int=function(args:List<String>):Int{discard Bits<64>{9223372036854775808}->toBytes(ByteOrder::LittleEndian);0};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);try layouts(plan->concrete,plan->layouts);let entries:List<Helper>=registry(List<Int>[]);
+ var mode:Int=0;loop while(mode<2){var changed:List<Helper>=List<Helper>[];loop over(entries as item:Helper){branch when{item->id==69=>{changed=changed->append(Helper{id:item->id,stack:branch when{mode==0=>false,else=>item->stack},arguments:branch when{mode==1=>List<Int>[0,0,0,0,3,3],else=>item->arguments},result:item->result,managedAllocation:item->managedAllocation,mayFail:item->mayFail,terminal:item->terminal,clobbers:item->clobbers,dependencies:item->dependencies,roots:item->roots});},else=>{changed=changed->append(item);}};};try reject(helpers(changed,code),branch when{mode==0=>"binary helper signature",else=>"binary helper argument kinds"});mode=mode+1;};
+ var call:Int= -1;var ordinal:Int=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==2&&item->target==69&&call<0=>{call=ordinal;},else=>unit};ordinal=ordinal+1;};};try require(call>=6,span,"binary encode call");
+ loop over(List<Int>[call-6,call-4,call-2,call] as index:Int){let item:Record=try lookup<Record>(code->records,index);let changed:Record=Record{kind:item->kind,bytes:item->bytes,value:item->value+branch when{index==call=>0,else=>1},target:branch when{index==call=>68,else=>item->target}};try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,index,changed),nextLabel:code->nextLabel,pending:code->pending}),branch when{index==call=>"binary helper target",else=>"binary helper descriptor metadata"});};
+ loop over(List<Int>[160,161,162,163,164] as target:Int){var index:Int= -1;ordinal=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target==target=>{index=ordinal+branch when{target==162=>1,else=>2};},else=>unit};ordinal=ordinal+1;};};try require(index>=0,span,"binary bitmap target");let item:Record=try lookup<Record>(code->records,index);let changed:Record=Record{kind:item->kind,bytes:item->bytes,value:branch when{target==160||target==163=>1,else=>0},target:item->target};try reject(machine(plan,Code{records:try replaceItem<Record>(code->records,index,changed),nextLabel:code->nextLabel,pending:code->pending}),"binary helper bitmap");};
+ var typeId:Int=0;var byteDescriptor:Int= -1;var resultDescriptor:Int= -1;loop over(plan->concrete->types->types->pages->append(plan->concrete->types->types->tail) as page:List<Type>){loop over(page as value:Type){branch when{value->kind==25=>{byteDescriptor=try get(plan->layouts->types,typeId);},value->kind==11&&(try lookup<Type>(plan->concrete->types->types,try argumentType(value,0,span)))->kind==25=>{resultDescriptor=try get(plan->layouts->types,typeId);},else=>unit};typeId=typeId+1;};};try require(byteDescriptor>=0&&resultDescriptor>=0,span,"binary layout targets");
+ loop over(List<Int>[byteDescriptor,resultDescriptor] as index:Int){let original:Descriptor=try lookup<Descriptor>(plan->layouts->descriptors,index);let altered:Descriptor=Descriptor{mode:branch when{index==byteDescriptor=>0,else=>original->mode},size:original->size,references:original->references,variants:branch when{index==resultDescriptor=>List<List<Int>>[List<Int>[],List<Int>[32]],else=>original->variants},elementManaged:original->elementManaged};let changed:Layouts=Layouts{descriptors:try replaceItem<Descriptor>(plan->layouts->descriptors,index,altered),types:plan->layouts->types,environments:plan->layouts->environments,buffers:plan->layouts->buffers};try reject(layouts(plan->concrete,changed),branch when{index==byteDescriptor=>"Bytes variable leaf descriptor",else=>"active variant trace fields"});};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_BINARY_IR_OK valid=1 rejected=13\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

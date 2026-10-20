@@ -260,3 +260,14 @@ Run v170-numeric-result-ir.py --seed SEED --output NEW_DIRECTORY to reject helpe
 ABI, descriptor/field-count, call-target and helper root-data mutations.
 The inherited v160-helper-contracts.py runner continues to check restricted
 helper subsets independently of the full generated runtime.
+
+## Bytes methods and encoding increment
+
+Run v170-binary-methods.py --compiler COMPILER --output NEW_DIRECTORY for all
+widths 1..64, independently calculated byte/word vectors in both byte orders,
+width/length errors, access/slice boundaries, immutable snapshots, capture and
+container retention, stress collection, isolation and invalid-source preservation.
+Run v170-binary-ir.py --seed SEED --output NEW_DIRECTORY to reject thirteen
+helper ABI, bitmap, descriptor, call-target and active-variant mutations.
+The Bytes variable-leaf mode is checked separately from String's scalar-count
+layout. Standard Binary construction/publication functions remain pending.

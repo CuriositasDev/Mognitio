@@ -11,8 +11,8 @@ public let emit:Function(Code):Code=function(initial:Code):Code{
  code=label(code,interrupted);code=constant(code,0,14,1);code=constant(code,7,14,16);code=jump(code,List<Int>[15,131],failed);code=jump(code,List<Int>[233],write);
  code=label(code,done);code=immediate(code,0,0);code=leave(code);code=label(code,failed);code=immediate(code,0,-1);code=leave(code);
  // R15 is zero only before context acquisition, before owned resources exist.
- loop over(List<Int>[1,2,3,4,5,6,7,8,9,67] as kind:Int){
-  code=label(code,kind);code=immediate(code,12,branch when{kind==67=>10,else=>kind});branch when{kind==3||kind==67=>{code=mov(code,13,7);},else=>unit};code=jump(code,List<Int>[233],66);
+ loop over(List<Int>[1,2,3,4,5,6,7,8,9,67,72] as kind:Int){
+  code=label(code,kind);code=immediate(code,12,branch when{kind==67=>10,kind==72=>11,else=>kind});branch when{kind==3||kind==67=>{code=mov(code,13,7);},else=>unit};code=jump(code,List<Int>[233],66);
  };
  code=label(code,66);let noContext:Int=code->nextLabel;let exit:Int=noContext+1;let panicLabel:Int=noContext+2;let assertionLabel:Int=noContext+3;code=fresh(code,4);
  code=alu(code,133,15,15);code=jump(code,List<Int>[15,132],noContext);code=store(code,15,primary,12);code=jump(code,List<Int>[232],63);
@@ -29,6 +29,7 @@ public let emit:Function(Code):Code=function(initial:Code):Code{
  let next7:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,7);code=jump(code,List<Int>[15,133],next7);code=symbol(code,7,157);code=immediate(code,6,40);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next7);
  let next8:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,8);code=jump(code,List<Int>[15,133],next8);code=symbol(code,7,158);code=immediate(code,6,35);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next8);
  let next9:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,9);code=jump(code,List<Int>[15,133],next9);code=symbol(code,7,159);code=immediate(code,6,36);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next9);
+let nextBytes:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,11);code=jump(code,List<Int>[15,133],nextBytes);code=symbol(code,7,166);code=immediate(code,6,36);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,nextBytes);
 code=jump(code,List<Int>[233],exit);
  code=label(code,panicLabel);code=symbol(code,7,153);code=immediate(code,6,7);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=address(code,7,13,40);code=load(code,6,13,24);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=symbol(code,7,150);code=immediate(code,6,1);code=jump(code,List<Int>[232],65);
  code=jump(code,List<Int>[233],exit);
@@ -44,5 +45,6 @@ code=jump(code,List<Int>[233],exit);
  code=label(code,157);code=raw(code,List<Int>[114,117,110,116,105,109,101,58,32,105,110,118,97,108,105,100,32,85,84,70,45,56,32,114,117,110,116,105,109,101,32,97,114,103,117,109,101,110,116,10]);
  code=label(code,158);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,105,110,118,97,108,105,100,32,101,120,105,116,32,115,116,97,116,117,115,10]);
  code=label(code,159);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,108,105,115,116,32,108,101,110,103,116,104,32,111,118,101,114,102,108,111,119,10]);
+ code=label(code,166);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,98,121,116,101,115,32,108,101,110,103,116,104,32,111,118,101,114,102,108,111,119,10]);
  code
 };

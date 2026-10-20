@@ -55,7 +55,7 @@ public let optional:Function(Store,Store,Parent,Parent,List<Binding>,Span):Resul
 public let closed:Function(Store,Int,Span):Result<Unit,Diagnostic>=function(store:Store,root:Int,span:Span):Result<Unit,Diagnostic>{
  var pending:Paged<Int>=push<Int>(empty<Int>(),root);var cursor:Int=0;var seen:Map=create();
  loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);
-  let item:Type=try lookup<Type>(store->types,id);try require(item->kind<22||item->kind==23||item->kind==24||item->kind==27||item->kind==28,span,"concrete unresolved or unsupported type");
+  let item:Type=try lookup<Type>(store->types,id);try require(item->kind<22||item->kind==23||item->kind==24||item->kind==25||item->kind==27||item->kind==28,span,"concrete unresolved or unsupported type");
   branch when{item->kind==23||item->kind==24=>{discard try numericShape(store,id,span);},else=>unit};
   loop over(item->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"concrete unresolved value");}};};
   loop over(item->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};

@@ -1,0 +1,54 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup,number};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\SemanticValues\{Node};
+use Mgnc\WholeIR\{Project,Body,Block,Operation,Terminator};
+use Mgnc\WholeLower\{lower};
+use Mgnc\WholeVerify\{verify};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList,replaceItem};
+use Std\Io\{writeStdout};
+let replaceBlocks:Function(Body,Paged<Block>):Body=function(body:Body,blocks:Paged<Block>):Body{
+ Body{declaration:body->declaration,functionOwner:body->functionOwner,root:body->root,resultType:body->resultType,slots:body->slots,blocks:blocks,parameters:body->parameters,captures:body->captures,entry:body->entry,occurrences:body->occurrences,tries:body->tries}
+};
+let replaceBodies:Function(Project,Paged<Body>):Project=function(project:Project,bodies:Paged<Body>):Project{
+ Project{types:project->types,declarations:project->declarations,bodies:bodies,functions:project->functions,entry:project->entry,moduleOrder:project->moduleOrder,obligations:project->obligations}
+};
+let mutate:Function(SemanticProject,Project,Int):Result<Project,Diagnostic>=function(semantic:SemanticProject,project:Project,mutation:Int):Result<Project,Diagnostic>{
+ var owner:Int=0;
+ loop over(project->bodies->pages->append(project->bodies->tail) as bodies:List<Body>){loop over(bodies as body:Body){
+  var index:Int=0;loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   let term:Terminator=block->terminator;let node:Node=try lookup<Node>(semantic->state->nodes,term->origin->node);
+   branch when{node->operation=="assert"&&term->code=="branch"=>{
+    var target:Int=index;var changed:Block=block;
+    branch when{mutation==0=>{
+     target=try atList<Int>(term->targets,1);let failed:Block=try lookup<Block>(body->blocks,target);let end:Terminator=failed->terminator;
+     changed=Block{operations:failed->operations,terminator:Terminator{code:"unreachable",inputs:end->inputs,targets:end->targets,variants:end->variants,sumType:end->sumType,origin:end->origin}};
+    },mutation==1=>{
+     changed=Block{operations:block->operations,terminator:Terminator{code:term->code,inputs:term->inputs,targets:List<Int>[try atList<Int>(term->targets,1),try atList<Int>(term->targets,0)],variants:term->variants,sumType:term->sumType,origin:term->origin}};
+    },mutation==2=>{
+     target=try atList<Int>(term->targets,0);let passed:Block=try lookup<Block>(body->blocks,target);changed=Block{operations:List<Operation>[],terminator:passed->terminator};
+    },else=>{
+     changed=Block{operations:block->operations,terminator:Terminator{code:term->code,inputs:List<Int>[],targets:term->targets,variants:term->variants,sumType:term->sumType,origin:term->origin}};
+    }};
+    let updated:Body=replaceBlocks(body,try replaceItem<Block>(body->blocks,target,changed));
+    return Result<Project,Diagnostic>::Ok(replaceBodies(project,try replaceItem<Body>(project->bodies,owner,updated)));
+   },else=>unit};index=index+1;
+  };};owner=owner+1;
+ };};try require(false,Span{start:0,end:0,line:1,column:1},"assert mutation target absent");Result<Project,Diagnostic>::Ok(project)
+};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let source:SourceUnit=SourceUnit{path:"assert.mgn",displayPath:"assert.mgn",relativePath:"assert.mgn",expectedNamespace:"",text:"namespace App;let helper:Function():Unit=function():Unit{assert false;};let main:Function(List<String>):Int=function(args:List<String>):Int{assert true;assert {return 7;};};"};
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[source]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};
+ let project:Project=try lower(semantic);try verify(semantic,project);
+ var sites:Int=0;loop over(project->bodies->pages->append(project->bodies->tail) as bodies:List<Body>){loop over(bodies as body:Body){loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){branch when{block->terminator->code=="assertion"=>{sites=sites+1;},else=>unit};};};};};
+ try require(sites==2,span,"non-completing assert acquired a false edge");
+ var mutation:Int=0;loop while(mutation<4){branch on verify(semantic,try mutate(semantic,project,mutation)){
+  Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted assertion mutation");},
+  Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"assert mutation rejection phase");discard writeStdout("V170_ASSERT_MUTANT "+number(mutation)+" rejected\n");}
+ };mutation=mutation+1;};Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_ASSERT_IR_OK valid=1 rejected=4\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}
+};

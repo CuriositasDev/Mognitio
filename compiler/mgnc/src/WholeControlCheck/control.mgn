@@ -14,6 +14,9 @@ let successor:Function(Body,Node,Occurrence):Result<Int,Diagnostic>=function(bod
  let end:Terminator=branch when{node->operation=="try"=>{
   try require(exit->terminator->code=="switch"&&integers(exit->terminator->variants,List<Int>[0,1]),node->span,"try normal edge");
   (try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,0)))->terminator
+ },node->operation=="assert"=>{
+  try require(exit->terminator->code=="branch"&&exit->terminator->targets->length()==2,node->span,"assert normal edge");
+  (try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,0)))->terminator
  },else=>exit->terminator};
  try require(end->code=="jump"&&end->targets->length()==1,node->span,"missing normal continuation");Result<Int,Diagnostic>::Ok(try atList<Int>(end->targets,0))
 };
@@ -106,7 +109,17 @@ public let verify:Function(State,Body,Map):Result<Unit,Diagnostic>=function(stat
    branch on previous{Parent::None=>unit,Parent::Some(previousId:Int)=>{let prior:Occurrence=try occurrence(body,index,previousId);let priorNode:Node=try lookup<Node>(state->nodes,previousId);
     branch when{priorNode->normal=>{try require((try successor(body,priorNode,prior))==current->exit,span,"final operand continuation");},else=>unit};
    }};
-   branch when{node->operation=="return"||node->operation=="panic"=>{
+   branch when{node->operation=="assert"=>{
+    let operand:Occurrence=try child(body,index,node,0);let operandNode:Node=try lookup<Node>(state->nodes,operand->node);
+    try require(node->children->length()==1&&exit->operations->length()==0,span,"assert operand and operation count");
+    branch when{operandNode->normal=>{
+     try require(exit->terminator->code=="branch"&&integers(exit->terminator->inputs,List<Int>[try present(operand->output,span,"assert Bool operand")])&&exit->terminator->targets->length()==2,span,"assert source condition");
+     let passed:Block=try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,0));let failed:Block=try lookup<Block>(body->blocks,try atList<Int>(exit->terminator->targets,1));
+     try require(passed->operations->length()==1&&passed->terminator->code=="jump"&&passed->terminator->targets->length()==1,span,"assert success continuation");
+     let result:Operation=try atList<Operation>(passed->operations,0);try require(result->code=="unit"&&parentEqual(result->output,current->output),span,"assert success Unit");
+     try require(failed->operations->length()==0&&failed->terminator->code=="assertion"&&failed->terminator->origin->node==current->node,span,"assert false terminal");
+    },else=>{try require(!node->normal&&exit->terminator->code=="unreachable",span,"non-completing assert acquired a Bool or false edge");}};
+   },node->operation=="return"||node->operation=="panic"=>{
     let operand:Occurrence=try child(body,index,node,0);let operandNode:Node=try lookup<Node>(state->nodes,operand->node);
     branch when{operandNode->normal=>{try require(exit->operations->length()==0&&exit->terminator->code==node->operation&&integers(exit->terminator->inputs,List<Int>[try present(operand->output,span,"terminal operand")]),span,"terminal source value");},else=>unit};
     branch when{node->operation=="return"=>{try require(parentEqual(node->target,body->functionOwner),span,"return lexical owner");},else=>unit};

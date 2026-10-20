@@ -11,14 +11,15 @@ public let emit:Function(Code):Code=function(initial:Code):Code{
  code=label(code,interrupted);code=constant(code,0,14,1);code=constant(code,7,14,16);code=jump(code,List<Int>[15,131],failed);code=jump(code,List<Int>[233],write);
  code=label(code,done);code=immediate(code,0,0);code=leave(code);code=label(code,failed);code=immediate(code,0,-1);code=leave(code);
  // R15 is zero only before context acquisition, before owned resources exist.
- loop over(List<Int>[1,2,3,4,5,6,7,8,9] as kind:Int){
-  code=label(code,kind);code=immediate(code,12,kind);branch when{kind==3=>{code=mov(code,13,7);},else=>unit};code=jump(code,List<Int>[233],66);
+ loop over(List<Int>[1,2,3,4,5,6,7,8,9,67] as kind:Int){
+  code=label(code,kind);code=immediate(code,12,branch when{kind==67=>10,else=>kind});branch when{kind==3||kind==67=>{code=mov(code,13,7);},else=>unit};code=jump(code,List<Int>[233],66);
  };
- code=label(code,66);let noContext:Int=code->nextLabel;let exit:Int=noContext+1;let panicLabel:Int=noContext+2;code=fresh(code,3);
+ code=label(code,66);let noContext:Int=code->nextLabel;let exit:Int=noContext+1;let panicLabel:Int=noContext+2;let assertionLabel:Int=noContext+3;code=fresh(code,4);
  code=alu(code,133,15,15);code=jump(code,List<Int>[15,132],noContext);code=store(code,15,primary,12);code=jump(code,List<Int>[232],63);
  code=label(code,noContext);
  // Protect stderr even if allocation failed before the startup signal guard.
  code=constant(code,5,4,32);code=immediate(code,0,0);loop over(List<Int>[0,8,16,24] as offset:Int){code=store(code,4,offset,0);};code=immediate(code,0,1);code=store(code,4,0,0);code=immediate(code,0,13);code=immediate(code,7,13);code=mov(code,6,4);code=immediate(code,2,0);code=immediate(code,10,8);code=raw(code,List<Int>[15,5]);code=constant(code,0,4,32);
+ code=constant(code,7,12,10);code=jump(code,List<Int>[15,132],assertionLabel);
  code=constant(code,7,12,3);code=jump(code,List<Int>[15,132],panicLabel);
  let next1:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,1);code=jump(code,List<Int>[15,133],next1);code=symbol(code,7,151);code=immediate(code,6,34);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next1);
  let next2:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,2);code=jump(code,List<Int>[15,133],next2);code=symbol(code,7,152);code=immediate(code,6,41);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next2);
@@ -30,7 +31,9 @@ public let emit:Function(Code):Code=function(initial:Code):Code{
  let next9:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,9);code=jump(code,List<Int>[15,133],next9);code=symbol(code,7,159);code=immediate(code,6,36);code=jump(code,List<Int>[232],65);code=jump(code,List<Int>[233],exit);code=label(code,next9);
 code=jump(code,List<Int>[233],exit);
  code=label(code,panicLabel);code=symbol(code,7,153);code=immediate(code,6,7);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=address(code,7,13,40);code=load(code,6,13,24);code=jump(code,List<Int>[232],65);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],exit);code=symbol(code,7,150);code=immediate(code,6,1);code=jump(code,List<Int>[232],65);
- code=label(code,exit);code=immediate(code,7,4);let statusReady:Int=code->nextLabel;let notInternal:Int=statusReady+1;code=fresh(code,2);code=constant(code,7,12,2);code=jump(code,List<Int>[15,133],notInternal);code=immediate(code,7,3);code=jump(code,List<Int>[233],statusReady);code=label(code,notInternal);code=constant(code,7,12,7);code=jump(code,List<Int>[15,133],statusReady);code=immediate(code,7,2);code=label(code,statusReady);code=immediate(code,0,60);code=raw(code,List<Int>[15,5]);
+ code=jump(code,List<Int>[233],exit);
+ code=label(code,assertionLabel);code=address(code,7,13,40);code=load(code,6,13,24);code=jump(code,List<Int>[232],65);
+ code=label(code,exit);code=immediate(code,7,4);let statusReady:Int=code->nextLabel;let notInternal:Int=statusReady+1;code=fresh(code,2);code=constant(code,7,12,2);code=jump(code,List<Int>[15,133],notInternal);code=immediate(code,7,3);code=jump(code,List<Int>[233],statusReady);code=label(code,notInternal);code=constant(code,7,12,7);code=jump(code,List<Int>[15,133],statusReady);code=immediate(code,7,2);code=label(code,statusReady);let notAssertion:Int=code->nextLabel;code=fresh(code,1);code=constant(code,7,12,10);code=jump(code,List<Int>[15,133],notAssertion);code=immediate(code,7,5);code=label(code,notAssertion);code=immediate(code,0,60);code=raw(code,List<Int>[15,5]);
  code=label(code,150);code=raw(code,List<Int>[10]);
  code=label(code,153);code=raw(code,List<Int>[112,97,110,105,99,58,32]);
  code=label(code,151);code=raw(code,List<Int>[114,117,110,116,105,109,101,32,101,114,114,111,114,58,32,97,108,108,111,99,97,116,105,111,110,32,102,97,105,108,117,114,101,10]);

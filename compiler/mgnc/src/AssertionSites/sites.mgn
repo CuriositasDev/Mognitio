@@ -1,0 +1,9 @@
+namespace Mgnc\AssertionSites;
+use Mgnc\Data\{Diagnostic,Span,lookup,number};
+use Mgnc\SemanticData\{Headers,Module};
+use Mgnc\WholeIR\{Origin};
+use Mgnc\InputDiagnostics\{escapePath};
+public let message:Function(Headers,Origin):Result<String,Diagnostic>=function(headers:Headers,origin:Origin):Result<String,Diagnostic>{
+ let source:Module=try lookup<Module>(headers->modules,origin->file);let span:Span=origin->span;
+ Result<String,Diagnostic>::Ok(escapePath(source->source->displayPath)+":"+number(span->line)+":"+number(span->column)+": assertion: assertion failed (outside test) [bytes "+number(span->start)+","+number(span->end)+")\n")
+};

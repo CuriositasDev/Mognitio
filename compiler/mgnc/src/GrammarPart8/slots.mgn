@@ -32,6 +32,10 @@ public let extend:Function(Paged<Slot>):Paged<Slot>=function(initial:Paged<Slot>
  Slot{lhs:61,rule:157,dot:4,next:34},
  Slot{lhs:61,rule:157,dot:5,next:-21},
  Slot{lhs:61,rule:157,dot:6,next:0},
+ Slot{lhs:37,rule:158,dot:0,next:-63},
+ Slot{lhs:37,rule:158,dot:1,next:39},
+ Slot{lhs:37,rule:158,dot:2,next:-2},
+ Slot{lhs:37,rule:158,dot:3,next:0},
  ] as value:Slot){result=push<Slot>(result,value);};
  result
 };

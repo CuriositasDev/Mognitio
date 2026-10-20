@@ -5,7 +5,8 @@ use Mgnc\Semantic\{SemanticProject};
 use Mgnc\SemanticValues\{Symbol};
 use Mgnc\SemanticData\{Declaration,Module,Introduction};
 use Mgnc\TypeData\{Type};
-use Mgnc\WholeIR\{Project,Body,Block,Operation};
+use Mgnc\WholeIR\{Project,Body,Block,Operation,TextPart};
+use Mgnc\AssertionSites\{message as assertionMessage};
 use Mgnc\WholeConcrete\{Plan,Instance};
 use Mgnc\WholeStablePlan\{canonical};
 use Mgnc\WholeClosures\{Closures,build as closuresPlan};
@@ -37,7 +38,10 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
    branch when{operation->code=="function"||operation->code=="list"=>{constructors=push<Constructor>(constructors,Constructor{instance:instanceId,block:blockId,operation:operationId,entry:next,roots:next+1});next=next+2;},else=>unit};
    branch when{operation->code=="string"=>{let encoded:Encoded=try encode(operation->text,operation->origin->span);literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:operationId,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;},
     operation->code=="global-load"||operation->code=="global-store"=>{neededGlobals=try put(neededGlobals,try present(operation->symbol,span,"native global symbol"),1);},else=>unit};operationId=operationId+1;
-  };blockId=blockId+1;};};instanceId=instanceId+1;
+  };branch when{block->terminator->code=="assertion"=>{
+   let site:String=try assertionMessage(plan->types->headers,block->terminator->origin);let encoded:Encoded=try encode(List<TextPart>[TextPart::Text(site)],block->terminator->origin->span);
+   literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:-1,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;
+  },else=>unit};blockId=blockId+1;};};instanceId=instanceId+1;
  };};
  loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Int=try present(instance->body->declaration,span,"native initializer declaration");let symbol:Int=try present(try lookup<Parent>(semantic->state->globals,declaration),span,"native initializer symbol");neededGlobals=try put(neededGlobals,symbol,1);};
  var globals:Paged<Global>=empty<Global>();var globalSymbols:Map=create();var globalDeclarations:Map=create();var references:List<Int>=List<Int>[];var symbolId:Int=0;

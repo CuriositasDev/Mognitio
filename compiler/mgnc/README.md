@@ -1,6 +1,8 @@
 # Experimental native compiler
 
-This source project contains the Mognitio 1.6 compiler implementation, mgnc.
+This source project extends the accepted Mognitio 1.6 experimental compiler
+toward 1.7. The current increment adds native assertions; complete 1.7
+implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
 It remains experimental and is not included in the regular Debian package,
@@ -9,8 +11,8 @@ APT repository, or installer bundle. All 1.6 implementation and performance stag
 
 ## Build
 
-Use the [frozen S10 Lisp seed](../../verification/v1.6.0-seed10.md), whose accepted
-source revision is 1751e69dd21048d91f7f91578496cc1ad9a15f03.
+Use the [qualified replacement Lisp seed](../../verification/v1.7.0-seed.md), whose accepted
+source revision is 63c99a21cd50e31f458c83231c34adbdce3bf4f2.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 
@@ -63,8 +65,11 @@ reachable values and initializes entry-reachable modules once in dependency orde
 Excluded standard identities and semantically valid features outside the native
 profile report unsupported, including in unused bodies.
 
-Contract, witness, attribute, and assertion syntax remain outside mgnc's
-experimental profile; the normal toolchain continues to support them.
+Assertions require Bool on normally completing operands and preserve non-completing
+control transfers. A failed assertion exits 5 with the original statement location;
+ordinary return 5 is silent, and an operand panic retains its panic diagnostic.
+Contract, witness and attribute syntax remain outside this increment's native
+profile; the normal toolchain continues to support them.
 
 Successful compiler commands have exit 0 and empty output streams.
 Build publishes a new standalone Linux AMD64 ELF without replacing an existing

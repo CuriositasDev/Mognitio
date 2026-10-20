@@ -48,6 +48,17 @@ with tempfile.TemporaryDirectory(prefix="mgn-publication-fault-") as temporary:
     token=(event["arguments"][0],acquired.get(event["arguments"][0],0));assert token not in closed,(name,"descriptor generation closed twice",token);closed.add(token)
   exit_event=events[-1];assert exit_event["call"]==60 and exit_event["owned"]["record"]==0,exit_event
   assert not [v for v in exit_event["fds"].values() if str(target.parent) in v],exit_event
+  assert exit_event["owned"]["primary"]==(1 if expected==4 else 2 if expected==3 else 0),(name,exit_event)
+  if stderr:
+   diagnostic=next(i for i,e in enumerate(events) if e["call"]==1 and e["arguments"][0]==2)
+   assert not [e for e in events[diagnostic+1:] if e["call"] in (3,11,263)],(name,"cleanup after reporting")
+   for event in events:
+    if "fail_allocation_ordinal" in event and event["owned"].get("path_map",0):
+     owned=event["owned"];released=[e for e in events[events.index(event)+1:] if e["call"]==11 and e["arguments"][:2]==[owned["path_map"],owned["path_size"]]]
+     assert len(released)==1,(name,"terminal mapping cleanup",released)
+   if name.startswith("temp-stat-internal"):
+    assert len([e for e in events if e["call"]==263])==1,(name,"terminal temporary cleanup")
+
   rows.append({"case":name,"expected":expected,"published":published,"syscalls":len(events),"passed":True})
   (options.out/"results.json").write_text(json.dumps(rows,indent=2)+"\n")
   print(name,"PASS",expected,flush=True);return data

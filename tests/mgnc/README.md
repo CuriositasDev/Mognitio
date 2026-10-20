@@ -221,3 +221,12 @@ non-completion, stress collection, closed stderr and isolated execution.
 Run v170-assert-ir.py --seed SEED --output NEW_DIRECTORY for independent
 rejection of inverted, missing and malformed assertion control-flow edges.
 Both runners preserve their inputs and raw results in fresh evidence directories.
+
+## Normal-build metadata increment
+
+Run v170-metadata.py --compiler COMPILER --output NEW_DIRECTORY for metadata
+ownership, ordinary initialization, direct and indirect function values,
+unreachable modules, visibility, signature and invalid-target observations.
+Run v170-metadata-ir.py --seed SEED --output NEW_DIRECTORY to reject lost,
+duplicated, renamed and position-corrupted declaration metadata. These checks
+do not introduce test discovery or execute an implicit test runner.

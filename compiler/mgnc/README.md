@@ -1,7 +1,7 @@
 # Experimental native compiler
 
 This source project extends the accepted Mognitio 1.6 experimental compiler
-toward 1.7. The current increment adds native assertions; complete 1.7
+toward 1.7. The current increments add native assertions and normal-build `@test` metadata; complete 1.7
 implementation and performance acceptance remain pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
@@ -68,8 +68,12 @@ profile report unsupported, including in unused bodies.
 Assertions require Bool on normally completing operands and preserve non-completing
 control transfers. A failed assertion exits 5 with the original statement location;
 ordinary return 5 is silent, and an operand panic retains its panic diagnostic.
-Contract, witness and attribute syntax remain outside this increment's native
-profile; the normal toolchain continues to support them.
+`@test` metadata belongs to module-level immutable declarations. The normal
+initializer executes once in each reachable module; the test body is not called
+automatically and no test command or summary is added. Unknown, duplicate,
+misplaced or incorrectly typed attributes are rejected by shared checking.
+Contract and witness syntax remain outside this increment's native profile;
+the normal toolchain continues to support them.
 
 Successful compiler commands have exit 0 and empty output streams.
 Build publishes a new standalone Linux AMD64 ELF without replacing an existing

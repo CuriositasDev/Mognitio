@@ -157,3 +157,14 @@ OnArm | on_arm | Pattern => Expr
 Pattern | pattern_empty | Type :: #id
 Pattern | pattern_payload | Type :: #id ( Param )
 Statement | statement_assert | assert Expr ;
+Top | attributed_top | @ #id AttributeRest AttributedDeclaration
+AttributeRest | attributes_end |
+AttributeRest | attributes_more | @ #id AttributeRest
+AttributedDeclaration | attributed_compile | Compile
+AttributedDeclaration | attributed_let | Let
+AttributedDeclaration | attributed_var | Var
+AttributedDeclaration | attributed_public_compile | public Compile
+AttributedDeclaration | attributed_public_let | public Let
+AttributedDeclaration | attributed_public_var | public Var
+Statement | attributed_local_let | @ #id AttributeRest Let
+Statement | attributed_local_var | @ #id AttributeRest Var

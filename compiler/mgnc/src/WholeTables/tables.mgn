@@ -1,7 +1,7 @@
 namespace Mgnc\WholeTables;
 use Mgnc\Data\{Diagnostic,Span,lookup};
 use Mgnc\Semantic\{SemanticProject};
-use Mgnc\SemanticData\{Introduction,Module};
+use Mgnc\SemanticData\{Introduction,Module,Declaration,Attribute};
 use Mgnc\TypeData\{Store,Type,Member,Obligation};
 use Mgnc\TypeOps\{parentEqual,argumentsEqual};
 use Mgnc\WholeIR\{Project};
@@ -23,6 +23,13 @@ public let verify:Function(SemanticProject,Project):Result<Unit,Diagnostic>=func
  index=0;loop while(index<actual->constraints->count){try obligations(try lookup<List<Obligation>>(actual->constraints,index),try lookup<List<Obligation>>(expected->constraints,index),span);index=index+1;};
  try obligations(project->obligations,source->state->obligations,span);
  try require(actual->headers->names->count==expected->headers->names->count&&actual->headers->modules->count==expected->headers->modules->count,span,"source and import table membership");
+ try require(actual->headers->declarations->count==expected->headers->declarations->count,span,"declaration metadata membership");
+ index=0;loop over(actual->headers->declarations->pages->append(actual->headers->declarations->tail) as declarations:List<Declaration>){loop over(declarations as item:Declaration){let other:Declaration=try lookup<Declaration>(expected->headers->declarations,index);index=index+1;
+  try require(item->file==other->file&&item->ordinal==other->ordinal&&item->name==other->name&&item->kind==other->kind&&item->exported==other->exported&&item->attributes->length()==other->attributes->length(),span,"declaration metadata owner");
+  var position:Int=0;loop over(item->attributes as attribute:Attribute){let original:Attribute=try atList<Attribute>(other->attributes,position);position=position+1;
+   try require(attribute->name==original->name&&attribute->span->start==original->span->start&&attribute->span->end==original->span->end&&attribute->span->line==original->span->line&&attribute->span->column==original->span->column&&attribute->nameSpan->start==original->nameSpan->start&&attribute->nameSpan->end==original->nameSpan->end&&attribute->nameSpan->line==original->nameSpan->line&&attribute->nameSpan->column==original->nameSpan->column,span,"declaration metadata source order");
+  };
+ };};
  index=0;loop over(actual->headers->names->pages->append(actual->headers->names->tail) as page:List<Introduction>){loop over(page as item:Introduction){let other:Introduction=try lookup<Introduction>(expected->headers->names,index);
   try require(item->file==other->file&&item->name==other->name&&item->declaration==other->declaration&&item->imported==other->imported,span,"resolved import origin");index=index+1;
  };};

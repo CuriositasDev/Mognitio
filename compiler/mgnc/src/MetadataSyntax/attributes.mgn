@@ -1,0 +1,18 @@
+namespace Mgnc\MetadataSyntax;
+use Mgnc\Data\{Span,Diagnostic,problem};
+use Mgnc\SemanticData\{Attribute};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\Projection\{parts,item,text,site};
+public let read:Function(SyntaxForest,List<Int>):Result<List<Attribute>,Diagnostic>=function(tree:SyntaxForest,fields:List<Int>):Result<List<Attribute>,Diagnostic>{
+ var result:List<Attribute>=List<Attribute>[];var values:List<Int>=fields;
+ loop while(true){
+  let at:Span=try site(tree,try item(values,0));let name:Span=try site(tree,try item(values,1));
+  result=result->append(Attribute{name:try text(tree,try item(values,1)),span:Span{start:at->start,end:name->end,line:at->line,column:at->column},nameSpan:name});
+  values=try parts(tree,try item(values,2));branch when{values->length()==0=>{break;},else=>unit};
+ };Result<List<Attribute>,Diagnostic>::Ok(result)
+};
+public let targets:Function(List<Attribute>,Bool):Result<Unit,Diagnostic>=function(attributes:List<Attribute>,valid:Bool):Result<Unit,Diagnostic>{
+ var seen:Bool=false;loop over(attributes as attribute:Attribute){
+  branch when{attribute->name!="test"=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->nameSpan,"unknown compiler attribute (unsupported in this version)"));},seen=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->span,"duplicate attribute"));},!valid=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->span,"test requires a module-level let declaration"));},else=>unit};seen=true;
+ };Result<Unit,Diagnostic>::Ok(unit)
+};

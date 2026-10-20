@@ -1,0 +1,15 @@
+namespace Mgnc\MetadataTypes;
+use Mgnc\Data\{Diagnostic,lookup,problem};
+use Mgnc\SemanticData\{Declaration,Module};
+use Mgnc\TypeData\{Store,Type};
+use Mgnc\TypeOps\{functionKind};
+use Mgnc\Syntax\{Parent};
+use Mgnc\VariantSupport\{memberType};
+use Mgnc\Projection\{site};
+public let validate:Function(Store,Int):Result<Unit,Diagnostic>=function(types:Store,id:Int):Result<Unit,Diagnostic>{
+ let declared:Declaration=try lookup<Declaration>(types->headers->declarations,id);
+ branch when{declared->attributes->length()==0=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};
+ let value:Int=branch on try lookup<Parent>(types->declarations,id){Parent::Some(found:Int)=>found,Parent::None=>{return Result<Unit,Diagnostic>::Err(problem("internal",declared->span,"attribute signature missing"));}};
+ let shape:Type=try lookup<Type>(types->types,value);let valid:Bool=shape->kind==functionKind&&shape->arguments->length()==1&&(try memberType(shape->arguments,0,declared->span))==0;
+ branch when{!valid=>{let module:Module=try lookup<Module>(types->headers->modules,declared->file);return Result<Unit,Diagnostic>::Err(problem("type",try site(module->tree,declared->annotation),"test must have type Function(): Unit"));},else=>unit};Result<Unit,Diagnostic>::Ok(unit)
+};

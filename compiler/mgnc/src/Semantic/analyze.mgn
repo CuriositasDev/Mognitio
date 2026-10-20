@@ -15,6 +15,7 @@ use Mgnc\TypeData\{Store,Type,Argument,Obligation};
 use Mgnc\TypeOps\{initialize as initializeTypes,functionKind,listKind};
 use Mgnc\TypeDeclarations\{define,Parameters,parameters};
 use Mgnc\Signatures\{declaration as signature,publicSignature};
+use Mgnc\MetadataTypes\{validate as metadataType};
 use Mgnc\SemanticValues\{State,Environment,Node,FunctionInfo,BodyState,Checked};
 use Mgnc\ValueSupport\{initialize as initializeValues,withTypes,withBodies,expect};
 use Mgnc\SemanticClassification\{BindingIndex,prepare,classifyPrepared};
@@ -96,6 +97,7 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   index=index+1;
  };
  index=0;loop while(index<headers->declarations->count){
+  branch on metadataType(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
   branch on publicSignature(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};index=index+1;
  };
  var state:State=branch on initializeValues(types){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};

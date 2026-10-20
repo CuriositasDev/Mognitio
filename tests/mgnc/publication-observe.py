@@ -17,12 +17,17 @@ def word(address):
  data=read(address,8);return struct.unpack("<Q",data)[0] if len(data)==8 else 0
 def text(address):return read(address,4096).split(b"\0",1)[0].decode(errors="backslashreplace")
 def signed(value):return value-(1<<64) if value>=1<<63 else value
+def resource_chain(record):
+ chain=[];seen=set()
+ while record and record not in seen and len(chain)<16 and record%8==0 and len(read(record,64))==64:
+  seen.add(record);chain.append({"record":record,"fd":signed(word(record+8)),"maps":[word(record+i) for i in (16,32,48)],"sizes":[word(record+i) for i in (24,40,56)]});record=word(record)
+ return chain
 def ownership(registers):
  context=registers.r15
  if not read(context,256):return None
  record=word(context+168)
  if not record:return {"record":0,"primary":word(context+176)}
- if signed(word(record+8))!=-2:return {"record":record,"tag":signed(word(record+8)),"fd":signed(word(record+8)),"maps":[word(record+i) for i in (16,32,48)],"sizes":[word(record+i) for i in (24,40,56)],"primary":word(context+176)}
+ if signed(word(record+8))!=-2:return {"chain":resource_chain(record),"record":record,"tag":signed(word(record+8)),"fd":signed(word(record+8)),"maps":[word(record+i) for i in (16,32,48)],"sizes":[word(record+i) for i in (24,40,56)],"primary":word(context+176)}
  return {"record":record,"tag":-2,"parent":signed(word(record+16)),"file":signed(word(record+24)),"path_map":word(record+32),"path_size":word(record+40),"temp_owned":word(record+48),"temp_name":text(word(record+56)),"probe":signed(word(record+80)),"identity_known":word(record+88),"certified":word(record+112),"primary":word(context+176)}
 def fds():
  result={}
@@ -47,6 +52,9 @@ try:
    if call in (257,262,263,332):event["path"]=text(registers.rsi)
    if call==316:event.update(source=text(registers.rsi),destination=text(registers.r10))
    if call==60:event["fds"]=fds()
+   if call==3:
+    try:event["closed_path"]=os.readlink(f"/proc/{pid}/fd/{registers.rdi}")
+    except FileNotFoundError:pass
    events.append(event)
    for index,rule in enumerate(rules):
     if call==rule["call"] and counts[call]==rule.get("ordinal",1):
@@ -64,7 +72,16 @@ try:
    for index,rule in pending:
     if "limit" in rule:continue
     if rule.get("action"):
-     if rule["action"]=="zero_random":
+     if rule["action"]=="directory_records":
+      assert event["call"]==217 and signed(registers.rax)>=0;payload=bytes.fromhex(rule["bytes_hex"]);assert len(payload)<=event["arguments"][2];assert os.pwrite(mem,payload,event["arguments"][1])==len(payload);registers.rax=rule.get("reported_count",len(payload))%(1<<64);api.ptrace(13,pid,0,ctypes.byref(registers));event["controlled_directory_hex"]=payload.hex();event["reported_return"]=signed(registers.rax)
+     elif rule["action"]=="stat_mode":
+      assert event["call"]==262 and signed(registers.rax)==0;assert os.pwrite(mem,struct.pack("<I",rule["mode"]),event["arguments"][2]+24)==4;event["controlled_mode"]=rule["mode"]
+     elif rule["action"] in ("unlink_after_scan","unlink_after_close"):
+      assert signed(registers.rax)>=0;name=rule["name"];assert name and name not in (".","..") and "/" not in name and chr(0) not in name
+      if rule["action"]=="unlink_after_scan":assert event["call"]==217;parent=Path(os.readlink(f"/proc/{pid}/fd/{event['arguments'][0]}"))
+      else:assert event["call"]==3;parent=Path(event["closed_path"])
+      (parent/name).unlink();event["removed_child"]=str(parent/name)
+     elif rule["action"]=="zero_random":
       assert signed(registers.rax)==16;assert os.pwrite(mem,bytes(16),event["arguments"][0])==16;event["controlled_random_hex"]=bytes(16).hex()
      elif rule["action"]=="stat_words":
       assert event["call"]==262 and signed(registers.rax)==0;raw=struct.pack("<QQ",rule["dev"],rule["inode"]);assert os.pwrite(mem,raw,event["arguments"][2])==16;event["controlled_identity_words"]=[rule["dev"],rule["inode"]]

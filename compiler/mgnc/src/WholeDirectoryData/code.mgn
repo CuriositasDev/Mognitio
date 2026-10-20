@@ -1,0 +1,14 @@
+namespace Mgnc\WholeDirectoryData;
+use Std\Numeric\{Bits};
+use Mgnc\Data\{Diagnostic,Span,empty,lookup};
+use Mgnc\TypeData\{Type,Member};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeLayout\{argumentType};
+use Mgnc\WholeChecks\{require,present};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{get};
+use Mgnc\WholeFrameData\{Frame,Point};
+public type Types=product{result:Int;error:Int;operation:Int;kind:Int;phase:Int;string:Int;entry:Int;entryKind:Int;list:Int;};
+public let frame:Frame=Frame{slots:8,outgoing:152,extent:1344,entry:List<Bits<64>>[Bits<64>{255}],points:empty<Point>()};
+let descriptor:Function(Native,Int):Result<Int,Diagnostic>=function(plan:Native,id:Int):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,Span{start:0,end:0,line:1,column:1},"directory allocation descriptor");Result<Int,Diagnostic>::Ok(found)};
+public let readTypes:Function(Native,Global):Result<Types,Diagnostic>=function(plan:Native,global:Global):Result<Types,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let signature:Type=try lookup<Type>(plan->concrete->types->types,global->valueType);let resultId:Int=try argumentType(signature,1,span);let result:Type=try lookup<Type>(plan->concrete->types->types,resultId);let listId:Int=try argumentType(result,0,span);let listType:Type=try lookup<Type>(plan->concrete->types->types,listId);let entryId:Int=try argumentType(listType,0,span);let entry:Type=try lookup<Type>(plan->concrete->types->types,entryId);let errorId:Int=try argumentType(result,1,span);let error:Type=try lookup<Type>(plan->concrete->types->types,errorId);Result<Types,Diagnostic>::Ok(Types{result:try descriptor(plan,resultId),error:try descriptor(plan,errorId),operation:try descriptor(plan,try present((try atList<Member>(error->members,0))->value,span,"directory operation type")),kind:try descriptor(plan,try present((try atList<Member>(error->members,1))->value,span,"directory error kind")),phase:try descriptor(plan,try present((try atList<Member>(error->members,3))->value,span,"directory phase type")),string:try descriptor(plan,3),entry:try descriptor(plan,entryId),entryKind:try descriptor(plan,try present((try atList<Member>(entry->members,1))->value,span,"directory entry kind")),list:try descriptor(plan,listId)})};

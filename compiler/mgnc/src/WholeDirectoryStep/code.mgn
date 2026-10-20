@@ -1,0 +1,11 @@
+namespace Mgnc\WholeDirectoryStep;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Machine\{Code,label,jump,raw};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteLoad,byteStore,shift,unary};
+use Mgnc\WholeABI\{leave};
+public type Step=product{op:Int;a:Int;b:Int;c:Int;d:Int;};
+public let emit:Function(Code,List<Step>,Int,Int):Result<Code,Diagnostic>=function(initial:Code,steps:List<Step>,base:Int,owner:Int):Result<Code,Diagnostic>{var code:Code=initial;let span:Span=Span{start:0,end:0,line:1,column:1};loop over(steps as row:Step){branch when{
+ row->op==0=>{code=label(code,base+row->a);},row->op==1=>{code=jump(code,branch when{row->a==233=>List<Int>[233],else=>List<Int>[15,row->a]},branch when{row->b<0=>-row->b,else=>base+row->b});},
+ row->op==2=>{code=mov(code,row->a,row->b);},row->op==3=>{code=load(code,row->a,row->b,row->c);},row->op==4=>{code=store(code,row->a,row->b,row->c);},row->op==5=>{code=address(code,row->a,row->b,row->c);},row->op==6=>{code=immediate(code,row->a,row->b);},row->op==7=>{code=alu(code,row->a,row->b,row->c);},row->op==8=>{code=constant(code,row->a,row->b,row->c);},row->op==9=>{code=byteLoad(code,row->a,row->b,row->c);},row->op==10=>{code=byteStore(code,row->a,row->b,row->c);},row->op==11=>{code=shift(code,row->a,row->b,row->c);},row->op==12=>{try require(owner==79,span,"directory syscall owner");code=raw(code,List<Int>[15,5]);},
+ row->op==13=>{try require(row->a==40||row->a==83||row->a==84||row->a==85||row->a==87,span,"directory raw helper");branch when{row->a==40=>{code=load(code,7,4,0);code=load(code,6,4,8);},row->a==84=>{code=load(code,7,4,0);},else=>unit};code=jump(code,List<Int>[232],row->a);},row->op==14=>{code=unary(code,4,row->a);},row->op==15=>{branch when{owner==87||owner==88=>{code=constant(code,0,4,128);code=leave(code);},else=>{try require(owner==85||owner==86,span,"directory raw return owner");code=raw(code,List<Int>[195]);}};},else=>{try require(false,span,"directory raw instruction opcode");}};};Result<Code,Diagnostic>::Ok(code)};

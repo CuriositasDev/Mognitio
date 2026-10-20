@@ -1,0 +1,15 @@
+namespace Mgnc\WholeDirectory;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeDirectoryData\{Types,frame,readTypes};
+use Mgnc\WholeDirectoryPrograms\{emit as program};
+use Mgnc\WholeDirectoryFinish\{emit as finish};
+use Mgnc\WholePathCommon\{validate};
+use Mgnc\WholeFrame\{begin,acceptArguments};
+use Mgnc\WholeABI\{enter,resources};
+use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,byteStore};
+let wrapper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{let types:Types=try readTypes(plan,global);var code:Code=try begin(label(initial,79),frame,List<Int>[0],List<Int>[],175);code=acceptArguments(code,1);code=address(code,7,4,32);code=immediate(code,0,0);code=immediate(code,1,148);code=raw(code,List<Int>[243,72,171]);loop over(List<Int>[-512,-704,-896] as record:Int){code=load(code,0,15,resources);code=store(code,5,record,0);code=address(code,0,5,record);code=store(code,15,resources,0);code=immediate(code,0,-1);code=store(code,5,record+8,0);};code=immediate(code,0,-1);code=store(code,5,-160,0);
+ let invalid:Int=code->nextLabel;let body:Int=invalid+1;let done:Int=invalid+2;code=fresh(code,3);code=validate(code,-72,false,invalid);code=load(code,0,5,-72);code=load(code,7,0,24);code=constant(code,0,7,1);code=jump(code,List<Int>[15,128],1);code=store(code,5,-488,7);code=jump(code,List<Int>[232],84);code=store(code,5,-496,0);code=mov(code,7,0);code=load(code,6,5,-72);code=load(code,1,6,24);code=constant(code,0,6,40);code=raw(code,List<Int>[243,164]);code=immediate(code,0,0);code=byteStore(code,7,0,0);code=immediate(code,0,1);code=store(code,5,-1248,0);code=jump(code,List<Int>[233],body);code=label(code,invalid);code=immediate(code,0,0);code=store(code,5,-160,0);code=jump(code,List<Int>[233],done);code=label(code,body);code=try program(code,79);code=label(code,done);Result<Code,Diagnostic>::Ok(finish(code,types))};
+public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{var code:Code=initial;var selected:Bool=false;loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as global:Global){branch when{global->standard=="readDirectory"=>{try require(!selected,Span{start:0,end:0,line:1,column:1},"duplicate directory wrapper");selected=true;code=try wrapper(code,plan,global);},else=>unit};};};branch when{selected=>{loop over(List<Int>[85,86,87,88] as owner:Int){code=label(code,owner);branch when{owner==87||owner==88=>{code=constant(enter(code),5,4,128);},else=>unit};code=try program(code,owner);};},else=>unit};code=label(code,175);code=field(code,4,8);code=field(code,4,255);Result<Code,Diagnostic>::Ok(code)};

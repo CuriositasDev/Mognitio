@@ -1,0 +1,64 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
+use Mgnc\Semantic\{SemanticProject,analyze};
+use Mgnc\WholePipeline\{prepare};
+use Mgnc\WholeDirectoryMachine\{verify as directoryMachine};
+use Mgnc\WholeNativeData\{Native,Global};
+use Mgnc\WholeNativeEmit\{emit};
+use Mgnc\WholeMachineCheck\{verify as machine};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeStandardProof\{helper as standardProof};
+use Mgnc\Tables\{replaceItem,atList};
+use Mgnc\WholeLayout\{Layouts,Descriptor,argumentType};
+use Mgnc\WholeLayoutCheck\{verify as layouts};
+use Mgnc\TypeData\{Type};
+use Mgnc\IntMap\{get};
+use Std\Io\{writeStdout};
+let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,message:String):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{try require(false,span,"accepted binary mutation");},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal",span,"wrong directory diagnostic phase: "+error->message);discard writeStdout("V170_DIRECTORY_MUTANT "+message+" ["+error->message+"]\n");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+
+
+
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){let other:Int=branch on right->at(index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
+let changed:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code,index:Int,item:Record):Result<Code,Diagnostic>{Result<Code,Diagnostic>::Ok(Code{records:try replaceItem<Record>(code->records,index,item),nextLabel:code->nextLabel,pending:code->pending})};
+
+let tail:Function(List<Int>,List<Int>):Bool=function(data:List<Int>,suffix:List<Int>):Bool{branch when{data->length()<suffix->length()=>{return false;},else=>unit};var index:Int=0;loop over(suffix as value:Int){let other:Int=branch on data->at(data->length()-suffix->length()+index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
+let signedBranch:Function(List<Int>):List<Int>=function(data:List<Int>):List<Int>{var out:List<Int>=List<Int>[];var index:Int=0;loop over(data as value:Int){out=out->append(branch when{index+1==data->length()=>140,else=>value});index=index+1;};out};
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"directory.mgn",displayPath:"directory.mgn",relativePath:"directory.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{readDirectory};let main:Function(List<String>):Int=function(args:List<String>):Int{discard readDirectory(\".\");0};"};let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;var covered:List<String>=List<String>[];
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
+ branch when{
+ owner==84&&item->kind==4&&item->value==34&&tail(item->bytes,List<Int>[73,186])=>{message="directory mapping flags";replacement=Record{kind:item->kind,bytes:item->bytes,value:2,target:item->target};all=true;},
+ owner==84&&item->kind==4&&item->value==9&&tail(item->bytes,List<Int>[72,184])=>{message="directory mapping syscall";replacement=Record{kind:item->kind,bytes:item->bytes,value:11,target:item->target};all=true;},
+ (owner==87||owner==88)&&item->kind==3&&item->value==128&&(tail(item->bytes,List<Int>[72,129,236])||tail(item->bytes,List<Int>[72,129,196]))=>{message="directory raw helper frame";replacement=Record{kind:item->kind,bytes:item->bytes,value:120,target:item->target};},
+ owner==79&&item->kind==3&&item->value==1304&&(tail(item->bytes,List<Int>[85,72,137,229,83,65,84,65,85,65,86,65,87,72,129,236])||tail(item->bytes,List<Int>[72,129,196]))=>{message="directory frame";replacement=Record{kind:item->kind,bytes:item->bytes,value:1296,target:item->target};},
+ owner==79&&item->kind==4&&(item->value==257||item->value==217||item->value==262||item->value==11)&&tail(item->bytes,List<Int>[72,184])=>{message="directory syscall set";replacement=Record{kind:item->kind,bytes:item->bytes,value:3,target:item->target};},
+ owner==79&&item->kind==4&&item->value==589824&&tail(item->bytes,List<Int>[72,186])=>{message="directory root flags";replacement=Record{kind:item->kind,bytes:item->bytes,value:524288,target:item->target};},
+ owner==79&&item->kind==4&&item->value==65536&&tail(item->bytes,List<Int>[72,186])=>{message="directory scan capacity";replacement=Record{kind:item->kind,bytes:item->bytes,value:65535,target:item->target};},
+ owner==79&&item->kind==4&&item->value==256&&tail(item->bytes,List<Int>[73,186])=>{message="directory child nofollow";replacement=Record{kind:item->kind,bytes:item->bytes,value:0,target:item->target};},
+ owner==79&&item->kind==3&&item->value== -1040&&tail(item->bytes,List<Int>[72,141,149])=>{message="directory stat buffer";replacement=Record{kind:item->kind,bytes:item->bytes,value: -1032,target:item->target};},
+ owner==79&&item->kind==3&&item->value== -1016&&tail(item->bytes,List<Int>[72,139,133])=>{message="directory stat mode snapshot";replacement=Record{kind:item->kind,bytes:item->bytes,value: -1008,target:item->target};},
+ owner==79&&item->kind==3&&item->value==19&&tail(item->bytes,List<Int>[72,129,198])=>{message="directory record name offset";replacement=Record{kind:item->kind,bytes:item->bytes,value:18,target:item->target};},
+ owner==79&&item->kind==3&&item->value==24&&tail(item->bytes,List<Int>[72,129,248])=>{message="directory minimum record length";replacement=Record{kind:item->kind,bytes:item->bytes,value:16,target:item->target};},
+ owner==79&&item->kind==3&&item->value==65536&&tail(item->bytes,List<Int>[72,129,248])=>{message="directory returned count bound";replacement=Record{kind:item->kind,bytes:item->bytes,value:65537,target:item->target};},
+ owner==79&&item->kind==3&&item->value==7&&tail(item->bytes,List<Int>[72,129,226])=>{message="directory record alignment";replacement=Record{kind:item->kind,bytes:item->bytes,value:3,target:item->target};},
+ owner==79&&item->kind==2&&item->target==84=>{message="directory strict map";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:60};},
+ owner==79&&item->kind==2&&item->target==40=>{message="directory decode before stat";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:83};},
+ owner==79&&item->kind==2&&item->target==62=>{message="directory close before allocation";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:83};},
+ owner==79&&item->kind==2&&item->target==61=>{message="directory cleanup before release";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:62};},
+ owner==79&&item->kind==3&&item->value== -480&&tail(item->bytes,List<Int>[72,137,133])=>{message="directory map publication";replacement=Record{kind:item->kind,bytes:item->bytes,value: -472,target:item->target};},
+ owner==79&&item->kind==3&&item->value== -704&&tail(item->bytes,List<Int>[72,141,133])=>{message="directory record registration";replacement=Record{kind:item->kind,bytes:item->bytes,value: -696,target:item->target};},
+ owner==79&&item->kind==3&&item->value== -896&&tail(item->bytes,List<Int>[72,139,133])=>{message="directory record release";replacement=Record{kind:item->kind,bytes:item->bytes,value: -888,target:item->target};},
+ owner==79&&item->kind==3&&item->value== -64&&tail(item->bytes,List<Int>[72,139,149])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==3&&following->value==0&&same(following->bytes,List<Int>[73,137,151])=>{message="directory root restore";replacement=Record{kind:item->kind,bytes:item->bytes,value: -72,target:item->target};},else=>unit};},
+ owner==79&&item->kind==4&&tail(item->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,ordinal+1);branch when{following->kind==2&&following->target==10=>{message="directory allocation descriptor";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value+1,target:item->target};all=true;},else=>unit};},
+ owner==79&&item->kind==5&&item->target==175=>{message="directory root selection";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value,target:174};all=true;},
+ owner==175&&item->kind==4&&(item->value==8||item->value==255)=>{message="directory root bitmap";replacement=Record{kind:item->kind,bytes:item->bytes,value:item->value-1,target:item->target};all=true;},
+ (owner==85||owner==86)&&item->kind==2&&tail(item->bytes,List<Int>[15,130])=>{message="directory unsigned name ordering";replacement=Record{kind:item->kind,bytes:signedBranch(item->bytes),value:item->value,target:item->target};},
+ owner==85&&item->kind==3&&item->value==32&&tail(item->bytes,List<Int>[73,139,128])=>{message="directory first complete observation";replacement=Record{kind:item->kind,bytes:item->bytes,value:24,target:item->target};},
+ owner==86&&item->kind==3&&item->value==8&&tail(item->bytes,List<Int>[73,139,136])=>{message="directory names compare without kind";replacement=Record{kind:item->kind,bytes:item->bytes,value:24,target:item->target};},else=>unit};
+ branch when{message!=""=>{let altered:Code=try changed(code,ordinal,replacement);try reject(branch when{all=>machine(plan,altered),else=>directoryMachine(plan,altered)},message);seen=seen+1;covered=covered->append(message);},else=>unit};ordinal=ordinal+1;};};try require(seen>=40,span,"directory mutation count");loop over(List<String>["directory mapping flags","directory mapping syscall","directory frame","directory root selection","directory record registration","directory strict map","directory root flags","directory scan capacity","directory syscall set","directory returned count bound","directory record name offset","directory decode before stat","directory map publication","directory child nofollow","directory stat buffer","directory stat mode snapshot","directory minimum record length","directory record alignment","directory close before allocation","directory allocation descriptor","directory cleanup before release","directory record release","directory root restore","directory root bitmap","directory unsigned name ordering","directory first complete observation","directory names compare without kind","directory raw helper frame"] as expected:String){var found:Bool=false;loop over(covered as observed:String){found=found||observed==expected;};try require(found,span,"missing directory mutation category: "+expected);};loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard=="readDirectory"=>{let altered:Global=Global{symbol:item->symbol,declaration:item->declaration,valueType:1,standard:item->standard};branch on standardProof(plan,altered){Result<Int,Diagnostic>::Ok(value:Int)=>{try require(false,span,"accepted directory signature mutation");},Result<Int,Diagnostic>::Err(error:Diagnostic)=>{try reject(Result<Unit,Diagnostic>::Err(error),"directory Function signature");}};},else=>unit};};};Result<Unit,Diagnostic>::Ok(unit)};
+let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>{discard writeStdout("V170_DIRECTORY_IR_OK valid=1\n");0},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

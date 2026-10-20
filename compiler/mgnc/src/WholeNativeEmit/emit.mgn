@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeEmit;
+use Mgnc\WholeDirectory\{emit as directory};
 use Mgnc\WholePathFunctions\{emit as paths};
 use Mgnc\WholeInspection\{emit as inspection};
 use Mgnc\WholePublication\{emit as publication};
@@ -27,5 +28,5 @@ use Mgnc\WholeTerminal\{emit as terminal};
 // Terminal handlers are supplied by the runtime linker.
 public let emit:Function(Native):Result<Code,Diagnostic>=function(plan:Native):Result<Code,Diagnostic>{
  var code:Code=Code{records:empty<Record>(),nextLabel:plan->nextLabel,pending:List<Int>[]};
- code=try startup(code,plan);code=try bodies(code,plan);code=try constructors(code,plan);code=try numericResult(try text(try bounds(code)));code=try bytesSlice(try binaryEncoding(code));code=try paths(code,plan);code=try inspection(code,plan);code=try publication(code,plan);code=try binaryFrom(code,plan);code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code),plan)
+ code=try startup(code,plan);code=try bodies(code,plan);code=try constructors(code,plan);code=try numericResult(try text(try bounds(code)));code=try bytesSlice(try binaryEncoding(code));code=try paths(code,plan);code=try directory(code,plan);code=try inspection(code,plan);code=try publication(code,plan);code=try binaryFrom(code,plan);code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code),plan)
 };

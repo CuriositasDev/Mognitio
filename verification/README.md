@@ -140,3 +140,6 @@ immutable bootstrap prerequisite and its qualification boundaries.
 
 [Bounded backend work](v1.7.0-backend-work.md) records relative ownership keys,
 buffered encoding and their independent regression controls.
+
+[First-fit search bounds](v1.7.0-fit-lower-bounds.md) documents safe reuse across
+different requested sizes and its independent equivalence/work controls.

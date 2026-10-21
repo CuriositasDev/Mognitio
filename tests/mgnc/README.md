@@ -349,3 +349,13 @@ field boundaries, a one-MiB raw record, carry ordering, signed and absolute
 fields, invalid bytes/labels/ranges and diagnostic priority. The frozen
 legacy-encode.mgn is an executable source reference from the preceding encoder,
 used only in the oracle; ordinary compiler inputs do not include it.
+
+
+The v1.7 Bytes structural-cost runner observes the unchanged native image with
+ptrace. Fixed markers bound each operation; actual REP copy/comparison counts,
+snapshot assertions, and conservative instruction bounds are separate from
+wall-time/RSS acceptance. Independent raw ELF controls include a functionally
+equivalent quadratic copy, missing markers, signals, timeout and wrong exit.
+
+    python3 tests/mgnc/v170-bytes-cost-controls.py --output /new/control-output
+    python3 tests/mgnc/v170-bytes-cost.py --compiler /path/to/compiler --output /new/cost-output

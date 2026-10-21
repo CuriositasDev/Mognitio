@@ -231,3 +231,42 @@
     (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 928) first-owner))
     (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 1312 928) second-owner))
     (signals error (v160-fit-sequence '(1000 1000 40 65536) '(928 1184 928) pair))))
+
+(deftest v170-fit-lower-bound-first-fit
+  ;; Increasing requests can reuse a smaller owner's skipped prefix. Descents,
+  ;; pair eviction, splits and collection resets still use independent first fit.
+  (dolist (count '(0 1 7 31 65 257))
+    (dolist (pattern '((40) (40 160 296) (1000 40 424)))
+      (let ((sizes (append (loop for i below count
+                                collect (nth (mod i (length pattern)) pattern))
+                           '(1048576))))
+        (dolist (requests
+                  (list (loop for size from 168 to 1192 by 128 collect size)
+                        (loop for size downfrom 1192 to 168 by 128 collect size)
+                        '(168 296 424 552 680 808 936 1064 1192 168 40 680 296)
+                        '(1192 1064 936 808 680 552 424 296 168 40 424 1192)))
+          (dolist (reset '(nil 4))
+            (v160-fit-sequence sizes requests nil reset)))))))
+
+(deftest v170-fit-lower-bound-work
+  ;; All 492 sizes are distinct. Sixteen cold set scans and one visit per
+  ;; following request bound the work despite a long unchanged free prefix.
+  (let* ((sizes (append (make-list 2048 :initial-element 40) '(16777216)))
+         (requests (loop for size from 168 to 4096 by 8 collect size))
+         (bound (+ (* 16 2049) (length requests)))
+         (disabled (v170-mutated-fit-code '(:load-word :r11 :r10 0)
+                                           '(:imm-reg :r11 0))))
+    (is (<= (v160-fit-sequence sizes requests) bound))
+    (is (> (v160-fit-sequence sizes requests disabled) bound))))
+
+(deftest v170-fit-lower-bound-direction-mutations
+  ;; Borrowing a cursor from a larger owner would skip an earlier fitting block.
+  ;; Check both mutation memberships outside the expected rejection boundary.
+  (let ((first-bound
+          (v170-mutated-fit-code '(:jb :runtime/find-free/second-bound)
+                                '(:ja :runtime/find-free/second-bound)))
+        (second-bound
+          (v170-mutated-fit-code '(:jb :runtime/find-free/bound-ready)
+                                '(:ja :runtime/find-free/bound-ready))))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 928) first-bound))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 1312 928) second-bound))))

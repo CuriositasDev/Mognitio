@@ -48,10 +48,17 @@
         (:add-reg :r10 :rax) (:load-word :r11 :r8 0) (:cmp-reg :r11 :rcx)
         (:jz :cached) (:load-word :rdx :r8 128) (:cmp-reg :rdx :rcx)
         (:jz :second-way)
-        ;; A miss replaces the least recently used way, retaining the first.
+        ;; A cursor for a smaller request has already excluded a prefix that
+        ;; cannot fit this larger request. Reuse only such a lower bound;
+        ;; an owner above the requested size must never skip earlier blocks.
+        (:imm-reg :rdi 0) (:cmp-reg :rcx :r11) (:jb :second-bound)
+        (:load-word :rdi :r10 0) (:jmp :bound-ready)
+        (:label :second-bound) (:cmp-reg :rcx :rdx) (:jb :bound-ready)
+        (:load-word :rdi :r10 128) (:label :bound-ready)
+        ;; Retain the former complete first-way pair when replacing the LRU.
         (:store-word :r8 128 :r11) (:load-word :r9 :r10 0)
         (:store-word :r10 128 :r9) (:store-word :r8 0 :rcx)
-        (:imm-reg :r11 0) (:store-word :r10 0 :r11) (:jmp :cached)
+        (:store-word :r10 0 :rdi) (:jmp :cached)
         ;; Promote an exact second-way hit by moving the complete key/cursor
         ;; pairs together. Cursor targets remain free-list links, never slots.
         (:label :second-way) (:load-word :r9 :r10 0) (:load-word :rax :r10 128)

@@ -2,8 +2,10 @@ namespace Mgnc\WholeNativeTables;
 use Std\Numeric\{Bits};
 use Mgnc\Data\{Span,Diagnostic,lookup};
 use Mgnc\Machine\{Code,Record,label,field,reference,raw};
-use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel};
+use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel,abiRevisionLabel};
 use Mgnc\WholeLayout\{Descriptor};
+use Mgnc\WholeDispatchData\{Pair};
+use Mgnc\WholeRuntimeTypes\{resolve};
 use Mgnc\WholeFrameData\{Point};
 use Mgnc\IntMap\{get};
 use Mgnc\Tables\{atList};
@@ -18,7 +20,7 @@ public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=func
 };
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){loop over(page as record:Record){extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};
- var code:Code=initial;loop while(extent%8!=0){code=raw(code,List<Int>[0]);extent=extent+1;};code=label(code,descriptorTableLabel);
+ var code:Code=initial;loop while(extent%8!=0){code=raw(code,List<Int>[0]);extent=extent+1;};code=label(code,abiRevisionLabel);code=field(code,4,plan->abiRevision);code=label(code,descriptorTableLabel);
  loop over(plan->descriptors->pages->append(plan->descriptors->tail) as page:List<Int>){loop over(page as target:Int){code=reference(code,5,target);};};
  var index:Int=0;loop over(plan->layouts->descriptors->pages->append(plan->layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
   code=label(code,try lookup<Int>(plan->descriptors,index));let rows:List<Int>=try lookup<List<Int>>(plan->variants,index);index=index+1;
@@ -31,6 +33,8 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
   loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try bitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots);branch when{point->handoff->length()>0=>{code=try bitmap(label(code,(try lookup<Int>(procedure->pointLabels,pointId))+1),procedure->frame->slots,point->handoff);},else=>unit};pointId=pointId+1;};};
  };};
  code=try bitmap(label(code,globalRootsLabel),plan->globals->count,plan->globalRoots);
+ // Dispatch code and type metadata are read-only scalars, outside the GC list.
+ var pairIndex:Int=0;loop over(plan->concrete->pairs->pages->append(plan->concrete->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){code=label(code,try lookup<Int>(plan->dispatchTables,pairIndex));pairIndex=pairIndex+1;code=field(code,4,(try resolve(plan->runtimeTypes,pair->concreteType))->value);code=field(code,4,(try resolve(plan->runtimeTypes,pair->contractType))->value);code=field(code,4,pair->methods->length());var ordinal:Int=0;loop over(pair->methods as method:Int){code=field(code,4,ordinal);code=reference(code,5,(try lookup<Procedure>(plan->procedures,method))->entry);code=field(code,4,(try resolve(plan->runtimeTypes,try atList<Int>(pair->signatures,ordinal)))->value);ordinal=ordinal+1;};};};
  code=label(code,staticTableLabel);loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){code=reference(code,5,literal->label);};};
  let stringDescriptor:Int=try get(plan->layouts->types,3);try require(stringDescriptor>=0,span,"native String descriptor");
  loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeContractMachine\{verify as contracts};
 use Mgnc\WholeDirectoryMachine\{verify as directory};
 use Mgnc\WholePathMachine\{verify as paths};
 use Mgnc\WholeInspectionMachine\{verify as inspection};
@@ -12,7 +13,7 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\Machine\{Code,Record,flush};
 use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
 use Mgnc\WholeConcrete\{Instance};
-use Mgnc\WholeNativeData\{Native,Procedure,Constructor,Global};
+use Mgnc\WholeNativeData\{Native,Procedure,Constructor,Global,abiRevisionLabel,descriptorTableLabel};
 use Mgnc\WholeFrameData\{Point};
 use Mgnc\WholeEffects\{allocating};
 use Mgnc\WholeHelpers\{Helper,registry};
@@ -55,11 +56,12 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
  loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{let target:Int=try standardHelper(plan,value);var count:Int=0;loop over(code->records->pages->append(code->records->tail) as records:List<Record>){loop over(records as record:Record){branch when{record->kind==5&&record->target==target=>{try require(same(record->bytes,List<Int>[72,186]),span,"standard Function code pointer register");count=count+1;},else=>unit};};};try require(count==1,span,"standard Function code pointer identity");},else=>unit};};};
- let entries:List<Helper>=registry(io);try helpers(entries,code);try publication(plan,code);try inspection(plan,code);try paths(plan,code);try directory(plan,code);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
+ let entries:List<Helper>=registry(io);try helpers(entries,code);try publication(plan,code);try inspection(plan,code);try paths(plan,code);try directory(plan,code);try contracts(plan,code);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
  loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){callable=try put(callable,procedure->entry,1);};};
  loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as item:Constructor){callable=try put(callable,item->entry,1);};};
 
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1=>{try require(record->target>=0&&record->target<code->nextLabel&&(try get(labels,record->target))<0,span,"machine label ownership");labels=try put(labels,record->target,index);},else=>unit};index=index+1;};};
+ let abiPosition:Int=try get(labels,abiRevisionLabel);try require(plan->abiRevision==2&&abiPosition>=0,span,"machine private value ABI membership");let abiWord:Record=try lookup<Record>(code->records,abiPosition+1);let afterABI:Record=try lookup<Record>(code->records,abiPosition+2);try require(abiWord->kind==4&&abiWord->bytes->length()==0&&abiWord->value==2&&afterABI->kind==1&&afterABI->target==descriptorTableLabel,span,"machine private value ABI revision data");
  loop over(entries as helper:Helper){try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");};
  loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{try standardAllocations(plan,code,labels,value,span);},else=>unit};};};
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
@@ -87,7 +89,7 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
      },else=>unit};
      branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
       let expected:List<Int>=append(List<Int>[72,137,133],bytes(-72-slot*8,4));try require(same(range(part->bytes,length-7,length),expected),span,"machine result root handoff");
-      branch when{op->code=="call"||op->code=="field-call"=>{try require(same(range(part->bytes,length-10,length-7),List<Int>[65,255,211]),span,"indirect call result handoff");},else=>unit};
+      branch when{op->code=="call"||op->code=="field-call"||op->code=="dispatch"=>{try require(same(range(part->bytes,length-10,length-7),List<Int>[65,255,211]),span,"indirect call result handoff");},else=>unit};
      }};
      branch when{op->code=="product"||op->code=="variant"=>{var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==10,span,"aggregate allocation helper");},else=>unit};};try require(calls==1,span,"aggregate initialization safepoint");},else=>unit};
     },else=>unit};position=position+1;

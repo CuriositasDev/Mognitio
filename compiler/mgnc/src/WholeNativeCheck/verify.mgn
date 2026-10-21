@@ -1,5 +1,6 @@
 namespace Mgnc\WholeNativeCheck;
 use Mgnc\WholeRuntimeTypeCheck\{verify as runtimeTypeIds};
+use Mgnc\WholeDispatchCheck\{verify as dispatchEdges,canonical as dispatchCanonical};
 use Mgnc\WholeStandardProof\{helper as standardHelper};
 use Mgnc\WholeBinaryProof\{selected as checkedBinary,expected as binaryExpected};
 use Mgnc\WholeNumericResultCheck\{selected as checkedNumeric,expected as numericExpected};
@@ -36,8 +37,8 @@ let global:Function(SemanticProject,Native,Int,Span):Result<Int,Diagnostic>=func
 };
 // Independently inspect each plan table after concrete/source correspondence.
 public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Native):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};let headers:Headers=semantic->state->types->headers;
- try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
+ let span:Span=Span{start:0,end:0,line:1,column:1};try require(plan->abiRevision==2,span,"native private value ABI revision");let headers:Headers=semantic->state->types->headers;
+ discard try dispatchEdges(semantic,source,plan->concrete);try dispatchCanonical(plan->concrete);try require(plan->dispatchTables->count==plan->concrete->pairs->count,span,"dispatch table label membership");try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
  try require(plan->procedures->count==plan->concrete->instances->count&&plan->moduleCount==headers->modules->count,span,"native procedure/module membership");
  var labels:Map=create();var used:Map=create();var owner:Int=0;var literalCount:Int=0;var constructorCount:Int=0;
  loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
@@ -56,7 +57,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
     branch when{op->code=="global-load"||op->code=="global-store"=>{let id:Int=try global(semantic,plan,try present(op->symbol,span,"global operation"),span);used=try put(used,id,1);},else=>unit};
     branch when{op->code=="string"=>{
      var found:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{try literal(op->text,entry->bytes,entry->scalars,span);found=found+1;},else=>unit};};};try require(found==1,span,"literal source membership");literalCount=literalCount+1;
-    },op->code=="function"||op->code=="list"=>{
+    },op->code=="function"||op->code=="list"||op->code=="package"&&op->unavailable->length()==0=>{
      var found:Int=0;loop over(plan->constructors->pages->append(plan->constructors->tail) as entries:List<Constructor>){loop over(entries as entry:Constructor){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{found=found+1;},else=>unit};};};try require(found==1,span,"constructor source membership");constructorCount=constructorCount+1;
     },else=>unit};operationId=operationId+1;
    };branch when{block->terminator->code=="assertion"=>{
@@ -68,6 +69,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
  };};
  try require(plan->constructors->count==constructorCount&&plan->literals->count==literalCount+3,span,"constructor/literal completeness");
  loop over(plan->constructors->pages->append(plan->constructors->tail) as entries:List<Constructor>){loop over(entries as entry:Constructor){labels=try claim(labels,entry->entry,plan->nextLabel,span);labels=try claim(labels,entry->roots,plan->nextLabel,span);};};
+ loop over(plan->dispatchTables->pages->append(plan->dispatchTables->tail) as page:List<Int>){loop over(page as target:Int){labels=try claim(labels,target,plan->nextLabel,span);};};
  var stream:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){
   branch when{entry->instance>=0=>{labels=try claim(labels,entry->label,plan->nextLabel,span);},else=>{
    let expected:List<Int>=branch when{stream==0=>List<Int>[115,116,100,105,110],stream==1=>List<Int>[115,116,100,111,117,116],else=>List<Int>[115,116,100,101,114,114]};

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeLayout;
+use Mgnc\WholeValueABI\{packageBytes,boxBytes,packageBoxOffset,boxedValueOffset};
 use Mgnc\WholeEmissionTypes\{collect as emissionTypes};
 use Mgnc\RepresentationInfo\{describe};
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
@@ -7,6 +8,7 @@ use Mgnc\TypeData\{Store,Type,Argument,Member,ValueTerm};
 use Mgnc\TypeOps\{parentEqual};
 use Mgnc\WholeIR\{Slot,Block,Operation};
 use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeDispatchData\{Pair};
 use Mgnc\WholeClosures\{Closures,Field};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\Tables\{atList};
@@ -14,7 +16,7 @@ use Mgnc\WholeStableKeys\{Entry,shape as stableShape,vector,sort as stableSort};
 use Mgnc\IntMap\{Map,create,get,put};
 // Offsets are bytes from the object base. Modes: fixed, variant, buffer, Bytes leaf.
 public type Descriptor=product{mode:Int;size:Int;references:List<Int>;variants:List<List<Int>>;elementManaged:Bool;};
-public type Layouts=product{descriptors:Paged<Descriptor>;types:Map;environments:Paged<Int>;buffers:Map;};
+public type Layouts=product{boxes:Paged<Int>;descriptors:Paged<Descriptor>;types:Map;environments:Paged<Int>;buffers:Map;};
 public let managed:Function(Store,Int):Result<Bool,Diagnostic>=function(store:Store,id:Int):Result<Bool,Diagnostic>{Result<Bool,Diagnostic>::Ok((try describe(store,id))->reference)};
 public let argumentType:Function(Type,Int,Span):Result<Int,Diagnostic>=function(shape:Type,index:Int,span:Span):Result<Int,Diagnostic>{
  branch on try atList<Argument>(shape->arguments,index){Argument::Type(value:Int)=>Result<Int,Diagnostic>::Ok(value),Argument::Value(term:ValueTerm)=>{try require(false,span,"layout type argument");Result<Int,Diagnostic>::Ok(0)}}
@@ -30,7 +32,7 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
  var descriptors:Paged<Descriptor>=empty<Descriptor>();var types:Map=create();var buffers:Map=create();
  loop over(entries->pages->append(entries->tail) as entriesPage:List<Entry>){loop over(entriesPage as entry:Entry){let id:Int=entry->id;
   let shape:Type=try lookup<Type>(plan->types->types,id);var descriptor:Descriptor=fixed(32,List<Int>[]);
-  branch when{shape->kind==26=>{descriptor=fixed(40,List<Int>[]);},shape->kind==25=>{descriptor=Descriptor{mode:3,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},shape->kind==3=>{descriptor=Descriptor{mode:0,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},
+  branch when{shape->kind==29=>{descriptor=fixed(packageBytes,List<Int>[packageBoxOffset]);},shape->kind==26=>{descriptor=fixed(40,List<Int>[]);},shape->kind==25=>{descriptor=Descriptor{mode:3,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},shape->kind==3=>{descriptor=Descriptor{mode:0,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:false};},
    shape->kind==10=>{var references:List<Int>=List<Int>[32];branch when{try managed(plan->types,try argumentType(shape,0,span))=>{references=references->append(40);},else=>unit};descriptor=fixed(48,references);},
    shape->kind==12=>{descriptor=fixed(40,List<Int>[32]);},
    shape->kind==11||shape->kind==21=>{
@@ -47,5 +49,8 @@ public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(pla
   loop over(fields as field:Field){branch when{try managed(plan->types,field->valueType)=>{references=references->append(24+ordinal*8);},else=>unit};ordinal=ordinal+1;};environments=push<Int>(environments,descriptors->count);descriptors=push<Descriptor>(descriptors,fixed(24+ordinal*8,references));
  };};
  loop over(entries->pages->append(entries->tail) as entriesPage:List<Entry>){loop over(entriesPage as entry:Entry){let id:Int=entry->id;let shape:Type=try lookup<Type>(plan->types->types,id);branch when{shape->kind==10=>{buffers=try put(buffers,id,descriptors->count);descriptors=push<Descriptor>(descriptors,Descriptor{mode:2,size:0,references:List<Int>[],variants:List<List<Int>>[],elementManaged:try managed(plan->types,try argumentType(shape,0,span))});},else=>unit};};};
- Result<Layouts,Diagnostic>::Ok(Layouts{descriptors:descriptors,types:types,environments:environments,buffers:buffers})
+ // A box descriptor is separate from the payload's own representation.
+ var requestedBoxes:Map=create();var boxEntries:Paged<Entry>=empty<Entry>();loop over(plan->pairs->pages->append(plan->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){branch when{(try get(requestedBoxes,pair->concreteType))<0=>{requestedBoxes=try put(requestedBoxes,pair->concreteType,1);boxEntries=push<Entry>(boxEntries,Entry{id:pair->concreteType,tokens:vector(try stableShape(plan->types,pair->concreteType))});},else=>unit};};};boxEntries=try stableSort(boxEntries);var boxMap:Map=create();loop over(boxEntries->pages->append(boxEntries->tail) as page:List<Entry>){loop over(page as entry:Entry){boxMap=try put(boxMap,entry->id,descriptors->count);descriptors=push<Descriptor>(descriptors,fixed(boxBytes,branch when{try managed(plan->types,entry->id)=>List<Int>[boxedValueOffset],else=>List<Int>[]}));};};
+ var boxes:Paged<Int>=empty<Int>();typeCursor=0;loop while(typeCursor<plan->types->types->count){let id:Int=try get(boxMap,typeCursor);boxes=push<Int>(boxes,branch when{id>=0=>id,else=>-1});typeCursor=typeCursor+1;};
+ Result<Layouts,Diagnostic>::Ok(Layouts{boxes:boxes,descriptors:descriptors,types:types,environments:environments,buffers:buffers})
 };

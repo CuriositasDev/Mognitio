@@ -1,0 +1,17 @@
+namespace Mgnc;
+use Std\Io\{writeStderr};use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Mgnc\Data\{Diagnostic,describe};use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\InputDiagnostics\{message};use Mgnc\Project\{project};
+use Mgnc\Semantic\{SemanticProject,analyze};use Mgnc\WholePipeline\{prepare,compile};
+use Mgnc\WholeNativeData\{Native};
+// Exercise checked native planning while the user-facing profile stays isolated.
+let diagnostic:Function(Diagnostic):Int=function(error:Diagnostic):Int{discard writeStderr(describe("probe",error));branch when{error->phase=="internal"=>3,else=>1}};
+let argument:Function(List<String>,Int):String=function(args:List<String>,index:Int):String{branch on args->at(index){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>""}};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let path:String=argument(args,0);let output:String=argument(args,1);branch when{args->length()!=2||path==""||output==""=>{discard writeStderr("probe: expected manifest and output\n");return 2;},else=>unit};
+ let input:ProjectInput=branch on project(path){Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,Result<ProjectInput,InputError>::Err(error:InputError)=>{discard writeStderr(message(error));return error->status;}};
+ let semantic:SemanticProject=branch on analyze(input){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{discard writeStderr(message(error));return error->status;}};
+ let native:Native=branch on prepare(semantic){Result<Native,Diagnostic>::Ok(value:Native)=>value,Result<Native,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(error);}};
+ let bytes:Bytes=branch on compile(native){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(error);}};
+ branch on publishFile(output,bytes,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(value:Unit)=>0,Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>{discard writeStderr("probe: output publication failed\n");2}}
+};

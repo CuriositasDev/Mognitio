@@ -1,0 +1,12 @@
+namespace Mgnc\WholeValueABI;
+// Private value layout revision. Independent verifiers keep literal ABI oracles.
+public let revision:Int=2;
+public let packageBytes:Int=48;
+public let boxBytes:Int=32;
+public let packageBoxOffset:Int=24;
+public let packageTableOffset:Int=32;
+public let packageTypeOffset:Int=40;
+public let boxedValueOffset:Int=24;
+public let dispatchHeaderBytes:Int=24;
+public let dispatchMemberBytes:Int=24;
+public let dispatchEntryOffset:Int=8;

@@ -11,6 +11,7 @@ use Mgnc\WholeConcrete\{Plan,Key,Instance,Target};
 use Mgnc\WholeSubstitution\{Binding};
 use Mgnc\WholeConcreteTypes\{prefix,closed};
 use Mgnc\WholeConcreteBody\{verify as verifyBody};
+use Mgnc\WholeDispatchCheck\{verify as dispatchEdges};
 use Mgnc\WholeVerify\{verify as verifyLowered};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\Tables\{atList};
@@ -30,7 +31,7 @@ let root:Function(Plan,Map,Paged<Int>,Int,Span):Result<Int,Diagnostic>=function(
  };try require(found>=0,span,"concrete missing root");Result<Int,Diagnostic>::Ok(found)
 };
 public let verify:Function(SemanticProject,Project,Plan):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Plan):Result<Unit,Diagnostic>{
- try verifyLowered(semantic,source);let span:Span=Span{start:0,end:0,line:1,column:1};try prefix(source->types,plan->types,span);
+ try verifyLowered(semantic,source);let span:Span=Span{start:0,end:0,line:1,column:1};try prefix(source->types,plan->types,span);let packageEdges:Paged<List<Int>>=try dispatchEdges(semantic,source,plan);
  var heads:Map=create();var previous:Paged<Int>=empty<Int>();
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as item:Instance){
   let prior:Int=try get(heads,item->key->body);heads=try put(heads,item->key->body,previous->count);previous=push<Int>(previous,prior);
@@ -84,6 +85,6 @@ public let verify:Function(SemanticProject,Project,Plan):Result<Unit,Diagnostic>
  // Only roots and the independently checked creation edges justify membership.
  var seen:Map=create();var cursor:Int=0;var reached:Int=0;
  loop while(cursor<roots->count){let id:Int=try lookup<Int>(roots,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);reached=reached+1;
-  let item:Instance=try lookup<Instance>(plan->instances,id);loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){roots=push<Int>(roots,target->instance);};};
+  loop over((try lookup<List<Int>>(packageEdges,id)) as method:Int){roots=push<Int>(roots,method);};let item:Instance=try lookup<Instance>(plan->instances,id);loop over(item->targets->pages->append(item->targets->tail) as targets:List<Target>){loop over(targets as target:Target){roots=push<Int>(roots,target->instance);};};
  };try require(reached==plan->instances->count,span,"concrete unreachable instance");Result<Unit,Diagnostic>::Ok(unit)
 };

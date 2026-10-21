@@ -5,7 +5,8 @@ use Mgnc\TypeData\{Store};
 use Mgnc\TypeOps\{parentEqual};
 use Mgnc\WholeIR\{Body,Slot,Block,Operation,Terminator,Occurrence,Origin,TrySite};
 use Mgnc\WholeSubstitution\{Binding};
-use Mgnc\WholeConcreteTypes\{shape,optional,arguments,closed};
+use Mgnc\WholeConcreteTypes\{shapeWithSeen,optionalWithSeen,argumentsWithSeen,closedWithSeen};
+use Mgnc\IntMap\{Map,create};
 use Mgnc\WholeChecks\{require,integers};
 use Mgnc\WholeShape\{textEqual};
 use Mgnc\WholeDataflow\{verify as dataflow};
@@ -15,9 +16,11 @@ let origin:Function(Origin,Origin):Bool=function(a:Origin,b:Origin):Bool{a->node
 public let verify:Function(Store,Store,Body,Body,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,original:Body,result:Body,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
  try require(parentEqual(original->declaration,result->declaration)&&parentEqual(original->functionOwner,result->functionOwner)&&original->root==result->root&&original->entry==result->entry&&integers(original->parameters,result->parameters)&&integers(original->captures,result->captures),span,"concrete body identity");
  try require(original->slots->count==result->slots->count&&original->blocks->count==result->blocks->count&&original->occurrences->count==result->occurrences->count&&original->tries->length()==result->tries->length(),span,"concrete body membership");
- try shape(source,actual,original->resultType,result->resultType,bindings,span);try closed(actual,result->resultType,span);
+ // Each instance has one fixed substitution context. Never share across bindings.
+ var shapeMemo:Map=create();var closedMemo:Map=create();
+ shapeMemo=try shapeWithSeen(source,actual,original->resultType,result->resultType,bindings,span,shapeMemo);closedMemo=try closedWithSeen(actual,result->resultType,span,closedMemo);
  var index:Int=0;loop over(original->slots->pages->append(original->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){let other:Slot=try lookup<Slot>(result->slots,index);index=index+1;
-  try require(slot->kind==other->kind&&parentEqual(slot->symbol,other->symbol),span,"concrete slot identity");try shape(source,actual,slot->valueType,other->valueType,bindings,span);try closed(actual,other->valueType,span);
+  try require(slot->kind==other->kind&&parentEqual(slot->symbol,other->symbol),span,"concrete slot identity");shapeMemo=try shapeWithSeen(source,actual,slot->valueType,other->valueType,bindings,span,shapeMemo);closedMemo=try closedWithSeen(actual,other->valueType,span,closedMemo);
  };};
  index=0;loop over(original->occurrences->pages->append(original->occurrences->tail) as page:List<Occurrence>){loop over(page as item:Occurrence){let other:Occurrence=try lookup<Occurrence>(result->occurrences,index);index=index+1;
   try require(item->node==other->node&&item->entry==other->entry&&item->exit==other->exit&&parentEqual(item->output,other->output),span,"concrete occurrence identity");
@@ -25,19 +28,19 @@ public let verify:Function(Store,Store,Body,Body,List<Binding>,Span):Result<Unit
  index=0;loop over(original->blocks->pages->append(original->blocks->tail) as page:List<Block>){loop over(page as block:Block){let other:Block=try lookup<Block>(result->blocks,index);index=index+1;
   let term:Terminator=block->terminator;let out:Terminator=other->terminator;
   try require(term->code==out->code&&integers(term->inputs,out->inputs)&&integers(term->targets,out->targets)&&integers(term->variants,out->variants)&&origin(term->origin,out->origin),span,"concrete control correspondence");
-  try optional(source,actual,term->sumType,out->sumType,bindings,span);
+  shapeMemo=try optionalWithSeen(source,actual,term->sumType,out->sumType,bindings,span,shapeMemo);
   try require(block->operations->length()==other->operations->length(),span,"concrete operation count");var position:Int=0;
   loop over(block->operations as op:Operation){let replacement:Operation=try atList<Operation>(other->operations,position);position=position+1;
    try require(op->code==replacement->code&&parentEqual(op->output,replacement->output)&&integers(op->inputs,replacement->inputs)&&integers(op->unavailable,replacement->unavailable)&&parentEqual(op->symbol,replacement->symbol)&&integers(op->mapping,replacement->mapping)&&op->integer==replacement->integer&&op->minimum==replacement->minimum&&origin(op->origin,replacement->origin),span,"concrete operation correspondence");
    try require(op->wide->length()==replacement->wide->length()&&(try textEqual(op->text,replacement->text)),span,"concrete literal correspondence");var wideIndex:Int=0;
    loop over(op->wide as number:Integer){let actualNumber:Integer=try atList<Integer>(replacement->wide,wideIndex);wideIndex=wideIndex+1;try require(number->negative==actualNumber->negative&&number->digits==actualNumber->digits,span,"concrete wide literal");};
-   try arguments(source,actual,op->arguments,replacement->arguments,bindings,span);
-   branch when{op->code=="dispatch"||op->code=="payload-box"||op->code=="sum-payload"||op->code=="iterator-init"||op->code=="variant"=>{try optional(source,actual,op->target,replacement->target,bindings,span);},else=>{try require(parentEqual(op->target,replacement->target),span,"concrete target identity");}};
+   shapeMemo=try argumentsWithSeen(source,actual,op->arguments,replacement->arguments,bindings,span,shapeMemo);
+   branch when{op->code=="dispatch"||op->code=="payload-box"||op->code=="sum-payload"||op->code=="iterator-init"||op->code=="variant"=>{shapeMemo=try optionalWithSeen(source,actual,op->target,replacement->target,bindings,span,shapeMemo);},else=>{try require(parentEqual(op->target,replacement->target),span,"concrete target identity");}};
   };
  };};
  index=0;loop over(original->tries as item:TrySite){let other:TrySite=try atList<TrySite>(result->tries,index);index=index+1;
   try require(item->node==other->node&&item->owner==other->owner&&parentEqual(item->dispatch,other->dispatch)&&parentEqual(item->ok,other->ok)&&parentEqual(item->err,other->err)&&parentEqual(item->payload,other->payload)&&parentEqual(item->returned,other->returned),span,"concrete try owner and control");
-  try shape(source,actual,item->operandType,other->operandType,bindings,span);try shape(source,actual,item->returnType,other->returnType,bindings,span);try shape(source,actual,item->errorType,other->errorType,bindings,span);
+  shapeMemo=try shapeWithSeen(source,actual,item->operandType,other->operandType,bindings,span,shapeMemo);shapeMemo=try shapeWithSeen(source,actual,item->returnType,other->returnType,bindings,span,shapeMemo);shapeMemo=try shapeWithSeen(source,actual,item->errorType,other->errorType,bindings,span,shapeMemo);
  };
  try dataflow(result);Result<Unit,Diagnostic>::Ok(unit)
 };

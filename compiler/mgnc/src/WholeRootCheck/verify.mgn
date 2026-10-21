@@ -12,7 +12,6 @@ use Mgnc\Tables\{atList};
 use Mgnc\Facts\{mask,at as wordAt};
 type Node=product{reads:List<Int>;write:Int;previous:List<Int>;};
 type Graph=product{nodes:Paged<Node>;bases:Paged<Int>;};
-type Uses=product{reached:Map;reference:Bool;bit:Bits<64>;};
 let contains:Function(List<Int>,Int):Bool=function(values:List<Int>,wanted:Int):Bool{loop over(values as value:Int){branch when{value==wanted=>{return true;},else=>unit};};false};
 // Build instruction-position predecessor edges independently of root planning.
 let buildGraph:Function(Body):Result<Graph,Diagnostic>=function(body:Body):Result<Graph,Diagnostic>{
@@ -30,41 +29,24 @@ let buildGraph:Function(Body):Result<Graph,Diagnostic>=function(body:Body):Resul
   nodes=push<Node>(nodes,Node{reads:block->terminator->inputs,write:-1,previous:previous});blockId=blockId+1;
  };};Result<Graph,Diagnostic>::Ok(Graph{nodes:nodes,bases:bases})
 };
-// For each source read, enumerate predecessor positions until a write kills
-// that value. This reachability oracle shares no producer fixed-point equations.
-let indexUses:Function(Store,Body,Graph):Result<Paged<Uses>,Diagnostic>=function(store:Store,body:Body,graph:Graph):Result<Paged<Uses>,Diagnostic>{
- let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;var result:Paged<Uses>=empty<Uses>();var slotId:Int=0;
- loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
-  let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;let reference:Bool=kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29;var reached:Map=create();
-  branch when{reference=>{
-   var queue:Paged<Int>=empty<Int>();var id:Int=0;
-   loop over(graph->nodes->pages->append(graph->nodes->tail) as pages:List<Node>){loop over(pages as node:Node){branch when{contains(node->reads,slotId)=>{queue=push<Int>(queue,id);},else=>unit};id=id+1;};};
-   var cursor:Int=0;loop while(cursor<queue->count){
-    let position:Int=try lookup<Int>(queue,cursor);cursor=cursor+1;branch when{(try get(reached,position))>=0=>{continue;},else=>unit};reached=try put(reached,position,1);
-    let node:Node=try lookup<Node>(graph->nodes,position);
-    loop over(node->previous as previous:Int){let prior:Node=try lookup<Node>(graph->nodes,previous);branch when{prior->write!=slotId&&(try get(reached,previous))<0=>{queue=push<Int>(queue,previous);},else=>unit};};
-   };
-  },else=>unit};
-  result=push<Uses>(result,Uses{reached:reached,reference:reference,bit:try mask(slotId,span)});slotId=slotId+1;
- };};Result<Paged<Uses>,Diagnostic>::Ok(result)
-};
-let roots:Function(Body,Paged<Uses>,Int,Int,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(body:Body,uses:Paged<Uses>,position:Int,ignored:Int,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{
- try require(actual->length()==(body->slots->count+63)/64,span,"root bitmap shape");var slotId:Int=0;
- loop over(uses->pages->append(uses->tail) as page:List<Uses>){loop over(page as used:Uses){
-  let expected:Bool=slotId!=ignored&&used->reference&&(try get(used->reached,position))>=0;let selected:Bool=(try wordAt(actual,slotId/64,span))->and(used->bit)!=Bits<64>{0};
-  try require(expected==selected,span,branch when{expected=>"missing live managed root",else=>"dead or scalar root retained"});slotId=slotId+1;
- };};
- loop while(slotId<actual->length()*64){try require((try wordAt(actual,slotId/64,span))->and(try mask(slotId,span))==Bits<64>{0},span,"root bitmap padding");slotId=slotId+1;};Result<Unit,Diagnostic>::Ok(unit)
-};
+// Index reads once. The oracle still enumerates predecessor paths per slot,
+// without using the producer's fixed-point facts or retaining every slot's map.
+type Reads=product{heads:Map;values:Paged<List<Int>>;};
+type Checkpoint=product{position:Int;ignored:Int;bitmap:List<Bits<64>>;};
+let readIndex:Function(Graph):Result<Reads,Diagnostic>=function(graph:Graph):Result<Reads,Diagnostic>{var heads:Map=create();var values:Paged<List<Int>>=empty<List<Int>>();var position:Int=0;loop over(graph->nodes->pages->append(graph->nodes->tail) as page:List<Node>){loop over(page as node:Node){loop over(node->reads as slot:Int){let prior:Int=try get(heads,slot);let list:List<Int>=branch when{prior<0=>List<Int>[],else=>try lookup<List<Int>>(values,prior)};heads=try put(heads,slot,values->count);values=push<List<Int>>(values,list->append(position));};position=position+1;};};Result<Reads,Diagnostic>::Ok(Reads{heads:heads,values:values})};
+let livePositions:Function(Graph,Reads,Int):Result<Map,Diagnostic>=function(graph:Graph,index:Reads,slot:Int):Result<Map,Diagnostic>{var reached:Map=create();var queue:Paged<Int>=empty<Int>();let version:Int=try get(index->heads,slot);branch when{version>=0=>{loop over((try lookup<List<Int>>(index->values,version)) as position:Int){queue=push<Int>(queue,position);};},else=>unit};var cursor:Int=0;loop while(cursor<queue->count){let position:Int=try lookup<Int>(queue,cursor);cursor=cursor+1;branch when{(try get(reached,position))>=0=>{continue;},else=>unit};reached=try put(reached,position,1);let node:Node=try lookup<Node>(graph->nodes,position);loop over(node->previous as previous:Int){let prior:Node=try lookup<Node>(graph->nodes,previous);branch when{prior->write!=slot&&(try get(reached,previous))<0=>{queue=push<Int>(queue,previous);},else=>unit};};};Result<Map,Diagnostic>::Ok(reached)};
+let bitmap:Function(Body,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(body:Body,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{try require(actual->length()==(body->slots->count+63)/64,span,"root bitmap shape");var slot:Int=body->slots->count;loop while(slot<actual->length()*64){try require((try wordAt(actual,slot/64,span))->and(try mask(slot,span))==Bits<64>{0},span,"root bitmap padding");slot=slot+1;};Result<Unit,Diagnostic>::Ok(unit)};
+let bitmapShape:Function(Body,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(body:Body,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{try require(actual->length()==(body->slots->count+63)/64,span,"root bitmap shape");Result<Unit,Diagnostic>::Ok(unit)};
 public let verify:Function(Store,Body,Frame):Result<Unit,Diagnostic>=function(store:Store,body:Body,frame:Frame):Result<Unit,Diagnostic>{
  let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(frame->slots>=0&&frame->slots<=268435440&&frame->outgoing>=8&&frame->outgoing<=268435440-frame->slots,span,"frame size bounds");try require(frame->slots==body->slots->count&&frame->extent%16==0&&frame->extent>=64+frame->slots*8+frame->outgoing*8&&frame->extent<2147483648,span,"frame layout or alignment");
- let indexed:Graph=try buildGraph(body);let uses:Paged<Uses>=try indexUses(store,body,indexed);try roots(body,uses,try lookup<Int>(indexed->bases,body->entry),-1,frame->entry,span);var id:Int=0;
- loop over(frame->points->pages->append(frame->points->tail) as page:List<Point>){loop over(page as point:Point){let block:Block=try lookup<Block>(body->blocks,point->block);try require(point->operation>=0&&point->operation<block->operations->length(),span,"root point operation bounds");
-  var earlier:Int=0;loop while(earlier<id){let other:Point=try lookup<Point>(frame->points,earlier);try require(other->block!=point->block||other->operation!=point->operation,span,"duplicate root point");earlier=earlier+1;};
-  let op:Operation=try atList<Operation>(block->operations,point->operation);try require(try allocating(store,body,op),span,"root point on nonallocating operation");try roots(body,uses,(try lookup<Int>(indexed->bases,point->block))+point->operation,-1,point->roots,span);
-  branch when{op->code=="call"||op->code=="field-call"||op->code=="dispatch"=>{try roots(body,uses,(try lookup<Int>(indexed->bases,point->block))+point->operation+1,branch on op->output{Parent::None=>-1,Parent::Some(slot:Int)=>slot},point->handoff,span);},else=>{try require(point->handoff->length()==0,span,"unexpected call handoff bitmap");}};id=id+1;
+ let graph:Graph=try buildGraph(body);let reads:Reads=try readIndex(graph);try bitmapShape(body,frame->entry,span);var checkpoints:Paged<Checkpoint>=push<Checkpoint>(empty<Checkpoint>(),Checkpoint{position:try lookup<Int>(graph->bases,body->entry),ignored:-1,bitmap:frame->entry});var seen:Map=create();
+ loop over(frame->points->pages->append(frame->points->tail) as page:List<Point>){loop over(page as point:Point){let block:Block=try lookup<Block>(body->blocks,point->block);try require(point->operation>=0&&point->operation<block->operations->length(),span,"root point operation bounds");let position:Int=(try lookup<Int>(graph->bases,point->block))+point->operation;try require((try get(seen,position))<0,span,"duplicate root point");seen=try put(seen,position,1);let op:Operation=try atList<Operation>(block->operations,point->operation);try require(try allocating(store,body,op),span,"root point on nonallocating operation");try bitmapShape(body,point->roots,span);checkpoints=push<Checkpoint>(checkpoints,Checkpoint{position:position,ignored:-1,bitmap:point->roots});
+  branch when{op->code=="call"||op->code=="field-call"||op->code=="dispatch"=>{try bitmapShape(body,point->handoff,span);checkpoints=push<Checkpoint>(checkpoints,Checkpoint{position:position+1,ignored:branch on op->output{Parent::None=>-1,Parent::Some(slot:Int)=>slot},bitmap:point->handoff});},else=>{try require(point->handoff->length()==0,span,"unexpected call handoff bitmap");}};
  };};
- var expected:Int=0;var maximum:Int=8;
- loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{try allocating(store,body,op)=>{expected=expected+1;},else=>unit};branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};
- try require(expected==frame->points->count,span,"missing allocation root point");try require(frame->outgoing==maximum&&frame->extent==((64+body->slots->count*8+maximum*8+15)/16)*16,span,"outgoing argument capacity");Result<Unit,Diagnostic>::Ok(unit)
+ var expectedPoints:Int=0;var maximum:Int=8;loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{try allocating(store,body,op)=>{expectedPoints=expectedPoints+1;},else=>unit};branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};try require(expectedPoints==frame->points->count,span,"missing allocation root point");try require(frame->outgoing==maximum&&frame->extent==((64+body->slots->count*8+maximum*8+15)/16)*16,span,"outgoing argument capacity");
+ var mismatch:Int= -1;var missing:Bool=false;var slotId:Int=0;loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;let reference:Bool=kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29;let reached:Map=branch when{reference=>try livePositions(graph,reads,slotId),else=>create()};let bit:Bits<64>=try mask(slotId,span);
+  var ordinal:Int=0;loop over(checkpoints->pages->append(checkpoints->tail) as checks:List<Checkpoint>){loop over(checks as check:Checkpoint){let expected:Bool=slotId!=check->ignored&&reference&&(try get(reached,check->position))>=0;let selected:Bool=(try wordAt(check->bitmap,slotId/64,span))->and(bit)!=Bits<64>{0};branch when{expected!=selected&&(mismatch<0||ordinal<mismatch)=>{mismatch=ordinal;missing=expected;},else=>unit};ordinal=ordinal+1;};};slotId=slotId+1;
+ };};
+ // Preserve checkpoint/slot diagnostic priority while holding one slot map.
+ var ordinal:Int=0;loop over(checkpoints->pages->append(checkpoints->tail) as checks:List<Checkpoint>){loop over(checks as check:Checkpoint){try require(ordinal!=mismatch,span,branch when{missing=>"missing live managed root",else=>"dead or scalar root retained"});try bitmap(body,check->bitmap,span);ordinal=ordinal+1;};};Result<Unit,Diagnostic>::Ok(unit)
 };

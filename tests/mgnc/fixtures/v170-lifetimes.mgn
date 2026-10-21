@@ -1,0 +1,20 @@
+namespace App;
+use Std\Numeric\{Bits};
+use Std\Binary\{Bytes,bytesFromBits};
+use Std\Io\{FileIdentity,PathInfo,PathInfoError,inspectPath,writeStdout};
+type Payload=product{label:String;bytes:Bytes;identity:FileIdentity;word:Bits<64>;};
+contract Read{read(value:Self):Int;}
+witness Proof=Payload implements Read{read(value:Self):Int{assert value->identity==value->identity;assert value->word==Bits<64>{18446744073709551615};value->label->length()+value->bytes->length()+value->word->length()}}
+type Snapshot=product{value:Read;copy:Result<Bytes,IndexError>;};
+alias Reader=Function():Snapshot;
+template keep<T>=function(value:T):Function():T{function():T{value}};
+let make:Function(FileIdentity):Snapshot=function(identity:FileIdentity):Snapshot{let bytes:Bytes=bytesFromBits(List<Bits<8>>[Bits<8>{0},Bits<8>{1},Bits<8>{128},Bits<8>{255},Bits<8>{0},Bits<8>{1},Bits<8>{128},Bits<8>{255}]);Snapshot{value:Read(Payload{label:"kept"+"-text",bytes:bytes,identity:identity,word:Bits<64>{18446744073709551615}}),copy:Result<Bytes,IndexError>::Ok(bytes)}};
+let argument:Function(List<String>,Int):String=function(args:List<String>,index:Int):String{branch on args->at(index){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>""}};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let retain:Bool=argument(args,0)=="retained";let resources:Bool=argument(args,0)=="resources";let path:String=argument(args,2);let choice:String=argument(args,1);let count:Int=branch when{choice=="64"=>64,choice=="256"=>256,choice=="1024"=>1024,else=>0};assert count>0;
+ let identity:FileIdentity=branch on inspectPath(path){Result<PathInfo,PathInfoError>::Ok(value:PathInfo)=>value->identity,Result<PathInfo,PathInfoError>::Err(error:PathInfoError)=>panic{"fixture identity unavailable"}};
+ let identityReader:Function():FileIdentity=keep<FileIdentity>(identity);var latest:Reader=keep<Snapshot>(make(identityReader()));var history:List<Reader>=List<Reader>[];var index:Int=0;
+ loop while(index<count){let current:FileIdentity=branch when{resources=>branch on inspectPath(path){Result<PathInfo,PathInfoError>::Ok(value:PathInfo)=>value->identity,Result<PathInfo,PathInfoError>::Err(error:PathInfoError)=>panic{"iteration identity unavailable"}},else=>identityReader()};assert current==identityReader();latest=keep<Snapshot>(make(current));branch when{retain=>{history=history->append(latest);},else=>unit};index=index+1;branch when{index%(count/4)==0=>{discard writeStdout("checkpoint\n");assert latest()->value->read()==81;},else=>unit};};
+ branch when{retain=>{assert history->length()==count;branch on history->at(0){Result<Reader,IndexError>::Ok(first:Reader)=>{assert first()->value->read()==81;},Result<Reader,IndexError>::Err(error:IndexError)=>{assert false;}};},else=>unit};
+ branch on latest()->copy{Result<Bytes,IndexError>::Ok(value:Bytes)=>{assert value->length()==8;},Result<Bytes,IndexError>::Err(error:IndexError)=>{assert false;}};discard writeStdout("done\n");0
+};

@@ -143,3 +143,6 @@ buffered encoding and their independent regression controls.
 
 [First-fit search bounds](v1.7.0-fit-lower-bounds.md) documents safe reuse across
 different requested sizes and its independent equivalence/work controls.
+
+The [first-fit-bound seed](v1.7.0-seed-fit-lower-bounds.md) records the new
+immutable bootstrap prerequisite and its qualification boundaries.

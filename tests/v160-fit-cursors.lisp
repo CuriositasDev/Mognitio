@@ -224,12 +224,10 @@
       (is (> (v160-fit-sequence sizes requests disabled) bound)))))
 
 (deftest v170-two-way-fit-owner-and-pair-mutations
-  (signals error
-    (v160-fit-sequence '(1000 1000 40 65536) '(1184 928)
-      (v170-mutated-fit-code '(:cmp-reg :r11 :rcx) '(:cmp-reg :rcx :rcx))))
-  (signals error
-    (v160-fit-sequence '(1000 1000 40 65536) '(1184 1312 928)
-      (v170-mutated-fit-code '(:cmp-reg :rdx :rcx) '(:cmp-reg :rcx :rcx))))
-  (signals error
-    (v160-fit-sequence '(1000 1000 40 65536) '(928 1184 928)
-      (v170-mutated-fit-code '(:store-word :r10 0 :rax) '(:store-word :r10 0 :r9)))))
+  ;; Check mutation membership outside the expected rejection boundary.
+  (let ((first-owner (v170-mutated-fit-code '(:cmp-reg :r11 :rcx) '(:cmp-reg :rcx :rcx)))
+        (second-owner (v170-mutated-fit-code '(:cmp-reg :rdx :rcx) '(:cmp-reg :rcx :rcx)))
+        (pair (v170-mutated-fit-code '(:store-word :r10 0 :rax) '(:store-word :r10 0 :r9))))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 928) first-owner))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 1312 928) second-owner))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(928 1184 928) pair))))

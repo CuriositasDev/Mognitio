@@ -16,7 +16,8 @@ use Mgnc\TemplateDependencies\{graph as templateGraph};
 use Mgnc\TypeData\{Store,Type,Argument,Obligation};
 use Mgnc\TypeOps\{initialize as initializeTypes,functionKind,listKind};
 use Mgnc\TypeDeclarations\{define,Parameters,parameters};
-use Mgnc\Signatures\{declaration as signature,publicSignature};
+use Mgnc\Signatures\{declaration as signature,publicSignatureWithSeen};
+use Mgnc\IntMap\{Map,create as createMap};
 use Mgnc\MetadataTypes\{validate as metadataType};
 use Mgnc\WitnessRegistry\{collect as collectWitnesses};
 use Mgnc\WitnessBodies\{check as witnessBody};
@@ -101,9 +102,11 @@ public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=fun
   index=index+1;
  };
  types=try collectWitnesses(types);
+ // The store and header/evidence tables stay fixed throughout this loop.
+ var publicTypes:Map=createMap();
  index=0;loop while(index<headers->declarations->count){
   branch on metadataType(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};
-  branch on publicSignature(types,index){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};index=index+1;
+  branch on publicSignatureWithSeen(types,index,publicTypes){Result<Map,Diagnostic>::Ok(value:Map)=>{publicTypes=value;},Result<Map,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(atDeclaration(headers,index,error));}};index=index+1;
  };
  var state:State=branch on initializeValues(types){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};
  let templatesGraph:Graph=branch on templateGraph(headers){Result<Graph,Diagnostic>::Ok(value:Graph)=>value,Result<Graph,Diagnostic>::Err(error:Diagnostic)=>{return Result<SemanticProject,InputError>::Err(internal(error));}};

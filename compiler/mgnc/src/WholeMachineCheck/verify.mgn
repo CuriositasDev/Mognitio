@@ -55,7 +55,12 @@ let standardAllocations:Function(Native,Code,Map,Global,Span):Result<Unit,Diagno
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
- loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{let target:Int=try standardHelper(plan,value);var count:Int=0;loop over(code->records->pages->append(code->records->tail) as records:List<Record>){loop over(records as record:Record){branch when{record->kind==5&&record->target==target=>{try require(same(record->bytes,List<Int>[72,186]),span,"standard Function code pointer register");count=count+1;},else=>unit};};};try require(count==1,span,"standard Function code pointer identity");},else=>unit};};};
+ // Index emitted standard pointers independently in one pass. Preserve each
+ // global's register failure before its identity-count failure.
+ var standardTargets:Map=create();loop over(io as target:Int){standardTargets=try put(standardTargets,target,1);};
+ var standardCounts:Map=create();var invalidStandardRegisters:Map=create();
+ loop over(code->records->pages->append(code->records->tail) as records:List<Record>){loop over(records as record:Record){branch when{record->kind==5&&record->target>=0&&(try get(standardTargets,record->target))>=0=>{let previous:Int=try get(standardCounts,record->target);standardCounts=try put(standardCounts,record->target,branch when{previous<0=>1,else=>previous+1});branch when{!same(record->bytes,List<Int>[72,186])=>{invalidStandardRegisters=try put(invalidStandardRegisters,record->target,1);},else=>unit};},else=>unit};};};
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{let target:Int=try standardHelper(plan,value);try require((try get(invalidStandardRegisters,target))<0,span,"standard Function code pointer register");try require((try get(standardCounts,target))==1,span,"standard Function code pointer identity");},else=>unit};};};
  let entries:List<Helper>=registry(io);try helpers(entries,code);try publication(plan,code);try inspection(plan,code);try paths(plan,code);try directory(plan,code);try contracts(plan,code);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
  loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){callable=try put(callable,procedure->entry,1);};};
  loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as item:Constructor){callable=try put(callable,item->entry,1);};};
@@ -75,6 +80,10 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
   try require(same(range(first->bytes,0,12),List<Int>[85,72,137,229,83,65,84,65,85,65,86,65])&&(try atList<Int>(first->bytes,12))==87,span,"source callee-save prologue");
   loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
    let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);let terminal:Int=try lookup<Int>(procedure->terminatorLabels,blockId);var position:Int=0;
+   // Retain the original last-match behavior while avoiding a point-table scan
+   // for every allocating operation in this source block.
+   var pointRoots:Map=create();var pointId:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){branch when{point->block==blockId&&point->operation>=0=>{pointRoots=try put(pointRoots,point->operation,try lookup<Int>(procedure->pointLabels,pointId));},else=>unit};pointId=pointId+1;};};
+
    loop over(block->operations as op:Operation){
     let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};
     let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);
@@ -83,7 +92,7 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
      branch when{op->code=="typed-integer"=>{try require(op->wide->length()==1&&part->references->length()==0&&part->bytes->length()==17,span,"numeric literal instruction shape");let expected:List<Int>=append(List<Int>[72,184],try numericBytes(try atList<Integer>(op->wide,0),op->origin->span));try require(same(range(part->bytes,0,10),expected),span,"numeric literal word encoding");},else=>unit};let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
     branch when{op->unavailable->length()==0=>{
      branch when{try allocating(plan->concrete->types,body,op)=>{
-      var bitmap:Int= -1;var pointId:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){branch when{point->block==blockId&&point->operation==position=>{bitmap=try lookup<Int>(procedure->pointLabels,pointId);},else=>unit};pointId=pointId+1;};};
+      let bitmap:Int=try get(pointRoots,position);
       try require(part->references->length()>0,span,"missing allocation root selection");let reference:Reference=try atList<Reference>(part->references,0);
       try require(bitmap>=0&&reference->kind==5&&reference->target==bitmap&&reference->offset==2&&same(range(part->bytes,0,2),List<Int>[72,184])&&same(range(part->bytes,10,17),List<Int>[72,137,133,208,255,255,255]),span,"allocation root descriptor handoff");
      },else=>unit};

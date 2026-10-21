@@ -41,8 +41,17 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
  discard try dispatchEdges(semantic,source,plan->concrete);try dispatchCanonical(plan->concrete);try require(plan->dispatchTables->count==plan->concrete->pairs->count,span,"dispatch table label membership");try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
  try require(plan->procedures->count==plan->concrete->instances->count&&plan->moduleCount==headers->modules->count,span,"native procedure/module membership");
  var labels:Map=create();var used:Map=create();var owner:Int=0;var literalCount:Int=0;var constructorCount:Int=0;
+ // Build independent instance groups once, retaining plan order and duplicates.
+ var literalHeads:Map=create();var literalGroups:Paged<List<Literal>>=empty<List<Literal>>();
+ loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as entry:Literal){branch when{entry->instance>=0=>{let previous:Int=try get(literalHeads,entry->instance);let group:List<Literal>=branch when{previous>=0=>try lookup<List<Literal>>(literalGroups,previous),else=>List<Literal>[]};literalHeads=try put(literalHeads,entry->instance,literalGroups->count);literalGroups=push<List<Literal>>(literalGroups,group->append(entry));},else=>unit};};};
+ var constructorHeads:Map=create();var constructorGroups:Paged<List<Constructor>>=empty<List<Constructor>>();
+ loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as entry:Constructor){branch when{entry->instance>=0=>{let previous:Int=try get(constructorHeads,entry->instance);let group:List<Constructor>=branch when{previous>=0=>try lookup<List<Constructor>>(constructorGroups,previous),else=>List<Constructor>[]};constructorHeads=try put(constructorHeads,entry->instance,constructorGroups->count);constructorGroups=push<List<Constructor>>(constructorGroups,group->append(entry));},else=>unit};};};
+
  loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
   let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);try roots(plan->concrete->types,instance->body,procedure->frame);
+  let literalGroup:Int=try get(literalHeads,owner);let bodyLiterals:List<Literal>=branch when{literalGroup>=0=>try lookup<List<Literal>>(literalGroups,literalGroup),else=>List<Literal>[]};
+  let constructorGroup:Int=try get(constructorHeads,owner);let bodyConstructors:List<Constructor>=branch when{constructorGroup>=0=>try lookup<List<Constructor>>(constructorGroups,constructorGroup),else=>List<Constructor>[]};
+
   labels=try claim(labels,procedure->endLabel,plan->nextLabel,span);labels=try claim(labels,procedure->entry,plan->nextLabel,span);labels=try claim(labels,procedure->entryRoots,plan->nextLabel,span);
   try require(procedure->pointLabels->count==procedure->frame->points->count,span,"root label membership");
   var handoffOrdinal:Int=0;loop over(procedure->pointLabels->pages->append(procedure->pointLabels->tail) as points:List<Int>){loop over(points as point:Int){labels=try claim(labels,point,plan->nextLabel,span);branch when{(try lookup<Point>(procedure->frame->points,handoffOrdinal))->handoff->length()>0=>{labels=try claim(labels,point+1,plan->nextLabel,span);},else=>unit};handoffOrdinal=handoffOrdinal+1;};};
@@ -56,14 +65,14 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
     branch when{try checkedNumeric(plan->concrete->types,instance->body,op)=>{discard try numericExpected(plan,instance->body,op);},else=>unit};
     branch when{op->code=="global-load"||op->code=="global-store"=>{let id:Int=try global(semantic,plan,try present(op->symbol,span,"global operation"),span);used=try put(used,id,1);},else=>unit};
     branch when{op->code=="string"=>{
-     var found:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{try literal(op->text,entry->bytes,entry->scalars,span);found=found+1;},else=>unit};};};try require(found==1,span,"literal source membership");literalCount=literalCount+1;
+     var found:Int=0;loop over(bodyLiterals as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{try literal(op->text,entry->bytes,entry->scalars,span);found=found+1;},else=>unit};};try require(found==1,span,"literal source membership");literalCount=literalCount+1;
     },op->code=="function"||op->code=="list"||op->code=="package"&&op->unavailable->length()==0=>{
-     var found:Int=0;loop over(plan->constructors->pages->append(plan->constructors->tail) as entries:List<Constructor>){loop over(entries as entry:Constructor){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{found=found+1;},else=>unit};};};try require(found==1,span,"constructor source membership");constructorCount=constructorCount+1;
+     var found:Int=0;loop over(bodyConstructors as entry:Constructor){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation==operationId=>{found=found+1;},else=>unit};};try require(found==1,span,"constructor source membership");constructorCount=constructorCount+1;
     },else=>unit};operationId=operationId+1;
    };branch when{block->terminator->code=="assertion"=>{
     let node:Node=try lookup<Node>(semantic->state->nodes,block->terminator->origin->node);let module:Module=try lookup<Module>(headers->modules,node->file);let site:Span=node->span;
     let expected:String=escapePath(module->source->displayPath)+":"+number(site->line)+":"+number(site->column)+": assertion: assertion failed (outside test) [bytes "+number(site->start)+","+number(site->end)+")\n";
-    var found:Int=0;loop over(plan->literals->pages->append(plan->literals->tail) as entries:List<Literal>){loop over(entries as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation== -1=>{try literal(List<TextPart>[TextPart::Text(expected)],entry->bytes,entry->scalars,site);found=found+1;},else=>unit};};};try require(found==1,site,"assertion site membership");literalCount=literalCount+1;
+    var found:Int=0;loop over(bodyLiterals as entry:Literal){branch when{entry->instance==owner&&entry->block==blockId&&entry->operation== -1=>{try literal(List<TextPart>[TextPart::Text(expected)],entry->bytes,entry->scalars,site);found=found+1;},else=>unit};};try require(found==1,site,"assertion site membership");literalCount=literalCount+1;
    },else=>unit};blockId=blockId+1;
   };};owner=owner+1;
  };};

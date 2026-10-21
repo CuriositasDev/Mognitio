@@ -20,8 +20,9 @@ public let value:Function(ValueTerm,List<Binding>,Span):Result<ValueTerm,Diagnos
 };
 // Compare a source type graph against substituted output without invoking the producer.
 type Pair=product{source:Int;actual:Int;};
-public let shape:Function(Store,Store,Int,Int,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,sourceId:Int,actualId:Int,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
- var queue:Paged<Pair>=push<Pair>(empty<Pair>(),Pair{source:sourceId,actual:actualId});var cursor:Int=0;var visited:Map=create();
+// The caller owns the memo scope; bindings and both stores must stay fixed.
+public let shapeWithSeen:Function(Store,Store,Int,Int,List<Binding>,Span,Map):Result<Map,Diagnostic>=function(source:Store,actual:Store,sourceId:Int,actualId:Int,bindings:List<Binding>,span:Span,initial:Map):Result<Map,Diagnostic>{
+ var queue:Paged<Pair>=push<Pair>(empty<Pair>(),Pair{source:sourceId,actual:actualId});var cursor:Int=0;var visited:Map=initial;
  loop while(cursor<queue->count){
   let pair:Pair=try lookup<Pair>(queue,cursor);cursor=cursor+1;
   let known:Int=try get(visited,pair->source);branch when{known>=0=>{try require(known==pair->actual,span,"concrete canonical type mapping");continue;},else=>unit};
@@ -41,25 +42,42 @@ public let shape:Function(Store,Store,Int,Int,List<Binding>,Span):Result<Unit,Di
   index=0;loop over(original->members as member:Member){let other:Member=try atList<Member>(result->members,index);index=index+1;try require(member->name==other->name,span,"concrete member name");
    branch on member->value{Parent::None=>{try require(parentEqual(other->value,Parent::None),span,"concrete empty member");},Parent::Some(typeId:Int)=>{queue=push<Pair>(queue,Pair{source:typeId,actual:try present(other->value,span,"concrete member type")});}};
   };
- };Result<Unit,Diagnostic>::Ok(unit)
+ };Result<Map,Diagnostic>::Ok(visited)
 };
-public let arguments:Function(Store,Store,List<Argument>,List<Argument>,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,original:List<Argument>,result:List<Argument>,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
+public let shape:Function(Store,Store,Int,Int,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,sourceId:Int,actualId:Int,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
+ discard try shapeWithSeen(source,actual,sourceId,actualId,bindings,span,create());Result<Unit,Diagnostic>::Ok(unit)
+};
+// The caller owns the memo scope; bindings and both stores must stay fixed.
+public let argumentsWithSeen:Function(Store,Store,List<Argument>,List<Argument>,List<Binding>,Span,Map):Result<Map,Diagnostic>=function(source:Store,actual:Store,original:List<Argument>,result:List<Argument>,bindings:List<Binding>,span:Span,initial:Map):Result<Map,Diagnostic>{
+ var memo:Map=initial;
  try require(original->length()==result->length(),span,"concrete argument count");var index:Int=0;
  loop over(original as argument:Argument){let other:Argument=try atList<Argument>(result,index);index=index+1;
-  branch on argument{Argument::Type(typeId:Int)=>branch on other{Argument::Type(otherId:Int)=>{try shape(source,actual,typeId,otherId,bindings,span);},Argument::Value(term:ValueTerm)=>{try require(false,span,"concrete argument kind");}},Argument::Value(term:ValueTerm)=>branch on other{Argument::Value(otherTerm:ValueTerm)=>{try require(valueEqual(try value(term,bindings,span),otherTerm),span,"concrete value substitution");},Argument::Type(otherId:Int)=>{try require(false,span,"concrete argument kind");}}};
- };Result<Unit,Diagnostic>::Ok(unit)
+  branch on argument{Argument::Type(typeId:Int)=>branch on other{Argument::Type(otherId:Int)=>{memo=try shapeWithSeen(source,actual,typeId,otherId,bindings,span,memo);},Argument::Value(term:ValueTerm)=>{try require(false,span,"concrete argument kind");}},Argument::Value(term:ValueTerm)=>branch on other{Argument::Value(otherTerm:ValueTerm)=>{try require(valueEqual(try value(term,bindings,span),otherTerm),span,"concrete value substitution");},Argument::Type(otherId:Int)=>{try require(false,span,"concrete argument kind");}}};
+ };Result<Map,Diagnostic>::Ok(memo)
+};
+public let arguments:Function(Store,Store,List<Argument>,List<Argument>,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,original:List<Argument>,result:List<Argument>,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
+ discard try argumentsWithSeen(source,actual,original,result,bindings,span,create());Result<Unit,Diagnostic>::Ok(unit)
+};
+// The caller owns the memo scope; bindings and both stores must stay fixed.
+public let optionalWithSeen:Function(Store,Store,Parent,Parent,List<Binding>,Span,Map):Result<Map,Diagnostic>=function(source:Store,actual:Store,original:Parent,result:Parent,bindings:List<Binding>,span:Span,initial:Map):Result<Map,Diagnostic>{
+ var memo:Map=initial;
+ branch on original{Parent::None=>{try require(parentEqual(result,Parent::None),span,"concrete absent type");},Parent::Some(typeId:Int)=>{memo=try shapeWithSeen(source,actual,typeId,try present(result,span,"concrete missing type"),bindings,span,memo);}};Result<Map,Diagnostic>::Ok(memo)
 };
 public let optional:Function(Store,Store,Parent,Parent,List<Binding>,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,original:Parent,result:Parent,bindings:List<Binding>,span:Span):Result<Unit,Diagnostic>{
- branch on original{Parent::None=>{try require(parentEqual(result,Parent::None),span,"concrete absent type");},Parent::Some(typeId:Int)=>{try shape(source,actual,typeId,try present(result,span,"concrete missing type"),bindings,span);}};Result<Unit,Diagnostic>::Ok(unit)
+ discard try optionalWithSeen(source,actual,original,result,bindings,span,create());Result<Unit,Diagnostic>::Ok(unit)
 };
-public let closed:Function(Store,Int,Span):Result<Unit,Diagnostic>=function(store:Store,root:Int,span:Span):Result<Unit,Diagnostic>{
- var pending:Paged<Int>=push<Int>(empty<Int>(),root);var cursor:Int=0;var seen:Map=create();
+// The caller owns the memo scope; bindings and both stores must stay fixed.
+public let closedWithSeen:Function(Store,Int,Span,Map):Result<Map,Diagnostic>=function(store:Store,root:Int,span:Span,initial:Map):Result<Map,Diagnostic>{
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var cursor:Int=0;var seen:Map=initial;
  loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);
   let item:Type=try lookup<Type>(store->types,id);try require(item->kind<22||item->kind==23||item->kind==24||item->kind==25||item->kind==26||item->kind==27||item->kind==28||item->kind==29,span,"concrete unresolved or unsupported type");
   branch when{item->kind==23||item->kind==24=>{discard try numericShape(store,id,span);},else=>unit};
   loop over(item->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{try require(parentEqual(term->parameter,Parent::None),span,"concrete unresolved value");}};};
   loop over(item->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{pending=push<Int>(pending,child);},Parent::None=>unit};};
- };Result<Unit,Diagnostic>::Ok(unit)
+ };Result<Map,Diagnostic>::Ok(seen)
+};
+public let closed:Function(Store,Int,Span):Result<Unit,Diagnostic>=function(store:Store,root:Int,span:Span):Result<Unit,Diagnostic>{
+ discard try closedWithSeen(store,root,span,create());Result<Unit,Diagnostic>::Ok(unit)
 };
 public let prefix:Function(Store,Store,Span):Result<Unit,Diagnostic>=function(source:Store,actual:Store,span:Span):Result<Unit,Diagnostic>{
  try require(actual->types->count>=source->types->count,span,"concrete type prefix size");var index:Int=0;

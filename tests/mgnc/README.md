@@ -307,3 +307,20 @@ ownership and independently reject result-guard/errno/flag mutations at all
 seven cleanup syscall sites. Use publication-surface.py, v170-inspection.py,
 v170-path-operations.py, v170-directory.py and their fault/surface companions
 for the corresponding standard Function and filesystem observations.
+
+## Verification scale and mixed-value lifetimes
+
+Run v170-index-verifiers.py --seed SEED --output NEW_DIRECTORY for independent
+instance-table grouping and emitted standard-pointer checks. Its negative
+controls retain duplicate, foreign-instance, orphan, register, and count failures.
+The root/layout differential checks remain in v160-runtime-plans.py.
+
+Run v170-lifetimes.py --compiler COMPILER --output NEW_DIRECTORY for mixed
+numeric, Bytes, FileIdentity, Result, contract, and generic-closure lifetimes.
+One generated program runs bounded, retained-history, and repeated-I/O modes at
+three iteration counts, both normally and under collection stress. The external
+observer traverses actual roots/descriptors/managed blocks and checks resources,
+descriptor counts, and every requested allocation. Temporary allocator software
+breakpoints single-step the original instruction; the unobserved run uses the
+same unchanged ELF. Functional structural bounds in this runner are separate
+from adopted wall/RSS performance budgets.

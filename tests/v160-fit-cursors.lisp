@@ -197,7 +197,7 @@
 (deftest v170-two-way-fit-first-fit-and-reset
   ;; Independent ordered-block selection and complete free-chain checks cover
   ;; promotions, eviction, smaller colliding requests and owner-link removal.
-  (dolist (count '(0 1 2 7 31 64 257))
+  (dolist (count '(0 1 2 7 31 64 257 2048))
     (dolist (pattern '((40) (40 80 160) (416) (40 416 80)
                        (40 1184 160) (1000 1000 40)))
       (let ((sizes (append (loop for i below count

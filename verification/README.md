@@ -130,3 +130,5 @@ independent root/layout checks, physical-heap execution and ABI probes.
 The [1.6 scale preparation](v1.6.0-native-scale.md) records independent root
 reachability, bounded source splitting, Unicode equivalence and the remaining
 whole-project cutoff.
+
+- [Two-way exact-size allocator cursors](v1.7.0-two-way-fit-cursors.md): first-fit correctness, collision bounds and replacement-seed boundary.

@@ -333,3 +333,10 @@ their actual targets, including forged targets outside the region; the complete
 machine oracle still checks all label ownership and linkage. The runner also
 compares coherent image permutations and runs every image normally and under
 collection stress. The individual oracle runners remain available.
+
+`v170-signature-visibility.py --seed SEED --output NEW_DIRECTORY` checks public
+nominal visibility across repeated semantic analyses in one process. It alternates
+public and private versions of the same type names, keeps hidden witness payloads
+behind contract values, rejects public witness leaks, and rejects a later private
+signature after earlier public traversals. Visibility memoization belongs only to
+one fixed store/header snapshot and is committed after complete successful walks.

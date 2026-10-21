@@ -1,5 +1,6 @@
 namespace Mgnc\Signatures;
-use Mgnc\Data\{Diagnostic,Span,lookup,problem};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Data\{push,empty,Paged,Diagnostic,Span,lookup,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\SemanticData\{Module,Declaration};
@@ -51,23 +52,27 @@ public let declaration:Function(Store,Int):Result<Store,Diagnostic>=function(ini
  declarations:try replaceItem<Parent>(store->declarations,id,Parent::Some(value)),
  constraints:try replaceItem<List<Obligation>>(store->constraints,id,obligations)})
 };
-public let publicSignature:Function(Store,Int):Result<Unit,Diagnostic>=function(store:Store,id:Int):Result<Unit,Diagnostic>{
+// The memo belongs to one immutable Store/header snapshot and only contains
+// complete successful visibility traversals. Failed traversals return no memo.
+public let publicSignatureWithSeen:Function(Store,Int,Map):Result<Map,Diagnostic>=function(store:Store,id:Int,initial:Map):Result<Map,Diagnostic>{
  let declared:Declaration=try lookup<Declaration>(store->headers->declarations,id);
- branch when{!declared->exported=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};
- let root:Int=branch on try lookup<Parent>(store->declarations,id){Parent::Some(value:Int)=>value,Parent::None=>{return Result<Unit,Diagnostic>::Err(problem("internal",declared->span,"public signature is incomplete"));}};
- var work:List<Int>=List<Int>[root];branch when{declared->kind==7=>{let proof:Evidence=try evidence(store->headers,id);work=List<Int>[proof->concreteType,proof->contractType];},else=>unit};var seen:List<Int>=List<Int>[];var index:Int=0;
- loop while(index<work->length()){
-  let current:Int=try item(work,index);index=index+1;var visited:Bool=false;loop over(seen as previous:Int){branch when{previous==current=>{visited=true;break;},else=>unit};};
-  branch when{visited=>{continue;},else=>unit};seen=seen->append(current);
-  let shape:Type=try lookup<Type>(store->types,current);
+ branch when{!declared->exported=>{return Result<Map,Diagnostic>::Ok(initial);},else=>unit};
+ let root:Int=branch on try lookup<Parent>(store->declarations,id){Parent::Some(value:Int)=>value,Parent::None=>{return Result<Map,Diagnostic>::Err(problem("internal",declared->span,"public signature is incomplete"));}};
+ var work:Paged<Int>=push<Int>(empty<Int>(),root);branch when{declared->kind==7=>{let proof:Evidence=try evidence(store->headers,id);work=push<Int>(push<Int>(empty<Int>(),proof->concreteType),proof->contractType);},else=>unit};var seen:Map=initial;var index:Int=0;
+ loop while(index<work->count){
+  let current:Int=try lookup<Int>(work,index);index=index+1;
+  branch when{current>=0&&(try get(seen,current))>=0=>{continue;},else=>unit};
+  let shape:Type=try lookup<Type>(store->types,current);seen=try put(seen,current,1);
   branch when{shape->kind==productKind||shape->kind==sumKind||shape->kind==bytesKind||shape->kind==identityKind||shape->kind==bitsKind||shape->kind==signedKind||shape->kind==unsignedKind||shape->kind==contractKind=>{
    branch on shape->owner{Parent::None=>unit,Parent::Some(owner:Int)=>{
     let nominal:Declaration=try lookup<Declaration>(store->headers->declarations,owner);
-    branch when{!nominal->exported=>{return Result<Unit,Diagnostic>::Err(problem("semantic",declared->span,"public signature exposes a private nominal type"));},else=>unit};
+    branch when{!nominal->exported=>{return Result<Map,Diagnostic>::Err(problem("semantic",declared->span,"public signature exposes a private nominal type"));},else=>unit};
    }};
   },else=>unit};
-  loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(value:Int)=>{work=work->append(value);},Argument::Value(value:MgncValueTerm)=>unit};};
-  loop over(shape->members as member:Member){branch on member->value{Parent::Some(value:Int)=>{work=work->append(value);},Parent::None=>unit};};
+  loop over(shape->arguments as argument:Argument){branch on argument{Argument::Type(value:Int)=>{work=push<Int>(work,value);},Argument::Value(value:MgncValueTerm)=>unit};};
+  loop over(shape->members as member:Member){branch on member->value{Parent::Some(value:Int)=>{work=push<Int>(work,value);},Parent::None=>unit};};
  };
- Result<Unit,Diagnostic>::Ok(unit)
+ Result<Map,Diagnostic>::Ok(seen)
 };
+
+public let publicSignature:Function(Store,Int):Result<Unit,Diagnostic>=function(store:Store,id:Int):Result<Unit,Diagnostic>{discard try publicSignatureWithSeen(store,id,create());Result<Unit,Diagnostic>::Ok(unit)};

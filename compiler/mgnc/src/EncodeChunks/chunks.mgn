@@ -1,0 +1,19 @@
+namespace Mgnc\EncodeChunks;
+use Std\Numeric\{Bits};
+use Std\Binary\{Bytes,ByteValueError,bytesFromInts,bytesFromBits};
+use Mgnc\Data\{Diagnostic,Span,problem};
+use Mgnc\Tables\{replaceList,atList};
+let vacant:Bytes=bytesFromBits(List<Bits<8>>[]);
+// Levels contain consecutive older chunks; a carry appends the new suffix.
+public let add:Function(List<Bytes>,Bytes):Result<List<Bytes>,Diagnostic>=function(initial:List<Bytes>,chunk:Bytes):Result<List<Bytes>,Diagnostic>{
+ branch when{chunk->length()==0=>{return Result<List<Bytes>,Diagnostic>::Ok(initial);},else=>unit};
+ var levels:List<Bytes>=initial;var carry:Bytes=chunk;var index:Int=0;
+ loop while(index<levels->length()){let previous:Bytes=try atList<Bytes>(levels,index);branch when{previous->length()==0=>{levels=replaceList<Bytes>(levels,index,carry);return Result<List<Bytes>,Diagnostic>::Ok(levels);},else=>unit};carry=previous->concat(carry);levels=replaceList<Bytes>(levels,index,vacant);index=index+1;};
+ Result<List<Bytes>,Diagnostic>::Ok(levels->append(carry))
+};
+public let pack:Function(List<Int>,Span):Result<Bytes,Diagnostic>=function(values:List<Int>,span:Span):Result<Bytes,Diagnostic>{
+ branch on bytesFromInts(values){Result<Bytes,ByteValueError>::Ok(value:Bytes)=>Result<Bytes,Diagnostic>::Ok(value),Result<Bytes,ByteValueError>::Err(error:ByteValueError)=>Result<Bytes,Diagnostic>::Err(problem("internal",span,"opcode byte out of range"))}
+};
+public let finish:Function(List<Bytes>):Bytes=function(levels:List<Bytes>):Bytes{
+ var result:Bytes=vacant;loop over(levels as previous:Bytes){branch when{previous->length()>0=>{result=previous->concat(result);},else=>unit};};result
+};

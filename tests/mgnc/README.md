@@ -340,3 +340,12 @@ public and private versions of the same type names, keeps hidden witness payload
 behind contract values, rejects public witness leaks, and rejects a later private
 signature after earlier public traversals. Visibility memoization belongs only to
 one fixed store/header snapshot and is committed after complete successful walks.
+
+The encoder keeps bounded raw-byte buffers and balanced immutable byte chunks.
+Its original complete label/size pass and field diagnostics precede publication.
+Run the source differential and independent ELF-byte oracle with
+v170-encode-chunks.py --seed SEED --output NEW_DIRECTORY. It covers chunk and
+field boundaries, a one-MiB raw record, carry ordering, signed and absolute
+fields, invalid bytes/labels/ranges and diagnostic priority. The frozen
+legacy-encode.mgn is an executable source reference from the preceding encoder,
+used only in the oracle; ordinary compiler inputs do not include it.

@@ -1,0 +1,48 @@
+namespace Mgnc;
+use Mgnc\Data\{Paged,empty,push,Diagnostic,Span,number};
+use Mgnc\Machine\{Code,Record};
+use Mgnc\Encode\{encode};
+use Mgnc\TestOldEncode\{encode as oldEncode};
+use Mgnc\EncodeChunks\{add as addChunk,finish as finishChunks,pack as packChunk};
+use Mgnc\WholeChecks\{require};
+use Std\Binary\{Bytes,bytesFromInts,ByteValueError,publishFile,BinaryFileMode,BinaryOutputError};
+use Std\Io\{writeStdout};
+let span:Span=Span{start:0,end:0,line:1,column:1};
+let build:Function(List<Record>,Int):Code=function(records:List<Record>,next:Int):Code{var values:Paged<Record>=empty<Record>();loop over(records as item:Record){values=push<Record>(values,item);};Code{records:values,nextLabel:next,pending:List<Int>[]}};
+let record:Function(Int,List<Int>,Int,Int):Record=function(kind:Int,data:List<Int>,value:Int,target:Int):Record{Record{kind:kind,bytes:data,value:value,target:target}};
+let save:Function(String,Bytes):Result<Unit,Diagnostic>=function(path:String,value:Bytes):Result<Unit,Diagnostic>{branch on publishFile(path,value,BinaryFileMode::Data){Result<Unit,BinaryOutputError>::Ok(done:Unit)=>unit,Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>{try require(false,span,"oracle publication");}};Result<Unit,Diagnostic>::Ok(unit)};
+let reject:Function(Code,String):Result<Unit,Diagnostic>=function(code:Code,message:String):Result<Unit,Diagnostic>{
+ branch on encode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>{try require(false,span,"new encoder accepted invalid code");},Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message==message&&error->span->start==0&&error->span->end==0&&error->span->line==1&&error->span->column==1,span,"new encoder diagnostic");}};
+ branch on oldEncode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>{try require(false,span,"old encoder accepted invalid code");},Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message==message,span,"old encoder diagnostic");}};Result<Unit,Diagnostic>::Ok(unit)
+};
+let test:Function(String):Result<Unit,Diagnostic>=function(directory:String):Result<Unit,Diagnostic>{
+ loop over(List<Int>[0,1,119,120,3975,3976,3977,4095,4096,4097,8191,8192,8193,65535,65536,65537,1048577] as count:Int){
+  var data:List<Int>=List<Int>[];var i:Int=0;loop while(i<count){data=data->append(i%256);i=i+1;};
+  let code:Code=build(List<Record>[record(1,List<Int>[],0,0),record(0,data,0,0),record(2,List<Int>[233],0,1),record(3,List<Int>[72,129,248],-2147483648,0),record(3,List<Int>[72,129,248],2147483647,0),record(4,List<Int>[72,184],-9223372036854775808,0),record(4,List<Int>[72,184],9223372036854775807,0),record(1,List<Int>[],0,1),record(5,List<Int>[72,186],0,0),record(1,List<Int>[],0,2)],3);
+  let value:Bytes=try encode(code);let prior:Bytes=try oldEncode(code);try require(value==prior&&value->length()==count+169,span,"complete ELF differential");try save(directory+"/raw-"+number(count)+".elf",value);
+ };
+ loop over(List<Int>[0,1,2,3,7,8,31,64,65,257] as count:Int){
+  var levels:List<Bytes>=List<Bytes>[];var i:Int=0;loop while(i<count){var values:List<Int>=List<Int>[];var j:Int=0;loop while(j<i%17+1){values=values->append(i%256);j=j+1;};let chunk:Bytes=try packChunk(values,span);levels=try addChunk(levels,chunk);i=i+1;};
+  try save(directory+"/carry-"+number(count)+".bin",finishChunks(levels));
+ };
+ let zero:Record=record(1,List<Int>[],0,0);
+ try reject(build(List<Record>[zero,record(0,List<Int>[256],0,0)],1),"opcode byte out of range");
+ try reject(build(List<Record>[zero,record(0,List<Int>[-1],0,0)],1),"opcode byte out of range");
+ try reject(build(List<Record>[zero,record(0,List<Int>[256],0,0),record(3,List<Int>[],2147483648,0)],1),"opcode byte out of range");
+ try reject(build(List<Record>[zero,record(0,List<Int>[256],0,0),record(6,List<Int>[],0,0)],1),"unknown machine record");
+ try reject(build(List<Record>[zero,record(0,List<Int>[256],0,0),zero],1),"duplicate machine label");
+ try reject(build(List<Record>[zero,record(3,List<Int>[],2147483648,0)],1),"encoding field out of range");
+ try reject(build(List<Record>[zero,record(3,List<Int>[],-2147483649,0)],1),"encoding field out of range");
+ try reject(build(List<Record>[zero,record(2,List<Int>[233],0,1)],2),"undefined machine label");
+ try reject(build(List<Record>[zero,record(5,List<Int>[72,186],0,1)],2),"undefined machine label");
+ try reject(build(List<Record>[record(1,List<Int>[],0,-1)],1),"machine label bounds");
+ try reject(build(List<Record>[record(1,List<Int>[],0,1)],1),"machine label bounds");
+ try reject(build(List<Record>[zero,record(-1,List<Int>[],0,0)],1),"unknown machine record");
+ try reject(build(List<Record>[record(1,List<Int>[],0,1)],2),"undefined machine label");
+ try reject(build(List<Record>[record(0,List<Int>[144],0,0),zero],1),"startup is not first");
+ let pending:Code=Code{records:build(List<Record>[zero],1)->records,nextLabel:1,pending:List<Int>[256]};try reject(pending,"opcode byte out of range");
+ try reject(build(List<Record>[record(1,List<Int>[-1],0,0)],1),"opcode byte out of range");
+ branch on packChunk(List<Int>[0,256,-1],span){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>{try require(false,span,"invalid chunk accepted");},Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="opcode byte out of range",span,"chunk diagnostic");}};
+ discard writeStdout("ENCODER_CHUNKS_ORACLE_OK images=17 carry_series=10 negative=17\n");Result<Unit,Diagnostic>::Ok(unit)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{let directory:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};branch on test(directory){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

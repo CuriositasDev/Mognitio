@@ -1,0 +1,84 @@
+namespace Mgnc\TestOldEncode;
+use Std\Numeric\{Bits};
+use Std\Binary\{Bytes,bytesFromBits};
+use Mgnc\Data\{Paged,empty,push,Diagnostic,problem,Span};
+use Mgnc\Machine\{Code,Record,Label,flush};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\Fields\{byte,i32,i64,u16,u32,u64,appendField};
+let locate:Function(Map,Int,Span):Result<Int,Diagnostic>=
+function(labels:Map,id:Int,span:Span):Result<Int,Diagnostic>{
+ branch when{id<0=>{return Result<Int,Diagnostic>::Err(problem("internal",span,"machine label bounds"));},else=>unit};
+ let offset:Int=try get(labels,id);
+ branch when{offset>=0=>Result<Int,Diagnostic>::Ok(offset),else=>Result<Int,Diagnostic>::Err(problem("internal",span,"undefined machine label"))}
+};
+let addLabel:Function(Map,Label,Span):Result<Map,Diagnostic>=
+function(labels:Map,value:Label,span:Span):Result<Map,Diagnostic>{
+ branch when{(try get(labels,value->id))>=0=>{return Result<Map,Diagnostic>::Err(problem("internal",span,"duplicate machine label"));},else=>unit};
+ put(labels,value->id,value->offset)
+};
+let size:Function(Record):Int=function(record:Record):Int{
+ record->bytes->length()+branch when{record->kind==0 || record->kind==1=>0,
+ record->kind==2 || record->kind==3=>4,else=>8}
+};
+public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code):Result<Bytes,Diagnostic>{
+ let code:Code=flush(initial);
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ var labels:Map=create();var length:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
+  loop over(page as record:Record){
+   branch when{record->kind==1=>{
+    branch when{record->target<0 || record->target>=code->nextLabel=>{
+     return Result<Bytes,Diagnostic>::Err(problem("internal",span,"machine label bounds"));
+    },else=>unit};
+    labels=try addLabel(labels,Label{id:record->target,offset:length},span);
+   },else=>{
+    branch when{record->kind<0 || record->kind>5=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"unknown machine record"));},else=>unit};
+   }};
+   length=length+size(record);
+  };
+ };
+ branch when{(try locate(labels,0,span))!=0=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"startup is not first"));},else=>unit};
+ var result:List<Bits<8>>=List<Bits<8>>[];
+ loop over(List<Int>[127,69,76,70,2,1,1,0,0,0,0,0,0,0,0,0] as value:Int){result=result->append(try byte(value,span));};
+ result=try appendField(result,try u16(2,span),span);
+ result=try appendField(result,try u16(62,span),span);
+ result=try appendField(result,try u32(1,span),span);
+ result=try appendField(result,try u64(4194424,span),span);
+ result=try appendField(result,try u64(64,span),span);
+ result=try appendField(result,try u64(0,span),span);
+ result=try appendField(result,try u32(0,span),span);
+ loop over(List<Int>[64,56,1,0,0,0] as value:Int){result=try appendField(result,try u16(value,span),span);};
+ result=try appendField(result,try u32(1,span),span);
+ result=try appendField(result,try u32(5,span),span);
+ result=try appendField(result,try u64(0,span),span);
+ result=try appendField(result,try u64(4194304,span),span);
+ result=try appendField(result,try u64(4194304,span),span);
+ result=try appendField(result,try u64(length+120,span),span);
+ result=try appendField(result,try u64(length+120,span),span);
+ result=try appendField(result,try u64(4096,span),span);
+ branch when{result->length()!=120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"ELF header size"));},else=>unit};
+ var offset:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
+  loop over(page as record:Record){
+   loop over(record->bytes as value:Int){result=result->append(try byte(value,span));};
+   branch when{
+    record->kind==0=>unit,
+    record->kind==1=>unit,
+    record->kind==2=>{
+     let target:Int=try locate(labels,record->target,span);
+     result=try appendField(result,try i32(target-offset-record->bytes->length()-4,span),span);
+    },
+    record->kind==3=>{result=try appendField(result,try i32(record->value,span),span);},
+    record->kind==4=>{result=try appendField(result,try i64(record->value,span),span);},
+    record->kind==5=>{
+     let target:Int=try locate(labels,record->target,span);
+     result=try appendField(result,try u64(4194424+target,span),span);
+    },
+    else=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"invalid machine record"));},
+   };
+   offset=offset+size(record);
+  };
+ };
+ branch when{offset!=length || result->length()!=length+120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"size pass mismatch"));},else=>unit};
+ Result<Bytes,Diagnostic>::Ok(bytesFromBits(result))
+};

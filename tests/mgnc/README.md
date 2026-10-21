@@ -324,3 +324,12 @@ descriptor counts, and every requested allocation. Temporary allocator software
 breakpoints single-step the original instruction; the unobserved run uses the
 same unchanged ELF. Functional structural bounds in this runner are separate
 from adopted wall/RSS performance budgets.
+
+Run v170-runtime-label-oracles.py --seed SEED --output NEW_DIRECTORY to replay
+the existing index, contract, publication, inspection, path, and directory
+oracles in one seed build. Fixed runtime labels remain visible even when helper
+root metadata is corrupted. Relocations from inspected helper regions retain
+their actual targets, including forged targets outside the region; the complete
+machine oracle still checks all label ownership and linkage. The runner also
+compares coherent image permutations and runs every image normally and under
+collection stress. The individual oracle runners remain available.

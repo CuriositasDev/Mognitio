@@ -1,0 +1,16 @@
+namespace Mgnc;
+use Std\Io\{writeStdout};
+use Mgnc\ProbeIndex\{main as probeIndex};
+use Mgnc\ProbeContracts\{main as probeContracts};
+use Mgnc\ProbePublication\{main as probePublication};
+use Mgnc\ProbeInspection\{main as probeInspection};
+use Mgnc\ProbePath\{main as probePath};
+use Mgnc\ProbeDirectory\{main as probeDirectory};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+let statusIndex:Int=probeIndex(args);branch when{statusIndex!=0=>{return statusIndex;},else=>unit};
+let statusContracts:Int=probeContracts(args);branch when{statusContracts!=0=>{return statusContracts;},else=>unit};
+let statusPublication:Int=probePublication(args);branch when{statusPublication!=0=>{return statusPublication;},else=>unit};
+let statusInspection:Int=probeInspection(args);branch when{statusInspection!=0=>{return statusInspection;},else=>unit};
+let statusPath:Int=probePath(args);branch when{statusPath!=0=>{return statusPath;},else=>unit};
+let statusDirectory:Int=probeDirectory(args);branch when{statusDirectory!=0=>{return statusDirectory;},else=>unit};
+discard writeStdout("RUNTIME_LABEL_ORACLES_OK cells=6\n");0};

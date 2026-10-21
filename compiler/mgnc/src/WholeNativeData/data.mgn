@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeData;
+use Mgnc\WholeRuntimeTypes\{Info as RuntimeTypes};
 use Mgnc\Data\{Paged};
 use Mgnc\WholeConcrete\{Plan};
 use Mgnc\WholeClosures\{Closures};
@@ -11,7 +12,7 @@ public type Literal=product{instance:Int;block:Int;operation:Int;label:Int;bytes
 public type Global=product{symbol:Int;declaration:Int;valueType:Int;standard:String;};
 public type Constructor=product{instance:Int;block:Int;operation:Int;entry:Int;roots:Int;};
 public type Native=product{
- concrete:Plan;closures:Closures;layouts:Layouts;procedures:Paged<Procedure>;literals:Paged<Literal>;constructors:Paged<Constructor>;
+ runtimeTypes:RuntimeTypes;concrete:Plan;closures:Closures;layouts:Layouts;procedures:Paged<Procedure>;literals:Paged<Literal>;constructors:Paged<Constructor>;
  globals:Paged<Global>;globalSymbols:Map;globalDeclarations:Map;globalRoots:List<Bits<64>>;
  initializers:List<Int>;modules:List<Int>;moduleCount:Int;descriptors:Paged<Int>;variants:Paged<List<Int>>;entryGlobal:Int;nextLabel:Int;
 };

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativePlan;
+use Mgnc\WholeRuntimeTypes\{Info as RuntimeTypes,build as runtimeTypeIds};
 use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Semantic\{SemanticProject};
@@ -20,7 +21,7 @@ use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Facts\{fromSlots};
 public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic>=function(semantic:SemanticProject,source:Project,initial:Plan):Result<Native,Diagnostic>{
  let plan:Plan=try canonical(initial);
- let span:Span=Span{start:0,end:0,line:1,column:1};let closures:Closures=try closuresPlan(plan);let layouts:Layouts=try layoutsPlan(plan,closures);let frames:Paged<Frame>=try rootsPlan(plan);
+ let span:Span=Span{start:0,end:0,line:1,column:1};let runtimeTypes:RuntimeTypes=try runtimeTypeIds(plan);let closures:Closures=try closuresPlan(plan);let layouts:Layouts=try layoutsPlan(plan,closures);let frames:Paged<Frame>=try rootsPlan(plan);
  var next:Int=256;var descriptors:Paged<Int>=empty<Int>();var variants:Paged<List<Int>>=empty<List<Int>>();
  loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
   descriptors=push<Int>(descriptors,next);next=next+1;var rows:List<Int>=List<Int>[];loop over(descriptor->variants as refs:List<Int>){discard refs;rows=rows->append(next);next=next+1;};variants=push<List<Int>>(variants,rows);
@@ -72,5 +73,5 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  var modules:List<Int>=List<Int>[];loop over(source->moduleOrder as file:Int){branch when{(try get(reachable,file))>=0&&!(try lookup<Module>(plan->types->headers->modules,file))->standard=>{modules=modules->append(file);},else=>unit};};
  var initializers:List<Int>=List<Int>[];loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,try present(instance->body->declaration,span,"initializer source"));branch when{(try get(reachable,declaration->file))>=0=>{initializers=initializers->append(initializer);},else=>unit};};
  let entryGlobal:Int=try get(globalDeclarations,source->entry);try require(entryGlobal>=0,span,"native entry global");
- Result<Native,Diagnostic>::Ok(Native{concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
+ Result<Native,Diagnostic>::Ok(Native{runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
 };

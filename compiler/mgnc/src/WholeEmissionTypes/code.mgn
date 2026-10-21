@@ -1,0 +1,11 @@
+namespace Mgnc\WholeEmissionTypes;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\TypeData\{Type,Argument,Member,ValueTerm};
+use Mgnc\RepresentationInfo\{describe};
+use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeIR\{Slot,Block,Operation};
+use Mgnc\WholeChecks\{require};
+use Mgnc\IntMap\{Map,create,get,put};
+// Completed emission identities include scalar types and signature/member edges.
+public let collect:Function(Plan):Result<Paged<Int>,Diagnostic>=function(plan:Plan):Result<Paged<Int>,Diagnostic>{var pending:Paged<Int>=empty<Int>();var seen:Map=create();var completed:Paged<Int>=empty<Int>();let span:Span=Span{start:0,end:0,line:1,column:1};loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){pending=push<Int>(pending,instance->body->resultType);loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){pending=push<Int>(pending,slot->valueType);};};loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as operation:Operation){loop over(operation->arguments as argument:Argument){branch on argument{Argument::Type(id:Int)=>{pending=push<Int>(pending,id);},Argument::Value(term:ValueTerm)=>unit};};};};};};};var cursor:Int=0;loop while(cursor<pending->count){let id:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);discard try describe(plan->types,id);completed=push<Int>(completed,id);let value:Type=try lookup<Type>(plan->types->types,id);loop over(value->arguments as argument:Argument){branch on argument{Argument::Type(child:Int)=>{pending=push<Int>(pending,child);},Argument::Value(term:ValueTerm)=>{branch on term->parameter{Parent::None=>unit,Parent::Some(ordinal:Int)=>{try require(false,span,"emission closure contains a symbolic value");}};}};};loop over(value->members as member:Member){branch on member->value{Parent::None=>unit,Parent::Some(child:Int)=>{pending=push<Int>(pending,child);}};};};Result<Paged<Int>,Diagnostic>::Ok(completed)};

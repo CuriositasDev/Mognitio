@@ -1,0 +1,13 @@
+namespace Mgnc\WholeRuntimeTypes;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\WholeConcrete\{Plan};
+use Mgnc\WholeEmissionTypes\{collect};
+use Mgnc\WholeStableKeys\{Entry,vector,shape,compare,sort};
+use Mgnc\WholeChecks\{require};
+use Mgnc\IntMap\{Map,create,get as mapGet,put};
+public type RuntimeId=product{value:Int;};
+// values: compiler TypeId -> RuntimeTypeId or -1. types: dense ID -> representative.
+// Neither direction contains descriptor IDs. The complete type-store extent is explicit.
+public type Info=product{values:Paged<Int>;types:Paged<Int>;};
+public let resolve:Function(Info,Int):Result<RuntimeId,Diagnostic>=function(info:Info,compilerId:Int):Result<RuntimeId,Diagnostic>{let value:Int=try lookup<Int>(info->values,compilerId);try require(value>=0&&value<info->types->count,Span{start:0,end:0,line:1,column:1},"concrete type is outside RuntimeTypeId closure");Result<RuntimeId,Diagnostic>::Ok(RuntimeId{value:value})};
+public let build:Function(Plan):Result<Info,Diagnostic>=function(plan:Plan):Result<Info,Diagnostic>{let completed:Paged<Int>=try collect(plan);var entries:Paged<Entry>=empty<Entry>();loop over(completed->pages->append(completed->tail) as page:List<Int>){loop over(page as id:Int){entries=push<Entry>(entries,Entry{id:id,tokens:vector(try shape(plan->types,id))});};};entries=try sort(entries);var assigned:Map=create();var types:Paged<Int>=empty<Int>();var previous:Paged<Int>=empty<Int>();var ordinal:Int= -1;loop over(entries->pages->append(entries->tail) as page:List<Entry>){loop over(page as entry:Entry){branch when{ordinal<0||(try compare(previous,entry->tokens))!=0=>{ordinal=ordinal+1;types=push<Int>(types,entry->id);previous=entry->tokens;},else=>unit};assigned=try put(assigned,entry->id,ordinal);};};var values:Paged<Int>=empty<Int>();var compilerId:Int=0;loop while(compilerId<plan->types->types->count){let value:Int=try mapGet(assigned,compilerId);values=push<Int>(values,branch when{value>=0=>value,else=>-1});compilerId=compilerId+1;};Result<Info,Diagnostic>::Ok(Info{values:values,types:types})};

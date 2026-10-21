@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeCheck;
+use Mgnc\WholeRuntimeTypeCheck\{verify as runtimeTypeIds};
 use Mgnc\WholeStandardProof\{helper as standardHelper};
 use Mgnc\WholeBinaryProof\{selected as checkedBinary,expected as binaryExpected};
 use Mgnc\WholeNumericResultCheck\{selected as checkedNumeric,expected as numericExpected};
@@ -36,7 +37,7 @@ let global:Function(SemanticProject,Native,Int,Span):Result<Int,Diagnostic>=func
 // Independently inspect each plan table after concrete/source correspondence.
 public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Native):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let headers:Headers=semantic->state->types->headers;
- try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
+ try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
  try require(plan->procedures->count==plan->concrete->instances->count&&plan->moduleCount==headers->modules->count,span,"native procedure/module membership");
  var labels:Map=create();var used:Map=create();var owner:Int=0;var literalCount:Int=0;var constructorCount:Int=0;
  loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){

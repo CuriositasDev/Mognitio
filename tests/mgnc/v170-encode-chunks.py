@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare bounded encoding with a frozen source reference and an independent ELF oracle."""
+"""Compare record encoding with a frozen source reference and an independent ELF oracle."""
 from pathlib import Path
 import argparse,hashlib,json,shutil,stat,struct,subprocess
 

@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "qualified-internal-seed",
+  "source_commit": "9cc663be54f9101f0b596578b37207bb2695856c",
+  "tested_runtime_head": "188077a99eddb9bc6d7e2d5b40cd0e363217ecbc",
+  "integrated_runtime_tree": "efe49a4a917d54fdd89d8df1b06a7745765398b1",
+  "accepted_at": "2026-10-21",
+  "archive": "lisp-9cc663be54f9101f0b596578b37207bb2695856c.tar.gz",
+  "archive_bytes": 30523151,
+  "archive_sha256": "675fd7ab2fed08c819477788918d89c7ddaad75848d7e0c69ca7de9f2309f38f",
+  "manifest_sha256": "83ef5c9e1c54b7a9fb2649d053c76a8fa04052f6dae945374e645b0835d9c3a5",
+  "components": 1497,
+  "host_lisp": {
+    "version": "SBCL 2.2.9.debian",
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64
+  },
+  "runtime_origin": "Verified retained locked executable, pristine input core and contributions; verified retained platform inputs; fresh compiler core from accepted source. No new container extraction or old compiler core reuse.",
+  "qualification": {
+    "component_hashes_and_modes": true,
+    "restore_and_mutation_rejection": true,
+    "isolated_run_and_build": true,
+    "independent_elf": true,
+    "witness_cases": 9,
+    "witness_observations": 25,
+    "additional_cases": 8,
+    "additional_observations": 24,
+    "inherited_capability_cells": 17,
+    "inherited_compiler_sources": 173,
+    "inherited_generated_compiler_check": true,
+    "complete_capacity_sources": 291,
+    "complete_capacity_input_files": 292,
+    "complete_capacity_input_bytes": 11859620,
+    "complete_capacity_inventory_sha256": "a2de27ebff590c8350f586aac01ea127f0fe6f68752f041682e08fd2c2fcea6e",
+    "capacity_compiler_bytes": 28887744,
+    "capacity_compiler_sha256": "c77049386f61a33c6b561296d1cc21a3f76c4980154836312852a313b375b615",
+    "source_export_diagnostic_byte_identical": true
+  },
+  "runtime_validation": {
+    "groups": 254,
+    "assertions": 16992973,
+    "native_processes": 1332,
+    "failures": 0,
+    "subsequent_integrations": true
+  },
+  "previous_seed": {
+    "source_commit": "607a8418b486f0cebd5e92041e894dded94b448b",
+    "archive_sha256": "a54ea44e38464d95e133b0c04aad4922519519563936faada4b8fbca479a9a27",
+    "mutated": false
+  },
+  "final_v170_implementation_accepted": false,
+  "formal_performance_accepted": false,
+  "release_performed": false
+}

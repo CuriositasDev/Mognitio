@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "qualified-internal-seed",
+  "source_commit": "263fc3651fd66bef62a023e4280c2353fa7086f1",
+  "tested_runtime_head": "e04acc0e25948e8af263a1cd0301e6542896c670",
+  "integrated_runtime_tree": "9da5c33c8a7e0302aa89c04d63813444eaedf35b",
+  "accepted_at": "2026-10-21",
+  "archive": "lisp-263fc3651fd66bef62a023e4280c2353fa7086f1.tar.gz",
+  "archive_bytes": 30496092,
+  "archive_sha256": "d87ed61f24459103f0d486bedd14dcea429c6bc4927be9f8c9cad4a15e08ed95",
+  "manifest_sha256": "347d9ce7ca30f4411bbc8a31b0f54dc9256ffdc7716a21e447d9c1e4f8f555f0",
+  "components": 1475,
+  "host_lisp": {
+    "version": "SBCL 2.2.9.debian",
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64
+  },
+  "runtime_origin": "Retained locked executable, pristine input core and contributions; verified retained platform components; fresh Mognitio core from accepted source; not a new container extraction.",
+  "qualification": {
+    "component_verification": true,
+    "restore_and_mutation_rejection": true,
+    "isolated_run_and_build": true,
+    "independent_elf": true,
+    "witness_cases": 9,
+    "witness_observations": 25,
+    "additional_cases": 8,
+    "additional_observations": 24,
+    "inherited_capability_cells": 17,
+    "inherited_compiler_sources": 173,
+    "inherited_generated_compiler_check": true,
+    "complete_capacity_sources": 290,
+    "complete_capacity_input_files": 291,
+    "complete_capacity_input_bytes": 11854613,
+    "complete_capacity_inventory_sha256": "7c48c87befe58c28274e3d559068feb819e1defd48770bb5496e09338da3adbf",
+    "capacity_compiler_bytes": 28800104,
+    "capacity_compiler_sha256": "7d203fdfbc16b2c05b5351522303764c1fa9135a3e392019eb4f4fdb25987f57",
+    "inherited_compiler_source_commit": "a3d1ec09c023f09e6f6da526fa5cf64f030c5e80"
+  },
+  "runtime_validation": {
+    "groups": 245,
+    "assertions": 1913030,
+    "native_processes": 1324,
+    "failures": 0,
+    "subsequent_integrations": true
+  },
+  "previous_seed": {
+    "source_commit": "63c99a21cd50e31f458c83231c34adbdce3bf4f2",
+    "archive_sha256": "5f4e21d2c52dfe3e6cca50f7c3c42bdf2d7c92510914b7cb173b25d2f3c4ac37",
+    "mutated": false
+  },
+  "final_v170_implementation_accepted": false,
+  "formal_performance_accepted": false,
+  "release_performed": false
+}

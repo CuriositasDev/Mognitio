@@ -46,7 +46,7 @@
             (otherwise (error "Unimplemented allocator instruction ~S" op)))))
       (error "Allocator instruction budget exceeded"))))
 
-(defun v160-fit-sequence (sizes requests &optional code)
+(defun v160-fit-sequence (sizes requests &optional code reset-at)
   (let* ((memory (make-hash-table)) (oracle nil) (address 16384)
          (head (+ 1024 288))
          (mognitio.native.runtime::*test-options* '(:gc-counters t))
@@ -61,7 +61,11 @@
     (setf oracle (nreverse oracle) (gethash head memory) (caar oracle))
     (loop for rest on oracle
           do (setf (gethash (+ (caar rest) 16) memory) (or (caadr rest) 0)))
-    (dolist (requested requests)
+    (loop for requested in requests for ordinal from 0 do
+      (when (eql ordinal reset-at)
+        ;; Collection invalidates cursor links; historical size keys may remain.
+        (loop for at from 304 below 688 by 8 do
+          (setf (gethash (+ 1024 at) memory) 0)))
       (let* ((selected (find-if (lambda (row) (>= (second row) requested)) oracle))
              (expected (or (first selected) 0))
              (actual (v160-run-fit-code code memory requested)))
@@ -118,7 +122,7 @@
 
 
 (deftest v160-large-fit-cursor-equivalence-and-collisions
-  ;; 1184 and 928 hash to the same slot. The earlier 1000-byte block becomes
+  ;; 1184 and 928 share a cache set. The earlier 1000-byte block becomes
   ;; eligible for the smaller request, so a stale cursor would violate first-fit.
   (v160-fit-sequence '(1000 8192) '(1184 928 1184 928 40 168))
   (v160-fit-sequence '(40 40 40 8192) '(1184 40 40 40 1184 1312 928))
@@ -177,3 +181,53 @@
                             :binary-error t :timeout 120)
           (same 0 code) (same "" out) (same 240 (length bytes))
           (is (> (loop for i below 8 sum (ash (aref bytes (+ 48 i)) (* i 8))) 0)))))))
+
+
+(defun v170-mutated-fit-code (before after)
+  (let* ((mognitio.native.runtime::*test-options* '(:gc-counters t))
+         (code (mognitio.native.runtime::find-free-unit)) (matches 0))
+    (setf (mognitio.object:code-unit-instructions code)
+      (mapcar (lambda (instruction)
+        (if (equal (cons (mognitio.machine:instruction-opcode instruction)
+                         (mognitio.machine:instruction-operands instruction)) before)
+            (progn (incf matches) (first (machine after))) instruction))
+        (mognitio.object:code-unit-instructions code)))
+    (same 1 matches) code))
+
+(deftest v170-two-way-fit-first-fit-and-reset
+  ;; Independent ordered-block selection and complete free-chain checks cover
+  ;; promotions, eviction, smaller colliding requests and owner-link removal.
+  (dolist (count '(0 1 2 7 31 64 257 2048))
+    (dolist (pattern '((40) (40 80 160) (416) (40 416 80)
+                       (40 1184 160) (1000 1000 40)))
+      (let ((sizes (append (loop for i below count
+                                collect (nth (mod i (length pattern)) pattern))
+                           '(65536))))
+        (dolist (requests '((1184 416 1184 416 1184 416 1184 416)
+                            (416 1184 416 1184 416 1184 416 1184)
+                            (1184 40 416 80 1184 160 416 40)
+                            (696 440 184 696 440 184 160 40)
+                            (928 1184 928 1184 928 1184 928 1184)
+                            (1184 416 672 1184 416 672 160 40)))
+          (dolist (reset '(nil 3))
+            (v160-fit-sequence sizes requests nil reset)))))))
+
+(deftest v170-two-way-fit-collision-work-bound
+  ;; Two cold traversals suffice for two colliding sizes. Later exact hits
+  ;; must not rescan the unchanged prefix, independently of allocation values.
+  (let* ((sizes (append (make-list 2048 :initial-element 40) '(1048576)))
+         (requests (loop repeat 32 append '(1184 416)))
+         (bound (+ (* 2 2049) 62)))
+    (is (<= (v160-fit-sequence sizes requests) bound))
+    (let ((disabled (v170-mutated-fit-code '(:load-word :r11 :r10 0)
+                                          '(:imm-reg :r11 0))))
+      (is (> (v160-fit-sequence sizes requests disabled) bound)))))
+
+(deftest v170-two-way-fit-owner-and-pair-mutations
+  ;; Check mutation membership outside the expected rejection boundary.
+  (let ((first-owner (v170-mutated-fit-code '(:cmp-reg :r11 :rcx) '(:cmp-reg :rcx :rcx)))
+        (second-owner (v170-mutated-fit-code '(:cmp-reg :rdx :rcx) '(:cmp-reg :rcx :rcx)))
+        (pair (v170-mutated-fit-code '(:store-word :r10 0 :rax) '(:store-word :r10 0 :r9))))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 928) first-owner))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(1184 1312 928) second-owner))
+    (signals error (v160-fit-sequence '(1000 1000 40 65536) '(928 1184 928) pair))))

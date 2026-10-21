@@ -29,6 +29,6 @@ run=subprocess.run([str(artifact)],capture_output=True,timeout=180)
 (args.output/'run.stdout').write_bytes(run.stdout)
 (args.output/'run.stderr').write_bytes(run.stderr)
 expected=b'V170_PUBLICATION_IR_OK valid=1\n'
-assert run.returncode==0 and run.stderr==b'' and run.stdout.endswith(expected) and run.stdout.count(b'V170_PUBLICATION_MUTANT ')>=12,(run.returncode,run.stdout,run.stderr)
+assert run.returncode==0 and run.stderr==b'' and run.stdout.endswith(expected) and run.stdout.count(b'V170_PUBLICATION_MUTANT ')>=82 and b'V170_PUBLICATION_CLEANUP_MUTANTS_OK sites=7 rejected=70\n' in run.stdout,(run.returncode,run.stdout,run.stderr)
 assert all(sha(project/row['path'])==row['sha256'] for row in inventory)
 print(run.stdout.decode(),end='')

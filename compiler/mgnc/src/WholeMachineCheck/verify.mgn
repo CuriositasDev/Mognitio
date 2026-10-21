@@ -52,6 +52,27 @@ let binary:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>
 let standardAllocations:Function(Native,Code,Map,Global,Span):Result<Unit,Diagnostic>=function(plan:Native,code:Code,labels:Map,value:Global,span:Span):Result<Unit,Diagnostic>{
  let id:Int=try standardHelper(plan,value);branch when{id!=73&&id!=74&&id!=75&&id!=76&&id!=77&&id!=78&&id!=79=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};let expected:List<Int>=try standardDescriptors(plan,value);var descriptors:List<Int>=List<Int>[];var bitmaps:List<Int>=List<Int>[];var cursor:Int=(try get(labels,id))+1;try require(cursor>0,span,"binary Function entry");loop while(cursor<code->records->count){let record:Record=try lookup<Record>(code->records,cursor);branch when{record->kind==1&&record->target<256=>{break;},else=>unit};branch when{record->kind==4&&same(record->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,cursor+1);branch when{following->kind==2&&following->target==10=>{descriptors=descriptors->append(record->value);},else=>unit};},record->kind==5&&record->target>=167&&record->target<=175=>{bitmaps=bitmaps->append(record->target);},else=>unit};cursor=cursor+1;};try require(same(descriptors,expected),span,"binary Function allocation descriptors");try require(same(bitmaps,branch when{id==73=>List<Int>[167,168,169],id==75=>List<Int>[171],id==76=>List<Int>[172],id==77=>List<Int>[173],id==78=>List<Int>[174],id==79=>List<Int>[175],else=>List<Int>[170]}),span,"binary Function root selections");Result<Unit,Diagnostic>::Ok(unit)
 };
+
+// This index is local to one immutable procedure. Keep the source point ordinal
+// so labels are still read in original order and duplicate sites still use last.
+type IndexedPoint=product{previous:Int;operation:Int;ordinal:Int;};
+type PointIndex=product{heads:Map;entries:Paged<IndexedPoint>;};
+let indexPoints:Function(Paged<Point>):Result<PointIndex,Diagnostic>=function(points:Paged<Point>):Result<PointIndex,Diagnostic>{
+ var heads:Map=create();var entries:Paged<IndexedPoint>=empty<IndexedPoint>();var ordinal:Int=0;
+ loop over(points->pages->append(points->tail) as page:List<Point>){loop over(page as point:Point){
+  branch when{point->block>=0&&point->operation>=0=>{
+   let previous:Int=try get(heads,point->block);heads=try put(heads,point->block,entries->count);entries=push<IndexedPoint>(entries,IndexedPoint{previous:previous,operation:point->operation,ordinal:ordinal});
+  },else=>unit};ordinal=ordinal+1;
+ };};Result<PointIndex,Diagnostic>::Ok(PointIndex{heads:heads,entries:entries})
+};
+let rootsAt:Function(PointIndex,Paged<Int>,Int):Result<Map,Diagnostic>=function(index:PointIndex,labels:Paged<Int>,block:Int):Result<Map,Diagnostic>{
+ var selected:Paged<Int>=empty<Int>();var cursor:Int=try get(index->heads,block);
+ loop while(cursor>=0){selected=push<Int>(selected,cursor);cursor=(try lookup<IndexedPoint>(index->entries,cursor))->previous;};
+ var roots:Map=create();var position:Int=selected->count;
+ loop while(position>0){position=position-1;let point:IndexedPoint=try lookup<IndexedPoint>(index->entries,try lookup<Int>(selected,position));roots=try put(roots,point->operation,try lookup<Int>(labels,point->ordinal));};
+ Result<Map,Diagnostic>::Ok(roots)
+};
+
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
@@ -78,11 +99,10 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
   // Prologue must save every private callee-save register before any call.
   let first:Record=try lookup<Record>(code->records,(try get(labels,procedure->entry))+1);
   try require(same(range(first->bytes,0,12),List<Int>[85,72,137,229,83,65,84,65,85,65,86,65])&&(try atList<Int>(first->bytes,12))==87,span,"source callee-save prologue");
+  let indexedPoints:PointIndex=try indexPoints(procedure->frame->points);
   loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
    let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);let terminal:Int=try lookup<Int>(procedure->terminatorLabels,blockId);var position:Int=0;
-   // Retain the original last-match behavior while avoiding a point-table scan
-   // for every allocating operation in this source block.
-   var pointRoots:Map=create();var pointId:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){branch when{point->block==blockId&&point->operation>=0=>{pointRoots=try put(pointRoots,point->operation,try lookup<Int>(procedure->pointLabels,pointId));},else=>unit};pointId=pointId+1;};};
+   let pointRoots:Map=try rootsAt(indexedPoints,procedure->pointLabels,blockId);
 
    loop over(block->operations as op:Operation){
     let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};

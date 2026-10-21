@@ -17,3 +17,16 @@ public let pack:Function(List<Int>,Span):Result<Bytes,Diagnostic>=function(value
 public let finish:Function(List<Bytes>):Bytes=function(levels:List<Bytes>):Bytes{
  var result:Bytes=vacant;loop over(levels as previous:Bytes){branch when{previous->length()>0=>{result=previous->concat(result);},else=>unit};};result
 };
+
+// Keep small record and relocation fragments out of the carry tree until
+// their combined byte buffer is full. A large existing fragment goes directly
+// into the tree; it is never rebuilt byte by byte.
+public type Buffered=product{levels:List<Bytes>;pending:Bytes;};
+public let buffered:Function():Buffered=function():Buffered{Buffered{levels:List<Bytes>[],pending:vacant}};
+public let addBuffered:Function(Buffered,Bytes):Result<Buffered,Diagnostic>=function(initial:Buffered,chunk:Bytes):Result<Buffered,Diagnostic>{
+ branch when{chunk->length()==0=>{return Result<Buffered,Diagnostic>::Ok(initial);},else=>unit};
+ branch when{initial->pending->length()+chunk->length()<=4096=>{return Result<Buffered,Diagnostic>::Ok(Buffered{levels:initial->levels,pending:initial->pending->concat(chunk)});},else=>unit};
+ let levels:List<Bytes>=try add(initial->levels,initial->pending);
+ branch when{chunk->length()>=4096=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:try add(levels,chunk),pending:vacant}),else=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:levels,pending:chunk})}
+};
+public let finishBuffered:Function(Buffered):Bytes=function(value:Buffered):Bytes{finish(value->levels)->concat(value->pending)};

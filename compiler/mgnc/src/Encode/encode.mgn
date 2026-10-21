@@ -1,7 +1,7 @@
 namespace Mgnc\Encode;
 use Std\Numeric\{Bits};
 use Std\Binary\{Bytes,bytesFromBits};
-use Mgnc\EncodeChunks\{add as addChunk,pack as packChunk,finish as finishChunks};
+use Mgnc\EncodeChunks\{Buffered,buffered,addBuffered as addChunk,pack as packChunk,finishBuffered as finishChunks};
 use Mgnc\Data\{Paged,empty,push,Diagnostic,problem,Span};
 use Mgnc\Machine\{Code,Record,Label,flush};
 use Mgnc\IntMap\{Map,create,get,put};
@@ -60,7 +60,7 @@ public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code)
  branch when{result->length()!=120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"ELF header size"));},else=>unit};
  // Machine records already own immutable raw-byte lists. Pack them directly;
  // do not rebuild every byte as a second linked list before conversion.
- var chunks:List<Bytes>=try addChunk(List<Bytes>[],bytesFromBits(result));
+ var chunks:Buffered=try addChunk(buffered(),bytesFromBits(result));
  var written:Int=120;var offset:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
   loop over(page as record:Record){

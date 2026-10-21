@@ -1,5 +1,5 @@
 namespace Mgnc;
-use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup,push};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\Semantic\{SemanticProject,analyze};
 use Mgnc\WholePipeline\{prepare};
@@ -29,7 +29,16 @@ let changed:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code
 
 let tail:Function(List<Int>,List<Int>):Bool=function(data:List<Int>,suffix:List<Int>):Bool{branch when{data->length()<suffix->length()=>{return false;},else=>unit};var index:Int=0;loop over(suffix as value:Int){let other:Int=branch on data->at(data->length()-suffix->length()+index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
 let signedBranch:Function(List<Int>):List<Int>=function(data:List<Int>):List<Int>{var out:List<Int>=List<Int>[];var index:Int=0;loop over(data as value:Int){out=out->append(branch when{index+1==data->length()=>140,else=>value});index=index+1;};out};
-let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"directory.mgn",displayPath:"directory.mgn",relativePath:"directory.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{readDirectory};let main:Function(List<String>):Int=function(args:List<String>):Int{discard readDirectory(\".\");0};"};let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;var covered:List<String>=List<String>[];
+
+let shiftedCode:Function(Code,Int):Code=function(initial:Code,count:Int):Code{
+ let code:Code=flush(initial);var records:Paged<Record>=empty<Record>();var i:Int=0;
+ let padding:Record=Record{kind:0,bytes:List<Int>[],value:0,target:0};
+ loop while(i<count){records=push<Record>(records,padding);i=i+1;};
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){records=push<Record>(records,item);};};
+ Code{records:records,nextLabel:code->nextLabel,pending:List<Int>[]}
+};
+
+let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"directory.mgn",displayPath:"directory.mgn",relativePath:"directory.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{readDirectory};let main:Function(List<String>):Int=function(args:List<String>):Int{discard readDirectory(\".\");0};"};let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try directoryMachine(plan,shiftedCode(code,32768));try machine(plan,code);var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;var covered:List<String>=List<String>[];
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
  branch when{
  owner==84&&item->kind==4&&item->value==34&&tail(item->bytes,List<Int>[73,186])=>{message="directory mapping flags";replacement=Record{kind:item->kind,bytes:item->bytes,value:2,target:item->target};all=true;},

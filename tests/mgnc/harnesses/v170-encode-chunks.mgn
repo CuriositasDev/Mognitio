@@ -3,7 +3,7 @@ use Mgnc\Data\{Paged,empty,push,Diagnostic,Span,number};
 use Mgnc\Machine\{Code,Record};
 use Mgnc\Encode\{encode};
 use Mgnc\TestOldEncode\{encode as oldEncode};
-use Mgnc\EncodeChunks\{add as addChunk,finish as finishChunks,pack as packChunk};
+use Mgnc\EncodeChunks\{Buffered,buffered,addBuffered,finishBuffered,add as addChunk,finish as finishChunks,pack as packChunk};
 use Mgnc\WholeChecks\{require};
 use Std\Binary\{Bytes,bytesFromInts,ByteValueError,publishFile,BinaryFileMode,BinaryOutputError};
 use Std\Io\{writeStdout};
@@ -43,6 +43,22 @@ let test:Function(String):Result<Unit,Diagnostic>=function(directory:String):Res
  let pending:Code=Code{records:build(List<Record>[zero],1)->records,nextLabel:1,pending:List<Int>[256]};try reject(pending,"opcode byte out of range");
  try reject(build(List<Record>[record(1,List<Int>[-1],0,0)],1),"opcode byte out of range");
  branch on packChunk(List<Int>[0,256,-1],span){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>{try require(false,span,"invalid chunk accepted");},Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{try require(error->phase=="internal"&&error->message=="opcode byte out of range",span,"chunk diagnostic");}};
- discard writeStdout("ENCODER_CHUNKS_ORACLE_OK images=17 carry_series=10 negative=17\n");Result<Unit,Diagnostic>::Ok(unit)
+
+ loop over(List<Int>[0,1,2,3,7,8,31,64,65,257] as count:Int){
+  var state:Buffered=buffered();var levels:List<Bytes>=List<Bytes>[];var i:Int=0;
+  loop while(i<count){
+   let sizes:List<Int>=List<Int>[0,1,2,3,4095,4096,4097,17,0,8192];let width:Int=branch on sizes->at(i%10){Result<Int,IndexError>::Ok(value:Int)=>value,Result<Int,IndexError>::Err(error:IndexError)=>0};
+   var values:List<Int>=List<Int>[];var j:Int=0;loop while(j<width){values=values->append(i%256);j=j+1;};
+   let chunk:Bytes=try packChunk(values,span);state=try addBuffered(state,chunk);levels=try addChunk(levels,chunk);
+   try require(state->pending->length()<=4096,span,"bounded fragment buffer");i=i+1;
+  };
+  let value:Bytes=finishBuffered(state);try require(value==finishChunks(levels),span,"buffered fragment order");try save(directory+"/buffered-"+number(count)+".bin",value);
+ };
+ loop over(List<Int>[0,1,255,256,257,4095,4096,4097,16385] as count:Int){
+  var records:Paged<Record>=push<Record>(empty<Record>(),record(1,List<Int>[],0,0));var i:Int=0;
+  loop while(i<count){var values:List<Int>=List<Int>[];var j:Int=0;loop while(j<i%17+1){values=values->append(i%256);j=j+1;};records=push<Record>(records,record(0,values,0,0));i=i+1;};
+  let code:Code=Code{records:records,nextLabel:1,pending:List<Int>[]};let value:Bytes=try encode(code);try require(value==(try oldEncode(code)),span,"many-record complete ELF differential");try save(directory+"/records-"+number(count)+".elf",value);
+ };
+ discard writeStdout("ENCODER_CHUNKS_ORACLE_OK images=26 carry_series=20 negative=17\n");Result<Unit,Diagnostic>::Ok(unit)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{let directory:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};branch on test(directory){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

@@ -34,6 +34,7 @@
               (:jnz (unless (zerop comparison) (setf target (first args))))
               (:jb (when (minusp comparison) (setf target (first args))))
               (:jbe (when (<= comparison 0) (setf target (first args))))
+              (:ja (when (> comparison 0) (setf target (first args))))
               (:jae (when (>= comparison 0) (setf target (first args))))
               (:load-word (write-reg (first args) (read-memory (+ (reg (second args)) (third args)))))
               (:load-byte (write-reg (first args) (logand 255 (read-memory (+ (reg (second args)) (third args))))))

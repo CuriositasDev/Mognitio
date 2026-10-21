@@ -1,0 +1,10 @@
+namespace App;
+type Cell=product{value:Int;};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ var kept:List<Cell>=List<Cell>[];var index:Int=0;
+ loop while(index<12000000){kept=kept->append(Cell{value:index});index=index+1;};
+ var last:Cell=Cell{value:0};index=0;
+ loop while(index<12000000){last=Cell{value:index};index=index+1;};
+ let first:Cell=branch on kept->at(0){Result<Cell,IndexError>::Ok(value:Cell)=>value,Result<Cell,IndexError>::Err(error:IndexError)=>{return 2;}};
+ branch when{kept->length()==12000000&&first->value==0&&last->value==11999999=>0,else=>1}
+};

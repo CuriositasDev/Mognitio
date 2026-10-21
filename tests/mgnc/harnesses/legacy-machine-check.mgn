@@ -1,0 +1,113 @@
+namespace Mgnc\TestOldMachine;
+use Mgnc\WholeContractMachine\{verify as contracts};
+use Mgnc\WholeDirectoryMachine\{verify as directory};
+use Mgnc\WholePathMachine\{verify as paths};
+use Mgnc\WholeInspectionMachine\{verify as inspection};
+use Mgnc\WholePubMachine\{verify as publication};
+use Mgnc\WholeBinaryProof\{Proof,selected as checkedBinary,expected as binaryExpected};
+use Mgnc\WholeNumericResultCheck\{Expected,selected as checkedNumeric,expected as numericExpected};
+use Mgnc\WholeNumericProof\{bytes as numericBytes};
+use Mgnc\MathValue\{Integer};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeNativeData\{Native,Procedure,Constructor,Global,abiRevisionLabel,descriptorTableLabel};
+use Mgnc\WholeFrameData\{Point};
+use Mgnc\WholeEffects\{allocating};
+use Mgnc\WholeHelpers\{Helper,registry};
+use Mgnc\WholeHelperCheck\{verify as helpers};
+use Mgnc\WholeStandardProof\{helper as standardHelper,descriptors as standardDescriptors};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+use Mgnc\IntMap\{Map,create,get,put};
+type Reference=product{offset:Int;kind:Int;target:Int;};
+type Fragment=product{bytes:List<Int>;references:List<Reference>;};
+let bytes:Function(Int,Int):List<Int>=function(value:Int,count:Int):List<Int>{
+ var remaining:Int=value;var result:List<Int>=List<Int>[];var index:Int=0;loop while(index<count){let rem:Int=remaining%256;result=result->append(branch when{rem<0=>rem+256,else=>rem});remaining=remaining/256-branch when{rem<0=>1,else=>0};index=index+1;};result
+};
+let append:Function(List<Int>,List<Int>):List<Int>=function(left:List<Int>,right:List<Int>):List<Int>{var result:List<Int>=left;loop over(right as value:Int){result=result->append(value);};result};
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{
+ branch when{left->length()!=right->length()=>{return false;},else=>unit};var i:Int=0;loop over(left as value:Int){branch on right->at(i){Result<Int,IndexError>::Ok(other:Int)=>{branch when{value!=other=>{return false;},else=>unit};},Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};i=i+1;};true
+};
+let range:Function(List<Int>,Int,Int):List<Int>=function(values:List<Int>,start:Int,end:Int):List<Int>{var result:List<Int>=List<Int>[];var i:Int=0;loop over(values as value:Int){branch when{i>=start&&i<end=>{result=result->append(value);},else=>unit};i=i+1;};result};
+let fragment:Function(Code,Map,Int,Int,Span):Result<Fragment,Diagnostic>=function(code:Code,labels:Map,start:Int,end:Int,span:Span):Result<Fragment,Diagnostic>{
+ var cursor:Int=try get(labels,start);let limit:Int=try get(labels,end);try require(cursor>=0&&limit>cursor,span,"machine source region");cursor=cursor+1;
+ var data:List<Int>=List<Int>[];var refs:List<Reference>=List<Reference>[];
+ loop while(cursor<limit){let record:Record=try lookup<Record>(code->records,cursor);data=append(data,record->bytes);branch when{record->kind==2||record->kind==5=>{refs=refs->append(Reference{offset:data->length(),kind:record->kind,target:record->target});data=append(data,bytes(0,branch when{record->kind==2=>4,else=>8}));},record->kind==3||record->kind==4=>{data=append(data,bytes(record->value,branch when{record->kind==3=>4,else=>8}));},else=>unit};cursor=cursor+1;
+ };Result<Fragment,Diagnostic>::Ok(Fragment{bytes:data,references:refs})
+};
+let occurrences:Function(List<Int>,List<Int>):Int=function(data:List<Int>,pattern:List<Int>):Int{
+ var count:Int=0;var window:List<Int>=List<Int>[];
+ loop over(data as octet:Int){window=window->append(octet);branch when{window->length()>pattern->length()=>{var changed:List<Int>=List<Int>[];var ordinal:Int=0;loop over(window as value:Int){branch when{ordinal>0=>{changed=changed->append(value);},else=>unit};ordinal=ordinal+1;};window=changed;},else=>unit};branch when{same(window,pattern)=>{count=count+1;},else=>unit};};count
+};
+let numeric:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
+ let expected:Expected=try numericExpected(plan,body,op);var position:Int=0;loop over(List<Int>[expected->resultDescriptor,expected->errorDescriptor,expected->fields] as value:Int){let prefix:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(40+position*8,4));try require(occurrences(part->bytes,prefix)==1,span,"numeric Result helper metadata");position=position+1;};
+ var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==68,span,"numeric Result helper target");},else=>unit};};try require(calls==1,span,"numeric Result helper call count");Result<Unit,Diagnostic>::Ok(unit)
+};
+let binary:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
+ let proof:Proof=try binaryExpected(plan,body,op);var position:Int=proof->start;loop over(proof->metadata as value:Int){let pattern:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(position,4));try require(occurrences(part->bytes,pattern)==1,span,"binary helper descriptor metadata");position=position+8;};var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==proof->helper,span,"binary helper target");},else=>unit};};try require(calls==1,span,"binary helper call count");Result<Unit,Diagnostic>::Ok(unit)
+};
+let standardAllocations:Function(Native,Code,Map,Global,Span):Result<Unit,Diagnostic>=function(plan:Native,code:Code,labels:Map,value:Global,span:Span):Result<Unit,Diagnostic>{
+ let id:Int=try standardHelper(plan,value);branch when{id!=73&&id!=74&&id!=75&&id!=76&&id!=77&&id!=78&&id!=79=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};let expected:List<Int>=try standardDescriptors(plan,value);var descriptors:List<Int>=List<Int>[];var bitmaps:List<Int>=List<Int>[];var cursor:Int=(try get(labels,id))+1;try require(cursor>0,span,"binary Function entry");loop while(cursor<code->records->count){let record:Record=try lookup<Record>(code->records,cursor);branch when{record->kind==1&&record->target<256=>{break;},else=>unit};branch when{record->kind==4&&same(record->bytes,List<Int>[72,190])=>{let following:Record=try lookup<Record>(code->records,cursor+1);branch when{following->kind==2&&following->target==10=>{descriptors=descriptors->append(record->value);},else=>unit};},record->kind==5&&record->target>=167&&record->target<=175=>{bitmaps=bitmaps->append(record->target);},else=>unit};cursor=cursor+1;};try require(same(descriptors,expected),span,"binary Function allocation descriptors");try require(same(bitmaps,branch when{id==73=>List<Int>[167,168,169],id==75=>List<Int>[171],id==76=>List<Int>[172],id==77=>List<Int>[173],id==78=>List<Int>[174],id==79=>List<Int>[175],else=>List<Int>[170]}),span,"binary Function root selections");Result<Unit,Diagnostic>::Ok(unit)
+};
+public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
+ var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
+ // Index emitted standard pointers independently in one pass. Preserve each
+ // global's register failure before its identity-count failure.
+ var standardTargets:Map=create();loop over(io as target:Int){standardTargets=try put(standardTargets,target,1);};
+ var standardCounts:Map=create();var invalidStandardRegisters:Map=create();
+ loop over(code->records->pages->append(code->records->tail) as records:List<Record>){loop over(records as record:Record){branch when{record->kind==5&&record->target>=0&&(try get(standardTargets,record->target))>=0=>{let previous:Int=try get(standardCounts,record->target);standardCounts=try put(standardCounts,record->target,branch when{previous<0=>1,else=>previous+1});branch when{!same(record->bytes,List<Int>[72,186])=>{invalidStandardRegisters=try put(invalidStandardRegisters,record->target,1);},else=>unit};},else=>unit};};};
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{let target:Int=try standardHelper(plan,value);try require((try get(invalidStandardRegisters,target))<0,span,"standard Function code pointer register");try require((try get(standardCounts,target))==1,span,"standard Function code pointer identity");},else=>unit};};};
+ let entries:List<Helper>=registry(io);try helpers(entries,code);try publication(plan,code);try inspection(plan,code);try paths(plan,code);try directory(plan,code);try contracts(plan,code);loop over(entries as helper:Helper){callable=try put(callable,helper->id,1);};
+ loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){callable=try put(callable,procedure->entry,1);};};
+ loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as item:Constructor){callable=try put(callable,item->entry,1);};};
+
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1=>{try require(record->target>=0&&record->target<code->nextLabel&&(try get(labels,record->target))<0,span,"machine label ownership");labels=try put(labels,record->target,index);},else=>unit};index=index+1;};};
+ let abiPosition:Int=try get(labels,abiRevisionLabel);try require(plan->abiRevision==2&&abiPosition>=0,span,"machine private value ABI membership");let abiWord:Record=try lookup<Record>(code->records,abiPosition+1);let afterABI:Record=try lookup<Record>(code->records,abiPosition+2);try require(abiWord->kind==4&&abiWord->bytes->length()==0&&abiWord->value==2&&afterABI->kind==1&&afterABI->target==descriptorTableLabel,span,"machine private value ABI revision data");
+ loop over(entries as helper:Helper){try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");};
+ loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{try standardAllocations(plan,code,labels,value,span);},else=>unit};};};
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
+  branch when{record->kind==2||record->kind==5=>{try require((try get(labels,record->target))>=0,span,"unlinked machine reference");},else=>unit};
+  branch when{record->kind==2&&record->bytes->length()>0&&(try atList<Int>(record->bytes,record->bytes->length()-1))==232=>{try require((try get(callable,record->target))>=0,span,"call into data or unregistered helper");},else=>unit};
+ };};
+ var owner:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+  let body:Body=instance->body;let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);var blockId:Int=0;
+  // Prologue must save every private callee-save register before any call.
+  let first:Record=try lookup<Record>(code->records,(try get(labels,procedure->entry))+1);
+  try require(same(range(first->bytes,0,12),List<Int>[85,72,137,229,83,65,84,65,85,65,86,65])&&(try atList<Int>(first->bytes,12))==87,span,"source callee-save prologue");
+  loop over(body->blocks->pages->append(body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){
+   let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);let terminal:Int=try lookup<Int>(procedure->terminatorLabels,blockId);var position:Int=0;
+   // Retain the original last-match behavior while avoiding a point-table scan
+   // for every allocating operation in this source block.
+   var pointRoots:Map=create();var pointId:Int=0;loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){branch when{point->block==blockId&&point->operation>=0=>{pointRoots=try put(pointRoots,point->operation,try lookup<Int>(procedure->pointLabels,pointId));},else=>unit};pointId=pointId+1;};};
+
+   loop over(block->operations as op:Operation){
+    let following:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>terminal};
+    let part:Fragment=try fragment(code,labels,try atList<Int>(markers,position),following,span);
+    branch when{try checkedBinary(plan->concrete->types,body,op)=>{try binary(plan,body,op,part,span);},else=>unit};
+    branch when{try checkedNumeric(plan->concrete->types,body,op)=>{try numeric(plan,body,op,part,span);},else=>unit};
+     branch when{op->code=="typed-integer"=>{try require(op->wide->length()==1&&part->references->length()==0&&part->bytes->length()==17,span,"numeric literal instruction shape");let expected:List<Int>=append(List<Int>[72,184],try numericBytes(try atList<Integer>(op->wide,0),op->origin->span));try require(same(range(part->bytes,0,10),expected),span,"numeric literal word encoding");},else=>unit};let length:Int=part->bytes->length();try require(length>0,span,"missing emitted source operation");
+    branch when{op->unavailable->length()==0=>{
+     branch when{try allocating(plan->concrete->types,body,op)=>{
+      let bitmap:Int=try get(pointRoots,position);
+      try require(part->references->length()>0,span,"missing allocation root selection");let reference:Reference=try atList<Reference>(part->references,0);
+      try require(bitmap>=0&&reference->kind==5&&reference->target==bitmap&&reference->offset==2&&same(range(part->bytes,0,2),List<Int>[72,184])&&same(range(part->bytes,10,17),List<Int>[72,137,133,208,255,255,255]),span,"allocation root descriptor handoff");
+     },else=>unit};
+     branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
+      let expected:List<Int>=append(List<Int>[72,137,133],bytes(-72-slot*8,4));try require(same(range(part->bytes,length-7,length),expected),span,"machine result root handoff");
+      branch when{op->code=="call"||op->code=="field-call"||op->code=="dispatch"=>{try require(same(range(part->bytes,length-10,length-7),List<Int>[65,255,211]),span,"indirect call result handoff");},else=>unit};
+     }};
+     branch when{op->code=="product"||op->code=="variant"=>{var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==10,span,"aggregate allocation helper");},else=>unit};};try require(calls==1,span,"aggregate initialization safepoint");},else=>unit};
+    },else=>unit};position=position+1;
+   };
+   let term:Terminator=block->terminator;branch when{term->code=="return"=>{
+    let following:Int=branch when{blockId+1<body->blocks->count=>procedure->blocks+blockId+1,else=>procedure->endLabel};let returned:Fragment=try fragment(code,labels,terminal,following,span);let slot:Int=try atList<Int>(term->inputs,0);
+    var expected:List<Int>=append(List<Int>[72,139,133],bytes(-72-slot*8,4));expected=append(expected,List<Int>[72,139,149,192,255,255,255,73,137,151,0,0,0,0,72,129,196]);expected=append(expected,bytes(procedure->frame->extent-40,4));expected=append(expected,List<Int>[65,95,65,94,65,93,65,92,91,93,195]);
+    try require(returned->references->length()==0&&same(returned->bytes,expected),span,"nonallocating return handoff and callee-save restore");
+   },else=>unit};blockId=blockId+1;
+  };};owner=owner+1;
+ };};Result<Unit,Diagnostic>::Ok(unit)
+};

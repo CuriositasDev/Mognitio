@@ -359,3 +359,16 @@ equivalent quadratic copy, missing markers, signals, timeout and wrong exit.
 
     python3 tests/mgnc/v170-bytes-cost-controls.py --output /new/control-output
     python3 tests/mgnc/v170-bytes-cost.py --compiler /path/to/compiler --output /new/cost-output
+
+
+Machine checking indexes frame points once per immutable procedure. The
+v170-machine-point-index.py --seed SEED --output NEW_DIRECTORY runner compares
+the actual helpers with the preceding scan and independent expected values.
+Its 168 cases include page boundaries, sparse blocks, ignored negative sites,
+missing selected labels and last-match duplicate ordering. A deliberately
+reversed traversal must fail despite producing well-typed source.
+
+Add --compare-machine-reference to v170-runtime-label-oracles.py to compare
+acceptance and complete diagnostics with the frozen legacy-machine-check.mgn
+source reference. The six oracle families exercise 266 comparisons, 462 mutants
+and six coherent images. References belong only to the test project.

@@ -1,0 +1,8 @@
+namespace Mgnc\TestMachineEquivalence;
+use Mgnc\WholeNativeData\{Native};use Mgnc\Machine\{Code};use Mgnc\Data\{Diagnostic,Span};use Mgnc\WholeChecks\{require};
+use Mgnc\WholeMachineCheck\{verify as current};use Mgnc\TestOldMachine\{verify as reference};use Std\Io\{writeStdout};
+public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,code:Code):Result<Unit,Diagnostic>{
+ let actual:Result<Unit,Diagnostic>=current(plan,code);let old:Result<Unit,Diagnostic>=reference(plan,code);let span:Span=Span{start:0,end:0,line:1,column:1};
+ branch on actual{Result<Unit,Diagnostic>::Ok(value:Unit)=>branch on old{Result<Unit,Diagnostic>::Ok(previous:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(false,span,"indexed machine accepted old rejection");}},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>branch on old{Result<Unit,Diagnostic>::Ok(previous:Unit)=>{try require(false,span,"indexed machine rejected old acceptance");},Result<Unit,Diagnostic>::Err(previous:Diagnostic)=>{try require(error->phase==previous->phase&&error->message==previous->message&&error->span->start==previous->span->start&&error->span->end==previous->span->end&&error->span->line==previous->span->line&&error->span->column==previous->span->column,span,"indexed machine diagnostic order");}}};
+ discard writeStdout("MACHINE_INDEX_EQ_OK\n");actual
+};

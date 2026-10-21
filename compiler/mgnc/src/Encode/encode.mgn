@@ -1,6 +1,7 @@
 namespace Mgnc\Encode;
 use Std\Numeric\{Bits};
 use Std\Binary\{Bytes,bytesFromBits};
+use Mgnc\EncodeChunks\{add as addChunk,pack as packChunk,finish as finishChunks};
 use Mgnc\Data\{Paged,empty,push,Diagnostic,problem,Span};
 use Mgnc\Machine\{Code,Record,Label,flush};
 use Mgnc\IntMap\{Map,create,get,put};
@@ -57,28 +58,38 @@ public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code)
  result=try appendField(result,try u64(length+120,span),span);
  result=try appendField(result,try u64(4096,span),span);
  branch when{result->length()!=120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"ELF header size"));},else=>unit};
- var offset:Int=0;
+ // Keep only a bounded raw-byte buffer live. Fields are already Bytes.
+ var chunks:List<Bytes>=try addChunk(List<Bytes>[],bytesFromBits(result));
+ var pending:List<Int>=List<Int>[];var written:Int=120;var offset:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
   loop over(page as record:Record){
-   loop over(record->bytes as value:Int){result=result->append(try byte(value,span));};
+   loop over(record->bytes as value:Int){
+    // Preserve the original first invalid-byte diagnostic before any field.
+    branch when{value<0||value>255=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"opcode byte out of range"));},else=>unit};
+    pending=pending->append(value);
+    branch when{pending->length()==4096=>{chunks=try addChunk(chunks,try packChunk(pending,span));written=written+pending->length();pending=List<Int>[];},else=>unit};
+   };
+   branch when{record->kind>=2&&pending->length()>0=>{chunks=try addChunk(chunks,try packChunk(pending,span));written=written+pending->length();pending=List<Int>[];},else=>unit};
    branch when{
     record->kind==0=>unit,
     record->kind==1=>unit,
     record->kind==2=>{
      let target:Int=try locate(labels,record->target,span);
-     result=try appendField(result,try i32(target-offset-record->bytes->length()-4,span),span);
+     let field:Bytes=try i32(target-offset-record->bytes->length()-4,span);chunks=try addChunk(chunks,field);written=written+field->length();
     },
-    record->kind==3=>{result=try appendField(result,try i32(record->value,span),span);},
-    record->kind==4=>{result=try appendField(result,try i64(record->value,span),span);},
+    record->kind==3=>{let field:Bytes=try i32(record->value,span);chunks=try addChunk(chunks,field);written=written+field->length();},
+    record->kind==4=>{let field:Bytes=try i64(record->value,span);chunks=try addChunk(chunks,field);written=written+field->length();},
     record->kind==5=>{
      let target:Int=try locate(labels,record->target,span);
-     result=try appendField(result,try u64(4194424+target,span),span);
+     let field:Bytes=try u64(4194424+target,span);chunks=try addChunk(chunks,field);written=written+field->length();
     },
     else=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"invalid machine record"));},
    };
    offset=offset+size(record);
   };
  };
- branch when{offset!=length || result->length()!=length+120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"size pass mismatch"));},else=>unit};
- Result<Bytes,Diagnostic>::Ok(bytesFromBits(result))
+ branch when{offset!=length || written+pending->length()!=length+120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"size pass mismatch"));},else=>unit};
+ branch when{pending->length()>0=>{chunks=try addChunk(chunks,try packChunk(pending,span));},else=>unit};
+ let encoded:Bytes=finishChunks(chunks);branch when{encoded->length()!=length+120=>{return Result<Bytes,Diagnostic>::Err(problem("internal",span,"size pass mismatch"));},else=>unit};
+ Result<Bytes,Diagnostic>::Ok(encoded)
 };

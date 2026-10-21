@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "qualified-internal-seed",
+  "source_commit": "607a8418b486f0cebd5e92041e894dded94b448b",
+  "tested_runtime_head": "637e54daaa64de35e4bc993fcc2501ca6b28703c",
+  "integrated_runtime_tree": "168694c7bdfa2d5b989032e6eae7197dc53c703c",
+  "accepted_at": "2026-10-21",
+  "archive": "lisp-607a8418b486f0cebd5e92041e894dded94b448b.tar.gz",
+  "archive_bytes": 30522617,
+  "archive_sha256": "a54ea44e38464d95e133b0c04aad4922519519563936faada4b8fbca479a9a27",
+  "manifest_sha256": "7840b6e0a4e3d027bf6626180522c82a17b3e11eac517b99584f3f3b7545c537",
+  "components": 1491,
+  "host_lisp": {
+    "version": "SBCL 2.2.9.debian",
+    "dynamic_space_mib": 4096,
+    "control_stack_mib": 64
+  },
+  "runtime_origin": "Verified retained locked executable, pristine input core and contributions; verified retained platform inputs; fresh compiler core from accepted source. No new container extraction or old compiler core reuse.",
+  "qualification": {
+    "component_hashes_and_modes": true,
+    "restore_and_mutation_rejection": true,
+    "isolated_run_and_build": true,
+    "independent_elf": true,
+    "witness_cases": 9,
+    "witness_observations": 25,
+    "additional_cases": 8,
+    "additional_observations": 24,
+    "inherited_capability_cells": 17,
+    "inherited_compiler_sources": 173,
+    "inherited_generated_compiler_check": true,
+    "complete_capacity_sources": 291,
+    "complete_capacity_input_files": 292,
+    "complete_capacity_input_bytes": 11858335,
+    "complete_capacity_inventory_sha256": "07ef35adcf7dcee7501abacef75123e568a797b8f6368ee832a173ffda25feba",
+    "capacity_compiler_bytes": 28868160,
+    "capacity_compiler_sha256": "38b3ba5f5d94d0e48d939fe59c2ce6a9cd676bfb2690bca26a7f3705032e9708",
+    "source_export_diagnostic_byte_identical": true
+  },
+  "runtime_validation": {
+    "groups": 250,
+    "assertions": 8541123,
+    "native_processes": 1326,
+    "failures": 0,
+    "subsequent_integrations": true
+  },
+  "previous_seed": {
+    "source_commit": "263fc3651fd66bef62a023e4280c2353fa7086f1",
+    "archive_sha256": "d87ed61f24459103f0d486bedd14dcea429c6bc4927be9f8c9cad4a15e08ed95",
+    "mutated": false
+  },
+  "final_v170_implementation_accepted": false,
+  "formal_performance_accepted": false,
+  "release_performed": false
+}

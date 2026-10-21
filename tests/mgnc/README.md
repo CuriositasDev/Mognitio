@@ -341,8 +341,10 @@ behind contract values, rejects public witness leaks, and rejects a later privat
 signature after earlier public traversals. Visibility memoization belongs only to
 one fixed store/header snapshot and is committed after complete successful walks.
 
-The encoder keeps bounded raw-byte buffers and balanced immutable byte chunks.
-Its original complete label/size pass and field diagnostics precede publication.
+The encoder packs existing immutable record byte lists directly and combines
+them as balanced immutable byte chunks. It avoids rebuilding every raw byte as
+a second linked-list node. The complete label/size pass, raw-byte validation
+priority and independent final byte-length check remain before publication.
 Run the source differential and independent ELF-byte oracle with
 v170-encode-chunks.py --seed SEED --output NEW_DIRECTORY. It covers chunk and
 field boundaries, a one-MiB raw record, carry ordering, signed and absolute

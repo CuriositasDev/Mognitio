@@ -38,15 +38,25 @@
         (:cmp-imm :rcx 40) (:jb :head) (:cmp-imm :rcx 160) (:ja :large)
         (:lea-base :r10 :r15 ,(- (context-field-offset :fit-cursors (test-image-p)) 40))
         (:add-reg :r10 :rcx) (:jmp :cached)
-        ;; Large requests use a bounded direct-mapped exact-size cache. A hash
-        ;; collision must invalidate the old cursor before reusing its slot.
-        (:label :large) (:mov-reg :rax :rcx) (:and-imm :rax 248)
+        ;; Large requests use 16 two-way sets in the same 32 exact-size slots.
+        ;; Each way owns its cursor. Complete key/cursor pairs move together;
+        ;; a miss initializes the replacement cursor before any lookup.
+        (:label :large) (:mov-reg :rax :rcx) (:and-imm :rax 120)
         (:lea-base :r8 :r15 ,(context-field-offset :large-fit-sizes (test-image-p)))
         (:add-reg :r8 :rax)
         (:lea-base :r10 :r15 ,(context-field-offset :large-fit-cursors (test-image-p)))
         (:add-reg :r10 :rax) (:load-word :r11 :r8 0) (:cmp-reg :r11 :rcx)
-        (:jz :cached) (:store-word :r8 0 :rcx)
-        (:imm-reg :r11 0) (:store-word :r10 0 :r11)
+        (:jz :cached) (:load-word :rdx :r8 128) (:cmp-reg :rdx :rcx)
+        (:jz :second-way)
+        ;; A miss replaces the least recently used way, retaining the first.
+        (:store-word :r8 128 :r11) (:load-word :r9 :r10 0)
+        (:store-word :r10 128 :r9) (:store-word :r8 0 :rcx)
+        (:imm-reg :r11 0) (:store-word :r10 0 :r11) (:jmp :cached)
+        ;; Promote an exact second-way hit by moving the complete key/cursor
+        ;; pairs together. Cursor targets remain free-list links, never slots.
+        (:label :second-way) (:load-word :r9 :r10 0) (:load-word :rax :r10 128)
+        (:store-word :r8 0 :rdx) (:store-word :r8 128 :r11)
+        (:store-word :r10 0 :rax) (:store-word :r10 128 :r9)
         (:label :cached) (:load-word :r11 :r10 0)
         (:cmp-imm :r11 0) (:jnz :cursor)
         (:label :head)

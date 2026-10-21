@@ -8,6 +8,8 @@ use Mgnc\WholePipeline\{prepare};
 use Mgnc\WholeNativeData\{Native,Literal,Constructor,Procedure};
 use Mgnc\WholeNativeCheck\{verify as verifyPlan};
 use Mgnc\WholeStandardProof\{helper as standardHelper};
+use Mgnc\WholeHelpers\{Helper,registry as helperRegistry};
+use Mgnc\WholeHelperCheck\{verify as helperOracle};
 use Mgnc\WholeNativeData\{Global};
 use Mgnc\WholeNativeEmit\{emit};
 use Mgnc\WholeMachineCheck\{verify as verifyMachine};
@@ -69,6 +71,10 @@ try reject(verifyMachine(plan,Code{records:try replaceItem<Record>(code->records
 try reject(verifyMachine(plan,Code{records:try replaceItem<Record>(code->records,pointer,Record{kind:0,bytes:List<Int>[],value:0,target:0}),nextLabel:code->nextLabel,pending:code->pending}),"standard Function code pointer identity");
 try reject(verifyMachine(plan,Code{records:push<Record>(code->records,pointerRecord),nextLabel:code->nextLabel,pending:code->pending}),"standard Function code pointer identity");
 try reject(verifyMachine(plan,Code{records:push<Record>(code->records,Record{kind:5,bytes:List<Int>[72,184],value:pointerRecord->value,target:pointerRecord->target}),nextLabel:code->nextLabel,pending:code->pending}),"standard Function code pointer register");
-discard writeStdout("V170_INDEX_VERIFIERS_OK valid=2 rejected=21\n");Result<Unit,Diagnostic>::Ok(unit)
+
+// Corrupt registry roots without hiding independently fixed bitmap labels.
+let runtimeEntries:List<Helper>=helperRegistry(List<Int>[standard]);try helperOracle(runtimeEntries,code);
+loop over(List<Int>[68,69,70,71] as target:Int){var changedEntries:List<Helper>=List<Helper>[];var matched:Bool=false;loop over(runtimeEntries as helper:Helper){branch when{helper->id==target=>{matched=true;changedEntries=changedEntries->append(Helper{id:helper->id,stack:helper->stack,arguments:helper->arguments,result:helper->result,managedAllocation:helper->managedAllocation,mayFail:helper->mayFail,terminal:helper->terminal,clobbers:helper->clobbers,dependencies:helper->dependencies,roots:List<Int>[]});},else=>{changedEntries=changedEntries->append(helper);}};};try require(matched,span,"helper root mutation target");try reject(helperOracle(changedEntries,code),branch when{target==68=>"numeric Result helper signature",else=>"undeclared runtime root descriptor"});};
+discard writeStdout("V170_INDEX_VERIFIERS_OK valid=2 rejected=25\n");Result<Unit,Diagnostic>::Ok(unit)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{branch on test(){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

@@ -12,8 +12,12 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
  try contracts(entries);let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);
  var helpers:Map=create();var labels:Map=create();var index:Int=0;
  loop over(entries as helper:Helper){helpers=try put(helpers,helper->id,index);index=index+1;};
+ // Keep every fixed runtime label even if registry roots are corrupted, plus
+ // any declared entry/root labels. The full machine oracle separately checks
+ // every source/local label and reference.
+ var queriedLabels:Map=create();loop over(entries as helper:Helper){queriedLabels=try put(queriedLabels,helper->id,1);loop over(helper->roots as root:Int){queriedLabels=try put(queriedLabels,root,1);};};
  index=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
-  branch when{record->kind==1=>{labels=try put(labels,record->target,index);},else=>unit};index=index+1;
+  branch when{record->kind==1&&(record->target<256||(try get(queriedLabels,record->target))>=0)=>{labels=try put(labels,record->target,index);},else=>unit};index=index+1;
  };};
  loop over(entries as helper:Helper){
   try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");

@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix="mgn-publication-fault-") as temporary:
   image.unlink(missing_ok=True)
   result=subprocess.run([options.compiler,"build",source,"-o",image],capture_output=True,timeout=180)
   assert (result.returncode,result.stdout,result.stderr)==(0,b"",b""),(result.returncode,result.stderr)
- def run(name,rules,expected,published=False,certified=None,stderr=b'',payload=bytes([0,128,255]),replaced=False):
+ def run(name,rules,expected,published=False,certified=None,stderr=b'',payload=bytes([0,128,255]),replaced=False,retained_temp=False):
   target.unlink(missing_ok=True);before={p.name for p in target.parent.iterdir()};report=options.out/(name+".json")
   result=subprocess.run([sys.executable,observer,"--report",report,"--rules",json.dumps(rules),image],capture_output=True,timeout=30)
   assert (result.returncode,result.stdout,result.stderr)==(expected,b"",stderr),(name,expected,result.returncode,result.stdout,result.stderr)
@@ -38,6 +38,12 @@ with tempfile.TemporaryDirectory(prefix="mgn-publication-fault-") as temporary:
   if published:assert target.read_bytes()==payload;target.unlink()
   if replaced:
    event=next(e for e in events if "replaced_temp" in e);foreign=Path(event["replaced_temp"]["foreign"]);retained=Path(event["replaced_temp"]["retained"]);assert foreign.read_bytes()==b"foreign";assert retained.stat().st_ino!=foreign.stat().st_ino;foreign.unlink();retained.unlink()
+  if retained_temp:
+   retained=[p for p in target.parent.iterdir() if p.name not in before]
+   assert len(retained)==1 and retained[0].name.startswith('.mgn-') and retained[0].is_file() and not retained[0].is_symlink(),(name,'unverified private leaf',retained)
+   assert retained[0].read_bytes()==payload and not [e for e in events if e['call']==263],(name,'unsafe identity cleanup')
+   data['retained_private_leaf']={'name':retained[0].name,'bytes_hex':retained[0].read_bytes().hex(),'reason':'identity verification failed; no unverified unlink'}
+   report.write_text(json.dumps(data,indent=2)+'\n');retained[0].unlink()
   assert {p.name for p in target.parent.iterdir()}==before,(name,"temporary leak",list(target.parent.iterdir()))
   for close in [e for e in events if e["call"]==3]:
    assert close["arguments"][0] not in [close["owned"].get(key,-1) for key in ("parent","file","probe")],(name,"released descriptor remains owned",close)
@@ -99,6 +105,23 @@ with tempfile.TemporaryDirectory(prefix="mgn-publication-fault-") as temporary:
  run("published-result-allocation-terminal",[{"call":3,"ordinal":3,"allocation_failure":True}],4,True,1,stderr=b"runtime error: allocation failure\n")
  run("temp-stat-internal",[fault(5,1,-9)],3,stderr=b"internal error: native runtime invariant\n")
  run("temp-stat-internal-secondary-close",[fault(5,1,-9),fault(3,2,-5,True)],3,stderr=b"internal error: native runtime invariant\n")
+
+ # Domain failures override ordinary API errors; an active runtime failure
+ # remains primary. Execute releases before replacing their replies so the
+ # observation does not pretend that a skipped release reached the kernel.
+ internal=b"internal error: native runtime invariant\n"
+ for reply in (1,-9,-14,-22,-4096,-5000):
+  suffix=str(reply)
+  run("cleanup-unlink-internal-"+suffix,[fault(1,1,-28),fault(263,1,reply,True)],3,stderr=internal)
+  run("cleanup-file-internal-"+suffix,[fault(1,1,-28),fault(3,2,reply,True)],3,stderr=internal)
+  run("cleanup-parent-internal-"+suffix,[fault(1,1,-28),fault(3,3,reply,True)],3,stderr=internal)
+  run("cleanup-name-stat-internal-"+suffix,[fault(1,1,-28),fault(262,2,reply,True)],3,stderr=internal,payload=b'',retained_temp=True)
+  run("cleanup-identity-stat-internal-"+suffix,[fault(5,1,-5),fault(5,2,reply,True)],3,stderr=internal,payload=b'',retained_temp=True)
+  run("cleanup-map-runtime-primary-"+suffix,[{"call":3,"ordinal":1,"allocation_failure":True},fault(11,1,reply,True)],4,stderr=b"runtime error: allocation failure\n")
+ run("cleanup-unlink-external-primary",[fault(1,1,-28),fault(263,1,-5,True)],status("ResourceExhausted","Body","NotPublished"))
+ run("cleanup-file-external-primary",[fault(1,1,-28),fault(3,2,-5,True)],status("ResourceExhausted","Body","NotPublished"))
+ run("cleanup-name-stat-external-primary",[fault(1,1,-28),fault(262,2,-5,True)],status("ResourceExhausted","Body","NotPublished"),payload=b'',retained_temp=True)
+ run("cleanup-identity-stat-external-primary",[fault(5,1,-5),fault(5,2,-5,True)],status("Other","Target","NotPublished"),payload=b'',retained_temp=True)
 
  # Controlled entropy makes the first temporary candidate equal the requested name.
  target=work/(".mgn-"+"0"*40);compile_target(target)

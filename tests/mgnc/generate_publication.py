@@ -39,6 +39,23 @@ def adapted(original):
     for key,words in [('profile',640),('cleanup',64)]:
      a=data[key];assert a[0][0]=='LABEL' and a[1:3]==[['PUSH-RBP'],['MOV-REG','RBP','RSP']] and all(row==['PUSH-ZERO'] for row in a[3:3+words]);assert a[-3:]==[['MOV-REG','RSP','RBP'],['POP-RBP'],['RET']];data[key]=a[3+words:-3]+[['RET']]
     assert data['errno'][0][0]=='LABEL';data['errno']=data['errno'][1:]
+    # Every cleanup syscall has a zero-or-errno result domain. Invalid replies
+    # set the invariant flag while the remaining owned resources are released.
+    forms=data['cleanup'];checked=[];site=0;close=0
+    for index,row in enumerate(forms):
+     if row==['LABEL','RUNTIME/PUBLICATION.CLEANUP/IDENTITY-FAILED']:
+      checked +=[['JMP','RUNTIME/PUBLICATION.CLEANUP/IDENTITY-FAILED'],['LABEL','RUNTIME/PUBLICATION.CLEANUP/BAD-IDENTITY'],['IMM-RCX',1],['STORE-FRAME',-24,'RCX']]
+     checked.append(row)
+     if row!=['SYSCALL']:continue
+     previous=forms[index-1];assert previous[0]=='MOV-EAX';number=previous[1]
+     if number==3:
+      close+=1;bad=['FILE-BAD','PROBE-BAD','BAD-PARENT'][close-1]
+     else:bad={5:'BAD-IDENTITY',262:'BAD-NAME',263:'BAD-NAME',11:'BAD-MAP'}[number]
+     bad='RUNTIME/PUBLICATION.CLEANUP/'+bad;negative='STRICT-NEGATIVE-'+str(site);done='STRICT-CHECKED-'+str(site);site+=1
+     checked +=[['TEST'],['JZ',done],['JS',negative],['JMP',bad],['LABEL',negative],['CMP-IMM','RAX',-4095],['JL',bad]]
+     for error in [9,14,22]:checked +=[['CMP-IMM','RAX',-error],['JZ',bad]]
+     checked +=[['LABEL',done]]
+    assert site==7 and close==3;data['cleanup']=checked
     helpers={'ALLOCATE-BLOCK':10,'IO.MAP':60,'PUBLICATION.CLEANUP':80,'PUBLICATION.PROFILE':81,'PUBLICATION.ERRNO':82,'DIRECTORY.INTERNAL':2}
     jumps={'JMP':233,'JZ':132,'JNZ':133,'JO':128,'JS':136,'JB':130,'JBE':134,'JA':135,'JAE':131,'JL':140}
     def token(value):return json.dumps(value,separators=(',',':'))
@@ -72,7 +89,7 @@ def adapted(original):
       elif op=='IMM-REG':add(6,reg(args[0]),args[1])
       elif op in ['MOV-EAX','MOV-EDX','MOV-R10D']:
        if op=='MOV-EAX' and i<len(forms) and forms[i]==['SYSCALL']:
-        i+=1;nr=args[0];add(12,nr,0,1 if nr in [138,332,63,3,5,91,11,262] else 0)
+        i+=1;nr=args[0];add(12,nr,0,1 if role!='cleanup' and nr in [138,332,63,3,5,91,11,262] else 0)
        else:add(6,{'MOV-EAX':0,'MOV-EDX':2,'MOV-R10D':10}[op],args[0])
       elif op in ['ADD-IMM','AND-IMM','CMP-IMM']:add(8,{'ADD-IMM':0,'AND-IMM':4,'CMP-IMM':7}[op],reg(args[0]),args[1])
       elif op in ['ADD-REG','SUB-REG','CMP-REG']:add(7,{'ADD-REG':1,'SUB-REG':41,'CMP-REG':57}[op],reg(args[0]),reg(args[1]))

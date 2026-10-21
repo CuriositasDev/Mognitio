@@ -235,11 +235,24 @@ do not introduce test discovery or execute an implicit test runner.
 
 Run v170-contracts.py --compiler COMPILER --output NEW_DIRECTORY for positive
 and negative project checks, typed lowering, evidence visibility, pair uniqueness,
-receiver signatures and isolated method bodies. Valid contract programs still
-report unsupported from Build and preserve an existing output.
+receiver signatures and isolated method bodies. Pass --native to require
+successful native generation of valid programs; the default preserves the
+historical frontend-only expectation. Invalid programs preserve existing output.
 Run v170-contract-ir.py --seed SEED --output NEW_DIRECTORY to reject independent
 evidence owner, pair, method-order, package, dispatch and capture mutations.
 These checks establish the frontend increment, not native dispatch acceptance.
+
+## Native contracts
+
+Run v170-contract-native.py --compiler COMPILER --output NEW_DIRECTORY for
+scalar/managed payloads, private implementations, shared dispatch sites,
+receiver snapshots, method closures, finite recursive packaging, and operand
+control flow under real collection stress. Run v170-contract-native-ir.py
+--seed SEED --output NEW_DIRECTORY for complete interner/worklist permutations,
+late-specialization request orders, image equality, typed/layout mutations,
+machine mutations, and actual root bitmap data. Run v170-contract-allocation.py
+--fixtures CONTRACT_NATIVE_OUTPUT/cases --output NEW_DIRECTORY to inject box
+and package allocation failures and inspect intermediate roots.
 
 ## Fixed-width scalar increment
 
@@ -270,7 +283,7 @@ container retention, stress collection, isolation and invalid-source preservatio
 Run v170-binary-ir.py --seed SEED --output NEW_DIRECTORY to reject thirteen
 helper ABI, bitmap, descriptor, call-target and active-variant mutations.
 The Bytes variable-leaf mode is checked separately from String's scalar-count
-layout. Standard Binary construction/publication functions remain pending.
+layout. Standard Binary construction/publication functions are covered separately.
 
 ## Standard Bytes construction increment
 
@@ -280,4 +293,17 @@ values, captures, re-exports, user names, operand return, retained errors, stres
 collection, isolation and invalid-source preservation. Run
 v170-binary-function-ir.py --seed SEED --output NEW_DIRECTORY to reject twenty
 ABI, bitmap, standard-identity, code-pointer, descriptor and root-selection
-mutations. publishFile remains pending.
+mutations. Publication has separate raw outcome and surface checks.
+
+## Filesystem and publication cleanup
+
+Run publication-faults.py --compiler COMPILER --out NEW_DIRECTORY for raw
+publication outcomes, cleanup syscall result domains, invariant precedence,
+and preservation of an active allocation failure. Identity-query failures
+retain an unverified private leaf instead of unlinking an unverified object;
+the harness records that leaf before removing its own fixture.
+Run v170-publication-ir.py --seed SEED --output NEW_DIRECTORY to check helper
+ownership and independently reject result-guard/errno/flag mutations at all
+seven cleanup syscall sites. Use publication-surface.py, v170-inspection.py,
+v170-path-operations.py, v170-directory.py and their fault/surface companions
+for the corresponding standard Function and filesystem observations.

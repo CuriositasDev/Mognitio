@@ -109,15 +109,20 @@
         ;; A tiny reclaimable tail must not force a full collection for every
         ;; short-lived object. Keep bounded reserve after collection; explicit
         ;; geometry/caps retain their original reuse and failure behavior.
-        ;; One eighth of mapped space, capped at 16 MiB, leaves collection
-        ;; headroom without exceeding the inherited whole-project RSS budget.
+        ;; Retain the 16 MiB cap through 512 MiB of mapped heap. Larger
+        ;; heaps use an eighth of mapped space capped at 128 MiB.
+        ;; Explicit geometry and caps retain their original behavior.
         ;; Count only blocks that fit this request. Fragmented small holes
         ;; otherwise hide a nearly exhausted supply of large allocations.
         ;; Restrict fragmentation-triggered growth to heaps above 256 MiB;
         ;; smaller heaps retain the inherited RSS behavior.
         (unless (or (option :arena-unit) cap)
           `((:load-word :rax :r15 ,+mapped-bytes+) (:imm-rcx 8) (:imm-rdx 0) (:div-rcx)
+            (:load-word :rdx :r15 ,+mapped-bytes+) (:cmp-imm :rdx 536870912)
+            (:ja :reserve-large-cap)
             (:cmp-imm :rax 16777216) (:jbe :reserve-sized) (:imm-rax 16777216)
+            (:jmp :reserve-sized) (:label :reserve-large-cap)
+            (:cmp-imm :rax 134217728) (:jbe :reserve-sized) (:imm-rax 134217728)
             (:label :reserve-sized) (:mov-reg :r8 :rax) (:imm-rax 0)
             (:load-frame :r10 -8) (:load-word :rdx :r15 ,+mapped-bytes+)
             (:cmp-imm :rdx 268435456) (:ja :reserve-filtered) (:imm-reg :r10 0)
@@ -140,7 +145,11 @@
         (unless (or (option :arena-unit) cap)
           `((:mov-reg :r8 :rax) (:load-word :rax :r15 ,+mapped-bytes+)
             (:imm-rcx 8) (:imm-rdx 0) (:div-rcx)
+            (:load-word :rdx :r15 ,+mapped-bytes+) (:cmp-imm :rdx 536870912)
+            (:ja :growth-large-cap)
             (:cmp-imm :rax 16777216) (:jbe :growth-clamped) (:imm-rax 16777216)
+            (:jmp :growth-clamped) (:label :growth-large-cap)
+            (:cmp-imm :rax 134217728) (:jbe :growth-clamped) (:imm-rax 134217728)
             (:label :growth-clamped) (:cmp-reg :rax :r8) (:jae :growth-sized)
             (:mov-reg :rax :r8) (:label :growth-sized)))
         `((:cmp-imm :rax ,unit) (:jae :round) (:imm-rax ,unit)

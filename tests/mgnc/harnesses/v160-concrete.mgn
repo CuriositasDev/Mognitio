@@ -21,15 +21,15 @@ let withBodytries:Function(Body,List<TrySite>):Body=function(original:Body,value
 let withInstancebody:Function(Instance,Body):Instance=function(original:Instance,value:Body):Instance{Instance{key:original->key,body:value,targets:original->targets}};
 let withInstancekey:Function(Instance,Key):Instance=function(original:Instance,value:Key):Instance{Instance{key:value,body:original->body,targets:original->targets}};
 let withInstancetargets:Function(Instance,Paged<Target>):Instance=function(original:Instance,value:Paged<Target>):Instance{Instance{key:original->key,body:original->body,targets:value}};
-let withPlaninstances:Function(Plan,Paged<Instance>):Plan=function(original:Plan,value:Paged<Instance>):Plan{Plan{types:original->types,instances:value,initializers:original->initializers}};
-let withPlantypes:Function(Plan,Store):Plan=function(original:Plan,value:Store):Plan{Plan{types:value,instances:original->instances,initializers:original->initializers}};
+let withPlaninstances:Function(Plan,Paged<Instance>):Plan=function(original:Plan,value:Paged<Instance>):Plan{Plan{pairs:original->pairs,types:original->types,instances:value,initializers:original->initializers}};
+let withPlantypes:Function(Plan,Store):Plan=function(original:Plan,value:Store):Plan{Plan{pairs:original->pairs,types:value,instances:original->instances,initializers:original->initializers}};
 let withOperationmapping:Function(Operation,List<Int>):Operation=function(original:Operation,value:List<Int>):Operation{Operation{code:original->code,output:original->output,inputs:original->inputs,unavailable:original->unavailable,symbol:original->symbol,target:original->target,arguments:original->arguments,mapping:value,integer:original->integer,minimum:original->minimum,wide:original->wide,text:original->text,origin:original->origin}};
 
 let reorder:Function(Plan):Result<Plan,Diagnostic>=function(original:Plan):Result<Plan,Diagnostic>{
  var instances:Paged<Instance>=empty<Instance>();var cursor:Int=original->instances->count;
  loop while(cursor>0){cursor=cursor-1;let item:Instance=try lookup<Instance>(original->instances,cursor);var targets:Paged<Target>=empty<Target>();
   loop over(item->targets->pages->append(item->targets->tail) as page:List<Target>){loop over(page as target:Target){targets=push<Target>(targets,Target{node:target->node,instance:original->instances->count-1-target->instance});};};instances=push<Instance>(instances,withInstancetargets(item,targets));
- };var initializers:List<Int>=List<Int>[];loop over(original->initializers as id:Int){initializers=initializers->append(original->instances->count-1-id);};Result<Plan,Diagnostic>::Ok(Plan{types:original->types,instances:instances,initializers:initializers})
+ };var initializers:List<Int>=List<Int>[];loop over(original->initializers as id:Int){initializers=initializers->append(original->instances->count-1-id);};Result<Plan,Diagnostic>::Ok(Plan{pairs:original->pairs,types:original->types,instances:instances,initializers:initializers})
 };
 let mutate:Function(Plan,Int):Result<Plan,Diagnostic>=function(original:Plan,mode:Int):Result<Plan,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};

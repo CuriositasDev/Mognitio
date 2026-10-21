@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativePlan;
+use Mgnc\WholeValueABI\{revision as valueABI};
 use Mgnc\WholeRuntimeTypes\{Info as RuntimeTypes,build as runtimeTypeIds};
 use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
@@ -36,7 +37,7 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
   };};
   let endLabel:Int=next;next=next+1;procedures=push<Procedure>(procedures,Procedure{entry:entry,blocks:blocks,entryRoots:entryRoots,pointLabels:pointLabels,operationLabels:operationLabels,terminatorLabels:terminatorLabels,endLabel:endLabel,frame:frame});
   var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocksPage:List<Block>){loop over(blocksPage as block:Block){var operationId:Int=0;loop over(block->operations as operation:Operation){
-   branch when{operation->code=="function"||operation->code=="list"=>{constructors=push<Constructor>(constructors,Constructor{instance:instanceId,block:blockId,operation:operationId,entry:next,roots:next+1});next=next+2;},else=>unit};
+   branch when{operation->code=="function"||operation->code=="list"||operation->code=="package"&&operation->unavailable->length()==0=>{constructors=push<Constructor>(constructors,Constructor{instance:instanceId,block:blockId,operation:operationId,entry:next,roots:next+1});next=next+2;},else=>unit};
    branch when{operation->code=="string"=>{let encoded:Encoded=try encode(operation->text,operation->origin->span);literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:operationId,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;},
     operation->code=="global-load"||operation->code=="global-store"=>{neededGlobals=try put(neededGlobals,try present(operation->symbol,span,"native global symbol"),1);},else=>unit};operationId=operationId+1;
   };branch when{block->terminator->code=="assertion"=>{
@@ -44,6 +45,7 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
    literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:-1,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;
   },else=>unit};blockId=blockId+1;};};instanceId=instanceId+1;
  };};
+ var dispatchTables:Paged<Int>=empty<Int>();var pairIndex:Int=0;loop while(pairIndex<plan->pairs->count){dispatchTables=push<Int>(dispatchTables,next);next=next+1;pairIndex=pairIndex+1;};
  loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Int=try present(instance->body->declaration,span,"native initializer declaration");let symbol:Int=try present(try lookup<Parent>(semantic->state->globals,declaration),span,"native initializer symbol");neededGlobals=try put(neededGlobals,symbol,1);};
  var globals:Paged<Global>=empty<Global>();var globalSymbols:Map=create();var globalDeclarations:Map=create();var references:List<Int>=List<Int>[];var symbolId:Int=0;
  loop over(semantic->state->symbols->pages->append(semantic->state->symbols->tail) as page:List<Symbol>){loop over(page as symbol:Symbol){
@@ -73,5 +75,5 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  var modules:List<Int>=List<Int>[];loop over(source->moduleOrder as file:Int){branch when{(try get(reachable,file))>=0&&!(try lookup<Module>(plan->types->headers->modules,file))->standard=>{modules=modules->append(file);},else=>unit};};
  var initializers:List<Int>=List<Int>[];loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,try present(instance->body->declaration,span,"initializer source"));branch when{(try get(reachable,declaration->file))>=0=>{initializers=initializers->append(initializer);},else=>unit};};
  let entryGlobal:Int=try get(globalDeclarations,source->entry);try require(entryGlobal>=0,span,"native entry global");
- Result<Native,Diagnostic>::Ok(Native{runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
+ Result<Native,Diagnostic>::Ok(Native{abiRevision:valueABI,dispatchTables:dispatchTables,runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
 };

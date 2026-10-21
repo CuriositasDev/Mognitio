@@ -2,9 +2,11 @@ namespace Mgnc\WholeConcrete;
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup,problem};
 use Mgnc\Syntax\{Parent};
 use Mgnc\Semantic\{SemanticProject};
-use Mgnc\SemanticData\{Declaration as SourceDeclaration,Module};
-use Mgnc\SemanticValues\{FunctionInfo};
-use Mgnc\TypeData\{Store,Argument};
+use Mgnc\SemanticData\{Declaration as SourceDeclaration,Module,Evidence};
+use Mgnc\SemanticValues\{FunctionInfo,BodyState,Node};
+use Mgnc\WholeDispatchData\{Pair};
+use Mgnc\Tables\{atList};
+use Mgnc\TypeData\{Store,Argument,ValueTerm};
 use Mgnc\WholeIR\{Project,Declaration,Body,Block,Operation};
 use Mgnc\WholeSubstitution\{Binding,Applied,equal,body as substituteBody};
 use Mgnc\WholeChecks\{present,require};
@@ -14,7 +16,7 @@ use Mgnc\IntMap\{Map,create,get,put};
 public type Key=product{body:Int;bindings:List<Binding>;};
 public type Target=product{node:Int;instance:Int;};
 public type Instance=product{key:Key;body:Body;targets:Paged<Target>;};
-public type Plan=product{types:Store;instances:Paged<Instance>;initializers:List<Int>;};
+public type Plan=product{pairs:Paged<Pair>;types:Store;instances:Paged<Instance>;initializers:List<Int>;};
 type Registered=product{keys:Paged<Key>;id:Int;};
 public let same:Function(Key,Key):Bool=function(left:Key,right:Key):Bool{left->body==right->body&&equal(left->bindings,right->bindings)};
 let register:Function(Paged<Key>,Key):Registered=function(keys:Paged<Key>,key:Key):Registered{
@@ -27,6 +29,12 @@ public let lexical:Function(Parent,List<Binding>,Span):Result<List<Binding>,Diag
   loop over(bindings as binding:Binding){branch when{binding->owner==id=>{return Result<List<Binding>,Diagnostic>::Ok(List<Binding>[binding]);},else=>unit};};
   Result<List<Binding>,Diagnostic>::Err(problem("internal",span,"concrete function lost lexical bindings"))
  }}
+};
+// Static checking owns visibility and method validity; this selects checked bodies.
+let witnessFunctions:Function(SemanticProject,Int,Span):Result<List<Int>,Diagnostic>=function(semantic:SemanticProject,implementation:Int,span:Span):Result<List<Int>,Diagnostic>{
+ let body:Int=branch on try lookup<BodyState>(semantic->state->bodies,implementation){BodyState::Complete(node:Int)=>node,BodyState::NotRequired=>{try require(false,span,"package witness body incomplete");0},BodyState::Pending=>{try require(false,span,"package witness body pending");0},BodyState::Checking=>{try require(false,span,"package witness body checking");0}};
+ let container:Node=try lookup<Node>(semantic->state->nodes,body);try require(container->operation=="witness",span,"package witness container");var functions:List<Int>=List<Int>[];
+ loop over(container->children as child:Int){let node:Node=try lookup<Node>(semantic->state->nodes,child);try require(node->operation=="function",span,"package witness method function");functions=functions->append(try present(node->target,span,"package witness function identity"));};Result<List<Int>,Diagnostic>::Ok(functions)
 };
 public let buildWithOrder:Function(SemanticProject,Project,Bool):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project,reverse:Bool):Result<Plan,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var keys:Paged<Key>=empty<Key>();var initializers:List<Int>=List<Int>[];
@@ -50,7 +58,7 @@ public let buildWithOrder:Function(SemanticProject,Project,Bool):Result<Plan,Dia
    let registered:Registered=register(keys,Key{body:try lookup<Int>(source->functions,functionId),bindings:List<Binding>[]});keys=registered->keys;
   }};requested=requested+1;
  };
- var types:Store=source->types;var instances:Paged<Instance>=empty<Instance>();var cursor:Int=0;
+ var pairs:Paged<Pair>=empty<Pair>();var selectedPairs:Map=create();var types:Store=source->types;var instances:Paged<Instance>=empty<Instance>();var cursor:Int=0;
  // Register before expansion; recursive requests resolve the existing key.
  loop while(cursor<keys->count){
   let key:Key=try lookup<Key>(keys,cursor);let original:Body=try lookup<Body>(source->bodies,key->body);
@@ -70,11 +78,21 @@ public let buildWithOrder:Function(SemanticProject,Project,Bool):Result<Plan,Dia
     try require((try get(targetNodes,operation->origin->node))<0,operation->origin->span,"duplicate concrete creation site");
     targetNodes=try put(targetNodes,operation->origin->node,registered->id);
     targets=push<Target>(targets,Target{node:operation->origin->node,instance:registered->id});
+   },operation->code=="package"&&operation->unavailable->length()==0=>{
+    let implementation:Int=try present(operation->target,operation->origin->span,"package witness identity");
+    branch when{(try get(selectedPairs,implementation))<0=>{
+     let declared:SourceDeclaration=try lookup<SourceDeclaration>(source->types->headers->declarations,implementation);try require(declared->kind==7&&declared->parameters->length()==0&&declared->evidence->length()==1,operation->origin->span,"package witness declaration");let evidence:Evidence=try atList<Evidence>(declared->evidence,0);
+     let concreteType:Int=branch on try atList<Argument>(operation->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,operation->origin->span,"package concrete type argument");0}};
+     let contractType:Int=branch on try atList<Argument>(operation->arguments,1){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,operation->origin->span,"package contract type argument");0}};
+     try require(evidence->concreteType==concreteType&&evidence->contractType==contractType,operation->origin->span,"package concrete evidence pair");var methods:List<Int>=List<Int>[];var signatures:List<Int>=List<Int>[];
+     loop over((try witnessFunctions(semantic,implementation,operation->origin->span)) as functionId:Int){let info:FunctionInfo=try lookup<FunctionInfo>(semantic->state->functions,functionId);let registered:Registered=register(keys,Key{body:try lookup<Int>(source->functions,functionId),bindings:List<Binding>[Binding{owner:implementation,arguments:List<Argument>[]}]});keys=registered->keys;methods=methods->append(registered->id);signatures=signatures->append(info->valueType);};
+     try require(methods->length()==evidence->methods->length(),operation->origin->span,"package witness method coverage");selectedPairs=try put(selectedPairs,implementation,pairs->count);pairs=push<Pair>(pairs,Pair{implementation:implementation,concreteType:concreteType,contractType:contractType,methods:methods,signatures:signatures});
+    },else=>unit};
    },else=>unit};
   };};};
   instances=push<Instance>(instances,Instance{key:key,body:body,targets:targets});cursor=cursor+1;
  };
- Result<Plan,Diagnostic>::Ok(Plan{types:types,instances:instances,initializers:initializers})
+ Result<Plan,Diagnostic>::Ok(Plan{pairs:pairs,types:types,instances:instances,initializers:initializers})
 };
 
 public let build:Function(SemanticProject,Project):Result<Plan,Diagnostic>=function(semantic:SemanticProject,source:Project):Result<Plan,Diagnostic>{buildWithOrder(semantic,source,false)};

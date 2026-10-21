@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check named evidence and typed IR while native dispatch remains gated."""
+"""Check named evidence and typed IR, with explicit native admission validation."""
 import argparse
 import hashlib
 import json
@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--compiler',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument("--keep-going",action="store_true")
+    parser.add_argument("--native",action="store_true",help="require successful native builds for accepted sources")
     args=parser.parse_args();compiler=args.compiler.resolve();args.output=args.output.resolve();args.output.mkdir(parents=True,exist_ok=False)
     positive={
         'unused-import':{'src/Model/model.mgn':MODEL,'src/app.mgn':entry(r'use App\Model\{Value,Show,Proof};')},
@@ -92,9 +93,12 @@ def main():
                 path=project/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(source)
             inventory={p.relative_to(project).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in project.rglob('*') if p.is_file()}
             for verb in ['check','lower']:call(name+'-'+verb,[compiler,verb,manifest],0 if valid else 1,phase)
-            image=project/'program';image.write_bytes(b'preserved')
-            call(name+'-build',[compiler,'build',manifest,'-o',image],1,'unsupported' if valid else phase)
-            assert image.read_bytes()==b'preserved'
+            image=project/'program'
+            admitted=valid and args.native
+            if not admitted:image.write_bytes(b'preserved')
+            call(name+'-build',[compiler,'build',manifest,'-o',image],0 if admitted else 1,None if admitted else ('unsupported' if valid else phase))
+            if admitted:assert image.read_bytes().startswith(b'\x7fELF')
+            else:assert image.read_bytes()==b'preserved'
             assert all(hashlib.sha256((project/path).read_bytes()).hexdigest()==digest for path,digest in inventory.items())
     assert all(row["passed"] for row in observations),[(row["case"],bytes.fromhex(row["stderr_hex"]).decode()) for row in observations if not row["passed"]]
     print(f'V170_CONTRACTS_OK positive={len(positive)} negative={len(negative)} observations={len(observations)}')

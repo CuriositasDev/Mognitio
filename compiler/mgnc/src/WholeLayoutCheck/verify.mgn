@@ -4,6 +4,7 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\TypeData\{Store,Type,Argument,Member,ValueTerm};
 use Mgnc\WholeIR\{Slot,Block,Operation};
 use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeDispatchData\{Pair};
 use Mgnc\WholeLayout\{Layouts,Descriptor};
 use Mgnc\WholeChecks\{require,present,integers};
 use Mgnc\IntMap\{Map,create,get,put};
@@ -15,11 +16,12 @@ let fixed:Function(Descriptor,Int,List<Int>,Span):Result<Unit,Diagnostic>=functi
  try require(descriptor->mode==0&&descriptor->size==size&&integers(descriptor->references,refs)&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"fixed descriptor layout");Result<Unit,Diagnostic>::Ok(unit)
 };
 public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:Plan,layouts:Layouts):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};var roots:Paged<Int>=empty<Int>();var needed:Map=create();
+ let span:Span=Span{start:0,end:0,line:1,column:1};var roots:Paged<Int>=empty<Int>();var needed:Map=create();var payloads:Map=create();try require(layouts->boxes->count==plan->types->types->count,span,"payload box compiler domain extent");
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){roots=push<Int>(roots,instance->body->resultType);
   loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){roots=push<Int>(roots,slot->valueType);};};
   loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as operation:Operation){loop over(operation->arguments as value:Argument){branch on value{Argument::Type(id:Int)=>{roots=push<Int>(roots,id);},Argument::Value(term:ValueTerm)=>unit};};};};};
  };};
+ loop over(plan->pairs->pages->append(plan->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){payloads=try put(payloads,pair->concreteType,1);roots=push<Int>(roots,pair->concreteType);roots=push<Int>(roots,pair->contractType);loop over(pair->signatures as signature:Int){roots=push<Int>(roots,signature);};};};
  var cursor:Int=0;loop while(cursor<roots->count){let id:Int=try lookup<Int>(roots,cursor);cursor=cursor+1;branch when{(try get(needed,id))>=0=>{continue;},else=>unit};needed=try put(needed,id,1);let value:Type=try lookup<Type>(plan->types->types,id);
   loop over(value->arguments as arg:Argument){branch on arg{Argument::Type(child:Int)=>{roots=push<Int>(roots,child);},Argument::Value(term:ValueTerm)=>unit};};loop over(value->members as member:Member){branch on member->value{Parent::Some(child:Int)=>{roots=push<Int>(roots,child);},Parent::None=>unit};};
  };
@@ -28,7 +30,7 @@ public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:P
   try require((id>=0)==wanted,span,"descriptor type membership");
   branch when{wanted=>{
    used=try claim(used,id,span);count=count+1;let descriptor:Descriptor=try lookup<Descriptor>(layouts->descriptors,id);
-   branch when{value->kind==26=>{try fixed(descriptor,40,List<Int>[],span);},value->kind==25=>{try require(descriptor->mode==3&&descriptor->size==0&&descriptor->references->length()==0&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"Bytes variable leaf descriptor");},value->kind==3=>{try fixed(descriptor,0,List<Int>[],span);},value->kind==12=>{try fixed(descriptor,40,List<Int>[32],span);},value->kind==10=>{
+   branch when{value->kind==29=>{try fixed(descriptor,48,List<Int>[24],span);},value->kind==26=>{try fixed(descriptor,40,List<Int>[],span);},value->kind==25=>{try require(descriptor->mode==3&&descriptor->size==0&&descriptor->references->length()==0&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"Bytes variable leaf descriptor");},value->kind==3=>{try fixed(descriptor,0,List<Int>[],span);},value->kind==12=>{try fixed(descriptor,40,List<Int>[32],span);},value->kind==10=>{
     let element:Int=try argument(value,0,span);let traced:Bool=try reference(plan->types,element);try fixed(descriptor,48,branch when{traced=>List<Int>[32,40],else=>List<Int>[32]},span);
     let bufferId:Int=try get(layouts->buffers,typeId);used=try claim(used,bufferId,span);count=count+1;let buffer:Descriptor=try lookup<Descriptor>(layouts->descriptors,bufferId);
     try require(buffer->mode==2&&buffer->size==0&&buffer->references->length()==0&&buffer->variants->length()==0&&buffer->elementManaged==traced,span,"iteration buffer descriptor");
@@ -42,6 +44,7 @@ public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:P
     };
    },else=>{try require(false,span,"unsupported descriptor type");}};
   },else=>unit};
+  let boxId:Int=try lookup<Int>(layouts->boxes,typeId);branch when{(try get(payloads,typeId))>=0=>{used=try claim(used,boxId,span);count=count+1;try fixed(try lookup<Descriptor>(layouts->descriptors,boxId),32,branch when{try reference(plan->types,typeId)=>List<Int>[24],else=>List<Int>[]},span);},else=>{try require(boxId== -1,span,"unexpected payload box descriptor");}};
   branch when{!wanted||value->kind!=10=>{try require((try get(layouts->buffers,typeId))<0,span,"unexpected iteration descriptor");},else=>unit};typeId=typeId+1;
  };};
  try require(layouts->environments->count==plan->instances->count,span,"environment descriptor membership");var instanceId:Int=0;

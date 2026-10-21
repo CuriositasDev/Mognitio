@@ -41,16 +41,16 @@ let rootMutants:Function(Plan,Body,Frame):Result<Unit,Diagnostic>=function(plan:
 let layoutMutants:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:Plan,layouts:Layouts):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var mode:Int=0;
  loop while(mode<8){var invalid:Layouts=layouts;
-  branch when{mode==0=>{invalid=Layouts{descriptors:push<Descriptor>(layouts->descriptors,try lookup<Descriptor>(layouts->descriptors,0)),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};},
-   mode==1=>{invalid=Layouts{descriptors:layouts->descriptors,types:layouts->types,environments:empty<Int>(),buffers:layouts->buffers};},
-   mode==2=>{invalid=Layouts{descriptors:layouts->descriptors,types:layouts->types,environments:try replaceItem<Int>(layouts->environments,1,try lookup<Int>(layouts->environments,0)),buffers:layouts->buffers};},
-   mode==6=>{var id:Int=0;loop while((try get(layouts->types,id))<0){id=id+1;};invalid=Layouts{descriptors:layouts->descriptors,types:try put(layouts->types,id,-1),environments:layouts->environments,buffers:layouts->buffers};},
+  branch when{mode==0=>{invalid=Layouts{boxes:layouts->boxes,descriptors:push<Descriptor>(layouts->descriptors,try lookup<Descriptor>(layouts->descriptors,0)),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};},
+   mode==1=>{invalid=Layouts{boxes:layouts->boxes,descriptors:layouts->descriptors,types:layouts->types,environments:empty<Int>(),buffers:layouts->buffers};},
+   mode==2=>{invalid=Layouts{boxes:layouts->boxes,descriptors:layouts->descriptors,types:layouts->types,environments:try replaceItem<Int>(layouts->environments,1,try lookup<Int>(layouts->environments,0)),buffers:layouts->buffers};},
+   mode==6=>{var id:Int=0;loop while((try get(layouts->types,id))<0){id=id+1;};invalid=Layouts{boxes:layouts->boxes,descriptors:layouts->descriptors,types:try put(layouts->types,id,-1),environments:layouts->environments,buffers:layouts->buffers};},
    else=>{
     var changed:Bool=false;var id:Int=0;loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
      let chosen:Bool=branch when{mode==3=>descriptor->mode==0&&descriptor->references->length()>0,mode==4=>descriptor->mode==1,mode==5=>descriptor->mode==2,else=>descriptor->mode==0};
      branch when{chosen&&!changed=>{
       let replacement:Descriptor=Descriptor{mode:descriptor->mode,size:branch when{mode==7=>descriptor->size+8,else=>descriptor->size},references:branch when{mode==3=>List<Int>[],else=>descriptor->references},variants:branch when{mode==4=>List<List<Int>>[],else=>descriptor->variants},elementManaged:branch when{mode==5=>!descriptor->elementManaged,else=>descriptor->elementManaged}};
-      invalid=Layouts{descriptors:try replaceItem<Descriptor>(layouts->descriptors,id,replacement),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};changed=true;
+      invalid=Layouts{boxes:layouts->boxes,descriptors:try replaceItem<Descriptor>(layouts->descriptors,id,replacement),types:layouts->types,environments:layouts->environments,buffers:layouts->buffers};changed=true;
      },else=>unit};id=id+1;
     };};try require(changed,span,"layout mutation target");
    }};

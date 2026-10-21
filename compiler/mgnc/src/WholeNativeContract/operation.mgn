@@ -1,0 +1,17 @@
+namespace Mgnc\WholeNativeContract;
+use Mgnc\WholeValueABI\{packageBoxOffset,packageTableOffset,boxedValueOffset,dispatchHeaderBytes,dispatchMemberBytes,dispatchEntryOffset};
+use Mgnc\Data\{Diagnostic,lookup};use Mgnc\WholeChecks\{require,present};
+use Mgnc\WholeNativeData\{Native,Procedure};use Mgnc\WholeConcrete\{Instance};use Mgnc\WholeDispatchData\{Pair};
+use Mgnc\WholeIR\{Operation};use Mgnc\WholeRuntimeTypes\{resolve};
+use Mgnc\WholeFrame\{offset};use Mgnc\WholeNativeLookup\{constructor,roots};
+use Mgnc\Machine\{Code,jump};use Mgnc\WholeX64\{immediate,symbol,load,store,indirect};
+use Mgnc\Tables\{atList};use Mgnc\IntMap\{get};
+public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnostic>=function(initial:Code,plan:Native,owner:Int,block:Int,operation:Int,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let instance:Instance=try lookup<Instance>(plan->concrete->instances,owner);let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);
+ branch when{op->code=="package"=>{
+  let implementation:Int=try present(op->target,op->origin->span,"native package selected witness");var index:Int=0;var selected:Int= -1;loop over(plan->concrete->pairs->pages->append(plan->concrete->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){branch when{pair->implementation==implementation=>{try require(selected<0,op->origin->span,"native duplicate package pair");selected=index;},else=>unit};index=index+1;};};try require(selected>=0,op->origin->span,"native package pair membership");let pair:Pair=try lookup<Pair>(plan->concrete->pairs,selected);let boxDescriptor:Int=try lookup<Int>(plan->layouts->boxes,pair->concreteType);let packageDescriptor:Int=try get(plan->layouts->types,pair->contractType);try require(boxDescriptor>=0&&packageDescriptor>=0&&procedure->frame->outgoing>=6,op->origin->span,"native package allocation metadata");
+  code=immediate(code,0,0);code=store(code,4,0,0);code=immediate(code,0,boxDescriptor);code=store(code,4,8,0);code=immediate(code,0,packageDescriptor);code=store(code,4,16,0);code=symbol(code,0,try lookup<Int>(plan->dispatchTables,selected));code=store(code,4,24,0);code=immediate(code,0,(try resolve(plan->runtimeTypes,pair->concreteType))->value);code=store(code,4,32,0);code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=store(code,4,40,0);code=jump(code,List<Int>[232],try constructor(plan,owner,block,operation,op->origin->span));
+ },else=>{
+  let ordinal:Int=try atList<Int>(op->mapping,0);try require(ordinal>=0&&ordinal<=(2147483647-dispatchHeaderBytes-dispatchEntryOffset)/dispatchMemberBytes,op->origin->span,"native dispatch table displacement");code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=load(code,2,0,packageTableOffset);code=load(code,11,2,dispatchHeaderBytes+dispatchEntryOffset+ordinal*dispatchMemberBytes);code=load(code,2,0,packageBoxOffset);code=load(code,0,2,boxedValueOffset);code=store(code,4,8,0);code=immediate(code,0,0);code=store(code,4,0,0);var position:Int=0;loop over(op->inputs as input:Int){branch when{position>0=>{code=load(code,0,5,offset(input));code=store(code,4,(position+1)*8,0);},else=>unit};position=position+1;};code=symbol(code,0,(try roots(procedure,block,operation,op->origin->span))+1);code=store(code,4,(position+1)*8,0);code=indirect(code,11,true);
+ }};Result<Code,Diagnostic>::Ok(code)
+};

@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeConstruct;
+use Mgnc\WholeValueABI\{packageBytes,boxBytes,packageBoxOffset,packageTableOffset,packageTypeOffset,boxedValueOffset};
 use Std\Numeric\{Bits};
 use Mgnc\Data\{Diagnostic,empty,lookup};
 use Mgnc\WholeNativeData\{Native,Constructor};
@@ -19,6 +20,9 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
    code=immediate(code,7,branch when{op->inputs->length()==0=>32,else=>24+op->inputs->length()*8});code=load(code,6,5,24);code=jump(code,List<Int>[232],allocateLabel);
    var position:Int=0;loop over(op->inputs as ignored:Int){discard ignored;code=load(code,2,5,48+position*8);code=store(code,0,24+position*8,2);position=position+1;};code=store(code,5,-72,0);
    code=immediate(code,7,40);code=load(code,6,5,32);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,40);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);
+  },op->code=="package"=>{
+   code=immediate(code,7,boxBytes);code=load(code,6,5,24);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,56);code=store(code,0,boxedValueOffset,2);code=store(code,5,-72,0);
+   code=immediate(code,7,packageBytes);code=load(code,6,5,32);code=jump(code,List<Int>[232],allocateLabel);code=load(code,2,5,-72);code=store(code,0,packageBoxOffset,2);code=load(code,2,5,40);code=store(code,0,packageTableOffset,2);code=load(code,2,5,48);code=store(code,0,packageTypeOffset,2);
   },else=>{
    var position:Int=0;loop over(op->inputs as ignored:Int){discard ignored;code=immediate(code,7,48);code=load(code,6,5,24);code=jump(code,List<Int>[232],allocateLabel);
     code=immediate(code,2,position+1);code=store(code,0,24,2);code=load(code,2,5,-72);code=store(code,0,32,2);code=load(code,2,5,32+position*8);code=store(code,0,40,2);code=store(code,5,-72,0);position=position+1;

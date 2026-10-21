@@ -1,0 +1,22 @@
+namespace Mgnc\TestNativePermutation;
+use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
+use Mgnc\Syntax\{Parent};use Mgnc\TypeData\{Structure};
+use Mgnc\Semantic\{SemanticProject};use Mgnc\SemanticValues\{State,Node,Symbol,FunctionInfo};
+use Mgnc\WholeIR\{Project,Declaration,Body};use Mgnc\WholeConcrete\{Plan};
+use Mgnc\TestTypePermutation\{mapped,parent as typeParent,arguments as typeArguments,body as typedBody,permute as permutePlan};
+use Mgnc\WholeChecks\{require};
+public type Changed=product{semantic:SemanticProject;source:Project;concrete:Plan;};
+// This fixture has no appended concrete types: both contexts share one complete
+// domain. A separate request-order control covers appended specialization types.
+public let transform:Function(SemanticProject,Project,Plan):Result<Changed,Diagnostic>=function(semantic:SemanticProject,source:Project,original:Plan):Result<Changed,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let count:Int=original->types->types->count;try require(count==source->types->types->count&&count==semantic->state->types->types->count&&count>20,span,"native permutation complete source domain");let changed:Plan=try permutePlan(original);let state:State=semantic->state;
+ var nodes:Paged<Node>=empty<Node>();loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){let structure:Structure=branch on node->structure{Structure::Unknown=>Structure::Unknown,Structure::Known(id:Int)=>Structure::Known(mapped(id,count))};let target:Parent=branch when{node->operation=="dispatch"||node->operation=="variant"||node->operation=="payload-box"||node->operation=="sum-payload"||node->operation=="iterator-init"=>typeParent(node->target,count),else=>node->target};nodes=push<Node>(nodes,Node{file:node->file,cursor:node->cursor,rule:node->rule,flag:node->flag,structure:structure,normal:node->normal,operation:node->operation,binding:node->binding,target:target,children:node->children,span:node->span,integer:node->integer,minimum:node->minimum,literal:node->literal,text:node->text,binder:node->binder,binders:node->binders,functionOwner:node->functionOwner,mapping:node->mapping,arguments:typeArguments(node->arguments,count)});};};
+ var symbols:Paged<Symbol>=empty<Symbol>();loop over(state->symbols->pages->append(state->symbols->tail) as page:List<Symbol>){loop over(page as symbol:Symbol){symbols=push<Symbol>(symbols,Symbol{file:symbol->file,name:symbol->name,valueType:mapped(symbol->valueType,count),mutable:symbol->mutable,functionOwner:symbol->functionOwner,declaration:symbol->declaration,span:symbol->span});};};
+ var functions:Paged<FunctionInfo>=empty<FunctionInfo>();loop over(state->functions->pages->append(state->functions->tail) as page:List<FunctionInfo>){loop over(page as info:FunctionInfo){functions=push<FunctionInfo>(functions,FunctionInfo{file:info->file,cursor:info->cursor,valueType:mapped(info->valueType,count),parameters:info->parameters,body:info->body,captures:info->captures,parent:info->parent,templateOwner:info->templateOwner});};};
+ // globals/captures/bodies/loop breaks contain symbol, function or node IDs.
+ let rewritten:State=State{types:changed->types,nodes:nodes,symbols:symbols,globals:state->globals,functions:functions,loops:state->loops,obligations:state->obligations,bodies:state->bodies};
+ var declarations:Paged<Declaration>=empty<Declaration>();loop over(source->declarations->pages->append(source->declarations->tail) as page:List<Declaration>){loop over(page as declaration:Declaration){declarations=push<Declaration>(declarations,Declaration{source:declaration->source,file:declaration->file,kind:declaration->kind,valueType:typeParent(declaration->valueType,count),body:declaration->body});};};
+ var bodies:Paged<Body>=empty<Body>();loop over(source->bodies->pages->append(source->bodies->tail) as page:List<Body>){loop over(page as originalBody:Body){bodies=push<Body>(bodies,typedBody(originalBody,count));};};
+ let lowered:Project=Project{types:changed->types,declarations:declarations,bodies:bodies,functions:source->functions,entry:source->entry,moduleOrder:source->moduleOrder,obligations:source->obligations};
+ Result<Changed,Diagnostic>::Ok(Changed{semantic:SemanticProject{state:rewritten,entry:semantic->entry},source:lowered,concrete:changed})
+};

@@ -41,7 +41,6 @@ public let validate:Function(SemanticProject):Result<Unit,InputError>=function(s
  var id:Int=0;
  loop over(headers->declarations->pages->append(headers->declarations->tail) as page:List<Declaration>){loop over(page as declared:Declaration){
   let module:Module=try checked<Module>(lookup<Module>(headers->modules,declared->file),headers,headers->input->entry,fallback);
-  branch when{!module->standard&&(declared->kind==6||declared->kind==7)=>{return Result<Unit,InputError>::Err(failure(headers,declared->file,declared->span,"contract native generation is not enabled in this increment"));},else=>unit};
   branch when{!module->standard=>{branch on try checked<Parent>(lookup<Parent>(state->types->declarations,id),headers,declared->file,declared->span){
    Parent::None=>unit,Parent::Some(typeId:Int)=>{work=push<Use>(work,Use{typeId:typeId,file:declared->file,span:declared->span});}
   };},else=>unit};id=id+1;

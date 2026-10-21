@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeOperation;
+use Mgnc\WholeNativeContract\{emit as contractOperation};
 use Mgnc\WholeBinaryOperation\{emit as binaryOperation};
 use Mgnc\WholeNumericChecked\{emit as numericChecked,supported as checkedNumeric};
 use Mgnc\WholeNumericLiteral\{emit as numericLiteral};
@@ -43,6 +44,7 @@ public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnost
   },else=>{code=immediate(code,0,descriptor);code=store(code,4,8,0);}};
   loop over(op->inputs as input:Int){code=load(code,0,5,offset(input));code=store(code,4,start,0);start=start+8;};code=jump(code,List<Int>[232],try constructor(plan,owner,block,operation,op->origin->span));
  },
+ name=="package"||name=="dispatch"=>{code=try contractOperation(code,plan,owner,block,operation,op);},
  name=="template"=>{let callee:Int=try target(instance,op->origin->node,op->origin->span);code=immediate(code,0,0);code=store(code,4,0,0);code=store(code,4,8,0);code=jump(code,List<Int>[232],(try lookup<Procedure>(plan->procedures,callee))->entry);},
  name=="product"||name=="variant"=>{
   let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native aggregate descriptor");code=immediate(code,6,descriptor);

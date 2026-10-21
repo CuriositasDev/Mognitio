@@ -12,10 +12,11 @@ public type Literal=product{instance:Int;block:Int;operation:Int;label:Int;bytes
 public type Global=product{symbol:Int;declaration:Int;valueType:Int;standard:String;};
 public type Constructor=product{instance:Int;block:Int;operation:Int;entry:Int;roots:Int;};
 public type Native=product{
- runtimeTypes:RuntimeTypes;concrete:Plan;closures:Closures;layouts:Layouts;procedures:Paged<Procedure>;literals:Paged<Literal>;constructors:Paged<Constructor>;
+ abiRevision:Int;dispatchTables:Paged<Int>;runtimeTypes:RuntimeTypes;concrete:Plan;closures:Closures;layouts:Layouts;procedures:Paged<Procedure>;literals:Paged<Literal>;constructors:Paged<Constructor>;
  globals:Paged<Global>;globalSymbols:Map;globalDeclarations:Map;globalRoots:List<Bits<64>>;
  initializers:List<Int>;modules:List<Int>;moduleCount:Int;descriptors:Paged<Int>;variants:Paged<List<Int>>;entryGlobal:Int;nextLabel:Int;
 };
 public let descriptorTableLabel:Int=128;
 public let staticTableLabel:Int=129;
 public let globalRootsLabel:Int=130;
+public let abiRevisionLabel:Int=176;

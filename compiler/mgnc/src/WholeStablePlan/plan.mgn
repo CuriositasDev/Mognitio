@@ -1,8 +1,9 @@
 namespace Mgnc\WholeStablePlan;
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
 use Mgnc\WholeConcrete\{Plan,Instance,Target};
+use Mgnc\WholeDispatchData\{Pair};
 use Mgnc\WholeSubstitution\{Binding};
-use Mgnc\WholeStableKeys\{Entry,vector,arguments,compare,sort};
+use Mgnc\WholeStableKeys\{Entry,vector,arguments,shape,compare,sort};
 use Mgnc\WholeChecks\{require};
 use Mgnc\IntMap\{Map,create,get,put};
 public let canonical:Function(Plan):Result<Plan,Diagnostic>=function(plan:Plan):Result<Plan,Diagnostic>{
@@ -25,5 +26,8 @@ public let canonical:Function(Plan):Result<Plan,Diagnostic>=function(plan:Plan):
   };};instances=push<Instance>(instances,Instance{key:item->key,body:item->body,targets:targets});
  };};
  var initializers:List<Int>=List<Int>[];loop over(plan->initializers as original:Int){let id:Int=try get(positions,original);try require(id>=0,span,"stable initializer membership");initializers=initializers->append(id);};
- Result<Plan,Diagnostic>::Ok(Plan{types:plan->types,instances:instances,initializers:initializers})
+ var pairEntries:Paged<Entry>=empty<Entry>();ordinal=0;
+ loop over(plan->pairs->pages->append(plan->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){let contractShape:List<Int>=try shape(plan->types,pair->contractType);let concrete:List<Int>=try shape(plan->types,pair->concreteType);var tokens:List<Int>=List<Int>[contractShape->length()];loop over(contractShape as token:Int){tokens=tokens->append(token);};tokens=tokens->append(concrete->length());loop over(concrete as token:Int){tokens=tokens->append(token);};pairEntries=push<Entry>(pairEntries,Entry{id:ordinal,tokens:vector(tokens)});ordinal=ordinal+1;};};pairEntries=try sort(pairEntries);
+ var pairs:Paged<Pair>=empty<Pair>();ordinal=0;loop over(pairEntries->pages->append(pairEntries->tail) as page:List<Entry>){loop over(page as entry:Entry){branch when{ordinal>0=>{try require((try compare((try lookup<Entry>(pairEntries,ordinal-1))->tokens,entry->tokens))<0,span,"duplicate stable dispatch pair");},else=>unit};let original:Pair=try lookup<Pair>(plan->pairs,entry->id);var methods:List<Int>=List<Int>[];loop over(original->methods as method:Int){let mapped:Int=try get(positions,method);try require(mapped>=0,span,"stable dispatch method membership");methods=methods->append(mapped);};pairs=push<Pair>(pairs,Pair{implementation:original->implementation,concreteType:original->concreteType,contractType:original->contractType,methods:methods,signatures:original->signatures});ordinal=ordinal+1;};};
+ Result<Plan,Diagnostic>::Ok(Plan{pairs:pairs,types:plan->types,instances:instances,initializers:initializers})
 };

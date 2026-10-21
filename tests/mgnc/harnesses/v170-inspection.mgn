@@ -1,5 +1,5 @@
 namespace Mgnc;
-use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup};
+use Mgnc\Data\{Paged,Span,Diagnostic,empty,lookup,push};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\Semantic\{SemanticProject,analyze};
 use Mgnc\WholePipeline\{prepare};
@@ -26,9 +26,18 @@ let reject:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=func
 
 let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){let other:Int=branch on right->at(index){Result<Int,IndexError>::Ok(found:Int)=>found,Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};branch when{value!=other=>{return false;},else=>unit};index=index+1;};true};
 let changed:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code,index:Int,item:Record):Result<Code,Diagnostic>{Result<Code,Diagnostic>::Ok(Code{records:try replaceItem<Record>(code->records,index,item),nextLabel:code->nextLabel,pending:code->pending})};
+
+let shiftedCode:Function(Code,Int):Code=function(initial:Code,count:Int):Code{
+ let code:Code=flush(initial);var records:Paged<Record>=empty<Record>();var i:Int=0;
+ let padding:Record=Record{kind:0,bytes:List<Int>[],value:0,target:0};
+ loop while(i<count){records=push<Record>(records,padding);i=i+1;};
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){records=push<Record>(records,item);};};
+ Code{records:records,nextLabel:code->nextLabel,pending:List<Int>[]}
+};
+
 let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let input:SourceUnit=SourceUnit{path:"inspection.mgn",displayPath:"inspection.mgn",relativePath:"inspection.mgn",expectedNamespace:"",text:"namespace App;use Std\\Io\\{inspectPath};let main:Function(List<String>):Int=function(args:List<String>):Int{discard inspectPath(\".\");0};"};
- let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try machine(plan,code);
+ let semantic:SemanticProject=branch on analyze(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,sources:List<SourceUnit>[input]}){Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>value,Result<SemanticProject,InputError>::Err(error:InputError)=>{return Result<Unit,Diagnostic>::Err(error->diagnostic);}};let plan:Native=try prepare(semantic);let code:Code=flush(try emit(plan));try inspection(plan,shiftedCode(code,262144));try machine(plan,code);
  var owner:Int= -1;var ordinal:Int=0;var seen:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){branch when{item->kind==1&&item->target<256=>{owner=item->target;},else=>unit};var message:String="";var replacement:Record=item;var all:Bool=false;
  branch when{

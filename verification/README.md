@@ -137,3 +137,6 @@ whole-project cutoff.
 
 The [large-heap reserve seed](v1.7.0-seed-adaptive-reserve.md) records the new
 immutable bootstrap prerequisite and its qualification boundaries.
+
+[Bounded backend work](v1.7.0-backend-work.md) records relative ownership keys,
+buffered encoding and their independent regression controls.

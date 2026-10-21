@@ -22,6 +22,17 @@ def expectations():
     for count in CARRIES:
         value=b''.join(bytes([i%256])*(i%17+1) for i in range(count))
         rows.append(dict(path='carry-'+str(count)+'.bin',bytes=len(value),sha256=hashlib.sha256(value).hexdigest(),mode=0o644))
+    for count in CARRIES:
+        widths=[0,1,2,3,4095,4096,4097,17,0,8192]
+        value=b''.join(bytes([i%256])*widths[i%10] for i in range(count))
+        rows.append(dict(path='buffered-'+str(count)+'.bin',bytes=len(value),sha256=hashlib.sha256(value).hexdigest(),mode=0o644))
+    for count in [0,1,255,256,257,4095,4096,4097,16385]:
+        body=b''.join(bytes([i%256])*(i%17+1) for i in range(count))
+        size=120+len(body)
+        header=struct.pack('<16sHHIQQQIHHHHHH',b'\x7fELF\x02\x01\x01'+b'\0'*9,2,62,1,4194424,64,0,0,64,56,1,0,0,0)
+        header+=struct.pack('<IIQQQQQQ',1,5,0,4194304,4194304,size,size,4096)
+        value=header+body
+        rows.append(dict(path='records-'+str(count)+'.elf',bytes=len(value),sha256=hashlib.sha256(value).hexdigest(),mode=0o644))
     return rows
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--seed',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
@@ -35,11 +46,11 @@ def main():
     (out/'build.stdout').write_bytes(built.stdout);(out/'build.stderr').write_bytes(built.stderr);assert (built.returncode,built.stdout,built.stderr)==(0,b'',b''),(built.returncode,built.stderr)
     result=subprocess.run([out/'probe',images],capture_output=True,timeout=600,umask=0o022)
     (out/'run.stdout').write_bytes(result.stdout);(out/'run.stderr').write_bytes(result.stderr)
-    assert (result.returncode,result.stdout,result.stderr)==(0,b'ENCODER_CHUNKS_ORACLE_OK images=17 carry_series=10 negative=17\n',b''),(result.returncode,result.stdout,result.stderr)
+    assert (result.returncode,result.stdout,result.stderr)==(0,b'ENCODER_CHUNKS_ORACLE_OK images=26 carry_series=20 negative=17\n',b''),(result.returncode,result.stdout,result.stderr)
     for row in rows:
         path=images/row['path'];assert path.stat().st_size==row['bytes'] and sha(path)==row['sha256'] and stat.S_IMODE(path.stat().st_mode)==row['mode'],row['path']
     assert {p.name for p in images.iterdir()}=={r['path'] for r in rows}
     assert all(sha(project/r['path'])==r['sha256'] for r in inputs)
-    (out/'results.json').write_text(json.dumps(dict(kind='encoder-bytes-and-diagnostics-not-performance',images=17,carry_series=10,negative=17,independent_expected_sha256=sha(out/'expected.json'),probe_sha256=sha(out/'probe'),source_inputs_sha256=sha(out/'inputs.json')),indent=2)+'\n')
-    print('ENCODER_CHUNKS_ORACLE_OK images=17 carry_series=10 negative=17 expected_files='+str(len(rows)))
+    (out/'results.json').write_text(json.dumps(dict(kind='encoder-bytes-and-diagnostics-not-performance',images=26,carry_series=20,negative=17,independent_expected_sha256=sha(out/'expected.json'),probe_sha256=sha(out/'probe'),source_inputs_sha256=sha(out/'inputs.json')),indent=2)+'\n')
+    print('ENCODER_CHUNKS_ORACLE_OK images=26 carry_series=20 negative=17 expected_files='+str(len(rows)))
 if __name__=='__main__':main()

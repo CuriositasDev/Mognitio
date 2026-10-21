@@ -54,7 +54,8 @@
                           (lambda ()
                             (let* ((unit (funcall original))
                                    (instructions (mognitio.object:code-unit-instructions unit))
-                                   (targets '(:reserve-large-cap :growth-large-cap)))
+                                   (targets '(:runtime/allocate-block/reserve-large-cap
+                                              :runtime/allocate-block/growth-large-cap)))
                               (when disabled
                                 (same 2 (count-if
                                   (lambda (inst)

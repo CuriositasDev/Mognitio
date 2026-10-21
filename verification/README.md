@@ -134,3 +134,6 @@ whole-project cutoff.
 - [Two-way exact-size allocator cursors](v1.7.0-two-way-fit-cursors.md): first-fit correctness, collision bounds and replacement-seed boundary.
 
 - [Bounded reserve for large native heaps](v1.7.0-adaptive-reserve.md): unsigned policy boundaries, native collection controls and replacement-seed boundary.
+
+The [large-heap reserve seed](v1.7.0-seed-adaptive-reserve.md) records the new
+immutable bootstrap prerequisite and its qualification boundaries.

@@ -1,0 +1,91 @@
+namespace Mgnc\IntMap;
+// Generated fixed-field radix tree. Empty subtrees are shared immutable values.
+// No child lookup or path update creates an intermediate List or Result.
+use Mgnc\Data\{Diagnostic,Span,problem};
+public type Level9=product{zero:Int;one:Int;two:Int;three:Int;};
+public type Level8=product{zero:Level9;one:Level9;two:Level9;three:Level9;};
+public type Level7=product{zero:Level8;one:Level8;two:Level8;three:Level8;};
+public type Level6=product{zero:Level7;one:Level7;two:Level7;three:Level7;};
+public type Level5=product{zero:Level6;one:Level6;two:Level6;three:Level6;};
+public type Level4=product{zero:Level5;one:Level5;two:Level5;three:Level5;};
+public type Level3=product{zero:Level4;one:Level4;two:Level4;three:Level4;};
+public type Level2=product{zero:Level3;one:Level3;two:Level3;three:Level3;};
+public type Level1=product{zero:Level2;one:Level2;two:Level2;three:Level2;};
+public type Level0=product{zero:Level1;one:Level1;two:Level1;three:Level1;};
+let blank9:Level9=Level9{zero:-2,one:-2,two:-2,three:-2};
+let blank8:Level8=Level8{zero:blank9,one:blank9,two:blank9,three:blank9};
+let blank7:Level7=Level7{zero:blank8,one:blank8,two:blank8,three:blank8};
+let blank6:Level6=Level6{zero:blank7,one:blank7,two:blank7,three:blank7};
+let blank5:Level5=Level5{zero:blank6,one:blank6,two:blank6,three:blank6};
+let blank4:Level4=Level4{zero:blank5,one:blank5,two:blank5,three:blank5};
+let blank3:Level3=Level3{zero:blank4,one:blank4,two:blank4,three:blank4};
+let blank2:Level2=Level2{zero:blank3,one:blank3,two:blank3,three:blank3};
+let blank1:Level1=Level1{zero:blank2,one:blank2,two:blank2,three:blank2};
+let blank0:Level0=Level0{zero:blank1,one:blank1,two:blank1,three:blank1};
+public type Entry=product{key:Int;value:Int;};
+public type Map=product{small:Level0;large:List<Entry>;};
+public let create:Function():Map=function():Map{Map{small:blank0,large:List<Entry>[]}};
+public let get:Function(Map,Int):Result<Int,Diagnostic>=function(table:Map,key:Int):Result<Int,Diagnostic>{
+ branch when{key<0=>{return Result<Int,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"negative radix key"));},key>=1048576=>{
+  loop over(table->large as entry:Entry){branch when{entry->key==key=>{return Result<Int,Diagnostic>::Ok(entry->value);},else=>unit};};return Result<Int,Diagnostic>::Ok(-2);
+ },else=>unit};
+ let node0:Level0=table->small;
+ let digit0:Int=key/262144%4;
+ let node1:Level1=branch when{digit0==0=>node0->zero,digit0==1=>node0->one,digit0==2=>node0->two,else=>node0->three};
+ let digit1:Int=key/65536%4;
+ let node2:Level2=branch when{digit1==0=>node1->zero,digit1==1=>node1->one,digit1==2=>node1->two,else=>node1->three};
+ let digit2:Int=key/16384%4;
+ let node3:Level3=branch when{digit2==0=>node2->zero,digit2==1=>node2->one,digit2==2=>node2->two,else=>node2->three};
+ let digit3:Int=key/4096%4;
+ let node4:Level4=branch when{digit3==0=>node3->zero,digit3==1=>node3->one,digit3==2=>node3->two,else=>node3->three};
+ let digit4:Int=key/1024%4;
+ let node5:Level5=branch when{digit4==0=>node4->zero,digit4==1=>node4->one,digit4==2=>node4->two,else=>node4->three};
+ let digit5:Int=key/256%4;
+ let node6:Level6=branch when{digit5==0=>node5->zero,digit5==1=>node5->one,digit5==2=>node5->two,else=>node5->three};
+ let digit6:Int=key/64%4;
+ let node7:Level7=branch when{digit6==0=>node6->zero,digit6==1=>node6->one,digit6==2=>node6->two,else=>node6->three};
+ let digit7:Int=key/16%4;
+ let node8:Level8=branch when{digit7==0=>node7->zero,digit7==1=>node7->one,digit7==2=>node7->two,else=>node7->three};
+ let digit8:Int=key/4%4;
+ let node9:Level9=branch when{digit8==0=>node8->zero,digit8==1=>node8->one,digit8==2=>node8->two,else=>node8->three};
+ let digit9:Int=key/1%4;
+ Result<Int,Diagnostic>::Ok(branch when{digit9==0=>node9->zero,digit9==1=>node9->one,digit9==2=>node9->two,else=>node9->three})
+};
+public let put:Function(Map,Int,Int):Result<Map,Diagnostic>=function(table:Map,key:Int,value:Int):Result<Map,Diagnostic>{
+ branch when{key<0=>{return Result<Map,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"negative radix key"));},key>=1048576=>{
+  var large:List<Entry>=List<Entry>[];var found:Bool=false;
+  loop over(table->large as entry:Entry){branch when{entry->key==key=>{large=large->append(Entry{key:key,value:value});found=true;},else=>{large=large->append(entry);}};};
+  branch when{!found=>{large=large->append(Entry{key:key,value:value});},else=>unit};return Result<Map,Diagnostic>::Ok(Map{small:table->small,large:large});
+ },else=>unit};
+ let node0:Level0=table->small;
+ let digit0:Int=key/262144%4;
+ let node1:Level1=branch when{digit0==0=>node0->zero,digit0==1=>node0->one,digit0==2=>node0->two,else=>node0->three};
+ let digit1:Int=key/65536%4;
+ let node2:Level2=branch when{digit1==0=>node1->zero,digit1==1=>node1->one,digit1==2=>node1->two,else=>node1->three};
+ let digit2:Int=key/16384%4;
+ let node3:Level3=branch when{digit2==0=>node2->zero,digit2==1=>node2->one,digit2==2=>node2->two,else=>node2->three};
+ let digit3:Int=key/4096%4;
+ let node4:Level4=branch when{digit3==0=>node3->zero,digit3==1=>node3->one,digit3==2=>node3->two,else=>node3->three};
+ let digit4:Int=key/1024%4;
+ let node5:Level5=branch when{digit4==0=>node4->zero,digit4==1=>node4->one,digit4==2=>node4->two,else=>node4->three};
+ let digit5:Int=key/256%4;
+ let node6:Level6=branch when{digit5==0=>node5->zero,digit5==1=>node5->one,digit5==2=>node5->two,else=>node5->three};
+ let digit6:Int=key/64%4;
+ let node7:Level7=branch when{digit6==0=>node6->zero,digit6==1=>node6->one,digit6==2=>node6->two,else=>node6->three};
+ let digit7:Int=key/16%4;
+ let node8:Level8=branch when{digit7==0=>node7->zero,digit7==1=>node7->one,digit7==2=>node7->two,else=>node7->three};
+ let digit8:Int=key/4%4;
+ let node9:Level9=branch when{digit8==0=>node8->zero,digit8==1=>node8->one,digit8==2=>node8->two,else=>node8->three};
+ let digit9:Int=key/1%4;
+ let updated9:Level9=Level9{zero:branch when{digit9==0=>value,else=>node9->zero},one:branch when{digit9==1=>value,else=>node9->one},two:branch when{digit9==2=>value,else=>node9->two},three:branch when{digit9==3=>value,else=>node9->three}};
+ let updated8:Level8=Level8{zero:branch when{digit8==0=>updated9,else=>node8->zero},one:branch when{digit8==1=>updated9,else=>node8->one},two:branch when{digit8==2=>updated9,else=>node8->two},three:branch when{digit8==3=>updated9,else=>node8->three}};
+ let updated7:Level7=Level7{zero:branch when{digit7==0=>updated8,else=>node7->zero},one:branch when{digit7==1=>updated8,else=>node7->one},two:branch when{digit7==2=>updated8,else=>node7->two},three:branch when{digit7==3=>updated8,else=>node7->three}};
+ let updated6:Level6=Level6{zero:branch when{digit6==0=>updated7,else=>node6->zero},one:branch when{digit6==1=>updated7,else=>node6->one},two:branch when{digit6==2=>updated7,else=>node6->two},three:branch when{digit6==3=>updated7,else=>node6->three}};
+ let updated5:Level5=Level5{zero:branch when{digit5==0=>updated6,else=>node5->zero},one:branch when{digit5==1=>updated6,else=>node5->one},two:branch when{digit5==2=>updated6,else=>node5->two},three:branch when{digit5==3=>updated6,else=>node5->three}};
+ let updated4:Level4=Level4{zero:branch when{digit4==0=>updated5,else=>node4->zero},one:branch when{digit4==1=>updated5,else=>node4->one},two:branch when{digit4==2=>updated5,else=>node4->two},three:branch when{digit4==3=>updated5,else=>node4->three}};
+ let updated3:Level3=Level3{zero:branch when{digit3==0=>updated4,else=>node3->zero},one:branch when{digit3==1=>updated4,else=>node3->one},two:branch when{digit3==2=>updated4,else=>node3->two},three:branch when{digit3==3=>updated4,else=>node3->three}};
+ let updated2:Level2=Level2{zero:branch when{digit2==0=>updated3,else=>node2->zero},one:branch when{digit2==1=>updated3,else=>node2->one},two:branch when{digit2==2=>updated3,else=>node2->two},three:branch when{digit2==3=>updated3,else=>node2->three}};
+ let updated1:Level1=Level1{zero:branch when{digit1==0=>updated2,else=>node1->zero},one:branch when{digit1==1=>updated2,else=>node1->one},two:branch when{digit1==2=>updated2,else=>node1->two},three:branch when{digit1==3=>updated2,else=>node1->three}};
+ let updated0:Level0=Level0{zero:branch when{digit0==0=>updated1,else=>node0->zero},one:branch when{digit0==1=>updated1,else=>node0->one},two:branch when{digit0==2=>updated1,else=>node0->two},three:branch when{digit0==3=>updated1,else=>node0->three}};
+ Result<Map,Diagnostic>::Ok(Map{small:updated0,large:table->large})
+};

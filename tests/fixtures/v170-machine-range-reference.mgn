@@ -1,0 +1,1 @@
+let oldRange:Function(List<Int>,Int,Int):List<Int>=function(values:List<Int>,start:Int,end:Int):List<Int>{var result:List<Int>=List<Int>[];var i:Int=0;loop over(values as value:Int){branch when{i>=start&&i<end=>{result=result->append(value);},else=>unit};i=i+1;};result};

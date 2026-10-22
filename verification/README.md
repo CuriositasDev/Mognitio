@@ -146,3 +146,6 @@ different requested sizes and its independent equivalence/work controls.
 
 The [first-fit-bound seed](v1.7.0-seed-fit-lower-bounds.md) records the new
 immutable bootstrap prerequisite and its qualification boundaries.
+
+[Bounded machine-verifier ranges](v1.7.0-machine-range.md) preserves selected bytes
+and bounds allocation work for short slices of large lists.

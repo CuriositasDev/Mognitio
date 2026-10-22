@@ -1,0 +1,17 @@
+namespace Mgnc;
+use Mgnc\IntMap\{Map,create,get,put};use Mgnc\Data\{Diagnostic};
+let exercise:Function(Int,Int):Result<Int,Diagnostic>=function(base:Int,count:Int):Result<Int,Diagnostic>{
+ let blank:Map=create();var table:Map=blank;var index:Int=0;
+ loop while(index<count){table=try put(table,base+index,index*17+5);index=index+1;};
+ let snapshot:Map=table;index=0;
+ loop while(index<count){assert (try get(snapshot,base+index))==index*17+5;table=try put(table,base+index,-index-1);index=index+1;};
+ index=0;loop while(index<count){assert (try get(table,base+index))== -index-1;assert (try get(snapshot,base+index))==index*17+5;assert (try get(blank,base+index))== -2;index=index+1;};
+ assert (try get(table,base+count))== -2;Result<Int,Diagnostic>::Ok(0)
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let region:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ let size:String=branch on args->at(1){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};
+ let base:Int=branch when{region=="low"=>0,region=="expanded"=>1048576,region=="edge"=>16776192,else=>16777216};
+ let count:Int=branch when{size=="tiny"=>16,size=="small"=>64,size=="medium"=>256,else=>1024};
+ branch on exercise(base,count){Result<Int,Diagnostic>::Ok(value:Int)=>value,Result<Int,Diagnostic>::Err(error:Diagnostic)=>3}
+};

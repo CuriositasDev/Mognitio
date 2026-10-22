@@ -149,3 +149,6 @@ immutable bootstrap prerequisite and its qualification boundaries.
 
 [Bounded machine-verifier ranges](v1.7.0-machine-range.md) preserves selected bytes
 and bounds allocation work for short slices of large lists.
+
+[Balanced pending encoding fragments](v1.7.0-balanced-encode-buffer.md) bounds
+repeated prefix copies while preserving emitted bytes and carry order.

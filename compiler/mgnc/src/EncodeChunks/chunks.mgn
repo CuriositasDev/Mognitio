@@ -18,15 +18,23 @@ public let finish:Function(List<Bytes>):Bytes=function(levels:List<Bytes>):Bytes
  var result:Bytes=vacant;loop over(levels as previous:Bytes){branch when{previous->length()>0=>{result=previous->concat(result);},else=>unit};};result
 };
 
-// Keep small record and relocation fragments out of the carry tree until
-// their combined byte buffer is full. A large existing fragment goes directly
-// into the tree; it is never rebuilt byte by byte.
-public type Buffered=product{levels:List<Bytes>;pending:Bytes;};
-public let buffered:Function():Buffered=function():Buffered{Buffered{levels:List<Bytes>[],pending:vacant}};
+// Collect small immutable fragments, then merge adjacent halves at flush.
+// The pending byte count is bounded; each fragment participates in at most
+// logarithmically many concatenations instead of copying each growing prefix.
+let combine:Function(List<Bytes>):Bytes=function(parts:List<Bytes>):Bytes{
+ var current:List<Bytes>=parts;
+ loop while(current->length()>1){var next:List<Bytes>=List<Bytes>[];var pending:Bytes=vacant;var waiting:Bool=false;
+  loop over(current as part:Bytes){branch when{waiting=>{next=next->append(pending->concat(part));waiting=false;},else=>{pending=part;waiting=true;}};};
+  branch when{waiting=>{next=next->append(pending);},else=>unit};current=next;
+ };
+ branch on current->at(0){Result<Bytes,IndexError>::Ok(value:Bytes)=>value,Result<Bytes,IndexError>::Err(error:IndexError)=>vacant}
+};
+public type Buffered=product{levels:List<Bytes>;pending:List<Bytes>;length:Int;};
+public let buffered:Function():Buffered=function():Buffered{Buffered{levels:List<Bytes>[],pending:List<Bytes>[],length:0}};
 public let addBuffered:Function(Buffered,Bytes):Result<Buffered,Diagnostic>=function(initial:Buffered,chunk:Bytes):Result<Buffered,Diagnostic>{
  branch when{chunk->length()==0=>{return Result<Buffered,Diagnostic>::Ok(initial);},else=>unit};
- branch when{initial->pending->length()+chunk->length()<=4096=>{return Result<Buffered,Diagnostic>::Ok(Buffered{levels:initial->levels,pending:initial->pending->concat(chunk)});},else=>unit};
- let levels:List<Bytes>=try add(initial->levels,initial->pending);
- branch when{chunk->length()>=4096=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:try add(levels,chunk),pending:vacant}),else=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:levels,pending:chunk})}
+ branch when{initial->length+chunk->length()<=4096=>{return Result<Buffered,Diagnostic>::Ok(Buffered{levels:initial->levels,pending:initial->pending->append(chunk),length:initial->length+chunk->length()});},else=>unit};
+ let levels:List<Bytes>=try add(initial->levels,combine(initial->pending));
+ branch when{chunk->length()>=4096=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:try add(levels,chunk),pending:List<Bytes>[],length:0}),else=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:levels,pending:List<Bytes>[chunk],length:chunk->length()})}
 };
-public let finishBuffered:Function(Buffered):Bytes=function(value:Buffered):Bytes{finish(value->levels)->concat(value->pending)};
+public let finishBuffered:Function(Buffered):Bytes=function(value:Buffered):Bytes{finish(value->levels)->concat(combine(value->pending))};

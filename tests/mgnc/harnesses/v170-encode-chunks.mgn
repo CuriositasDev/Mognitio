@@ -50,7 +50,7 @@ let test:Function(String):Result<Unit,Diagnostic>=function(directory:String):Res
    let sizes:List<Int>=List<Int>[0,1,2,3,4095,4096,4097,17,0,8192];let width:Int=branch on sizes->at(i%10){Result<Int,IndexError>::Ok(value:Int)=>value,Result<Int,IndexError>::Err(error:IndexError)=>0};
    var values:List<Int>=List<Int>[];var j:Int=0;loop while(j<width){values=values->append(i%256);j=j+1;};
    let chunk:Bytes=try packChunk(values,span);state=try addBuffered(state,chunk);levels=try addChunk(levels,chunk);
-   try require(state->pending->length()<=4096,span,"bounded fragment buffer");i=i+1;
+   var pendingBytes:Int=0;loop over(state->pending as part:Bytes){pendingBytes=pendingBytes+part->length();};try require(state->length==pendingBytes&&pendingBytes<=4096&&state->pending->length()<=pendingBytes,span,"bounded fragment buffer");i=i+1;
   };
   let value:Bytes=finishBuffered(state);try require(value==finishChunks(levels),span,"buffered fragment order");try save(directory+"/buffered-"+number(count)+".bin",value);
  };
@@ -59,6 +59,13 @@ let test:Function(String):Result<Unit,Diagnostic>=function(directory:String):Res
   loop while(i<count){var values:List<Int>=List<Int>[];var j:Int=0;loop while(j<i%17+1){values=values->append(i%256);j=j+1;};records=push<Record>(records,record(0,values,0,0));i=i+1;};
   let code:Code=Code{records:records,nextLabel:1,pending:List<Int>[]};let value:Bytes=try encode(code);try require(value==(try oldEncode(code)),span,"many-record complete ELF differential");try save(directory+"/records-"+number(count)+".elf",value);
  };
- discard writeStdout("ENCODER_CHUNKS_ORACLE_OK images=26 carry_series=20 negative=17\n");Result<Unit,Diagnostic>::Ok(unit)
+ loop over(List<Int>[0,1,2,3,7,8,4095,4096,4097] as count:Int){
+  var state:Buffered=buffered();var i:Int=0;
+  loop while(i<count){state=try addBuffered(state,try packChunk(List<Int>[i%256],span));i=i+1;};
+  var pendingBytes:Int=0;loop over(state->pending as part:Bytes){pendingBytes=pendingBytes+part->length();};
+  try require(state->length==pendingBytes&&pendingBytes<=4096&&state->pending->length()==pendingBytes,span,"one-byte fragment count bound");
+  let value:Bytes=finishBuffered(state);try require(value->length()==count,span,"balanced batch size");try save(directory+"/batch-"+number(count)+".bin",value);
+ };
+ discard writeStdout("ENCODER_CHUNKS_ORACLE_OK images=26 carry_series=29 negative=17\n");Result<Unit,Diagnostic>::Ok(unit)
 };
 let main:Function(List<String>):Int=function(args:List<String>):Int{let directory:String=branch on args->at(0){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>{return 2;}};branch on test(directory){Result<Unit,Diagnostic>::Ok(value:Unit)=>0,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{discard writeStdout(error->phase+": "+error->message+"\n");1}}};

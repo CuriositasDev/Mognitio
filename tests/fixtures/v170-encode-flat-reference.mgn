@@ -1,0 +1,33 @@
+// Frozen flat-prefix buffer from e81a223; used only as an allocation control.
+namespace Mgnc\FlatChunks;
+use Std\Numeric\{Bits};
+use Std\Binary\{Bytes,ByteValueError,bytesFromInts,bytesFromBits};
+use Mgnc\Data\{Diagnostic,Span,problem};
+use Mgnc\Tables\{replaceList,atList};
+let vacant:Bytes=bytesFromBits(List<Bits<8>>[]);
+// Levels contain consecutive older chunks; a carry appends the new suffix.
+public let add:Function(List<Bytes>,Bytes):Result<List<Bytes>,Diagnostic>=function(initial:List<Bytes>,chunk:Bytes):Result<List<Bytes>,Diagnostic>{
+ branch when{chunk->length()==0=>{return Result<List<Bytes>,Diagnostic>::Ok(initial);},else=>unit};
+ var levels:List<Bytes>=initial;var carry:Bytes=chunk;var index:Int=0;
+ loop while(index<levels->length()){let previous:Bytes=try atList<Bytes>(levels,index);branch when{previous->length()==0=>{levels=replaceList<Bytes>(levels,index,carry);return Result<List<Bytes>,Diagnostic>::Ok(levels);},else=>unit};carry=previous->concat(carry);levels=replaceList<Bytes>(levels,index,vacant);index=index+1;};
+ Result<List<Bytes>,Diagnostic>::Ok(levels->append(carry))
+};
+public let pack:Function(List<Int>,Span):Result<Bytes,Diagnostic>=function(values:List<Int>,span:Span):Result<Bytes,Diagnostic>{
+ branch on bytesFromInts(values){Result<Bytes,ByteValueError>::Ok(value:Bytes)=>Result<Bytes,Diagnostic>::Ok(value),Result<Bytes,ByteValueError>::Err(error:ByteValueError)=>Result<Bytes,Diagnostic>::Err(problem("internal",span,"opcode byte out of range"))}
+};
+public let finish:Function(List<Bytes>):Bytes=function(levels:List<Bytes>):Bytes{
+ var result:Bytes=vacant;loop over(levels as previous:Bytes){branch when{previous->length()>0=>{result=previous->concat(result);},else=>unit};};result
+};
+
+// Keep small record and relocation fragments out of the carry tree until
+// their combined byte buffer is full. A large existing fragment goes directly
+// into the tree; it is never rebuilt byte by byte.
+public type Buffered=product{levels:List<Bytes>;pending:Bytes;};
+public let buffered:Function():Buffered=function():Buffered{Buffered{levels:List<Bytes>[],pending:vacant}};
+public let addBuffered:Function(Buffered,Bytes):Result<Buffered,Diagnostic>=function(initial:Buffered,chunk:Bytes):Result<Buffered,Diagnostic>{
+ branch when{chunk->length()==0=>{return Result<Buffered,Diagnostic>::Ok(initial);},else=>unit};
+ branch when{initial->pending->length()+chunk->length()<=4096=>{return Result<Buffered,Diagnostic>::Ok(Buffered{levels:initial->levels,pending:initial->pending->concat(chunk)});},else=>unit};
+ let levels:List<Bytes>=try add(initial->levels,initial->pending);
+ branch when{chunk->length()>=4096=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:try add(levels,chunk),pending:vacant}),else=>Result<Buffered,Diagnostic>::Ok(Buffered{levels:levels,pending:chunk})}
+};
+public let finishBuffered:Function(Buffered):Bytes=function(value:Buffered):Bytes{finish(value->levels)->concat(value->pending)};

@@ -31,7 +31,7 @@ let append:Function(List<Int>,List<Int>):List<Int>=function(left:List<Int>,right
 let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{
  branch when{left->length()!=right->length()=>{return false;},else=>unit};var i:Int=0;loop over(left as value:Int){branch on right->at(i){Result<Int,IndexError>::Ok(other:Int)=>{branch when{value!=other=>{return false;},else=>unit};},Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};i=i+1;};true
 };
-let range:Function(List<Int>,Int,Int):List<Int>=function(values:List<Int>,start:Int,end:Int):List<Int>{var result:List<Int>=List<Int>[];var i:Int=0;loop over(values as value:Int){branch when{i>=start&&i<end=>{result=result->append(value);},else=>unit};i=i+1;};result};
+let range:Function(List<Int>,Int,Int):List<Int>=function(values:List<Int>,start:Int,end:Int):List<Int>{var result:List<Int>=List<Int>[];var i:Int=branch when{start<0=>0,else=>start};let stop:Int=branch when{end>values->length()=>values->length(),else=>end};loop while(i<stop){branch on values->at(i){Result<Int,IndexError>::Ok(value:Int)=>{result=result->append(value);},Result<Int,IndexError>::Err(error:IndexError)=>unit};i=i+1;};result};
 let fragment:Function(Code,Map,Int,Int,Span):Result<Fragment,Diagnostic>=function(code:Code,labels:Map,start:Int,end:Int,span:Span):Result<Fragment,Diagnostic>{
  var cursor:Int=try get(labels,start);let limit:Int=try get(labels,end);try require(cursor>=0&&limit>cursor,span,"machine source region");cursor=cursor+1;
  var data:List<Int>=List<Int>[];var refs:List<Reference>=List<Reference>[];

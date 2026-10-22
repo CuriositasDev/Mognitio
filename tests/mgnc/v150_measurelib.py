@@ -6,6 +6,7 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=False)
     stdout=directory/"stdout";stderr=directory/"stderr"
     samples=[];reason=None;failure=None;status=None;usage=None;missing_since=None
+    exit_grace=1.0
     started=time.monotonic()
     with stdout.open("wb") as out,stderr.open("wb") as err:
         child=subprocess.Popen(list(map(str,command)),stdout=out,stderr=err,start_new_session=True)
@@ -28,13 +29,15 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
                     missing_since=None
                 else:
                     # Linux releases mm before the task becomes waitable. Its
-                    # status can still say R during this short exit interval.
+                    # status can still say R while a large heap is being released.
+                    # Allow a bounded one-second grace, still subject to the
+                    # original wall deadline and final wait4 peak RSS.
                     pid,current,observed=os.wait4(child.pid,os.WNOHANG)
                     if pid:
                         status,usage=current,observed
                         break
                     if missing_since is None:missing_since=now
-                    if now-missing_since>=.1:
+                    if now-missing_since>=exit_grace:
                         raise RuntimeError("process RSS unavailable beyond exit grace")
                 if samples and samples[-1]["rss_bytes"]>rss_limit:reason="rss"
                 elif now-started>=timeout:reason="wall"
@@ -55,6 +58,7 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
     # Reaping can precede the loop's deadline check after a delayed observation.
     # Preserve the actual exit/signal and any earlier cutoff; no child remains to kill.
     if reason is None and elapsed>timeout:reason="wall"
+    if reason is None and usage and usage.ru_maxrss*1024>rss_limit:reason="rss"
     streams={}
     for name,path in [("stdout",stdout),("stderr",stderr)]:
         data=path.read_bytes()
@@ -64,5 +68,5 @@ def observe(command, directory, *, timeout=600.0, rss_limit=4096*1024**2, interv
             "exit":child.returncode if child.returncode>=0 else None,
             "signal":-child.returncode if child.returncode<0 else None,
             "cutoff":reason,"harness_failure":failure,"sample_interval_seconds":interval,
-            "rss_exit_grace_seconds":.1,"last_sample":samples[-1] if samples else None,"sample_count":len(samples),
+            "rss_exit_grace_seconds":exit_grace,"last_sample":samples[-1] if samples else None,"sample_count":len(samples),
             "streams":streams}

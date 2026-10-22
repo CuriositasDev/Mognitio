@@ -19,8 +19,15 @@ with tempfile.TemporaryDirectory() as temporary:
  def no_rss(path,*args,**kwargs):return "State:\\tR (running)\\n"
  with patch.object(Path,"read_text",no_rss):
   exiting=observe([sys.executable,"-c","pass"],root/"exit-race")
+  delayed=observe([sys.executable,"-c","import time;time.sleep(.25)"],root/"delayed-exit-race")
+  deadline=observe([sys.executable,"-c","import time;time.sleep(10)"],root/"missing-rss-wall",timeout=.15)
+  peak=observe([sys.executable,"-c","x=bytearray(64*1024*1024)"],root/"missing-rss-peak",rss_limit=32*1024**2)
   unavailable=observe([sys.executable,"-c","import time;time.sleep(10)"],root/"unavailable")
  assert exiting["exit"]==0 and exiting["harness_failure"] is None,exiting
  assert exiting["peak_rss_bytes"]>0 and exiting["last_sample"] is None,exiting
+ assert delayed["exit"]==0 and delayed["harness_failure"] is None and delayed["cutoff"] is None,delayed
+ assert delayed["rss_exit_grace_seconds"]==1.0 and delayed["seconds"]>=.25,delayed
+ assert deadline["cutoff"]=="wall" and deadline["signal"]==9 and deadline["harness_failure"] is None,deadline
+ assert peak["cutoff"]=="rss" and peak["exit"]==0 and peak["harness_failure"] is None and peak["last_sample"] is None,peak
  assert unavailable["harness_failure"]=="RuntimeError: process RSS unavailable beyond exit grace" and unavailable["signal"]==9,unavailable
- print("V150_MEASUREMENT_HARNESS_OK exit=true streams=true wait4=true wall=true rss=true exit_race=true unavailable=true")
+ print("V150_MEASUREMENT_HARNESS_OK exit=true streams=true wait4=true wall=true rss=true exit_race=true unavailable=true delayed_exit=true missing_rss_wall=true reaped_peak=true")

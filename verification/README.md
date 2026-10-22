@@ -152,3 +152,5 @@ and bounds allocation work for short slices of large lists.
 
 [Balanced pending encoding fragments](v1.7.0-balanced-encode-buffer.md) bounds
 repeated prefix copies while preserving emitted bytes and carry order.
+
+The [bounded exit observation](v1.7.0-observation-exit.md) handles large-heap teardown and retains wall/RSS cutoffs.

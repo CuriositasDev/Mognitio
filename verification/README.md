@@ -37,7 +37,8 @@ The retained v0.11 [72-case ledger](v0.11.0-testing.md) and
 [process evidence](v0.11.0-process.md) describe the inherited runner.
 The [runner review fixes](v0.11.0-review.md) cover host storage recovery,
 helper frame-register preservation, and committed-result diagnostics.
-The current release validation procedure is [v1.5.0](v1.5.0-release.md).
+The current released compiler acceptance and release record is
+[v1.6.0](v1.6.0-release.md).
 The retained stable release record is [v1.0.0](v1.0.0-release.md).
 The retained source release record is [v0.14.0](v0.14.0-release.md).
 Run checks from the repository root on a non-root Linux amd64 host with SBCL,
@@ -93,7 +94,7 @@ evidence. Do not include private setup details in public records.
 - [v0.4.0](v0.4.0.md), [v0.3.0](v0.3.0.md), [v0.2.0](v0.2.0.md)
 
 Historical counts and old source oracles apply to their pinned revisions.
-Version-branch completion does not authorize main integration, a tag, or release.
+Historical branch completion does not authorize a release tag or publication.
 
 - [v0.15.1 package permissions](v0.15.1.md): archive modes and non-owner execution regression.
 

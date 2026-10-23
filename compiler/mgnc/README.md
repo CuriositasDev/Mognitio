@@ -1,10 +1,11 @@
 # Experimental native compiler
 
 This source project extends the accepted Mognitio 1.6 experimental compiler
-toward 1.7. The current increments add native assertions, normal-build `@test`
-metadata, named witness checking with typed whole IR, and fixed-width scalar
-arithmetic, numeric Result generation, and Bytes methods/encoding, and standard Bytes construction; complete 1.7
-implementation and performance acceptance remain pending.
+toward 1.7. The implementation includes native assertions, normal-build `@test`
+metadata, named contracts and witness dispatch, fixed-width arithmetic, numeric
+Results, Bytes operations and encoding, directory/path inspection, and binary
+publication. Complete 1.7 acceptance, including whole-generation and formal
+performance gates, remains pending.
 Final 1.6 conformance and performance acceptance are complete; see the
 [acceptance record](../../verification/v1.6.0-final-acceptance.md).
 It remains experimental and is not included in the regular Debian package,
@@ -13,8 +14,8 @@ APT repository, or installer bundle. All 1.6 implementation and performance stag
 
 ## Build
 
-Use the [qualified replacement Lisp seed](../../verification/v1.7.0-seed.md), whose accepted
-source revision is 63c99a21cd50e31f458c83231c34adbdce3bf4f2.
+Use the [qualified first-fit-bound Lisp seed](../../verification/v1.7.0-seed-fit-lower-bounds.md), whose accepted
+source revision is 9cc663be54f9101f0b596578b37207bb2695856c.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 
@@ -79,8 +80,11 @@ descriptor and collector bounds check. Standard Binary construction functions us
 renamed imports, re-exports, captures and indirect calls. The first invalid Int
 preserves its original index/value. Independent checks validate standard origin,
 Function signatures, code pointers, allocation descriptors and root selections.
-Binary publication and filesystem additions remain gated until their runtime paths
-are ready.
+The native filesystem profile includes `readDirectory`, `inspectPath`,
+`sameFileIdentity`, `joinPath`, and `createDir`. Binary publication preserves
+partial-write progress, ownership, cleanup, and commit outcomes. These paths
+are covered by native positive/negative cases and raw syscall fault injection;
+whole-version acceptance is recorded separately.
 
 Assertions require Bool on normally completing operands and preserve non-completing
 control transfers. A failed assertion exits 5 with the original statement location;
@@ -94,8 +98,9 @@ and unreachable files. Packaging requires a local witness declaration or an
 explicitly imported public witness; dispatch of a packed value requires neither
 the concrete type nor its witness import. Witness bodies remain isolated from
 outer runtime values. Check and lower preserve these bindings and method order.
-Build reports unsupported for contracts and witnesses until native package and
-dispatch support is complete.
+Build generates contract packages, method tables and dispatch through ordinary
+function closures. Managed package payloads and captured values remain rooted
+across allocation and collection; scalar payloads are not traced as pointers.
 
 Successful compiler commands have exit 0 and empty output streams.
 Build publishes a new standalone Linux AMD64 ELF without replacing an existing

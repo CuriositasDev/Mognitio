@@ -74,7 +74,7 @@ contents rather than proving that tests passed.
 ## Repository review
 
 The [v1.7 implementation review map](v1.7.0-review.md) identifies the current
-source, functional evidence and remaining release-readiness gates.
+source, completed acceptance evidence and the release-review boundary.
 
 Include new files in review. Check changed Markdown links and fences, UTF-8,
 LF endings, final newlines, executable launchers, and whitespace.

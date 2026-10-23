@@ -156,3 +156,6 @@ repeated prefix copies while preserving emitted bytes and carry order.
 The [bounded exit observation](v1.7.0-observation-exit.md) handles large-heap teardown and retains wall/RSS cutoffs.
 
 - [Wider persistent radix map](v1.7.0-wide-radix-map.md): expanded label-key range, snapshot equivalence, allocation bounds, and forced collection.
+
+[Capture verification allocation](v1.7.0-capture-check.md) preserves independent
+capture and module-load checks while avoiding read-only list copies.

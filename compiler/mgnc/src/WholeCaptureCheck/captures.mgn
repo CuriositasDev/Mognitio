@@ -6,17 +6,22 @@ use Mgnc\TypeOps\{parentEqual};
 use Mgnc\WholeIR\{Body,Slot,Block,Operation};
 use Mgnc\WholeChecks\{require,present};
 use Mgnc\Tables\{atList,replaceItem};
-let contains:Function(List<Int>,Int):Bool=function(values:List<Int>,wanted:Int):Bool{loop over(values as value:Int){branch when{value==wanted=>{return true;},else=>unit};};false};
+use Mgnc\IntMap\{Map,create,get,put};
+// Index membership without copying a list for every lookup.
+let members:Function(List<Int>):Result<Map,Diagnostic>=function(values:List<Int>):Result<Map,Diagnostic>{
+ var result:Map=create();loop over(values as value:Int){result=try put(result,value,1);};Result<Map,Diagnostic>::Ok(result)
+};
 // Derive free variables from resolved uses, independently of FunctionInfo.captures.
 public let expected:Function(State):Result<Paged<List<Int>>,Diagnostic>=function(state:State):Result<Paged<List<Int>>,Diagnostic>{
- var result:Paged<List<Int>>=empty<List<Int>>();var index:Int=0;
- loop while(index<state->functions->count){result=push<List<Int>>(result,List<Int>[]);index=index+1;};
+ var result:Paged<List<Int>>=empty<List<Int>>();var membership:Paged<Map>=empty<Map>();var index:Int=0;
+ loop while(index<state->functions->count){result=push<List<Int>>(result,List<Int>[]);membership=push<Map>(membership,create());index=index+1;};
  loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
   branch when{node->operation!="binding"=>{continue;},else=>unit};let symbolId:Int=try present(node->binding,node->span,"resolved free variable");let symbol:Symbol=try lookup<Symbol>(state->symbols,symbolId);
   var owner:Parent=node->functionOwner;var steps:Int=0;
   loop while(!parentEqual(owner,symbol->functionOwner)){
    let functionId:Int=try present(owner,node->span,"free-variable owner chain");let previous:List<Int>=try lookup<List<Int>>(result,functionId);
-   branch when{!contains(previous,symbolId)=>{result=try replaceItem<List<Int>>(result,functionId,previous->append(symbolId));},else=>unit};
+   let known:Map=try lookup<Map>(membership,functionId);
+   branch when{(try get(known,symbolId))<0=>{result=try replaceItem<List<Int>>(result,functionId,previous->append(symbolId));membership=try replaceItem<Map>(membership,functionId,try put(known,symbolId,1));},else=>unit};
    owner=(try lookup<FunctionInfo>(state->functions,functionId))->parent;steps=steps+1;try require(steps<=state->functions->count,node->span,"cyclic function ancestry");
   };
  };};Result<Paged<List<Int>>,Diagnostic>::Ok(result)
@@ -24,26 +29,35 @@ public let expected:Function(State):Result<Paged<List<Int>>,Diagnostic>=function
 public let verify:Function(State,Paged<List<Int>>,Body):Result<Unit,Diagnostic>=function(state:State,expectedCaptures:Paged<List<Int>>,body:Body):Result<Unit,Diagnostic>{
  let span:Span=(try lookup<Node>(state->nodes,body->root))->span;
  branch on body->functionOwner{Parent::None=>unit,Parent::Some(id:Int)=>{
-  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,id);let required:List<Int>=try lookup<List<Int>>(expectedCaptures,id);var seen:List<Int>=List<Int>[];
+  let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,id);let required:List<Int>=try lookup<List<Int>>(expectedCaptures,id);let membership:Map=try members(required);var seen:Map=create();
   try require(body->captures->length()==required->length(),span,"capture frame completeness");
-  loop over(body->captures as slotId:Int){let slot:Slot=try lookup<Slot>(body->slots,slotId);let symbol:Int=try present(slot->symbol,span,"capture slot source");try require(slot->kind==3&&contains(required,symbol)&&!contains(seen,symbol),span,"capture frame source");seen=seen->append(symbol);};
+  loop over(body->captures as slotId:Int){let slot:Slot=try lookup<Slot>(body->slots,slotId);let symbol:Int=try present(slot->symbol,span,"capture slot source");try require(slot->kind==3&&symbol>=0&&(try get(membership,symbol))>=0&&(try get(seen,symbol))<0,span,"capture frame source");seen=try put(seen,symbol,1);};
   var position:Int=0;loop over(body->parameters as slotId:Int){let slot:Slot=try lookup<Slot>(body->slots,slotId);try require(slot->kind==2&&parentEqual(slot->symbol,Parent::Some(try atList<Int>(info->parameters,position))),span,"parameter source order");position=position+1;};
  }};
  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
-  var previous:List<Operation>=List<Operation>[];
+  // Retain every preceding (output, symbol) pair, including repeated outputs.
+  var outputs:Map=create();var previous:Paged<Map>=empty<Map>();
   loop over(block->operations as op:Operation){
    branch when{op->code=="function"=>{
-    let id:Int=try present(op->target,op->origin->span,"closure target");let required:List<Int>=try lookup<List<Int>>(expectedCaptures,id);var seen:List<Int>=List<Int>[];var position:Int=0;
+    let id:Int=try present(op->target,op->origin->span,"closure target");let required:List<Int>=try lookup<List<Int>>(expectedCaptures,id);let membership:Map=try members(required);var seen:Map=create();var position:Int=0;
     try require(op->mapping->length()==required->length(),op->origin->span,"closure capture completeness");
     loop over(op->mapping as symbol:Int){
-     try require(contains(required,symbol)&&!contains(seen,symbol),op->origin->span,"closure capture identity");seen=seen->append(symbol);
+     try require(symbol>=0&&(try get(membership,symbol))>=0&&(try get(seen,symbol))<0,op->origin->span,"closure capture identity");seen=try put(seen,symbol,1);
      let input:Int=try atList<Int>(op->inputs,position);let slot:Slot=try lookup<Slot>(body->slots,input);
      branch on slot->symbol{Parent::Some(source:Int)=>{try require(source==symbol,op->origin->span,"closure local or parent capture source");},Parent::None=>{
-      var found:Bool=false;loop over(previous as load:Operation){branch when{load->code=="global-load"&&parentEqual(load->symbol,Parent::Some(symbol))&&parentEqual(load->output,Parent::Some(input))=>{found=true;},else=>unit};};
+      let group:Int=try get(outputs,input);let found:Bool=branch when{group<0=>false,else=>(try get(try lookup<Map>(previous,group),symbol))>=0};
       try require(found&&parentEqual(body->functionOwner,Parent::None),op->origin->span,"closure module capture generation site");
      }};position=position+1;
     };
-   },else=>unit};previous=previous->append(op);
+   },else=>unit};
+   branch when{op->code=="global-load"=>{branch on op->output{Parent::None=>unit,Parent::Some(output:Int)=>{branch on op->symbol{Parent::None=>unit,Parent::Some(symbol:Int)=>{
+    branch when{output>=0&&symbol>=0=>{
+     let group:Int=try get(outputs,output);
+     branch when{group<0=>{outputs=try put(outputs,output,previous->count);previous=push<Map>(previous,try put(create(),symbol,1));},else=>{
+      previous=try replaceItem<Map>(previous,group,try put(try lookup<Map>(previous,group),symbol,1));
+     }};
+    },else=>unit};
+   }}}};},else=>unit};
   };
  };};
  Result<Unit,Diagnostic>::Ok(unit)

@@ -6,7 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from v180_evidence import Store, digest, identity
-from v180_acceptance import evaluate_execution, evaluate_matrix, validate_inherited_mapping
+from v180_acceptance import (evaluate_execution, evaluate_matrix,
+                              validate_inherited_mapping, validate_observer_binding)
 
 class AcceptanceTests(unittest.TestCase):
     def setUp(self):
@@ -84,6 +85,41 @@ class AcceptanceTests(unittest.TestCase):
         raw=self.store.get(self.execution["raw"]);raw["files"][1].update(sha256=digest(b""),bytes=0)
         self.execution.update(raw=self.store.put(raw),stderr_hex="",exit=4,observables={})
         self.assertEqual(self.evaluate(),"Passed");self.assertEqual(self.evaluate(dict(exit=2)),"Failed")
+
+
+class ObserverBindingTests(unittest.TestCase):
+    def setUp(self):
+        self.request = dict(worker_sha256="a"*64, sources={
+            "v150_measurelib.py":"b"*64, "v160_measurelib.py":"c"*64})
+        self.request_hash = identity(self.request)
+        self.result = dict(observer_policy="fresh-process-v2-tree",
+            observer_request_sha256=self.request_hash, observer_worker_sha256="a"*64,
+            observer_sources=copy.deepcopy(self.request["sources"]), exit=0)
+    def test_saved_worker_identity_survives_different_current_checkout(self):
+        self.assertTrue(validate_observer_binding(self.request, self.result, self.request_hash))
+        self.result.update(exit=None, signal=9, cutoff="wall")
+        before=copy.deepcopy(self.result)
+        self.assertTrue(validate_observer_binding(self.request, self.result, self.request_hash))
+        self.assertEqual(self.result,before)
+    def test_success_cannot_relabel_worker_or_dependency_bytes(self):
+        for field,value in [("observer_worker_sha256","d"*64),
+                ("observer_request_sha256","e"*64),
+                ("observer_sources",dict(self.request["sources"], **{"v150_measurelib.py":"f"*64})),
+                ("observer_policy","old")]:
+            changed=copy.deepcopy(self.result);changed[field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):
+                validate_observer_binding(self.request,changed,self.request_hash)
+    def test_missing_malformed_or_extra_source_bindings_rejected(self):
+        for field,value in [("worker_sha256",None),("worker_sha256","not-a-hash"),
+                ("sources",{}),("sources",{"v150_measurelib.py":"b"*64}),
+                ("sources",dict(self.request["sources"], extra="d"*64))]:
+            changed=copy.deepcopy(self.request);changed[field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):
+                validate_observer_binding(changed,self.result,self.request_hash)
+        for field in ["observer_request_sha256","observer_worker_sha256","observer_sources"]:
+            changed=copy.deepcopy(self.result);del changed[field]
+            with self.subTest(field=field),self.assertRaises(ValueError):
+                validate_observer_binding(self.request,changed,self.request_hash)
 
 class InheritedTests(unittest.TestCase):
     def setUp(self):

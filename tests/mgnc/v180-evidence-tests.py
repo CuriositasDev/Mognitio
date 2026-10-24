@@ -87,6 +87,17 @@ class EvidenceTests(unittest.TestCase):
                 with self.assertRaises((ValueError,FileNotFoundError)):
                     validate_graph(self.store,self.candidate,[a,bad])
 
+    def test_unknown_generation_role(self):
+        edge=self.store.get(self.edge("A"))
+        artifact=self.store.get(edge["artifact"])
+        artifact["role"]="unregistered"
+        artifact["file"]["mode"]=0o755
+        artifact_id=self.store.put(artifact)
+        obs=self.store.get(edge["observation"]);obs["output"]=artifact_id
+        edge.update(role="unregistered",artifact=artifact_id,observation=self.store.put(obs))
+        with self.assertRaisesRegex(ValueError,"unknown generation role"):
+            validate_graph(self.store,self.candidate,[self.store.put(edge)])
+
     def test_bootstrap_and_native_modes_are_distinct(self):
         a=self.edge("A");b=self.edge("B",a)
         for key,wrong in ((a,0o755),(b,0o700)):

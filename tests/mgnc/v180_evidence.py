@@ -147,7 +147,8 @@ def validate_graph(store, candidate_id, edge_ids, *, complete=False):
         require(edge["candidate"] == candidate_id, "mixed candidate")
         require(edge["status"] == "Passed", "unsuccessful producer")
         role = edge["role"]
-        builder_role, source_role = expected.get(role, (edge["builder_role"], edge["source_role"]))
+        require(role in expected, "unknown generation role")
+        builder_role, source_role = expected[role]
         require(edge["builder_role"] == builder_role and edge["source_role"] == source_role,
                 "producer/source role mismatch")
         require(edge["source"] == cand["sources"].get(source_role), "wrong source identity")

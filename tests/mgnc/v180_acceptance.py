@@ -99,6 +99,35 @@ def evaluate_matrix(store, contracts, execution_ids):
     return {key: found.get(key, "NotRun") for key in contracts}
 
 
+def validate_observer_binding(request, observation, request_sha256):
+    """Bind a completed tree observer to its original request and source bytes.
+
+    A historical worker may have read its own file after a checkout changed it.
+    A successful exit cannot justify relabelling that worker with newer bytes.
+    Callers hash the saved request and verify its frozen source bundle separately.
+    This check does not promote a failed observation or change its status.
+    """
+    valid_hash(request_sha256)
+    require(isinstance(request, dict) and isinstance(observation, dict),
+            "missing observer request or result")
+    require(observation.get("observer_policy") == "fresh-process-v2-tree",
+            "unexpected observer policy")
+    worker = valid_hash(request.get("worker_sha256"))
+    sources = request.get("sources")
+    require(isinstance(sources, dict)
+            and set(sources) == {"v150_measurelib.py", "v160_measurelib.py"},
+            "missing or unexpected observer source scope")
+    for value in sources.values():
+        valid_hash(value)
+    require(observation.get("observer_request_sha256") == request_sha256,
+            "observer request digest mismatch")
+    require(observation.get("observer_worker_sha256") == worker,
+            "observer worker changed during execution")
+    require(observation.get("observer_sources") == sources,
+            "observer dependency sources changed")
+    return True
+
+
 def inherited_role(manifest, cell):
     """Derive roles from immutable command dependencies, not display names."""
     builders = {row["build_key"]: row for row in manifest["cells"] if row["build_key"]}

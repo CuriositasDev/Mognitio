@@ -21,7 +21,7 @@ def namespace(userland, source, output, *, builder=None, seed=None, input_path="
             "invalid namespace input path")
     for path in userland.rglob("*"):
         require(path.name not in FORBIDDEN, "forbidden tool in userland")
-    args = ["bwrap", "--unshare-user", "--uid", str(os.getuid()), "--gid", str(os.getgid()),
+    args = ["bwrap", "--as-pid-1", "--unshare-user", "--uid", str(os.getuid()), "--gid", str(os.getgid()),
             "--unshare-pid", "--unshare-net", "--unshare-ipc", "--die-with-parent",
             "--ro-bind", str(userland), "/", "--proc", "/proc", "--dev", "/dev",
             "--ro-bind", str(source), input_path, "--bind", str(output), "/output",

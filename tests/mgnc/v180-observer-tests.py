@@ -18,6 +18,11 @@ d=run('wall',[sys.executable,'-c','import time;time.sleep(30)'],timeout=.1);asse
 g=run('rss',[sys.executable,'-c','import time;x=bytearray(64*1024**2);time.sleep(30)'],rss_limit=32*1024**2);assert g['cutoff']=='rss' and g['signal']==9
 h=run('descendant',[sys.executable,'-c','import os,time;p=os.fork();time.sleep(30) if p==0 else None']);assert h['descendant_residue']>=1 and h['harness_failure']
 i=run('observed-child',[sys.executable,'-c','import subprocess;subprocess.run(["/bin/sleep",".12"],check=True)']);assert i['observed_child_pids'] and i['descendant_residue']==0 and i['exit']==0
+tree=run('descendant-memory',[sys.executable,'-c','import subprocess,sys;subprocess.run([sys.executable,"-c","import time;x=bytearray(64*1024**2);time.sleep(.15)"],check=True)'])
+assert tree['exit']==0 and tree['harness_failure'] is None and tree['sampled_peak_rss_bytes']>64*1024**2
+assert any(len(sample['processes'])>=2 for sample in json.loads((O/'descendant-memory/rss-samples.json').read_text()))
+tree_kill=run('descendant-rss-guard',[sys.executable,'-c','import subprocess,sys;subprocess.run([sys.executable,"-c","import time;x=bytearray(64*1024**2);time.sleep(30)"],check=True)'],rss_limit=48*1024**2)
+assert tree_kill['cutoff']=='rss' and tree_kill['unreaped_descendants']==0
 j=run('short-rss-guard',['/bin/true'],rss_limit=1);assert j['cutoff']=='rss'
 padding=bytearray(128*1024**2)
 k=run('parent-padded',['/bin/true']);assert k['exit']==0 and k['peak_rss_bytes']<48*1024**2 and abs(k['peak_rss_bytes']-a['peak_rss_bytes'])<16*1024**2

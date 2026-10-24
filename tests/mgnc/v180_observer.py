@@ -27,6 +27,36 @@ def derived_observe():
  for old,new in edits:
   assert source.count(old)==1,old
   source=source.replace(old,new)
+ old_rss="""try:
+                    contents=Path(f"/proc/{child.pid}/status").read_text()
+                except FileNotFoundError:
+                    contents=""
+                entries=[line.split() for line in contents.splitlines() if line.startswith("VmRSS:")]
+                if entries:
+                    assert len(entries)==1 and entries[0][2]=="kB"
+                    current_rss=int(entries[0][1])*1024
+                    samples.append({"seconds":now-started,"rss_bytes":current_rss})"""
+ new_rss="""pending=[child.pid];seen=set();processes=[];unavailable=[]
+                while pending:
+                    member=pending.pop()
+                    if member in seen:continue
+                    seen.add(member)
+                    try:
+                        pending.extend(int(x) for x in Path(f"/proc/{member}/task/{member}/children").read_text().split())
+                        contents=Path(f"/proc/{member}/status").read_text()
+                    except FileNotFoundError:
+                        unavailable.append(member);continue
+                    entries=[line.split() for line in contents.splitlines() if line.startswith("VmRSS:")]
+                    if entries:
+                        assert len(entries)==1 and entries[0][2]=="kB"
+                        processes.append({"pid":member,"rss_bytes":int(entries[0][1])*1024})
+                    else:unavailable.append(member)
+                observed_children.update(seen-{child.pid})
+                if processes:
+                    current_rss=sum(p["rss_bytes"] for p in processes)
+                    samples.append({"seconds":now-started,"rss_bytes":current_rss,"processes":processes,"unavailable_pids":unavailable})"""
+ assert source.count(old_rss)==1
+ source=source.replace(old_rss,new_rss).replace("sampled direct-child list; final subreaper residue checked separately","sampled full descendant tree; final subreaper residue checked separately")
  ns={};exec(compile(source,'<frozen-observer-with-sample-evidence>','exec'),ns)
  return ns['observe'],hashlib.sha256(source.encode()).hexdigest()
 def worker(request):
@@ -35,7 +65,7 @@ def worker(request):
  os.chdir(data['cwd']);os.umask(data['umask'])
  before=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024
  result=v160_measurelib.observe(data['command'],data['directory'],timeout=data['timeout'],rss_limit=data['rss_limit'],interval=data['interval'])
- result.update(observer_policy='fresh-process-v1',observer_request_sha256=sha(request),observer_worker_sha256=sha(__file__),observer_sources=data['sources'],instrumented_observer_sha256=derived_hash,observer_peak_before_child_bytes=before,kernel_peak_scope='wait4 measured command, including fixed observer pre-exec floor; instrumented commands include their observer process')
+ result.update(observer_policy='fresh-process-v2-tree',observer_request_sha256=sha(request),observer_worker_sha256=sha(__file__),observer_sources=data['sources'],instrumented_observer_sha256=derived_hash,observer_peak_before_child_bytes=before,kernel_peak_scope='wait4 measured command, including fixed observer pre-exec floor; instrumented commands include their observer process',sampler_scope='sum of sampled RSS across the command and its descendant tree; shared pages may be counted per process')
  Path(data['directory'],'observation.json').write_text(json.dumps(result,indent=2)+'\n')
 def observe(command,directory,*,timeout=900.0,rss_limit=4096*1024**2,interval=.01):
  directory=Path(directory).absolute();assert not directory.exists();directory.parent.mkdir(parents=True,exist_ok=True)

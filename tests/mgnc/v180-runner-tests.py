@@ -29,6 +29,7 @@ class RunnerTests(unittest.TestCase):
         self.assertNotIn("/seed",args)
         self.assertIn("--ro-bind",args)
         self.assertIn("--unshare-net",args)
+        self.assertIn("--as-pid-1",args)
         (output/"old").write_bytes(b"old")
         with self.assertRaises(ValueError):namespace(self.userland,self.source,output,builder=self.root/"compiler")
 

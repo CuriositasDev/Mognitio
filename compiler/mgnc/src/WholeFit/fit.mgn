@@ -1,0 +1,44 @@
+namespace Mgnc\WholeFit;
+use Mgnc\Machine\{Code,label,jump,fresh};
+use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant};
+use Mgnc\WholeABI\{arenaHead,freeHead};
+// Scratch metadata belongs to the current arena. Existing context fields,
+// object headers, helper registers and ABI revision remain unchanged.
+// 16 small cursors, 32 large cursors and 32 large size keys precede the bitmap.
+public let metadataBytes:Int=704;
+// R12 is the physical request. Return its slot in R10 and incoming link in R14.
+// A cached prefix excludes only blocks too small for this request.
+public let cursor:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=immediate(initial,10,0);
+ let head:Int=code->nextLabel;let cached:Int=head+1;let large:Int=head+2;let second:Int=head+3;let secondBound:Int=head+4;let boundReady:Int=head+5;let done:Int=head+6;code=fresh(code,7);
+ code=load(code,8,15,arenaHead);code=alu(code,133,8,8);code=jump(code,List<Int>[15,132],head);
+ code=constant(code,7,12,152);code=jump(code,List<Int>[15,135],large);code=address(code,10,8,32);code=alu(code,1,10,12);code=jump(code,List<Int>[233],cached);
+ code=label(code,large);code=mov(code,0,12);code=constant(code,4,0,120);code=address(code,10,8,192);code=alu(code,1,10,0);code=address(code,8,8,448);code=alu(code,1,8,0);
+ code=load(code,11,8,0);code=alu(code,57,11,12);code=jump(code,List<Int>[15,132],cached);code=load(code,2,8,128);code=alu(code,57,2,12);code=jump(code,List<Int>[15,132],second);
+ code=immediate(code,7,0);code=alu(code,57,12,11);code=jump(code,List<Int>[15,130],secondBound);code=load(code,7,10,0);code=jump(code,List<Int>[233],boundReady);
+ code=label(code,secondBound);code=alu(code,57,12,2);code=jump(code,List<Int>[15,130],boundReady);code=load(code,7,10,128);
+ code=label(code,boundReady);code=store(code,8,128,11);code=load(code,9,10,0);code=store(code,10,128,9);code=store(code,8,0,12);code=store(code,10,0,7);code=jump(code,List<Int>[233],cached);
+ code=label(code,second);code=load(code,9,10,0);code=load(code,0,10,128);code=store(code,8,0,2);code=store(code,8,128,11);code=store(code,10,0,0);code=store(code,10,128,9);
+ code=label(code,cached);code=load(code,14,10,0);code=alu(code,133,14,14);code=jump(code,List<Int>[15,133],done);
+ code=label(code,head);code=address(code,14,15,freeHead);label(code,done)
+};
+// Save the incoming link before consuming a fitting block.
+public let remember:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=initial;let done:Int=code->nextLabel;code=fresh(code,1);
+ code=alu(code,133,10,10);code=jump(code,List<Int>[15,132],done);code=store(code,10,0,14);label(code,done)
+};
+// R3 is the consumed block, R14 its incoming link. Splitting also removes
+// the old block's next-link address; every cursor owner must be repaired.
+public let repair:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=initial;let scan:Int=code->nextLabel;let next:Int=scan+1;code=fresh(code,2);
+ code=load(code,10,15,arenaHead);code=address(code,10,10,64);code=address(code,2,10,384);code=address(code,6,3,24);
+ code=label(code,scan);code=load(code,7,10,0);code=alu(code,57,7,6);code=jump(code,List<Int>[15,133],next);code=store(code,10,0,14);
+ code=label(code,next);code=constant(code,0,10,8);code=alu(code,57,10,2);code=jump(code,List<Int>[15,130],scan);code
+};
+// Sweep rewrites/coalesces free links. A newly prepended mmap arena starts
+// with zeroed scratch metadata and therefore also starts with cold cursors.
+public let reset:Function(Code):Code=function(initial:Code):Code{
+ var code:Code=initial;let scan:Int=code->nextLabel;let done:Int=scan+1;code=fresh(code,2);
+ code=load(code,7,15,arenaHead);code=alu(code,133,7,7);code=jump(code,List<Int>[15,132],done);code=address(code,7,7,64);code=address(code,1,7,384);code=immediate(code,0,0);
+ code=label(code,scan);code=store(code,7,0,0);code=constant(code,0,7,8);code=alu(code,57,7,1);code=jump(code,List<Int>[15,130],scan);label(code,done)
+};

@@ -168,3 +168,6 @@ capture and module-load checks while avoiding read-only list copies.
 The [repeated generation evidence foundation](v1.8.0-evidence-foundation.md)
 provides immutable producer records, isolated generation and fresh observations.
 Its focused controls do not establish whole-version acceptance.
+
+[Native allocator first-fit cursors](v1.8.0-native-fit-cursors.md) preserves
+ordered selection while bounding repeated free-prefix scans in emitted runtimes.

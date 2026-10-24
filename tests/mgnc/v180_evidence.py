@@ -176,7 +176,7 @@ def validate_graph(store, candidate_id, edge_ids, *, complete=False):
         require(artifact["candidate"] == candidate_id and artifact["role"] == role,
                 "artifact role/candidate mismatch")
         valid_hash(artifact["file"]["sha256"])
-        require(artifact["file"]["bytes"] > 0 and artifact["file"]["mode"] == 0o755,
+        require(artifact["file"]["bytes"] > 0 and artifact["file"]["mode"] == (0o700 if role == "A" else 0o755),
                 "invalid artifact")
         require(role not in roles or roles[role] == key, "ambiguous production role")
         roles[role] = key

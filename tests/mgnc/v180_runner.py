@@ -72,6 +72,7 @@ def run_edge(store, candidate_id, role, source_root, userland, run_root,
     environment = dict(schema=1,kind="Environment",userland=ledger(userland),
                        kernel=os.uname().release,uid=os.getuid(),gid=os.getgid())
     env_id = store.put(environment)
+    builder_before = file_record(builder) if builder is not None else identity(ledger(seed_root))
     before = ledger(source_root)
     command = namespace(userland, source_root, output, builder=builder, seed=seed_root, input_path=input_path)
     command += ["/seed/bin/mgn" if role == "A" else "/compiler",
@@ -82,7 +83,7 @@ def run_edge(store, candidate_id, role, source_root, userland, run_root,
     observation = v180_observer.observe(command, run_root/"raw", timeout=3600,
                                         rss_limit=8192*1024**2)
     image = output/"compiler"
-    unchanged = before == ledger(source_root)
+    unchanged = before == ledger(source_root) and builder_before == (file_record(builder) if builder is not None else identity(ledger(seed_root)))
     passed = (observation["exit"] == 0 and observation["signal"] is None
               and observation["cutoff"] is None and observation["harness_failure"] is None
               and observation["descendant_residue"] == observation["unreaped_descendants"] == 0
@@ -92,7 +93,7 @@ def run_edge(store, candidate_id, role, source_root, userland, run_root,
     if passed:
         data = image.read_bytes()
         passed = (data[:7] == b"\x7fELF\x02\x01\x01" and data[16:20] == b"\x02\x00\x3e\x00"
-                  and file_record(image)["mode"] == 0o755 and list(output.iterdir()) == [image])
+                  and file_record(image)["mode"] == (0o700 if role == "A" else 0o755) and list(output.iterdir()) == [image])
     if passed:
         artifact_id = store.put(dict(schema=1,kind="Artifact",candidate=candidate_id,role=role,
                                      file=file_record(image)))

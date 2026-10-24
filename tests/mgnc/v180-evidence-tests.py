@@ -29,7 +29,7 @@ class EvidenceTests(unittest.TestCase):
         builder_role = {"A":"S","B":"A","C":"B","B-repeat":"A","C-repeat":"B"}[role]
         builder = self.seed if parent is None else self.store.get(parent)["artifact"]
         artifact = self.store.put(dict(schema=1,kind="Artifact",candidate=self.candidate,
-            role=role,file=dict(bytes=10,mode=0o755,sha256="c"*64)))
+            role=role,file=dict(bytes=10,mode=0o700 if role=="A" else 0o755,sha256="c"*64)))
         raw=self.store.put(dict(schema=1,kind="Raw",files=[]))
         env=self.store.put(dict(schema=1,kind="Environment",fixture="unit-test"))
         obs = dict(schema=1,kind="Observation",raw=raw,environment=env,candidate=self.candidate,status="Passed",
@@ -86,6 +86,19 @@ class EvidenceTests(unittest.TestCase):
                 bad=self.edge("B",a,**kwargs)
                 with self.assertRaises((ValueError,FileNotFoundError)):
                     validate_graph(self.store,self.candidate,[a,bad])
+
+    def test_bootstrap_and_native_modes_are_distinct(self):
+        a=self.edge("A");b=self.edge("B",a)
+        for key,wrong in ((a,0o755),(b,0o700)):
+            edge=self.store.get(key)
+            artifact=self.store.get(edge["artifact"])
+            artifact["file"]["mode"]=wrong
+            artifact_id=self.store.put(artifact)
+            obs=self.store.get(edge["observation"]);obs["output"]=artifact_id
+            edge.update(artifact=artifact_id,observation=self.store.put(obs))
+            altered=self.store.put(edge)
+            with self.assertRaises(ValueError):
+                validate_graph(self.store,self.candidate,[altered] if key==a else [a,altered])
 
     def test_failed_observation_cannot_be_promoted(self):
         for field,value in (("exit",1),("signal",9),("cutoff","wall"),

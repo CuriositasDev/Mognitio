@@ -1,0 +1,29 @@
+namespace Mgnc;
+use Std\Io\{writeStdout};
+use Mgnc\Data\{empty,lookup,number,Diagnostic};
+use Mgnc\Machine\{Code,Record,label,jump,raw,flush};
+use Mgnc\WholeX64\{mov,push,pop,constant};
+use Mgnc\WholeMark\{emit};
+let signed:Function(Int):String=function(value:Int):String{
+ branch when{value<0=>"-"+number(-value),else=>number(value)}
+};
+let dump:Function(String,Code):Int=function(name:String,initial:Code):Int{
+ let code:Code=flush(initial);discard writeStdout(name+"\n");
+ var i:Int=0;loop while(i<code->records->count){
+  let row:Record=branch on lookup<Record>(code->records,i){
+   Result<Record,Diagnostic>::Ok(value:Record)=>value,
+   Result<Record,Diagnostic>::Err(error:Diagnostic)=>{return 1;}
+  };
+  var line:String=number(row->kind)+" "+signed(row->value)+" "+number(row->target);
+  loop over(row->bytes as byte:Int){line=line+" "+number(byte);};
+  discard writeStdout(line+"\n");i=i+1;
+ };0
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ var code:Code=Code{records:empty<Record>(),nextLabel:1000,pending:List<Int>[]};
+ code=emit(code);code=label(code,1);code=raw(code,List<Int>[191,91,0,0,0,184,60,0,0,0,15,5]);code=label(code,2);code=raw(code,List<Int>[191,92,0,0,0,184,60,0,0,0,15,5]);
+ code=label(code,0);code=push(code,15);code=push(code,14);code=push(code,3);code=mov(code,15,7);code=mov(code,14,6);code=mov(code,3,2);
+ code=label(code,3000);code=mov(code,7,14);code=jump(code,List<Int>[232],12);code=constant(code,5,3,1);code=jump(code,List<Int>[15,133],3000);
+ code=pop(code,3);code=pop(code,14);code=pop(code,15);code=raw(code,List<Int>[195]);
+ dump("MARK",code)
+};

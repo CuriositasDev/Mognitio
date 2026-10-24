@@ -16,13 +16,24 @@ let mark:Function(Code):Code=function(initial:Code):Code{
  var code:Code=enter(label(initial,markLabel));let done:Int=code->nextLabel;let searchStatic:Int=done+1;let higher:Int=done+2;let staticFound:Int=done+3;let heap:Int=done+4;let arenaLoop:Int=done+5;let arenaNext:Int=done+6;let found:Int=done+7;let queued:Int=done+8;code=fresh(code,9);
  code=mov(code,12,7);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);
  code=immediate(code,8,0);code=load(code,9,15,staticCount);code=load(code,13,15,staticTable);
+ // Most heap pointers lie outside the sorted static-object address range.
+ code=alu(code,133,9,9);code=jump(code,List<Int>[15,132],heap);
+ code=load(code,0,13,0);code=alu(code,57,12,0);code=jump(code,List<Int>[15,130],heap);
+ code=mov(code,0,9);code=constant(code,5,0,1);code=shift(code,4,0,3);code=alu(code,1,0,13);code=load(code,0,0,0);code=alu(code,57,12,0);code=jump(code,List<Int>[15,135],heap);
  code=label(code,searchStatic);code=alu(code,57,8,9);code=jump(code,List<Int>[15,131],heap);code=mov(code,10,8);code=alu(code,1,10,9);code=shift(code,5,10,1);code=mov(code,0,10);code=shift(code,4,0,3);code=alu(code,1,0,13);code=load(code,0,0,0);code=alu(code,57,12,0);code=jump(code,List<Int>[15,132],staticFound);code=jump(code,List<Int>[15,135],higher);code=mov(code,9,10);code=jump(code,List<Int>[233],searchStatic);
  code=label(code,higher);code=mov(code,8,10);code=constant(code,0,8,1);code=jump(code,List<Int>[233],searchStatic);
  code=label(code,staticFound);code=load(code,0,12,8);code=constant(code,7,0,5);code=jump(code,List<Int>[15,133],internalFailure);code=load(code,0,12,16);code=load(code,1,15,descriptorCount);code=alu(code,57,0,1);code=jump(code,List<Int>[15,131],internalFailure);code=shift(code,4,0,3);code=load(code,1,15,descriptorTable);code=alu(code,1,0,1);code=load(code,0,0,0);code=load(code,1,0,0);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],internalFailure);code=load(code,1,0,16);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],internalFailure);code=jump(code,List<Int>[233],done);
  code=label(code,heap);code=load(code,13,15,arenaHead);
+ // Arena metadata slot 56 caches only a previously range-checked arena.
+ // Bitmap, extent, descriptor and allocation-state checks still run below.
+ code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],internalFailure);
+ code=load(code,8,13,56);code=alu(code,133,8,8);code=jump(code,List<Int>[15,132],arenaLoop);
+ code=load(code,0,8,16);code=alu(code,57,12,0);code=jump(code,List<Int>[15,130],arenaLoop);
+ code=load(code,1,8,24);code=alu(code,57,12,1);code=jump(code,List<Int>[15,131],arenaLoop);
+ code=mov(code,13,8);code=jump(code,List<Int>[233],found);
  code=label(code,arenaLoop);code=alu(code,133,13,13);code=jump(code,List<Int>[15,132],internalFailure);code=load(code,0,13,16);code=alu(code,57,12,0);code=jump(code,List<Int>[15,130],arenaNext);code=load(code,1,13,24);code=alu(code,57,12,1);code=jump(code,List<Int>[15,130],found);
  code=label(code,arenaNext);code=load(code,13,13,0);code=jump(code,List<Int>[233],arenaLoop);
- code=label(code,found);code=mov(code,14,1);code=alu(code,41,14,12);code=constant(code,7,14,24);code=jump(code,List<Int>[15,130],internalFailure);
+ code=label(code,found);code=load(code,8,15,arenaHead);code=store(code,8,56,13);code=mov(code,14,1);code=alu(code,41,14,12);code=constant(code,7,14,24);code=jump(code,List<Int>[15,130],internalFailure);
  code=mov(code,8,12);code=alu(code,41,8,0);code=mov(code,0,8);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);code=shift(code,5,8,3);code=mov(code,1,8);code=constant(code,4,1,7);code=shift(code,5,8,3);code=load(code,0,13,32);code=alu(code,1,8,0);code=byteLoad(code,0,8,0);code=shiftCl(code,5,0);code=constant(code,4,0,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],internalFailure);
  code=load(code,0,12,0);code=constant(code,7,0,32);code=jump(code,List<Int>[15,130],internalFailure);code=alu(code,57,0,14);code=jump(code,List<Int>[15,135],internalFailure);code=constant(code,4,0,7);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],internalFailure);
  code=load(code,0,12,16);code=load(code,1,15,descriptorCount);code=alu(code,57,0,1);code=jump(code,List<Int>[15,131],internalFailure);

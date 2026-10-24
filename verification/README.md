@@ -174,3 +174,6 @@ ordered selection while bounding repeated free-prefix scans in emitted runtimes.
 
 [Generation candidate preconditions](v1.8.0-generation-preconditions.md) binds
 runtime inventories, target identity and the actual generation policy before execution.
+
+[Bounded native mark searches](v1.8.0-native-mark-search.md) preserves pointer
+validation while avoiding repeated static and arena searches for heap references.

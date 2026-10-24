@@ -1,4 +1,5 @@
 namespace Mgnc\WholeSweep;
+use Mgnc\WholeFit\{reset};
 use Mgnc\Machine\{Code,raw,label,jump,fresh};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,shift,shiftCl,byteLoad,byteStore};
 use Mgnc\WholeABI\{enter,leave,arenaHead,freeHead,liveBytes,sweepLabel,internalFailure};
@@ -7,7 +8,7 @@ let indexed:Function(Code):Code=function(initial:Code):Code{
 };
 public let emit:Function(Code):Code=function(initial:Code):Code{
  var code:Code=enter(label(initial,sweepLabel));let arenas:Int=code->nextLabel;let blocks:Int=arenas+1;let live:Int=arenas+2;let merge:Int=arenas+3;let free:Int=arenas+4;let advance:Int=arenas+5;let next:Int=arenas+6;let done:Int=arenas+7;code=fresh(code,8);
- code=immediate(code,0,0);code=store(code,15,liveBytes,0);code=address(code,3,15,freeHead);code=load(code,12,15,arenaHead);
+ code=reset(code);code=immediate(code,0,0);code=store(code,15,liveBytes,0);code=address(code,3,15,freeHead);code=load(code,12,15,arenaHead);
  code=label(code,arenas);code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);
  code=load(code,7,12,32);code=load(code,1,12,40);code=immediate(code,0,0);code=raw(code,List<Int>[243,170]);code=load(code,13,12,16);code=load(code,14,12,24);
  code=label(code,blocks);code=alu(code,57,13,14);code=jump(code,List<Int>[15,132],next);code=jump(code,List<Int>[15,135],internalFailure);

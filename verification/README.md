@@ -164,3 +164,7 @@ The [bounded exit observation](v1.7.0-observation-exit.md) handles large-heap te
 
 [Capture verification allocation](v1.7.0-capture-check.md) preserves independent
 capture and module-load checks while avoiding read-only list copies.
+
+The [repeated generation evidence foundation](v1.8.0-evidence-foundation.md)
+provides immutable producer records, isolated generation and fresh observations.
+Its focused controls do not establish whole-version acceptance.

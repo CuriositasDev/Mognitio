@@ -38,9 +38,39 @@ def namespace(userland, source, output, *, builder=None, seed=None, input_path="
     return args
 
 
+
+def validate_generation_candidate(store, candidate_id):
+    """Bind this runner's actual target, runtime source and fixed generation policy."""
+    cand = store.get(candidate_id, "Candidate")
+    require(cand["target"] == {"triple": "linux-amd64", "abi": "inherited-1.7"},
+            "unsupported generation target or ABI")
+    expected = dict(bootstrap_mode=0o700, native_mode=0o755, umask=0o022,
+                    guard_wall=3600, guard_rss=8192*1024**2)
+    require(cand["conditions"] == expected, "generation conditions do not match runner")
+    seed = store.get(cand["seed"], "Seed")
+    require(isinstance(seed.get("ledger"), str) and len(seed["ledger"]) == 64
+            and all(c in "0123456789abcdef" for c in seed["ledger"]), "invalid seed ledger")
+    whole = store.get(cand["sources"]["T1"], "SourceSet")
+    runtime = store.get(cand["runtime"], "SourceSet")
+    require(whole["role"] == "T1" and runtime["role"] == "runtime",
+            "runtime/source role mismatch")
+    files = [dict(row, path=row["path"][4:]) for row in whole["files"]
+             if row["path"].startswith("src/")]
+    require(bool(files) and runtime["files"] == files,
+            "runtime is not the complete candidate compiler source subtree")
+    serialized = "".join(f"{row['path']}\t{row['bytes']}\t{row['sha256']}\n" for row in files)
+    require(runtime["inventory_sha256"] == digest(serialized.encode())
+            and runtime["bytes"] == sum(row["bytes"] for row in files)
+            and runtime["revision"] == whole["revision"], "runtime inventory binding mismatch")
+    return cand
+
+
 def run_edge(store, candidate_id, role, source_root, userland, run_root,
              *, seed_root=None, parent=None, ancestors=(), input_path="/input"):
-    cand = store.get(candidate_id, "Candidate")
+    cand = validate_generation_candidate(store, candidate_id)
+    mask = os.umask(0o022)
+    os.umask(mask)
+    require(mask == cand["conditions"]["umask"], "process umask does not match candidate")
     require(role in ("A", "B", "C", "B-repeat", "C-repeat", "D0", "D1"), "unknown edge role")
     source_role = "O0" if role == "D0" else "O1" if role == "D1" else "T1"
     source_id = cand["sources"][source_role]

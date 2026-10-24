@@ -171,3 +171,6 @@ Its focused controls do not establish whole-version acceptance.
 
 [Native allocator first-fit cursors](v1.8.0-native-fit-cursors.md) preserves
 ordered selection while bounding repeated free-prefix scans in emitted runtimes.
+
+[Generation candidate preconditions](v1.8.0-generation-preconditions.md) binds
+runtime inventories, target identity and the actual generation policy before execution.

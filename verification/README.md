@@ -177,3 +177,9 @@ runtime inventories, target identity and the actual generation policy before exe
 
 [Bounded native mark searches](v1.8.0-native-mark-search.md) preserves pointer
 validation while avoiding repeated static and arena searches for heap references.
+
+[Adaptive native arena capacity](v1.8.0-native-arena-capacity.md) scales uncapped
+large-heap growth while preserving collection order and capped geometry.
+
+[Fitting reserve after native collection](v1.8.0-post-collection-reserve.md)
+prevents small reclaimed tails from suppressing optional arena growth.

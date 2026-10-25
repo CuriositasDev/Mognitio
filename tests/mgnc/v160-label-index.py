@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser();p.add_argument("--seed",type=Path,required=True);p.add_argument("--output",type=Path,required=True);a=p.parse_args();a.output.mkdir()
 project=a.output/"compiler";(project/"src").mkdir(parents=True)
 shutil.copyfile(ROOT/"compiler/mgnc/mognitio.toml",project/"mognitio.toml")
-for name in ["Data","Machine","Encode","EncodeChunks","Fields","IntMap"]:shutil.copytree(ROOT/"compiler/mgnc/src"/name,project/"src"/name)
+for name in ["Data","Machine","Encode","EncodeChunks","Tables","Fields","IntMap"]:shutil.copytree(ROOT/"compiler/mgnc/src"/name,project/"src"/name)
 shutil.copyfile(ROOT/"tests/mgnc/harnesses/v160-label-index.mgn",project/"src/mgnc.mgn")
 binary=a.output/"probe";result=subprocess.run([a.seed,"build",project/"mognitio.toml","-o",binary],capture_output=True,timeout=900)
 assert (result.returncode,result.stdout,result.stderr)==(0,b"",b""),result

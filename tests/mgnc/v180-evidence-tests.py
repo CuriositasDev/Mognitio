@@ -146,6 +146,25 @@ class EvidenceTests(unittest.TestCase):
                 evaluate_suite(self.store,self.candidate,suite,[self.store.put(bad)])
         self.assertEqual(self.store.get(key)["status"],"Failed")
 
+    @unittest.skipIf(os.geteuid() == 0, "permission controls require non-root")
+    def test_inaccessible_descendants_are_not_omitted(self):
+        restricted=self.src/"restricted";restricted.mkdir()
+        (restricted/"hidden.mgn").write_bytes(b"must remain in the inventory")
+        restricted.chmod(0)
+        try:
+            for capture in (lambda:source_set(self.src,"T1","r"),lambda:ledger(self.src)):
+                with self.subTest(capture=capture),self.assertRaises(PermissionError):
+                    capture()
+            self.assertEqual(restricted.stat().st_mode&0o777,0)
+        finally:
+            restricted.chmod(0o700)
+
+    def test_ledger_rejects_missing_and_linked_roots(self):
+        missing=self.root/"missing"
+        with self.assertRaises(ValueError):ledger(missing)
+        link=self.root/"root-link";link.symlink_to(self.src)
+        with self.assertRaises(ValueError):ledger(link)
+
     def test_ledger_content_and_hardlinks(self):
         import shutil
         tree=self.root/"tree";tree.mkdir()

@@ -12,10 +12,11 @@ let start:Function(Code):Code=function(initial:Code):Code{
  code=label(code,found);code=mov(code,8,7);code=alu(code,41,8,0);code=shift(code,5,8,3);code=mov(code,1,8);code=constant(code,4,1,7);code=shift(code,5,8,3);code=load(code,9,2,32);code=alu(code,1,8,9);code=immediate(code,0,1);code=shiftCl(code,4,0);code=byteLoad(code,9,8,0);code=alu(code,9,9,0);code=byteStore(code,8,0,9);raw(code,List<Int>[195])
 };
 // Reserve an indexed arena. RDI is the minimum physical object size.
+// RAX is one on success or zero on mmap failure; invalid geometry still fails.
 // Above 512 MiB, uncapped heaps reserve one eighth of mapped space, up to
 // 128 MiB. Explicit caps retain the original geometry and collection order.
 let arena:Function(Code):Code=function(initial:Code):Code{
- var code:Code=enter(label(initial,arenaLabel));let minimum:Int=code->nextLabel;let capped:Int=minimum+1;let requested:Int=minimum+2;let map:Int=minimum+3;let small:Int=minimum+4;code=fresh(code,5);
+ var code:Code=enter(label(initial,arenaLabel));let minimum:Int=code->nextLabel;let capped:Int=minimum+1;let requested:Int=minimum+2;let map:Int=minimum+3;let small:Int=minimum+4;let mapFailed:Int=minimum+5;code=fresh(code,6);
  code=mov(code,12,7);code=load(code,0,15,mappedBytes);code=shift(code,5,0,2);code=constant(code,7,0,1048576);code=jump(code,List<Int>[15,131],minimum);code=immediate(code,0,1048576);
  code=label(code,minimum);code=load(code,1,15,mappedCap);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],small);
  code=load(code,1,15,mappedBytes);code=constant(code,7,1,536870912);code=jump(code,List<Int>[15,134],small);
@@ -25,14 +26,14 @@ let arena:Function(Code):Code=function(initial:Code):Code{
  code=label(code,requested);code=constant(code,0,12,4095);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,4,12,-4096);
  code=mov(code,13,12);code=shift(code,5,13,6);code=mov(code,14,12);code=alu(code,1,14,13);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,0,14,4095+metadataBytes);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,4,14,-4096);
  code=load(code,0,15,mappedBytes);code=alu(code,1,0,14);code=jump(code,List<Int>[15,128],allocationFailure);code=load(code,1,15,mappedCap);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],map);code=alu(code,57,0,1);code=jump(code,List<Int>[15,135],allocationFailure);
- code=label(code,map);code=immediate(code,0,9);code=immediate(code,7,0);code=mov(code,6,14);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],allocationFailure);code=mov(code,3,0);
+ code=label(code,map);code=immediate(code,0,9);code=immediate(code,7,0);code=mov(code,6,14);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],mapFailed);code=mov(code,3,0);
  code=load(code,1,15,arenaHead);code=store(code,3,0,1);code=store(code,3,8,14);code=address(code,0,3,metadataBytes);code=store(code,3,32,0);code=store(code,3,40,13);code=immediate(code,1,1);code=byteStore(code,0,0,1);code=alu(code,1,0,13);code=store(code,3,16,0);code=mov(code,1,0);code=alu(code,1,1,12);code=store(code,3,24,1);code=store(code,3,48,12);
- code=store(code,0,0,12);code=immediate(code,1,0);code=store(code,0,8,1);code=store(code,0,16,1);code=load(code,1,15,freeHead);code=store(code,0,24,1);code=store(code,15,freeHead,0);code=store(code,15,arenaHead,3);code=load(code,1,15,mappedBytes);code=alu(code,1,1,14);code=store(code,15,mappedBytes,1);leave(code)
+ code=store(code,0,0,12);code=immediate(code,1,0);code=store(code,0,8,1);code=store(code,0,16,1);code=load(code,1,15,freeHead);code=store(code,0,24,1);code=store(code,15,freeHead,0);code=store(code,15,arenaHead,3);code=load(code,1,15,mappedBytes);code=alu(code,1,1,14);code=store(code,15,mappedBytes,1);code=immediate(code,0,1);code=leave(code);code=label(code,mapFailed);code=immediate(code,0,0);leave(code)
 };
 // Allocate an initialized header. RDI=size, RSI=descriptor; payload remains private
 // until its constructor fills it without a safepoint and publishes the result.
 let allocate:Function(Code):Code=function(initial:Code):Code{
- var code:Code=enter(label(initial,allocateLabel));let sized:Int=code->nextLabel;let searched:Int=sized+1;let scan:Int=sized+2;let found:Int=sized+3;let whole:Int=sized+4;let finish:Int=sized+5;let missing:Int=sized+6;let grow:Int=sized+7;let scheduled:Int=sized+8;let collectNow:Int=sized+9;code=fresh(code,10);
+ var code:Code=enter(label(initial,allocateLabel));let sized:Int=code->nextLabel;let searched:Int=sized+1;let scan:Int=sized+2;let found:Int=sized+3;let whole:Int=sized+4;let finish:Int=sized+5;let missing:Int=sized+6;let grow:Int=sized+7;let scheduled:Int=sized+8;let collectNow:Int=sized+9;let reserveCap:Int=sized+10;let reserveScan:Int=sized+11;let reserveNext:Int=sized+12;let reserveLow:Int=sized+13;code=fresh(code,14);
  code=mov(code,12,7);code=mov(code,13,6);code=constant(code,7,12,0);code=jump(code,List<Int>[15,140],allocationFailure);code=constant(code,0,12,7);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,4,12,-8);code=constant(code,7,12,32);code=jump(code,List<Int>[15,131],sized);code=immediate(code,12,32);
  code=label(code,sized);code=load(code,0,15,descriptorCount);code=alu(code,57,13,0);code=jump(code,List<Int>[15,131],internalFailure);
  code=load(code,0,15,allocations);code=constant(code,0,0,1);code=jump(code,List<Int>[15,128],allocationFailure);code=store(code,15,allocations,0);code=load(code,1,15,failOrdinal);code=alu(code,57,0,1);code=jump(code,List<Int>[15,132],allocationFailure);
@@ -43,7 +44,20 @@ let allocate:Function(Code):Code=function(initial:Code):Code{
  code=mov(code,7,3);code=alu(code,1,7,12);code=store(code,7,0,2);code=immediate(code,0,0);code=store(code,7,8,0);code=store(code,7,16,0);code=store(code,7,24,8);code=store(code,14,0,7);code=store(code,3,0,12);code=jump(code,List<Int>[232],startLabel);code=jump(code,List<Int>[233],finish);
  code=label(code,whole);code=store(code,14,0,8);
  code=label(code,finish);code=repair(code);code=immediate(code,0,1);code=store(code,3,8,0);code=store(code,3,16,13);code=load(code,0,15,sinceCollection);code=load(code,1,3,0);code=alu(code,1,0,1);code=jump(code,List<Int>[15,128],allocationFailure);code=store(code,15,sinceCollection,0);code=mov(code,0,3);code=leave(code);
- code=label(code,missing);code=alu(code,133,3,3);code=jump(code,List<Int>[15,133],grow);code=immediate(code,3,1);code=jump(code,List<Int>[232],collectLabel);code=jump(code,List<Int>[233],searched);
- code=label(code,grow);code=mov(code,7,12);code=jump(code,List<Int>[232],arenaLabel);code=jump(code,List<Int>[233],searched);code
+ code=label(code,missing);code=alu(code,133,3,3);code=jump(code,List<Int>[15,133],grow);code=immediate(code,3,1);code=jump(code,List<Int>[232],collectLabel);
+ // A tiny reclaimed tail must not force another full collection immediately.
+ // Keep the original policy for small, capped and forced-collection heaps.
+ code=load(code,0,15,mappedCap);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],searched);
+ code=load(code,0,15,stress);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],searched);
+ code=load(code,8,15,mappedBytes);code=constant(code,7,8,536870912);code=jump(code,List<Int>[15,134],searched);
+ code=mov(code,9,8);code=shift(code,5,9,5);code=constant(code,0,9,1);code=shift(code,5,8,3);code=constant(code,7,8,134217728);code=jump(code,List<Int>[15,134],reserveCap);code=immediate(code,8,134217728);
+ code=label(code,reserveCap);code=load(code,1,15,freeHead);code=immediate(code,0,0);
+ code=label(code,reserveScan);code=alu(code,57,0,8);code=jump(code,List<Int>[15,131],searched);code=alu(code,133,1,1);code=jump(code,List<Int>[15,132],reserveLow);
+ code=constant(code,5,9,1);code=jump(code,List<Int>[15,132],internalFailure);code=load(code,2,1,0);code=alu(code,57,2,12);code=jump(code,List<Int>[15,130],reserveNext);code=alu(code,1,0,2);code=jump(code,List<Int>[15,128],internalFailure);
+ code=label(code,reserveNext);code=load(code,1,1,24);code=jump(code,List<Int>[233],reserveScan);
+ code=label(code,reserveLow);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],grow);
+ // At least one reclaimed block fits: a failed optional mapping may retry it.
+ code=mov(code,7,12);code=jump(code,List<Int>[232],arenaLabel);code=jump(code,List<Int>[233],searched);
+ code=label(code,grow);code=mov(code,7,12);code=jump(code,List<Int>[232],arenaLabel);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],allocationFailure);code=jump(code,List<Int>[233],searched);code
 };
 public let emit:Function(Code):Code=function(code:Code):Code{allocate(arena(start(code)))};

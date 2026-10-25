@@ -12,10 +12,15 @@ let start:Function(Code):Code=function(initial:Code):Code{
  code=label(code,found);code=mov(code,8,7);code=alu(code,41,8,0);code=shift(code,5,8,3);code=mov(code,1,8);code=constant(code,4,1,7);code=shift(code,5,8,3);code=load(code,9,2,32);code=alu(code,1,8,9);code=immediate(code,0,1);code=shiftCl(code,4,0);code=byteLoad(code,9,8,0);code=alu(code,9,9,0);code=byteStore(code,8,0,9);raw(code,List<Int>[195])
 };
 // Reserve an indexed arena. RDI is the minimum physical object size.
+// Above 512 MiB, uncapped heaps reserve one eighth of mapped space, up to
+// 128 MiB. Explicit caps retain the original geometry and collection order.
 let arena:Function(Code):Code=function(initial:Code):Code{
- var code:Code=enter(label(initial,arenaLabel));let minimum:Int=code->nextLabel;let capped:Int=minimum+1;let requested:Int=minimum+2;let map:Int=minimum+3;code=fresh(code,4);
+ var code:Code=enter(label(initial,arenaLabel));let minimum:Int=code->nextLabel;let capped:Int=minimum+1;let requested:Int=minimum+2;let map:Int=minimum+3;let small:Int=minimum+4;code=fresh(code,5);
  code=mov(code,12,7);code=load(code,0,15,mappedBytes);code=shift(code,5,0,2);code=constant(code,7,0,1048576);code=jump(code,List<Int>[15,131],minimum);code=immediate(code,0,1048576);
- code=label(code,minimum);code=constant(code,7,0,16777216);code=jump(code,List<Int>[15,134],capped);code=immediate(code,0,16777216);
+ code=label(code,minimum);code=load(code,1,15,mappedCap);code=alu(code,133,1,1);code=jump(code,List<Int>[15,133],small);
+ code=load(code,1,15,mappedBytes);code=constant(code,7,1,536870912);code=jump(code,List<Int>[15,134],small);
+ code=mov(code,0,1);code=shift(code,5,0,3);code=constant(code,7,0,134217728);code=jump(code,List<Int>[15,134],capped);code=immediate(code,0,134217728);code=jump(code,List<Int>[233],capped);
+ code=label(code,small);code=constant(code,7,0,16777216);code=jump(code,List<Int>[15,134],capped);code=immediate(code,0,16777216);
  code=label(code,capped);code=alu(code,57,12,0);code=jump(code,List<Int>[15,131],requested);code=mov(code,12,0);
  code=label(code,requested);code=constant(code,0,12,4095);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,4,12,-4096);
  code=mov(code,13,12);code=shift(code,5,13,6);code=mov(code,14,12);code=alu(code,1,14,13);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,0,14,4095+metadataBytes);code=jump(code,List<Int>[15,128],allocationFailure);code=constant(code,4,14,-4096);

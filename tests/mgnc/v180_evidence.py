@@ -56,11 +56,26 @@ def file_record(path):
     return dict(bytes=len(data), mode=stat.S_IMODE(info.st_mode), sha256=digest(data))
 
 
+def _tree_paths(root):
+    """Enumerate every node without following links or suppressing I/O errors."""
+    root = Path(root)
+    require(root.is_dir() and not root.is_symlink(), "invalid tree root")
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                path = Path(entry.path)
+                yield path
+                if entry.is_dir(follow_symlinks=False):
+                    pending.append(path)
+
+
 def source_set(root, role, revision):
     root = Path(root)
     require(root.is_dir() and not root.is_symlink(), "invalid source root")
     rows = []
-    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix().encode()):
+    for path in sorted(_tree_paths(root), key=lambda p: p.relative_to(root).as_posix().encode()):
         require(not path.is_symlink(), "source symlink")
         if path.is_dir():
             continue
@@ -232,7 +247,7 @@ def ledger(root):
     import base64
     root = Path(root)
     rows, groups = [], {}
-    for path in sorted(root.rglob("*"), key=lambda p: os.fsencode(p.relative_to(root))):
+    for path in sorted(_tree_paths(root), key=lambda p: os.fsencode(p.relative_to(root))):
         info = path.lstat()
         name = base64.b64encode(os.fsencode(path.relative_to(root))).decode("ascii")
         row = dict(path_b64=name, mode=stat.S_IMODE(info.st_mode))

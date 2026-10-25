@@ -33,6 +33,26 @@ class ArchiveTests(unittest.TestCase):
             archive.write_bytes(archive.read_bytes()+b"changed")
             with self.assertRaises(ValueError):restore(archive,work/"invalid",receipt)
 
+    @unittest.skipIf(os.geteuid() == 0, "permission controls require non-root")
+    def test_unreadable_subtree_cannot_be_archived_as_empty(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            work=Path(temporary);root=work/"source";root.mkdir()
+            (root/"visible").write_bytes(b"visible")
+            restricted=root/"restricted";restricted.mkdir()
+            (restricted/"hidden").write_bytes(b"must not disappear")
+            archive=work/"evidence.tar.gz"
+            restricted.chmod(0)
+            try:
+                with self.assertRaises(PermissionError):freeze(root,archive)
+                self.assertFalse(archive.exists())
+                self.assertEqual(restricted.stat().st_mode&0o777,0)
+            finally:
+                restricted.chmod(0o700)
+            receipt=freeze(root,archive)
+            self.assertEqual(receipt["unique_blobs"],2)
+            self.assertEqual(restore(archive,work/"restored",receipt)["status"],"Passed")
+            self.assertEqual((work/"restored/restricted/hidden").read_bytes(),b"must not disappear")
+
     def test_unsafe_names(self):
         for name in ("../escape","/absolute","a/../b","a//b","", "."):
             with self.subTest(name=name),self.assertRaises(ValueError):

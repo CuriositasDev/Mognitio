@@ -5,6 +5,7 @@ use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction,Attribute,Evidence};
 use Mgnc\MetadataSyntax\{read as attributes,targets as attributeTargets};
 use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\Classification\{prune};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{getNode};
@@ -54,7 +55,8 @@ public let collect:Function(ProjectInput):Result<Headers,InputError>=function(in
  var modules:Paged<Module>=empty<Module>();var declarations:Paged<Declaration>=empty<Declaration>();var names:Paged<Introduction>=empty<Introduction>();
  loop over(input->sources as source:SourceUnit){
   let parsed:SyntaxForest=branch on analyzeSyntax(source->text){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
-  let tree:SyntaxForest=parsed;
+  // Retain every family reachable from the module root; discard failed parse paths.
+  let tree:SyntaxForest=branch on prune(parsed,parsed->root,List<Int>[]){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
   let scanned:Result<Headers,Diagnostic>=scan(input,modules,declarations,names,source,tree,false);
   branch on scanned{Result<Headers,Diagnostic>::Ok(value:Headers)=>{modules=value->modules;declarations=value->declarations;names=value->names;},
    Result<Headers,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};

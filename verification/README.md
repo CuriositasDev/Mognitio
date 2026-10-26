@@ -183,3 +183,6 @@ large-heap growth while preserving collection order and capped geometry.
 
 [Fitting reserve after native collection](v1.8.0-post-collection-reserve.md)
 prevents small reclaimed tails from suppressing optional arena growth.
+
+[Reachable semantic parse forests](v1.8.0-semantic-forest-retention.md)
+reduces retained parser data while preserving every completed syntax alternative.

@@ -1,5 +1,5 @@
 namespace Mgnc\Classification;
-use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
+use Mgnc\PruneMemo\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
 use Mgnc\Tables\{replaceItem};
 use Mgnc\Forest\{SyntaxForest};

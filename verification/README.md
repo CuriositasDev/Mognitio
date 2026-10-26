@@ -186,3 +186,6 @@ prevents small reclaimed tails from suppressing optional arena growth.
 
 [Reachable semantic parse forests](v1.8.0-semantic-forest-retention.md)
 reduces retained parser data while preserving every completed syntax alternative.
+
+[Short pruning memo paths](v1.8.0-prune-memo.md) reduce small-node radix work
+while preserving shared forests and the full nonnegative integer key range.

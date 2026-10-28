@@ -19,7 +19,7 @@ public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=func
  };};Result<Code,Diagnostic>::Ok(code)
 };
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){loop over(page as record:Record){extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};
+ let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){var recordCursor0:Int=0;loop while(recordCursor0<page->length()){let record:Record=try atList<Record>(page,recordCursor0);recordCursor0=recordCursor0+1;extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};
  var code:Code=initial;loop while(extent%8!=0){code=raw(code,List<Int>[0]);extent=extent+1;};code=label(code,abiRevisionLabel);code=field(code,4,plan->abiRevision);code=label(code,descriptorTableLabel);
  loop over(plan->descriptors->pages->append(plan->descriptors->tail) as page:List<Int>){loop over(page as target:Int){code=reference(code,5,target);};};
  var index:Int=0;loop over(plan->layouts->descriptors->pages->append(plan->layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){

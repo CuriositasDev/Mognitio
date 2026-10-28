@@ -374,3 +374,9 @@ Add --compare-machine-reference to v170-runtime-label-oracles.py to compare
 acceptance and complete diagnostics with the frozen legacy-machine-check.mgn
 source reference. The six oracle families exercise 266 comparisons, 462 mutants
 and six coherent images. References belong only to the test project.
+
+Add --compare-verifier-reference COMPILER_SOURCE to compare all seven machine
+verifiers and their nested calls with a prior src/ tree. Exact acceptance and
+diagnostic fields must agree, and comparator mismatches abort the probe.
+The encoder oracle also covers record counts around 64-record page and
+4096-record page-group boundaries against independent ELF bytes.

@@ -189,3 +189,6 @@ reduces retained parser data while preserving every completed syntax alternative
 
 [Short pruning memo paths](v1.8.0-prune-memo.md) reduce small-node radix work
 while preserving shared forests and the full nonnegative integer key range.
+
+[Machine-record page iteration](v1.8.0-record-page-iteration.md) avoids per-page
+iterator buffers while preserving verifier diagnostics and complete ELF bytes.

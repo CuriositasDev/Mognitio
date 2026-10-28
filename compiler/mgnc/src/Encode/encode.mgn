@@ -1,4 +1,5 @@
 namespace Mgnc\Encode;
+use Mgnc\Tables\{atList};
 use Std\Numeric\{Bits};
 use Std\Binary\{Bytes,bytesFromBits};
 use Mgnc\EncodeChunks\{Buffered,buffered,addBuffered as addChunk,pack as packChunk,finishBuffered as finishChunks};
@@ -26,7 +27,7 @@ public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code)
  let span:Span=Span{start:0,end:0,line:1,column:1};
  var labels:Map=create();var length:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
-  loop over(page as record:Record){
+  var recordCursor0:Int=0;loop while(recordCursor0<page->length()){let record:Record=try atList<Record>(page,recordCursor0);recordCursor0=recordCursor0+1;
    branch when{record->kind==1=>{
     branch when{record->target<0 || record->target>=code->nextLabel=>{
      return Result<Bytes,Diagnostic>::Err(problem("internal",span,"machine label bounds"));
@@ -63,7 +64,7 @@ public let encode:Function(Code):Result<Bytes,Diagnostic>=function(initial:Code)
  var chunks:Buffered=try addChunk(buffered(),bytesFromBits(result));
  var written:Int=120;var offset:Int=0;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){
-  loop over(page as record:Record){
+  var recordCursor1:Int=0;loop while(recordCursor1<page->length()){let record:Record=try atList<Record>(page,recordCursor1);recordCursor1=recordCursor1+1;
    branch when{record->bytes->length()>0=>{chunks=try addChunk(chunks,try packChunk(record->bytes,span));written=written+record->bytes->length();},else=>unit};
    branch when{
     record->kind==0=>unit,

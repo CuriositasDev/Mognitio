@@ -16,7 +16,7 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
  // any declared entry/root labels. The full machine oracle separately checks
  // every source/local label and reference.
  var queriedLabels:Map=create();loop over(entries as helper:Helper){queriedLabels=try put(queriedLabels,helper->id,1);loop over(helper->roots as root:Int){queriedLabels=try put(queriedLabels,root,1);};};
- index=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
+ index=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){var recordCursor0:Int=0;loop while(recordCursor0<page->length()){let record:Record=try atList<Record>(page,recordCursor0);recordCursor0=recordCursor0+1;
   branch when{record->kind==1&&(record->target<256||(try get(queriedLabels,record->target))>=0)=>{labels=try put(labels,record->target,index);},else=>unit};index=index+1;
  };};
  loop over(entries as helper:Helper){
@@ -41,7 +41,7 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
  branch when{(try get(helpers,76))>=0=>{let position:Int=try get(labels,172);let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(position>=0&&count->kind==4&&count->bytes->length()==0&&count->value==4&&bits->kind==4&&bits->bytes->length()==0&&bits->value==15&&next->kind==1,span,"inspection helper bitmap");},else=>unit};
  loop over(List<Int>[77,78,79] as helper:Int){branch when{(try get(helpers,helper))>=0=>{let position:Int=try get(labels,helper+96);try require(position>=0,span,"directory helper bitmap");let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(count->kind==4&&count->bytes->length()==0&&count->value==branch when{helper==79=>8,else=>6}&&bits->kind==4&&bits->bytes->length()==0&&bits->value==branch when{helper==79=>255,else=>63}&&next->kind==1,span,"directory helper bitmap");},else=>unit};};
  var owner:Int= -1;
- loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){var recordCursor1:Int=0;loop while(recordCursor1<page->length()){let record:Record=try atList<Record>(page,recordCursor1);recordCursor1=recordCursor1+1;
   branch when{record->kind==1=>{
    let found:Int=try get(helpers,record->target);
    branch when{found>=0=>{owner=found;},record->target<256=>{

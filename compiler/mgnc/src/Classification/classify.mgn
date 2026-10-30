@@ -1,7 +1,7 @@
 namespace Mgnc\Classification;
 use Mgnc\PruneMemo\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
-use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic};
-use Mgnc\Tables\{replaceItem};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
+use Mgnc\Tables\{replaceItem,atList};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{NodeStore,emptyNodes,addNode,getNode};
@@ -15,21 +15,64 @@ public let genericGuards:Function(SyntaxForest):Result<List<Int>,Diagnostic>=fun
  Result<List<Int>,Diagnostic>::Ok(starts)
 };
 type Visit=product{id:Int;block:Int;};
+// Compact append-only traversal frames. Sealed pages contain only scalar IDs.
+type PruneFrame=product{id:Int;parent:Int;};
+type PrunePage=product{id0:Int;parent0:Int;id1:Int;parent1:Int;id2:Int;parent2:Int;id3:Int;parent3:Int;id4:Int;parent4:Int;id5:Int;parent5:Int;id6:Int;parent6:Int;id7:Int;parent7:Int;};
+type PruneStack=product{pages:Paged<PrunePage>;tail:List<PruneFrame>;count:Int;};
+let emptyPruneStack:Function():PruneStack=function():PruneStack{
+ PruneStack{pages:empty<PrunePage>(),tail:List<PruneFrame>[],count:0}
+};
+let packPrunePage:Function(List<PruneFrame>):PrunePage=function(values:List<PruneFrame>):PrunePage{
+ let frame0:PruneFrame=branch on values->at(0){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame1:PruneFrame=branch on values->at(1){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame2:PruneFrame=branch on values->at(2){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame3:PruneFrame=branch on values->at(3){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame4:PruneFrame=branch on values->at(4){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame5:PruneFrame=branch on values->at(5){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame6:PruneFrame=branch on values->at(6){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ let frame7:PruneFrame=branch on values->at(7){Result<PruneFrame,IndexError>::Ok(value:PruneFrame)=>value,Result<PruneFrame,IndexError>::Err(error:IndexError)=>panic{"incomplete prune page"}};
+ PrunePage{id0:frame0->id,parent0:frame0->parent,id1:frame1->id,parent1:frame1->parent,id2:frame2->id,parent2:frame2->parent,id3:frame3->id,parent3:frame3->parent,id4:frame4->id,parent4:frame4->parent,id5:frame5->id,parent5:frame5->parent,id6:frame6->id,parent6:frame6->parent,id7:frame7->id,parent7:frame7->parent}
+};
+let pushPruneFrame:Function(PruneStack,PruneFrame):PruneStack=function(stack:PruneStack,frame:PruneFrame):PruneStack{
+ var pages:Paged<PrunePage>=stack->pages;var tail:List<PruneFrame>=stack->tail;
+ branch when{tail->length()==8=>{pages=push<PrunePage>(pages,packPrunePage(tail));tail=List<PruneFrame>[];},else=>unit};
+ PruneStack{pages:pages,tail:tail->append(frame),count:stack->count+1}
+};
+let pruneFrameAt:Function(PruneStack,Int):Result<PruneFrame,Diagnostic>=function(stack:PruneStack,index:Int):Result<PruneFrame,Diagnostic>{
+ branch when{index<0||index>=stack->count=>{return Result<PruneFrame,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid prune frame index"));},else=>unit};
+ branch when{index/8==stack->pages->count=>{return atList<PruneFrame>(stack->tail,index%8);},else=>unit};
+ let page:PrunePage=try lookup<PrunePage>(stack->pages,index/8);let lane:Int=index%8;
+ Result<PruneFrame,Diagnostic>::Ok(branch when{
+  lane==0=>PruneFrame{id:page->id0,parent:page->parent0},
+  lane==1=>PruneFrame{id:page->id1,parent:page->parent1},
+  lane==2=>PruneFrame{id:page->id2,parent:page->parent2},
+  lane==3=>PruneFrame{id:page->id3,parent:page->parent3},
+  lane==4=>PruneFrame{id:page->id4,parent:page->parent4},
+  lane==5=>PruneFrame{id:page->id5,parent:page->parent5},
+  lane==6=>PruneFrame{id:page->id6,parent:page->parent6},
+  else=>PruneFrame{id:page->id7,parent:page->parent7},
+ })
+};
 public let prune:Function(SyntaxForest,Int,List<Int>):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest,root:Int,rejected:List<Int>):Result<SyntaxForest,Diagnostic>{
- var memo:IntMap=createMap();var excluded:IntMap=createMap();
+ var memo:IntMap=createMap();var excluded:IntMap=createMap();let hasRejected:Bool=rejected->length()>0;
  loop over(rejected as id:Int){excluded=try mapPut(excluded,id,1);};
- var nodes:NodeStore=emptyNodes();var stackIds:Paged<Int>=push<Int>(empty<Int>(),root);var stackParents:Paged<Int>=push<Int>(empty<Int>(),-1);var active:Int=0;
+ var nodes:NodeStore=emptyNodes();var stack:PruneStack=pushPruneFrame(emptyPruneStack(),PruneFrame{id:root,parent:-1});var active:Int=0;
  // Memoized postorder over the shared DAG; a dead child invalidates its parent family,
  // while a surviving alternative remains available to every parent referencing it.
  loop while(active>=0){
-  let workId:Int=try lookup<Int>(stackIds,active);let workParent:Int=try lookup<Int>(stackParents,active);let node:ForestNode=try getNode(tree->nodes,workId);var missing:Int=-1;
-  loop over(List<Int>[node->left,node->right,node->alternatives] as child:Int){branch when{child>=0&&(try mapGet(memo,child))== -2=>{missing=child;break;},else=>unit};};
-  branch when{missing>=0=>{stackIds=push<Int>(stackIds,missing);stackParents=push<Int>(stackParents,active);active=stackIds->count-1;continue;},else=>unit};
+  let frame:PruneFrame=try pruneFrameAt(stack,active);let workId:Int=frame->id;let workParent:Int=frame->parent;let node:ForestNode=try getNode(tree->nodes,workId);var missing:Int=-1;
+  branch when{
+   node->left>=0&&(try mapGet(memo,node->left))== -2=>{missing=node->left;},
+   node->right>=0&&(try mapGet(memo,node->right))== -2=>{missing=node->right;},
+   node->alternatives>=0&&(try mapGet(memo,node->alternatives))== -2=>{missing=node->alternatives;},
+   else=>unit
+  };
+  branch when{missing>=0=>{stack=pushPruneFrame(stack,PruneFrame{id:missing,parent:active});active=stack->count-1;continue;},else=>unit};
   let left:Int=branch when{node->left>=0=>try mapGet(memo,node->left),else=> -1};
   let right:Int=branch when{node->right>=0=>try mapGet(memo,node->right),else=> -1};
   let alternative:Int=branch when{node->alternatives>=0=>try mapGet(memo,node->alternatives),else=> -1};
   var live:Bool=(node->left<0||left>=0)&&(node->right<0||right>=0);
-  branch when{(try mapGet(excluded,workId))==1=>{live=false;},else=>unit};
+  branch when{hasRejected&&(try mapGet(excluded,workId))==1=>{live=false;},else=>unit};
   var result:Int=alternative;
   branch when{live=>{result=nodes->count;nodes=addNode(nodes,ForestNode{symbol:node->symbol,slot:node->slot,start:node->start,end:node->end,rule:node->rule,left:left,right:right,split:node->split,alternatives:alternative});},else=>unit};
   // Alternative records carry only a family (symbol -1000); promotion retains

@@ -192,3 +192,6 @@ while preserving shared forests and the full nonnegative integer key range.
 
 [Machine-record page iteration](v1.8.0-record-page-iteration.md) avoids per-page
 iterator buffers while preserving verifier diagnostics and complete ELF bytes.
+
+[Compiler traversal allocation lifetime](v1.8.0-allocation-lifetime.md) records
+compact pruning frames, the separate reserve trigger and indexed chunk merging.

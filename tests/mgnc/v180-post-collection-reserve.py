@@ -24,7 +24,7 @@ def prepared(path,mutation=None,fail=False):
  matches=0
  for i in range(start,next(j for j,r in enumerate(rows) if r['kind']==1 and r['target']==15)):
   row=rows[i];b=bytes(row['bytes'])
-  if mutation=='threshold' and row['kind']==3 and row['value']==512*M:
+  if mutation=='threshold' and row['kind']==3 and row['value']==64*M:
    assert rows[i+1]['kind']==2 and bytes(rows[i+1]['bytes'])==bytes.fromhex('0f86')
    rows[i+1]['bytes']=list(bytes.fromhex('0f82'));matches+=1
   elif mutation in ['ignore-cap','ignore-stress'] and row['kind']==3 and row['value']==(184 if mutation=='ignore-cap' else 152) and b==bytes.fromhex('498b87'):
@@ -35,6 +35,8 @@ def prepared(path,mutation=None,fail=False):
    row.update(kind=0,bytes=list(b[:-2])+[144]*6);matches+=1
   elif mutation=='large-rate' and i>next(j for j in range(start,len(rows)) if rows[j]['kind']==3 and rows[j]['value']==184) and bytes.fromhex('49c1e803') in b:
    matches+=b.count(bytes.fromhex('49c1e803'));row['bytes']=list(b.replace(bytes.fromhex('49c1e803'),bytes.fromhex('49c1e802')))
+  elif mutation=='reserve-cap' and row['kind']==4 and row['value']==128*M:
+   row['value']=256*M;matches+=1
  if mutation=='fatal-optional-map':
   for i,row in enumerate(rows[:start]):
    if row['kind']==3 and row['value']==-4095:
@@ -64,21 +66,30 @@ def one(path,mutation,mapped,sizes,request,grow,cap=0,stress=0,fail=False):
 def execute(path,mutation):
  resource.setrlimit(resource.RLIMIT_CORE,(0,0))
  cases=[
-  (512*M,[64],48,False,0,0,False),
+  (64*M-8,[64],48,False,0,0,False),
+  (64*M,[64],48,False,0,0,False),
+  (64*M+8,[64],48,True,0,0,False),
+  (65*M,[64],48,False,1<<60,0,False),
+  (65*M,[64],48,False,0,1,False),
+  (65*M,[12*M],48,False,0,0,False),
+  (65*M,[M]*9+[2*M],2*M,True,0,0,False),
+  (65*M,[64],48,False,0,0,True),
+  (512*M,[64],48,True,0,0,False),
   (512*M+8,[64],48,True,0,0,False),
   (513*M,[64],48,False,1<<60,0,False),
   (513*M,[64],48,False,0,1,False),
   (513*M,[100*M],48,False,0,0,False),
   (513*M,[15*M]*5+[16*M],16*M,True,0,0,False),
-  (513*M,[64],48,False,0,0,True)]
+  (513*M,[64],48,False,0,0,True),
+  (2**31,[160*M],48,False,0,0,False)]
  for case in cases:one(path,mutation,*case)
  print(json.dumps(dict(status='Passed',cases=len(cases))))
 def main():
- p=argparse.ArgumentParser();p.add_argument('--records',required=True,type=Path);p.add_argument('--output',type=Path);p.add_argument('--execute',action='store_true');p.add_argument('--mutation');p.add_argument('--mandatory-failure',action='store_true');a=p.parse_args()
- if a.mandatory_failure:one(a.records,None,513*M,[40],48,False,fail=True);raise AssertionError('mandatory mapping failure returned')
+ p=argparse.ArgumentParser();p.add_argument('--records',required=True,type=Path);p.add_argument('--output',type=Path);p.add_argument('--execute',action='store_true');p.add_argument('--mutation');p.add_argument('--mandatory-failure',action='store_true');p.add_argument('--mandatory-mapped',type=int,default=513*M);a=p.parse_args()
+ if a.mandatory_failure:one(a.records,None,a.mandatory_mapped,[40],48,False,fail=True);raise AssertionError('mandatory mapping failure returned')
  if a.execute:execute(a.records,a.mutation);return
  a.output.mkdir();rows=[]
- for mutation in [None,'threshold','ignore-cap','ignore-stress','count-small','large-rate','fatal-optional-map']:
+ for mutation in [None,'threshold','ignore-cap','ignore-stress','count-small','large-rate','reserve-cap','fatal-optional-map']:
   cmd=[sys.executable,'-B',str(Path(__file__).resolve()),'--records',str(a.records),'--execute']
   if mutation:cmd+=['--mutation',mutation]
   r=subprocess.run(cmd,capture_output=True,timeout=90);name=mutation or 'normal'
@@ -87,11 +98,13 @@ def main():
   elif mutation:assert r.returncode!=0 and b'reserve oracle' in r.stderr and b'mutation membership' not in r.stderr,(mutation,r.returncode,r.stderr)
   else:assert r.returncode==0,(r.returncode,r.stderr)
   rows.append(dict(mutation=mutation,exit=r.returncode,status='Passed'))
- cmd=[sys.executable,'-B',str(Path(__file__).resolve()),'--records',str(a.records),'--mandatory-failure']
- r=subprocess.run(cmd,capture_output=True,timeout=5)
- (a.output/'mandatory-failure.stdout').write_bytes(r.stdout);(a.output/'mandatory-failure.stderr').write_bytes(r.stderr)
- assert r.returncode==91 and not r.stderr,('mandatory failure',r.returncode,r.stderr)
- rows.append(dict(mutation='mandatory-mmap-failure',exit=r.returncode,status='Passed'))
+ for mapped in [64*M+8,513*M,2**31]:
+  cmd=[sys.executable,'-B',str(Path(__file__).resolve()),'--records',str(a.records),'--mandatory-failure','--mandatory-mapped',str(mapped)]
+  r=subprocess.run(cmd,capture_output=True,timeout=5)
+  name='mandatory-failure-'+str(mapped)
+  (a.output/(name+'.stdout')).write_bytes(r.stdout);(a.output/(name+'.stderr')).write_bytes(r.stderr)
+  assert r.returncode==91 and not r.stderr,('mandatory failure',mapped,r.returncode,r.stderr)
+  rows.append(dict(mutation='mandatory-mmap-failure',mapped=mapped,exit=r.returncode,status='Passed'))
  (a.output/'receipt.json').write_text(json.dumps(dict(status='Passed',rows=rows,records_sha256=hashlib.sha256(a.records.read_bytes()).hexdigest(),validator_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()),indent=2)+'\n')
- print('POST_COLLECTION_RESERVE_OK controls=8')
+ print('POST_COLLECTION_RESERVE_OK controls=11')
 if __name__=='__main__':main()

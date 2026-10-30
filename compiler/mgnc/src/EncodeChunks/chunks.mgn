@@ -21,10 +21,11 @@ public let finish:Function(List<Bytes>):Bytes=function(levels:List<Bytes>):Bytes
 // Collect small immutable fragments, then merge adjacent halves at flush.
 // The pending byte count is bounded; each fragment participates in at most
 // logarithmically many concatenations instead of copying each growing prefix.
+// Indexed access avoids materializing a remaining fragment list at each step.
 let combine:Function(List<Bytes>):Bytes=function(parts:List<Bytes>):Bytes{
  var current:List<Bytes>=parts;
  loop while(current->length()>1){var next:List<Bytes>=List<Bytes>[];var pending:Bytes=vacant;var waiting:Bool=false;
-  loop over(current as part:Bytes){branch when{waiting=>{next=next->append(pending->concat(part));waiting=false;},else=>{pending=part;waiting=true;}};};
+  var partIndex:Int=0;loop while(partIndex<current->length()){let part:Bytes=branch on current->at(partIndex){Result<Bytes,IndexError>::Ok(value:Bytes)=>value,Result<Bytes,IndexError>::Err(error:IndexError)=>panic{"invalid chunk index"}};partIndex=partIndex+1;branch when{waiting=>{next=next->append(pending->concat(part));waiting=false;},else=>{pending=part;waiting=true;}};};
   branch when{waiting=>{next=next->append(pending);},else=>unit};current=next;
  };
  branch on current->at(0){Result<Bytes,IndexError>::Ok(value:Bytes)=>value,Result<Bytes,IndexError>::Err(error:IndexError)=>vacant}

@@ -380,3 +380,17 @@ verifiers and their nested calls with a prior src/ tree. Exact acceptance and
 diagnostic fields must agree, and comparator mismatches abort the probe.
 The encoder oracle also covers record counts around 64-record page and
 4096-record page-group boundaries against independent ELF bytes.
+
+## Pruning frame storage and reserve boundary
+
+Run v180-prune-storage.py --source compiler/mgnc --baseline BASELINE_SOURCE
+--seed SEED --output NEW_DIRECTORY for 16 recursive forest oracle cases.
+The 521-node shared chain crosses both the eight-frame page and 64-page
+storage boundaries. The test records source, validator and producer identities.
+
+V180-post-collection-reserve.py checks the separate 64 MiB optional-reserve
+boundary, capped/stress behavior, fitting-space fragmentation and mapping
+failures with seven mutation controls. V180-arena-capacity.py retains its
+independent 512 MiB capacity boundary. Both consume actual emitted records
+from v180-fit-cursors.py. See the
+[allocation lifetime record](../../verification/v1.8.0-allocation-lifetime.md).

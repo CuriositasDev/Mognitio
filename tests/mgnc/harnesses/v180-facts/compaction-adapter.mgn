@@ -1,0 +1,60 @@
+
+// Diagnostic-only exports. The complete product module above is unchanged.
+let bfBit:Function(Int):Bits<64>=function(bit:Int):Bits<64>{
+ branch when{bit==0=>Bits<64>{1},bit==1=>Bits<64>{2},bit==2=>Bits<64>{4},bit==3=>Bits<64>{8},bit==4=>Bits<64>{16},bit==5=>Bits<64>{32},bit==6=>Bits<64>{64},bit==7=>Bits<64>{128},bit==8=>Bits<64>{256},bit==9=>Bits<64>{512},bit==10=>Bits<64>{1024},bit==11=>Bits<64>{2048},bit==12=>Bits<64>{4096},bit==13=>Bits<64>{8192},bit==14=>Bits<64>{16384},bit==15=>Bits<64>{32768},bit==16=>Bits<64>{65536},bit==17=>Bits<64>{131072},bit==18=>Bits<64>{262144},bit==19=>Bits<64>{524288},bit==20=>Bits<64>{1048576},bit==21=>Bits<64>{2097152},bit==22=>Bits<64>{4194304},bit==23=>Bits<64>{8388608},bit==24=>Bits<64>{16777216},bit==25=>Bits<64>{33554432},bit==26=>Bits<64>{67108864},bit==27=>Bits<64>{134217728},bit==28=>Bits<64>{268435456},bit==29=>Bits<64>{536870912},bit==30=>Bits<64>{1073741824},bit==31=>Bits<64>{2147483648},bit==32=>Bits<64>{4294967296},bit==33=>Bits<64>{8589934592},bit==34=>Bits<64>{17179869184},bit==35=>Bits<64>{34359738368},bit==36=>Bits<64>{68719476736},bit==37=>Bits<64>{137438953472},bit==38=>Bits<64>{274877906944},bit==39=>Bits<64>{549755813888},bit==40=>Bits<64>{1099511627776},bit==41=>Bits<64>{2199023255552},bit==42=>Bits<64>{4398046511104},bit==43=>Bits<64>{8796093022208},bit==44=>Bits<64>{17592186044416},bit==45=>Bits<64>{35184372088832},bit==46=>Bits<64>{70368744177664},bit==47=>Bits<64>{140737488355328},bit==48=>Bits<64>{281474976710656},bit==49=>Bits<64>{562949953421312},bit==50=>Bits<64>{1125899906842624},bit==51=>Bits<64>{2251799813685248},bit==52=>Bits<64>{4503599627370496},bit==53=>Bits<64>{9007199254740992},bit==54=>Bits<64>{18014398509481984},bit==55=>Bits<64>{36028797018963968},bit==56=>Bits<64>{72057594037927936},bit==57=>Bits<64>{144115188075855872},bit==58=>Bits<64>{288230376151711744},bit==59=>Bits<64>{576460752303423488},bit==60=>Bits<64>{1152921504606846976},bit==61=>Bits<64>{2305843009213693952},bit==62=>Bits<64>{4611686018427387904},bit==63=>Bits<64>{9223372036854775808},else=>Bits<64>{0}}
+};
+
+let bfFact:Function(Int):Facts=function(tag:Int):Facts{
+ branch when{tag<0=>{return Facts{definitions:List<Bits<64>>[Bits<64>{18446744073709551615}],guards:List<Bits<64>>[Bits<64>{0},Bits<64>{18446744073709551615}]};},else=>unit};
+ var definitions:List<Bits<64>>=List<Bits<64>>[];var guards:List<Bits<64>>=List<Bits<64>>[];var i:Int=0;
+ loop while(i<1+tag%3){definitions=definitions->append(bfBit((tag+i*13)%64));i=i+1;};
+ definitions=definitions->append(bfBit((tag/64)%64));i=0;
+ loop while(i<tag%4){guards=guards->append(bfBit((tag+i*17)%64)->not());i=i+1;};
+ Facts{definitions:definitions,guards:guards}
+};
+let bfMatches:Function(Facts,Int):Result<Bool,Diagnostic>=function(actual:Facts,tag:Int):Result<Bool,Diagnostic>{
+ let expected:Facts=bfFact(tag);
+ branch when{actual->definitions->length()!=expected->definitions->length()||actual->guards->length()!=expected->guards->length()=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ var i:Int=0;loop while(i<expected->definitions->length()){
+  branch when{(try atList<Bits<64>>(actual->definitions,i))!=(try atList<Bits<64>>(expected->definitions,i))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};i=i+1;
+ };i=0;loop while(i<expected->guards->length()){
+  branch when{(try atList<Bits<64>>(actual->guards,i))!=(try atList<Bits<64>>(expected->guards,i))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};i=i+1;
+ };Result<Bool,Diagnostic>::Ok(true)
+};
+let bfExpected:Function(List<Int>,Int,Int):Result<Int,Diagnostic>=function(updates:List<Int>,prefix:Int,id:Int):Result<Int,Diagnostic>{
+ var i:Int=prefix;loop while(i>0){i=i-1;branch when{(try atList<Int>(updates,i))==id=>{return Result<Int,Diagnostic>::Ok(i+1);},else=>unit};};Result<Int,Diagnostic>::Ok(-1)
+};
+public let boundedFlowOracle:Function(List<Int>,List<Int>,List<Int>,List<Int>,List<Int>):Result<Bool,Diagnostic>=
+function(ids:List<Int>,updates:List<Int>,latest:List<Int>,counts:List<Int>,prefixes:List<Int>):Result<Bool,Diagnostic>{
+ var order:Paged<Int>=empty<Int>();loop over(ids as id:Int){order=push<Int>(order,id);};
+ var original:Flow=Flow{values:empty<Facts>(),heads:create()};var tag:Int=0;
+ loop over(updates as id:Int){tag=tag+1;original=Flow{heads:try put(original->heads,id,original->values->count),values:push<Facts>(original->values,bfFact(tag))};};
+ let saved:Flow=original;let reduced:Flow=try compact(original,order);var index:Int=0;var retained:Int=0;
+ loop over(ids as id:Int){
+  let expected:Int=try atList<Int>(latest,index);let head:Int=try get(reduced->heads,id);
+  branch when{expected<0=>{branch when{head>=0=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};},else=>{
+   branch when{head!=retained||!(try bfMatches(try lookup<Facts>(reduced->values,retained),expected))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};retained=retained+1;
+  }};
+  branch when{!(try bfMatches(try stateAt(reduced,id,bfFact(-1)),expected))||!(try bfMatches(try stateAt(saved,id,bfFact(-1)),expected))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+  index=index+1;
+ };
+ branch when{reduced->values->count!=retained||saved->values->count!=updates->length()||!(try bfMatches(try stateAt(reduced,999999,bfFact(-1)),-1))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ index=0;loop while(index<saved->values->count){branch when{!(try bfMatches(try lookup<Facts>(saved->values,index),index+1))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};index=index+1;};
+ var outgoing:Flow=Flow{values:empty<Facts>(),heads:create()};var history:Paged<Flow>=push<Flow>(empty<Flow>(),outgoing);index=0;
+ loop over(updates as current:Int){let next:Facts=bfFact(index+1);
+ branch when{outgoing->values->count/2>=order->count=>{outgoing=try compact(outgoing,order);},else=>unit};
+ outgoing=Flow{heads:try put(outgoing->heads,current,outgoing->values->count),values:push<Facts>(outgoing->values,next)};
+ index=index+1;history=push<Flow>(history,outgoing);
+ branch when{outgoing->values->count!=(try atList<Int>(counts,index))||outgoing->values->count/2>order->count=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ loop over(ids as id:Int){branch when{!(try bfMatches(try stateAt(outgoing,id,bfFact(-1)),try bfExpected(updates,index,id)))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};};
+ };
+ loop over(prefixes as prefix:Int){
+  let snapshot:Flow=try lookup<Flow>(history,prefix);
+  branch when{snapshot->values->count!=(try atList<Int>(counts,prefix))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+  loop over(ids as id:Int){branch when{!(try bfMatches(try stateAt(snapshot,id,bfFact(-1)),try bfExpected(updates,prefix,id)))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};};
+  branch when{!(try bfMatches(try stateAt(snapshot,999999,bfFact(-1)),-1))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+ };
+ // The original unbounded input remains observable after all bounded updates.
+ index=0;loop over(ids as id:Int){branch when{!(try bfMatches(try stateAt(saved,id,bfFact(-1)),try atList<Int>(latest,index)))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};index=index+1;};
+ Result<Bool,Diagnostic>::Ok(true)
+};

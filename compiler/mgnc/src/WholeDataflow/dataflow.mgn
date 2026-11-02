@@ -6,7 +6,7 @@ use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
 use Mgnc\WholeChecks\{require as invariant,present};
 use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Tables\{atList};
-use Mgnc\Facts\{words,combine,equal,define,require,mask,fromSlots};
+use Mgnc\Facts\{words,combine,equal,define,require,mask,fromSlots,WordEdit,beginEdit,finishEdit,defineEdit,requireEdit};
 type Guard=product{slot:Int;sumType:Int;variant:Int;};
 type Edge=product{source:Int;guard:Parent;next:Int;};
 type Facts=product{definitions:List<Bits<64>>;guards:List<Bits<64>>;};
@@ -31,6 +31,19 @@ type Flow=product{values:Paged<Facts>;heads:Map;};
 let stateAt:Function(Flow,Int,Facts):Result<Facts,Diagnostic>=function(flow:Flow,id:Int,full:Facts):Result<Facts,Diagnostic>{
  let version:Int=try get(flow->heads,id);
  branch when{version<0=>Result<Facts,Diagnostic>::Ok(full),else=>lookup<Facts>(flow->values,version)}
+};
+// Only the latest version of each reachable block is observable through stateAt.
+// Rebuild the index in the existing reachable order; previous Flow values remain immutable.
+let compact:Function(Flow,Paged<Int>):Result<Flow,Diagnostic>=function(flow:Flow,order:Paged<Int>):Result<Flow,Diagnostic>{
+ var values:Paged<Facts>=empty<Facts>();var heads:Map=create();
+ loop over(order->pages->append(order->tail) as page:List<Int>){loop over(page as id:Int){
+  let version:Int=try get(flow->heads,id);
+  branch when{version>=0=>{
+   let facts:Facts=try lookup<Facts>(flow->values,version);
+   heads=try put(heads,id,values->count);values=push<Facts>(values,facts);
+  },else=>unit};
+ };};
+ Result<Flow,Diagnostic>::Ok(Flow{values:values,heads:heads})
 };
 let incoming:Function(Body,Int,Paged<Edge>,Map,Map,Flow,Facts,Facts,Span):Result<Facts,Diagnostic>=
 function(body:Body,current:Int,edges:Paged<Edge>,heads:Map,reachable:Map,flow:Flow,full:Facts,entry:Facts,span:Span):Result<Facts,Diagnostic>{
@@ -78,11 +91,14 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
  loop while(cursor<queue->count){
   let current:Int=try lookup<Int>(queue,cursor);queued=try put(queued,current,0);cursor=cursor+1;
   let facts:Facts=try incoming(body,current,edges,heads,reachable,outgoing,full,entryFacts,span);
-  var definitions:List<Bits<64>>=facts->definitions;
-  loop over((try lookup<List<Int>>(generated,current)) as slot:Int){definitions=try define(definitions,slot,span);};
-  let next:Facts=Facts{definitions:definitions,guards:try erase(facts->guards,try lookup<List<Int>>(kills,current),span)};
+  var definitions:WordEdit=beginEdit(facts->definitions);
+  loop over((try lookup<List<Int>>(generated,current)) as slot:Int){definitions=try defineEdit(definitions,slot,span);};
+  let next:Facts=Facts{definitions:try finishEdit(definitions,span),guards:try erase(facts->guards,try lookup<List<Int>>(kills,current),span)};
   let previous:Facts=try stateAt(outgoing,current,full);
   branch when{!(try equal(next->definitions,previous->definitions,span))||!(try equal(next->guards,previous->guards,span))=>{
+   // At most twice the reachable block count is retained after each update.
+   // Division avoids overflow in a doubled-count threshold.
+   branch when{outgoing->values->count/2>=order->count=>{outgoing=try compact(outgoing,order);},else=>unit};
    outgoing=Flow{heads:try put(outgoing->heads,current,outgoing->values->count),values:push<Facts>(outgoing->values,next)};let block:Block=try lookup<Block>(body->blocks,current);
    loop over(block->terminator->targets as target:Int){branch when{(try get(queued,target))!=1=>{queue=push<Int>(queue,target);queued=try put(queued,target,1);},else=>unit};};
   },else=>unit};
@@ -90,19 +106,21 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
  loop over(order->pages->append(order->tail) as page:List<Int>){loop over(page as blockId:Int){
   let block:Block=try lookup<Block>(body->blocks,blockId);var facts:Facts=try incoming(body,blockId,edges,heads,reachable,outgoing,full,entryFacts,span);
   try invariant(block->terminator->code!="unreachable",block->terminator->origin->span,"reachable non-completion boundary");
+  var definitions:WordEdit=beginEdit(facts->definitions);
   loop over(block->operations as op:Operation){
    let at:Span=op->origin->span;try invariant(op->unavailable->length()==0,at,"reachable unavailable operand");
-   loop over(op->inputs as slot:Int){try require(facts->definitions,slot,at);};
+   loop over(op->inputs as slot:Int){try requireEdit(definitions,slot,at);};
    branch when{op->code=="sum-payload"=>{
     let guard:Int=try findGuard(guards,try atList<Int>(op->inputs,0),try present(op->target,at,"payload Sum identity"),try atList<Int>(op->mapping,0));
     try invariant(guard>=0,at,"payload has no matching subject guard");
     branch on require(facts->guards,guard,at){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try invariant(false,at,"payload variant guard not established for current subject");}};
    },else=>unit};
    branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{
-    facts=Facts{definitions:try define(facts->definitions,slot,at),guards:try erase(facts->guards,killedBy(guards,List<Int>[slot]),at)};
+    definitions=try defineEdit(definitions,slot,at);
+    facts=Facts{definitions:facts->definitions,guards:try erase(facts->guards,killedBy(guards,List<Int>[slot]),at)};
    }};
   };
-  loop over(block->terminator->inputs as slot:Int){try require(facts->definitions,slot,block->terminator->origin->span);};
+  loop over(block->terminator->inputs as slot:Int){try requireEdit(definitions,slot,block->terminator->origin->span);};
  };};
  Result<Unit,Diagnostic>::Ok(unit)
 };

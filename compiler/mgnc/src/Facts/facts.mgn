@@ -33,16 +33,22 @@ function(left:List<Bits<64>>,right:List<Bits<64>>,union:Bool,span:Span):Result<L
 public let equal:Function(List<Bits<64>>,List<Bits<64>>,Span):Result<Bool,Diagnostic>=
 function(left:List<Bits<64>>,right:List<Bits<64>>,span:Span):Result<Bool,Diagnostic>{
  branch when{left->length()!=right->length()=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
- var index:Int=0;
- loop over(left as word:Bits<64>){
-  branch when{word!=(try at(right,index,span))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
-  index=index+1;
+ // Compare from the newest list element without materializing an iteration buffer.
+ var index:Int=left->length();
+ loop while(index>0){
+  index=index-1;
+  branch when{(try at(left,index,span))!=(try at(right,index,span))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
  };
  Result<Bool,Diagnostic>::Ok(true)
 };
 public let define:Function(List<Bits<64>>,Int,Span):Result<List<Bits<64>>,Diagnostic>=
 function(current:List<Bits<64>>,slot:Int,span:Span):Result<List<Bits<64>>,Diagnostic>{
  let bit:Bits<64>=try mask(slot,span);
+ let target:Int=slot/64;
+ branch when{target<0||target>=current->length()=>{return Result<List<Bits<64>>,Diagnostic>::Err(problem("internal",span,"definition slot bounds"));},else=>unit};
+ let previous:Bits<64>=try at(current,target,span);
+ // Re-defining an available bit preserves the immutable vector.
+ branch when{previous->or(bit)==previous=>{return Result<List<Bits<64>>,Diagnostic>::Ok(current);},else=>unit};
  var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;var found:Bool=false;
  loop over(current as word:Bits<64>){
   branch when{index==slot/64=>{result=result->append(word->or(bit));found=true;},else=>{result=result->append(word);}};
@@ -83,4 +89,33 @@ function(incoming:List<Bits<64>>,written:Paged<Int>,slot:Int,span:Span):Result<U
   branch when{(try lookup<Int>(written,index))==slot=>{return Result<Unit,Diagnostic>::Ok(unit);},else=>unit};
  };
  Result<Unit,Diagnostic>::Err(problem("internal",span,"IR read before definition"))
+};
+
+// One pending word preserves immutable snapshots and amortizes adjacent definitions.
+public type WordEdit=product{base:List<Bits<64>>;index:Int;word:Bits<64>;};
+public let beginEdit:Function(List<Bits<64>>):WordEdit=function(base:List<Bits<64>>):WordEdit{
+ WordEdit{base:base,index:-1,word:Bits<64>{0}}
+};
+public let finishEdit:Function(WordEdit,Span):Result<List<Bits<64>>,Diagnostic>=function(edit:WordEdit,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ branch when{edit->index<0=>{return Result<List<Bits<64>>,Diagnostic>::Ok(edit->base);},else=>unit};
+ var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;
+ loop while(index<edit->base->length()){
+  let value:Bits<64>=branch when{index==edit->index=>edit->word,else=>try at(edit->base,index,span)};
+  result=result->append(value);index=index+1;
+ };
+ Result<List<Bits<64>>,Diagnostic>::Ok(result)
+};
+public let defineEdit:Function(WordEdit,Int,Span):Result<WordEdit,Diagnostic>=function(edit:WordEdit,slot:Int,span:Span):Result<WordEdit,Diagnostic>{
+ let bit:Bits<64>=try mask(slot,span);let target:Int=slot/64;
+ branch when{target<0||target>=edit->base->length()=>{return Result<WordEdit,Diagnostic>::Err(problem("internal",span,"definition slot bounds"));},else=>unit};
+ let previous:Bits<64>=branch when{target==edit->index=>edit->word,else=>try at(edit->base,target,span)};
+ let updated:Bits<64>=previous->or(bit);
+ branch when{updated==previous=>{return Result<WordEdit,Diagnostic>::Ok(edit);},else=>unit};
+ let base:List<Bits<64>>=branch when{target==edit->index=>edit->base,else=>try finishEdit(edit,span)};
+ Result<WordEdit,Diagnostic>::Ok(WordEdit{base:base,index:target,word:updated})
+};
+public let requireEdit:Function(WordEdit,Int,Span):Result<Unit,Diagnostic>=function(edit:WordEdit,slot:Int,span:Span):Result<Unit,Diagnostic>{
+ let original:Bits<64>=try at(edit->base,slot/64,span);let bit:Bits<64>=try mask(slot,span);
+ let word:Bits<64>=branch when{slot/64==edit->index=>edit->word,else=>original};
+ branch when{word->and(bit)==Bits<64>{0}=>Result<Unit,Diagnostic>::Err(problem("internal",span,"IR read before definition")),else=>Result<Unit,Diagnostic>::Ok(unit)}
 };

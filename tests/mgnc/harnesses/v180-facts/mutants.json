@@ -1,0 +1,199 @@
+[
+  {
+    "name": "equal-ignore-first",
+    "oracle": "facts",
+    "mutation": {
+      "old": "var index:Int=left->length();\n loop while(index>0){",
+      "new": "var index:Int=left->length();\n loop while(index>1){",
+      "count": 1
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED equal-8\n"
+  },
+  {
+    "name": "equal-false",
+    "oracle": "facts",
+    "mutation": {
+      "old": "Result<Bool,Diagnostic>::Ok(true)",
+      "new": "Result<Bool,Diagnostic>::Ok(false)",
+      "count": 1
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED equal-0\n"
+  },
+  {
+    "name": "define-noop",
+    "oracle": "facts",
+    "mutation": {
+      "old": "previous->or(bit)==previous",
+      "new": "true",
+      "count": 1
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED define-34\n"
+  },
+  {
+    "name": "define-next-bit",
+    "oracle": "facts",
+    "mutation": {
+      "old": "let bit:Bits<64>=try mask(slot,span);\n let target",
+      "new": "let bit:Bits<64>=try mask(slot+1,span);\n let target",
+      "count": 1
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED define-0\n"
+  },
+  {
+    "name": "define-lax-bounds",
+    "oracle": "facts",
+    "mutation": {
+      "old": "target>=current->length()",
+      "new": "target>current->length()",
+      "count": 1
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED define-4\n"
+  },
+  {
+    "name": "define-wrong-diagnostic",
+    "oracle": "facts",
+    "mutation": {
+      "old": "\"definition slot bounds\"",
+      "new": "\"incorrect slot bounds\"",
+      "count": 3
+    },
+    "expected_stdout": "FACTS_ORACLE_FAILED define-0\n"
+  },
+  {
+    "name": "cache-ignore-pending-read",
+    "oracle": "editsequence",
+    "mutation": {
+      "old": "slot/64==edit->index=>edit->word",
+      "new": "false=>edit->word",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-3\n"
+  },
+  {
+    "name": "cache-drop-on-word-change",
+    "oracle": "editsequence",
+    "mutation": {
+      "old": "else=>try finishEdit(edit,span)",
+      "new": "else=>edit->base",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-6\n"
+  },
+  {
+    "name": "cache-replace-with-bit",
+    "oracle": "editsequence",
+    "mutation": {
+      "old": "let updated:Bits<64>=previous->or(bit);",
+      "new": "let updated:Bits<64>=bit;",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-3\n"
+  },
+  {
+    "name": "cache-wrong-flush",
+    "oracle": "editsequence",
+    "mutation": {
+      "old": "index==edit->index=>edit->word",
+      "new": "index==edit->index=>Bits<64>{0}",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-3\n"
+  },
+  {
+    "name": "cache-lax-bounds",
+    "oracle": "edit",
+    "mutation": {
+      "old": "target>=edit->base->length()",
+      "new": "target>edit->base->length()",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_ORACLE_FAILED define-4\n"
+  },
+  {
+    "name": "cache-read-diagnostic-order",
+    "oracle": "editsequence",
+    "mutation": {
+      "old": "let original:Bits<64>=try at(edit->base,slot/64,span);let bit:Bits<64>=try mask(slot,span);",
+      "new": "let bit:Bits<64>=try mask(slot,span);let original:Bits<64>=try at(edit->base,slot/64,span);",
+      "count": 1
+    },
+    "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-0\n"
+  },
+  {
+    "name": "compact-reuse-old-index",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "heads=try put(heads,id,values->count);values=push<Facts>(values,facts);",
+      "new": "heads=try put(heads,id,version);values=push<Facts>(values,facts);",
+      "count": 1,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-3\n"
+  },
+  {
+    "name": "compact-drop-version-zero",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "branch when{version>=0=>{",
+      "new": "branch when{version>0=>{",
+      "count": 1,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-2\n"
+  },
+  {
+    "name": "compact-no-heads",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "heads=try put(heads,id,values->count);values=push<Facts>(values,facts);",
+      "new": "heads=heads;values=push<Facts>(values,facts);",
+      "count": 1,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-2\n"
+  },
+  {
+    "name": "compact-swap-fields",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "values=push<Facts>(values,facts);",
+      "new": "values=push<Facts>(values,Facts{definitions:facts->guards,guards:facts->definitions});",
+      "count": 1,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-2\n"
+  },
+  {
+    "name": "compact-late-threshold",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "outgoing->values->count/2>=order->count",
+      "new": "outgoing->values->count/2>order->count",
+      "count": 2,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-3\n"
+  },
+  {
+    "name": "compact-early-threshold",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "outgoing->values->count/2>=order->count",
+      "new": "outgoing->values->count/2>=order->count-1",
+      "count": 2,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-3\n"
+  },
+  {
+    "name": "compact-wrong-fallback",
+    "oracle": "compaction",
+    "mutation": {
+      "old": "version<0=>Result<Facts,Diagnostic>::Ok(full)",
+      "new": "version<0=>Result<Facts,Diagnostic>::Ok(Facts{definitions:List<Bits<64>>[],guards:List<Bits<64>>[]})",
+      "count": 1,
+      "file": "src/WholeDataflow/dataflow.mgn"
+    },
+    "expected_stdout": "BOUNDED_FLOW_FAILED case-0\n"
+  }
+]

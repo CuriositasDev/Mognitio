@@ -1,0 +1,522 @@
+namespace Mgnc;
+use Std\Numeric\{Bits};
+use Std\Io\{writeStdout};
+use Mgnc\Data\{Span,Diagnostic};
+use Mgnc\Facts\{equal,define};
+let origin:Span=Span{start:3,end:8,line:4,column:5};
+let word:Function(Int,Int):Bits<64>=function(pattern:Int,index:Int):Bits<64>{
+ branch when{pattern==0=>Bits<64>{0},pattern==1=>Bits<64>{18446744073709551615},index%2==0=>Bits<64>{12297829382473034410},else=>Bits<64>{6148914691236517205}}
+};
+let vector:Function(Int,Int,Int,Bits<64>):List<Bits<64>>=function(n:Int,pattern:Int,replaced:Int,replacement:Bits<64>):List<Bits<64>>{
+ var values:List<Bits<64>>=List<Bits<64>>[];var i:Int=0;
+ loop while(i<n){values=values->append(branch when{i==replaced=>replacement,else=>word(pattern,i)});i=i+1;};values
+};
+let matches:Function(List<Bits<64>>,Int,Int,Int,Bits<64>):Bool=function(values:List<Bits<64>>,n:Int,pattern:Int,replaced:Int,replacement:Bits<64>):Bool{
+ branch when{values->length()!=n=>{return false;},else=>unit};var i:Int=0;
+ loop while(i<n){let expected:Bits<64>=branch when{i==replaced=>replacement,else=>word(pattern,i)};
+ branch on values->at(i){Result<Bits<64>,IndexError>::Ok(actual:Bits<64>)=>{branch when{actual!=expected=>{return false;},else=>unit};},Result<Bits<64>,IndexError>::Err(error:IndexError)=>{return false;}};i=i+1;};true
+};
+let checkEqual:Function(Int,Int,Int,Int,Bits<64>,Int,Bits<64>,Bool):Bool=function(n:Int,m:Int,pattern:Int,li:Int,lw:Bits<64>,ri:Int,rw:Bits<64>,expected:Bool):Bool{
+ let left:List<Bits<64>>=vector(n,pattern,li,lw);let right:List<Bits<64>>=vector(m,pattern,ri,rw);
+ branch on equal(left,right,origin){Result<Bool,Diagnostic>::Ok(actual:Bool)=>actual==expected&&matches(left,n,pattern,li,lw)&&matches(right,m,pattern,ri,rw),Result<Bool,Diagnostic>::Err(error:Diagnostic)=>false}
+};
+let checkDefine:Function(Int,Int,Int,Int,Bits<64>,String):Bool=function(n:Int,pattern:Int,slot:Int,target:Int,expected:Bits<64>,message:String):Bool{
+ let input:List<Bits<64>>=vector(n,pattern,-1,Bits<64>{0});
+ branch on define(input,slot,origin){
+ Result<List<Bits<64>>,Diagnostic>::Ok(actual:List<Bits<64>>)=>message==""&&matches(actual,n,pattern,target,expected)&&matches(input,n,pattern,-1,Bits<64>{0}),
+ Result<List<Bits<64>>,Diagnostic>::Err(error:Diagnostic)=>message!=""&&error->phase=="internal"&&error->message==message&&error->span->start==3&&error->span->end==8&&error->span->line==4&&error->span->column==5&&matches(input,n,pattern,-1,Bits<64>{0})
+ }
+};
+let group0:Function():Bool=function():Bool{
+ branch when{!(checkEqual(0,0,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-0\n");return false;},else=>unit};
+ branch when{!(checkEqual(0,1,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-1\n");return false;},else=>unit};
+ branch when{!(checkEqual(0,0,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-2\n");return false;},else=>unit};
+ branch when{!(checkEqual(0,1,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-3\n");return false;},else=>unit};
+ branch when{!(checkEqual(0,0,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-4\n");return false;},else=>unit};
+ branch when{!(checkEqual(0,1,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-5\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-6\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,2,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-7\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-8\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-9\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-10\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,2,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-11\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-12\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-13\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-14\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,2,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-15\n");return false;},else=>unit};
+ true
+};
+let group1:Function():Bool=function():Bool{
+ branch when{!(checkEqual(1,1,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-16\n");return false;},else=>unit};
+ branch when{!(checkEqual(1,1,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-17\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-18\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,3,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-19\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-20\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-21\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,0,1,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-22\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,0,-1,Bits<64>{0},1,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-23\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-24\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,3,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-25\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-26\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-27\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,1,1,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-28\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,1,-1,Bits<64>{0},1,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-29\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-30\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,3,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-31\n");return false;},else=>unit};
+ true
+};
+let group2:Function():Bool=function():Bool{
+ branch when{!(checkEqual(2,2,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-32\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-33\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,2,1,Bits<64>{6148914691236517204},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-34\n");return false;},else=>unit};
+ branch when{!(checkEqual(2,2,2,-1,Bits<64>{0},1,Bits<64>{6148914691236517204},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-35\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-36\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,4,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-37\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-38\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-39\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,1,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-40\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,-1,Bits<64>{0},1,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-41\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,2,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-42\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,0,-1,Bits<64>{0},2,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-43\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-44\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,4,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-45\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-46\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-47\n");return false;},else=>unit};
+ true
+};
+let group3:Function():Bool=function():Bool{
+ branch when{!(checkEqual(3,3,1,1,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-48\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,-1,Bits<64>{0},1,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-49\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,2,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-50\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,1,-1,Bits<64>{0},2,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-51\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-52\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,4,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-53\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-54\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-55\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,1,Bits<64>{6148914691236517204},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-56\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,-1,Bits<64>{0},1,Bits<64>{6148914691236517204},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-57\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,2,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-58\n");return false;},else=>unit};
+ branch when{!(checkEqual(3,3,2,-1,Bits<64>{0},2,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-59\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-60\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,9,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-61\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-62\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-63\n");return false;},else=>unit};
+ true
+};
+let group4:Function():Bool=function():Bool{
+ branch when{!(checkEqual(8,8,0,4,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-64\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,-1,Bits<64>{0},4,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-65\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,7,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-66\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,0,-1,Bits<64>{0},7,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-67\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-68\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,9,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-69\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-70\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-71\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,4,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-72\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,-1,Bits<64>{0},4,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-73\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,7,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-74\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,1,-1,Bits<64>{0},7,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-75\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-76\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,9,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-77\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-78\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-79\n");return false;},else=>unit};
+ true
+};
+let group5:Function():Bool=function():Bool{
+ branch when{!(checkEqual(8,8,2,4,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-80\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,-1,Bits<64>{0},4,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-81\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,7,Bits<64>{6148914691236517204},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-82\n");return false;},else=>unit};
+ branch when{!(checkEqual(8,8,2,-1,Bits<64>{0},7,Bits<64>{6148914691236517204},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-83\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-84\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,66,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-85\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-86\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-87\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,32,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-88\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,-1,Bits<64>{0},32,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-89\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,64,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-90\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,0,-1,Bits<64>{0},64,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-91\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-92\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,66,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-93\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-94\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-95\n");return false;},else=>unit};
+ true
+};
+let group6:Function():Bool=function():Bool{
+ branch when{!(checkEqual(65,65,1,32,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-96\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,-1,Bits<64>{0},32,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-97\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,64,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-98\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,1,-1,Bits<64>{0},64,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-99\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-100\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,66,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-101\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-102\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-103\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,32,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-104\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,-1,Bits<64>{0},32,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-105\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,64,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-106\n");return false;},else=>unit};
+ branch when{!(checkEqual(65,65,2,-1,Bits<64>{0},64,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-107\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-108\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1026,0,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-109\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,0,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-110\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,-1,Bits<64>{0},0,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-111\n");return false;},else=>unit};
+ true
+};
+let group7:Function():Bool=function():Bool{
+ branch when{!(checkEqual(1025,1025,0,512,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-112\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,-1,Bits<64>{0},512,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-113\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,1024,Bits<64>{1},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-114\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,0,-1,Bits<64>{0},1024,Bits<64>{1},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-115\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-116\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1026,1,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-117\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,0,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-118\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,-1,Bits<64>{0},0,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-119\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,512,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-120\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,-1,Bits<64>{0},512,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-121\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,1024,Bits<64>{18446744073709551614},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-122\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,1,-1,Bits<64>{0},1024,Bits<64>{18446744073709551614},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-123\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,-1,Bits<64>{0},-1,Bits<64>{0},true))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-124\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1026,2,-1,Bits<64>{0},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-125\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,0,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-126\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,-1,Bits<64>{0},0,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-127\n");return false;},else=>unit};
+ true
+};
+let group8:Function():Bool=function():Bool{
+ branch when{!(checkEqual(1025,1025,2,512,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-128\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,-1,Bits<64>{0},512,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-129\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,1024,Bits<64>{12297829382473034411},-1,Bits<64>{0},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-130\n");return false;},else=>unit};
+ branch when{!(checkEqual(1025,1025,2,-1,Bits<64>{0},1024,Bits<64>{12297829382473034411},false))=>{discard writeStdout("FACTS_ORACLE_FAILED equal-131\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-0\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-1\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-2\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-3\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,0,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-4\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,1,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-5\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,63,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-6\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-7\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-8\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-9\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-10\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-11\n");return false;},else=>unit};
+ true
+};
+let group9:Function():Bool=function():Bool{
+ branch when{!(checkDefine(0,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-12\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-13\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,0,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-14\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,1,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-15\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,63,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-16\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-17\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-18\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-19\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-20\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-21\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-22\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-23\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,0,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-24\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,1,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-25\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,63,0,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-26\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-27\n");return false;},else=>unit};
+ true
+};
+let group10:Function():Bool=function():Bool{
+ branch when{!(checkDefine(0,2,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-28\n");return false;},else=>unit};
+ branch when{!(checkDefine(0,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-29\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-30\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-31\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-32\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-33\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-34\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-35\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-36\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-37\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-38\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,127,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-39\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-40\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-41\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-42\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-43\n");return false;},else=>unit};
+ true
+};
+let group11:Function():Bool=function():Bool{
+ branch when{!(checkDefine(1,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-44\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-45\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-46\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-47\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-48\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-49\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,127,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-50\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-51\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-52\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-53\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-54\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-55\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-56\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-57\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-58\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,64,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-59\n");return false;},else=>unit};
+ true
+};
+let group12:Function():Bool=function():Bool{
+ branch when{!(checkDefine(1,2,65,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-60\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,127,1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-61\n");return false;},else=>unit};
+ branch when{!(checkDefine(1,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-62\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-63\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-64\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-65\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-66\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-67\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-68\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-69\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,64,1,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-70\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,65,1,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-71\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,127,1,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-72\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,128,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-73\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,191,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-74\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-75\n");return false;},else=>unit};
+ true
+};
+let group13:Function():Bool=function():Bool{
+ branch when{!(checkDefine(2,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-76\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-77\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-78\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-79\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-80\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-81\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-82\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,64,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-83\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,65,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-84\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,127,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-85\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,128,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-86\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,191,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-87\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-88\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-89\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-90\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-91\n");return false;},else=>unit};
+ true
+};
+let group14:Function():Bool=function():Bool{
+ branch when{!(checkDefine(2,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-92\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-93\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-94\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-95\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,64,1,Bits<64>{6148914691236517205},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-96\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,65,1,Bits<64>{6148914691236517207},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-97\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,127,1,Bits<64>{15372286728091293013},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-98\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,128,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-99\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,191,2,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-100\n");return false;},else=>unit};
+ branch when{!(checkDefine(2,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-101\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-102\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-103\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-104\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-105\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-106\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-107\n");return false;},else=>unit};
+ true
+};
+let group15:Function():Bool=function():Bool{
+ branch when{!(checkDefine(3,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-108\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,64,1,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-109\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,65,1,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-110\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,191,2,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-111\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,192,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-112\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,255,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-113\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-114\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-115\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-116\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-117\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-118\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-119\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-120\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-121\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,64,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-122\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,65,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-123\n");return false;},else=>unit};
+ true
+};
+let group16:Function():Bool=function():Bool{
+ branch when{!(checkDefine(3,1,191,2,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-124\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,192,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-125\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,255,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-126\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-127\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-128\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-129\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-130\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-131\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-132\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-133\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-134\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,64,1,Bits<64>{6148914691236517205},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-135\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,65,1,Bits<64>{6148914691236517207},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-136\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,191,2,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-137\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,192,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-138\n");return false;},else=>unit};
+ branch when{!(checkDefine(3,2,255,3,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-139\n");return false;},else=>unit};
+ true
+};
+let group17:Function():Bool=function():Bool{
+ branch when{!(checkDefine(3,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-140\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-141\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-142\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-143\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-144\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-145\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-146\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-147\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,64,1,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-148\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,65,1,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-149\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,511,7,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-150\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,512,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-151\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,575,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-152\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-153\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-154\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-155\n");return false;},else=>unit};
+ true
+};
+let group18:Function():Bool=function():Bool{
+ branch when{!(checkDefine(8,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-156\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-157\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-158\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-159\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-160\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,64,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-161\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,65,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-162\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,511,7,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-163\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,512,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-164\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,575,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-165\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-166\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-167\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-168\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-169\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-170\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-171\n");return false;},else=>unit};
+ true
+};
+let group19:Function():Bool=function():Bool{
+ branch when{!(checkDefine(8,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-172\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-173\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,64,1,Bits<64>{6148914691236517205},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-174\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,65,1,Bits<64>{6148914691236517207},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-175\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,511,7,Bits<64>{15372286728091293013},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-176\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,512,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-177\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,575,8,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-178\n");return false;},else=>unit};
+ branch when{!(checkDefine(8,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-179\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-180\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-181\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-182\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-183\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-184\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-185\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-186\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,64,1,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-187\n");return false;},else=>unit};
+ true
+};
+let group20:Function():Bool=function():Bool{
+ branch when{!(checkDefine(65,0,65,1,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-188\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,4159,64,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-189\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,4160,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-190\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,4223,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-191\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-192\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-193\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-194\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-195\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-196\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-197\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-198\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-199\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,64,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-200\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,65,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-201\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,4159,64,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-202\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,4160,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-203\n");return false;},else=>unit};
+ true
+};
+let group21:Function():Bool=function():Bool{
+ branch when{!(checkDefine(65,1,4223,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-204\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-205\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-206\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-207\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-208\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-209\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-210\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-211\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-212\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,64,1,Bits<64>{6148914691236517205},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-213\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,65,1,Bits<64>{6148914691236517207},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-214\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,4159,64,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-215\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,4160,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-216\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,4223,65,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-217\n");return false;},else=>unit};
+ branch when{!(checkDefine(65,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-218\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-219\n");return false;},else=>unit};
+ true
+};
+let group22:Function():Bool=function():Bool{
+ branch when{!(checkDefine(1025,0,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-220\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-221\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-222\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,0,0,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-223\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,1,0,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-224\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,63,0,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-225\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,64,1,Bits<64>{1},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-226\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,65,1,Bits<64>{2},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-227\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,65599,1024,Bits<64>{9223372036854775808},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-228\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,65600,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-229\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,65663,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-230\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,0,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-231\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-232\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-233\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-234\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-235\n");return false;},else=>unit};
+ true
+};
+let group23:Function():Bool=function():Bool{
+ branch when{!(checkDefine(1025,1,0,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-236\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,1,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-237\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,63,0,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-238\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,64,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-239\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,65,1,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-240\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,65599,1024,Bits<64>{18446744073709551615},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-241\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,65600,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-242\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,65663,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-243\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,1,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-244\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,-9223372036854775808,-144115188075855872,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-245\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,-65,-1,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-246\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,-64,-1,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-247\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,-1,0,Bits<64>{0},"invalid definition bit"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-248\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,0,0,Bits<64>{12297829382473034411},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-249\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,1,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-250\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,63,0,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-251\n");return false;},else=>unit};
+ true
+};
+let group24:Function():Bool=function():Bool{
+ branch when{!(checkDefine(1025,2,64,1,Bits<64>{6148914691236517205},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-252\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,65,1,Bits<64>{6148914691236517207},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-253\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,65599,1024,Bits<64>{12297829382473034410},""))=>{discard writeStdout("FACTS_ORACLE_FAILED define-254\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,65600,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-255\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,65663,1025,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-256\n");return false;},else=>unit};
+ branch when{!(checkDefine(1025,2,9223372036854775807,144115188075855871,Bits<64>{0},"definition slot bounds"))=>{discard writeStdout("FACTS_ORACLE_FAILED define-257\n");return false;},else=>unit};
+ true
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch when{!group0()=>{return 1;},else=>unit};
+ branch when{!group1()=>{return 1;},else=>unit};
+ branch when{!group2()=>{return 1;},else=>unit};
+ branch when{!group3()=>{return 1;},else=>unit};
+ branch when{!group4()=>{return 1;},else=>unit};
+ branch when{!group5()=>{return 1;},else=>unit};
+ branch when{!group6()=>{return 1;},else=>unit};
+ branch when{!group7()=>{return 1;},else=>unit};
+ branch when{!group8()=>{return 1;},else=>unit};
+ branch when{!group9()=>{return 1;},else=>unit};
+ branch when{!group10()=>{return 1;},else=>unit};
+ branch when{!group11()=>{return 1;},else=>unit};
+ branch when{!group12()=>{return 1;},else=>unit};
+ branch when{!group13()=>{return 1;},else=>unit};
+ branch when{!group14()=>{return 1;},else=>unit};
+ branch when{!group15()=>{return 1;},else=>unit};
+ branch when{!group16()=>{return 1;},else=>unit};
+ branch when{!group17()=>{return 1;},else=>unit};
+ branch when{!group18()=>{return 1;},else=>unit};
+ branch when{!group19()=>{return 1;},else=>unit};
+ branch when{!group20()=>{return 1;},else=>unit};
+ branch when{!group21()=>{return 1;},else=>unit};
+ branch when{!group22()=>{return 1;},else=>unit};
+ branch when{!group23()=>{return 1;},else=>unit};
+ branch when{!group24()=>{return 1;},else=>unit};
+ discard writeStdout("FACTS_ORACLE_OK equal=132 define=258\n");0
+};

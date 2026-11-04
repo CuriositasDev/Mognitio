@@ -14,7 +14,7 @@ use Mgnc\WholeRootFlow\{Flow,Instruction,incoming,outgoing,transfer,solveProject
 use Mgnc\WholeRootProjection\{Projection,project,expand};
 use Mgnc\Tables\{atList};
 public let frame:Function(Store,Body):Result<Frame,Diagnostic>=function(store:Store,body:Body):Result<Frame,Diagnostic>{
- let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(body->slots->count>=0&&body->slots->count<=268435440,span,"frame slot range");let projection:Projection=try project(store,body);let blank:List<Bits<64>>=words(projection->references->length(),false);
+ let span:Span=(try lookup<Block>(body->blocks,body->entry))->terminator->origin->span;try require(body->slots->count>=0&&body->slots->count<=268435440,span,"frame slot range");let projection:Projection=try project(store,body);let blank:List<Bits<64>>=words(projection->references->count,false);
  var maximum:Int=8;
  loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};
  let flow:Flow=try solveProjected(body,projection->operations,projection->terms,blank,span);

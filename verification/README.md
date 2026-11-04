@@ -198,3 +198,5 @@ compact pruning frames, the separate reserve trigger and indexed chunk merging.
 
 [Bounded bitmap edits and dataflow retention](v1.8.0-facts-flow.md) preserves
 immutable facts and old snapshots while bounding current flow storage.
+[Paged managed-slot projection](v1.8.0-paged-root-projection.md) preserves
+root IDs and expansion order while avoiding repeated flat-list prefix copies.

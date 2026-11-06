@@ -1519,7 +1519,7 @@ f85a22647c26d368d27fb93d394df73e55f8fdf7b955d6055d2e262403773e13  verification/v
 36b1ddce01511c6b7907e641a3400aafe2a06109df0bbbb0e1f2b216d6bdd047  verification/v1.7.0-two-way-fit-cursors.md
 3f131febf1a405dd0299e0d05f0d90dede4de74fdf8a39f15161ec6d54486fd1  verification/v1.7.0-wide-radix-map.md
 5f681ce36ba4c7af9c3518a9e2d3011e868d3e97b74bb8f0073130fc7cda4e32  verification/v1.8.0-allocation-lifetime.md
-c3f5e401c31c205fa3949da9c7bce37a0f26886e4173f78017f0335990b3d9a1  verification/v1.8.0-cached-facts-and-queue.md
+33cf2183ffe3c9b0329da1c9351618fcd344162a54d71eac538512eb4b31f869  verification/v1.8.0-cached-facts-and-queue.md
 462fddc6bc84ef386b0cccad71b8452d536079ff446335c8dff0da8b680e8668  verification/v1.8.0-evidence-foundation.md
 3b036f1aa7324864005072b12ff04140b94c5e558c2fa339e89706be2a4f3c28  verification/v1.8.0-facts-flow.md
 d68ac9617b383b9b5ed5e73de6f3f909e56f86899d9787844c704511eaaca76a  verification/v1.8.0-generation-preconditions.md

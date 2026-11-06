@@ -694,7 +694,7 @@ f5908a6560b3e7e0a0464babdcffece74126c9a57ffbbf62b253d45153104870  tests/mgnc/har
 f50581c6ccd004f351aa0c6e4cc958d07c32b1e0375377cdcc205361f3b117ac  tests/mgnc/harnesses/v180-facts/compaction-adapter.mgn
 31594f503920de36d2466785ce07cc9475994834e0e42df40eb051f0db37f50b  tests/mgnc/harnesses/v180-facts/compaction-oracle.mgn
 9ac8b093368da20fe94f72cedd42f9d11120d80be50534c5da84402f5812a9b6  tests/mgnc/harnesses/v180-facts/edit-oracle.mgn
-77bf15dde6a56edee7a4f00b8c604b501cee866b460667141adab591edecd201  tests/mgnc/harnesses/v180-facts/editsequence-oracle.mgn
+9ab74aa916039d70b5ca9fa7e8dcecffa63d5868d70470df9e379cc3048e59cc  tests/mgnc/harnesses/v180-facts/editsequence-oracle.mgn
 e83c200ef0b9fb0e541690e52c88163d8bec1ab53dcd379a4d005c3571dfa745  tests/mgnc/harnesses/v180-facts/facts-oracle.mgn
 190c56af6508db6ef0c42f8bbf646c167456868081c903dca9913a61eeec995e  tests/mgnc/harnesses/v180-facts/mutants.json
 e71eb13de42ff4a7141a35bcac3ce19ef1c4b48e1623d68262bbfd544d60297c  tests/mgnc/harnesses/v180-fit-cursors.mgn
@@ -1519,7 +1519,7 @@ f85a22647c26d368d27fb93d394df73e55f8fdf7b955d6055d2e262403773e13  verification/v
 36b1ddce01511c6b7907e641a3400aafe2a06109df0bbbb0e1f2b216d6bdd047  verification/v1.7.0-two-way-fit-cursors.md
 3f131febf1a405dd0299e0d05f0d90dede4de74fdf8a39f15161ec6d54486fd1  verification/v1.7.0-wide-radix-map.md
 5f681ce36ba4c7af9c3518a9e2d3011e868d3e97b74bb8f0073130fc7cda4e32  verification/v1.8.0-allocation-lifetime.md
-d684529c2158a25d8a9984d1fb6f0e4e686e2b65d4863f83ac0f66ca28c622c1  verification/v1.8.0-cached-facts-and-queue.md
+c3f5e401c31c205fa3949da9c7bce37a0f26886e4173f78017f0335990b3d9a1  verification/v1.8.0-cached-facts-and-queue.md
 462fddc6bc84ef386b0cccad71b8452d536079ff446335c8dff0da8b680e8668  verification/v1.8.0-evidence-foundation.md
 3b036f1aa7324864005072b12ff04140b94c5e558c2fa339e89706be2a4f3c28  verification/v1.8.0-facts-flow.md
 d68ac9617b383b9b5ed5e73de6f3f909e56f86899d9787844c704511eaaca76a  verification/v1.8.0-generation-preconditions.md

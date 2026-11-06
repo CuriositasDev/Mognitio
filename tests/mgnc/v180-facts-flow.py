@@ -17,7 +17,7 @@ from v180_observer import observe
 EXPECTED = {
     "facts": "FACTS_ORACLE_OK equal=132 define=258\n",
     "edit": "EDIT_ORACLE_OK equal=132 define=258\n",
-    "editsequence": "EDIT_SEQUENCE_OK sequences=18 reads=3759\n",
+    "editsequence": "EDIT_SEQUENCE_OK sequences=18 reads=3759\nCACHED_READ_BOUNDARY_OK cases=6 reads=9\n",
     "compaction": "BOUNDED_FLOW_OK cases=22\n",
     "dataflow": "V160_DATAFLOW_OK valid=3 rejected=8\nV160_DATAFLOW_WIDE_OK valid=3 rejected=5\n",
 }

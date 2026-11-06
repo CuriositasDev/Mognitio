@@ -200,3 +200,5 @@ compact pruning frames, the separate reserve trigger and indexed chunk merging.
 immutable facts and old snapshots while bounding current flow storage.
 [Paged managed-slot projection](v1.8.0-paged-root-projection.md) preserves
 root IDs and expansion order while avoiding repeated flat-list prefix copies.
+
+- [Cached fact reads and queue membership](v1.8.0-cached-facts-and-queue.md): reduce verifier temporary values while retaining diagnostic and worklist behavior.

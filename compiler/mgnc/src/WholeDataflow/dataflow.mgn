@@ -65,7 +65,7 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
  let entry:Block=try lookup<Block>(body->blocks,body->entry);let span:Span=entry->terminator->origin->span;
  var reachable:Map=try put(create(),body->entry,1);var order:Paged<Int>=push<Int>(empty<Int>(),body->entry);var cursor:Int=0;
  loop while(cursor<order->count){let block:Block=try lookup<Block>(body->blocks,try lookup<Int>(order,cursor));
-  loop over(block->terminator->targets as target:Int){branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,1);order=push<Int>(order,target);},else=>unit};};cursor=cursor+1;
+  loop over(block->terminator->targets as target:Int){branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,order->count+1);order=push<Int>(order,target);},else=>unit};};cursor=cursor+1;
  };
  var guards:Paged<Guard>=empty<Guard>();var edges:Paged<Edge>=empty<Edge>();var heads:Map=create();var id:Int=0;
  id=0;loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){
@@ -87,9 +87,11 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
   var writes:List<Int>=List<Int>[];loop over(block->operations as op:Operation){branch on op->output{Parent::None=>unit,Parent::Some(slot:Int)=>{writes=writes->append(slot);}};};
   generated=push<List<Int>>(generated,writes);kills=push<List<Int>>(kills,killedBy(guards,writes));
  };};
+ // Membership is the last one-based queue position, greater than the consumed prefix.
+ // Reachability already records the initial unique order positions.
  var queue:Paged<Int>=order;var queued:Map=reachable;cursor=0;
  loop while(cursor<queue->count){
-  let current:Int=try lookup<Int>(queue,cursor);queued=try put(queued,current,0);cursor=cursor+1;
+  let current:Int=try lookup<Int>(queue,cursor);cursor=cursor+1;
   let facts:Facts=try incoming(body,current,edges,heads,reachable,outgoing,full,entryFacts,span);
   var definitions:WordEdit=beginEdit(facts->definitions);
   loop over((try lookup<List<Int>>(generated,current)) as slot:Int){definitions=try defineEdit(definitions,slot,span);};
@@ -100,7 +102,7 @@ public let verify:Function(Body):Result<Unit,Diagnostic>=function(body:Body):Res
    // Division avoids overflow in a doubled-count threshold.
    branch when{outgoing->values->count/2>=order->count=>{outgoing=try compact(outgoing,order);},else=>unit};
    outgoing=Flow{heads:try put(outgoing->heads,current,outgoing->values->count),values:push<Facts>(outgoing->values,next)};let block:Block=try lookup<Block>(body->blocks,current);
-   loop over(block->terminator->targets as target:Int){branch when{(try get(queued,target))!=1=>{queue=push<Int>(queue,target);queued=try put(queued,target,1);},else=>unit};};
+   loop over(block->terminator->targets as target:Int){branch when{(try get(queued,target))<=cursor=>{queue=push<Int>(queue,target);queued=try put(queued,target,queue->count);},else=>unit};};
   },else=>unit};
  };
  loop over(order->pages->append(order->tail) as page:List<Int>){loop over(page as blockId:Int){

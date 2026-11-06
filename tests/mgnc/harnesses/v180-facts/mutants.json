@@ -63,7 +63,7 @@
     "name": "cache-ignore-pending-read",
     "oracle": "editsequence",
     "mutation": {
-      "old": "slot/64==edit->index=>edit->word",
+      "old": "target==edit->index&&target>=0&&target<edit->base->length()=>edit->word",
       "new": "false=>edit->word",
       "count": 1
     },
@@ -113,8 +113,8 @@
     "name": "cache-read-diagnostic-order",
     "oracle": "editsequence",
     "mutation": {
-      "old": "let original:Bits<64>=try at(edit->base,slot/64,span);let bit:Bits<64>=try mask(slot,span);",
-      "new": "let bit:Bits<64>=try mask(slot,span);let original:Bits<64>=try at(edit->base,slot/64,span);",
+      "old": " let word:Bits<64>=branch when{target==edit->index&&target>=0&&target<edit->base->length()=>edit->word,else=>try at(edit->base,target,span)};\n let bit:Bits<64>=try mask(slot,span);",
+      "new": " let bit:Bits<64>=try mask(slot,span);\n let word:Bits<64>=branch when{target==edit->index&&target>=0&&target<edit->base->length()=>edit->word,else=>try at(edit->base,target,span)};",
       "count": 1
     },
     "expected_stdout": "EDIT_SEQUENCE_FAILED sequence-0\n"

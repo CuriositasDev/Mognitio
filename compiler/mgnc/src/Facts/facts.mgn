@@ -37,7 +37,16 @@ function(left:List<Bits<64>>,right:List<Bits<64>>,span:Span):Result<Bool,Diagnos
  var index:Int=left->length();
  loop while(index>0){
   index=index-1;
-  branch when{(try at(left,index,span))!=(try at(right,index,span))=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
+  // Inspect the original lookup result without wrapping each successful word again.
+  let leftWord:Bits<64>=branch on left->at(index){
+   Result<Bits<64>,IndexError>::Ok(word:Bits<64>)=>word,
+   Result<Bits<64>,IndexError>::Err(error:IndexError)=>{return Result<Bool,Diagnostic>::Err(problem("internal",span,"definition vector bounds"));},
+  };
+  let rightWord:Bits<64>=branch on right->at(index){
+   Result<Bits<64>,IndexError>::Ok(word:Bits<64>)=>word,
+   Result<Bits<64>,IndexError>::Err(error:IndexError)=>{return Result<Bool,Diagnostic>::Err(problem("internal",span,"definition vector bounds"));},
+  };
+  branch when{leftWord!=rightWord=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
  };
  Result<Bool,Diagnostic>::Ok(true)
 };
@@ -115,7 +124,8 @@ public let defineEdit:Function(WordEdit,Int,Span):Result<WordEdit,Diagnostic>=fu
  Result<WordEdit,Diagnostic>::Ok(WordEdit{base:base,index:target,word:updated})
 };
 public let requireEdit:Function(WordEdit,Int,Span):Result<Unit,Diagnostic>=function(edit:WordEdit,slot:Int,span:Span):Result<Unit,Diagnostic>{
- let original:Bits<64>=try at(edit->base,slot/64,span);let bit:Bits<64>=try mask(slot,span);
- let word:Bits<64>=branch when{slot/64==edit->index=>edit->word,else=>original};
+ let target:Int=slot/64;
+ let word:Bits<64>=branch when{target==edit->index&&target>=0&&target<edit->base->length()=>edit->word,else=>try at(edit->base,target,span)};
+ let bit:Bits<64>=try mask(slot,span);
  branch when{word->and(bit)==Bits<64>{0}=>Result<Unit,Diagnostic>::Err(problem("internal",span,"IR read before definition")),else=>Result<Unit,Diagnostic>::Ok(unit)}
 };

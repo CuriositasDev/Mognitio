@@ -16,7 +16,13 @@ def generate(prefix,record,fields,lanes):
   f' var pages:Paged<{page}>=table->pages;var tail:List<{record}>=table->tail;',
   f' branch when{{tail->length()=={lanes}=>{{pages=push<{page}>(pages,packPage(tail));tail=List<{record}>[];}},else=>unit}};',
   f' {store}{{pages:pages,tail:tail->append(value),count:table->count+1}}','};']
- lines+=[f'public let get{prefix}:Function({store},Int):Result<{record},Diagnostic>=function(table:{store},index:Int):Result<{record},Diagnostic>{{',f' branch when{{index<0||index>=table->count=>{{return Result<{record},Diagnostic>::Err(problem("internal",Span{{start:0,end:0,line:1,column:1}},"invalid {prefix.lower()} arena index"));}},else=>unit}};',f' branch when{{index/{lanes}==table->pages->count=>{{return atList<{record}>(table->tail,index%{lanes});}},else=>unit}};',f' let page:{page}=try lookup<{page}>(table->pages,index/{lanes});',f' Result<{record},Diagnostic>::Ok(readPage(page,index%{lanes}))','};']
+ lines+=[f'public let get{prefix}:Function({store},Int):Result<{record},Diagnostic>=function(table:{store},index:Int):Result<{record},Diagnostic>{{',f' branch when{{index<0||index>=table->count=>{{return Result<{record},Diagnostic>::Err(problem("internal",Span{{start:0,end:0,line:1,column:1}},"invalid {prefix.lower()} arena index"));}},else=>unit}};']
+ if prefix in ('Node','Item'):
+  lines += [f' let pageIndex:Int=index/{lanes};let lane:Int=index%{lanes};',f' branch when{{pageIndex==table->pages->count=>{{return atList<{record}>(table->tail,lane);}},else=>unit}};',f' let page:{page}=try lookup<{page}>(table->pages,pageIndex);',f' Result<{record},Diagnostic>::Ok(branch when{{']
+  for i in range(lanes):lines.append(('else' if i==lanes-1 else 'lane=='+str(i))+'=>'+record+'{'+','.join(f'{f}:page->{f}{i}' for f in fields)+'},')
+  lines += ['})','};']
+ else:
+  lines += [f' branch when{{index/{lanes}==table->pages->count=>{{return atList<{record}>(table->tail,index%{lanes});}},else=>unit}};',f' let page:{page}=try lookup<{page}>(table->pages,index/{lanes});',f' Result<{record},Diagnostic>::Ok(readPage(page,index%{lanes}))','};']
  lines+=[f'public let set{prefix}:Function({store},Int,{record}):Result<{store},Diagnostic>=function(table:{store},index:Int,value:{record}):Result<{store},Diagnostic>{{',f' let checked:{record}=try get{prefix}(table,index);',f' branch when{{index/{lanes}==table->pages->count=>Result<{store},Diagnostic>::Ok({store}{{pages:table->pages,tail:replaceList<{record}>(table->tail,index%{lanes},value),count:table->count}}),else=>{{',f' let previous:{page}=try lookup<{page}>(table->pages,index/{lanes});',f' let pages:Paged<{page}>=try replaceItem<{page}>(table->pages,index/{lanes},writePage(previous,index%{lanes},value));',f' Result<{store},Diagnostic>::Ok({store}{{pages:pages,tail:table->tail,count:table->count}})',' }}','};']
  return '\n'.join(lines)+'\n'
 def main():

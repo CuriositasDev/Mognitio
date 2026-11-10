@@ -205,3 +205,6 @@ root IDs and expansion order while avoiding repeated flat-list prefix copies.
 
 [Reader storage and bitmap emission](v1.8.0-reader-storage.md) records checked
 indexed reads, persistent root maps and byte-equivalent bitmap encoding.
+
+[Storage getter regeneration](v1.8.0-storage-generator.md) binds the scalar-page
+generator to the existing optimized reader source.

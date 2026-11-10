@@ -76,18 +76,6 @@ function(current:List<Bits<64>>,slot:Int,span:Span):Result<Unit,Diagnostic>{
  }
 };
 
-public let fromSlots:Function(Int,List<Int>,Span):Result<List<Bits<64>>,Diagnostic>=
-function(count:Int,slots:List<Int>,span:Span):Result<List<Bits<64>>,Diagnostic>{
- var result:List<Bits<64>>=List<Bits<64>>[];var index:Int=0;
- loop while(index<(count+63)/64){
-  var word:Bits<64>=Bits<64>{0};
-  loop over(slots as slot:Int){
-   branch when{slot/64==index=>{word=word->or(try mask(slot,span));},else=>unit};
-  };
-  result=result->append(word);index=index+1;
- };
- Result<List<Bits<64>>,Diagnostic>::Ok(result)
-};
 public let requireAvailable:Function(List<Bits<64>>,Paged<Int>,Int,Span):Result<Unit,Diagnostic>=
 function(incoming:List<Bits<64>>,written:Paged<Int>,slot:Int,span:Span):Result<Unit,Diagnostic>{
  let word:Bits<64>=try at(incoming,slot/64,span);let bit:Bits<64>=try mask(slot,span);
@@ -122,6 +110,18 @@ public let defineEdit:Function(WordEdit,Int,Span):Result<WordEdit,Diagnostic>=fu
  branch when{updated==previous=>{return Result<WordEdit,Diagnostic>::Ok(edit);},else=>unit};
  let base:List<Bits<64>>=branch when{target==edit->index=>edit->base,else=>try finishEdit(edit,span)};
  Result<WordEdit,Diagnostic>::Ok(WordEdit{base:base,index:target,word:updated})
+};
+public let fromSlots:Function(Int,List<Int>,Span):Result<List<Bits<64>>,Diagnostic>=
+function(count:Int,slots:List<Int>,span:Span):Result<List<Bits<64>>,Diagnostic>{
+ let length:Int=(count+63)/64;
+ var edit:WordEdit=beginEdit(words(count,false));
+ branch when{length>0=>{
+  loop over(slots as slot:Int){
+   let target:Int=slot/64;
+   branch when{target>=0&&target<length=>{edit=try defineEdit(edit,slot,span);},else=>unit};
+  };
+ },else=>unit};
+ finishEdit(edit,span)
 };
 public let requireEdit:Function(WordEdit,Int,Span):Result<Unit,Diagnostic>=function(edit:WordEdit,slot:Int,span:Span):Result<Unit,Diagnostic>{
  let target:Int=slot/64;

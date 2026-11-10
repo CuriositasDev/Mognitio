@@ -7,7 +7,7 @@ use Mgnc\WholeIR\{Body,Block,Operation,Slot};
 use Mgnc\WholeFrameData\{Frame,Point};
 use Mgnc\WholeEffects\{allocating};
 use Mgnc\WholeChecks\{require};
-use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\PruneMemo\{Map,create,get,put};
 use Mgnc\Tables\{atList};
 use Mgnc\Facts\{mask,at as wordAt};
 type Node=product{reads:List<Int>;write:Int;previous:List<Int>;};
@@ -45,7 +45,7 @@ public let verify:Function(Store,Body,Frame):Result<Unit,Diagnostic>=function(st
  };};
  var expectedPoints:Int=0;var maximum:Int=8;loop over(body->blocks->pages->append(body->blocks->tail) as page:List<Block>){loop over(page as block:Block){loop over(block->operations as op:Operation){branch when{try allocating(store,body,op)=>{expectedPoints=expectedPoints+1;},else=>unit};branch when{op->inputs->length()+4>maximum=>{maximum=op->inputs->length()+4;},else=>unit};};};};try require(expectedPoints==frame->points->count,span,"missing allocation root point");try require(frame->outgoing==maximum&&frame->extent==((64+body->slots->count*8+maximum*8+15)/16)*16,span,"outgoing argument capacity");
  var mismatch:Int= -1;var missing:Bool=false;var slotId:Int=0;loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;let reference:Bool=kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29;let reached:Map=branch when{reference=>try livePositions(graph,reads,slotId),else=>create()};let bit:Bits<64>=try mask(slotId,span);
-  var ordinal:Int=0;loop over(checkpoints->pages->append(checkpoints->tail) as checks:List<Checkpoint>){loop over(checks as check:Checkpoint){let expected:Bool=slotId!=check->ignored&&reference&&(try get(reached,check->position))>=0;let selected:Bool=(try wordAt(check->bitmap,slotId/64,span))->and(bit)!=Bits<64>{0};branch when{expected!=selected&&(mismatch<0||ordinal<mismatch)=>{mismatch=ordinal;missing=expected;},else=>unit};ordinal=ordinal+1;};};slotId=slotId+1;
+  var ordinal:Int=0;loop over(checkpoints->pages->append(checkpoints->tail) as checks:List<Checkpoint>){var checkCursor:Int=0;loop while(checkCursor<checks->length()){let check:Checkpoint=try atList<Checkpoint>(checks,checkCursor);checkCursor=checkCursor+1;let expected:Bool=slotId!=check->ignored&&reference&&(try get(reached,check->position))>=0;let selected:Bool=(try wordAt(check->bitmap,slotId/64,span))->and(bit)!=Bits<64>{0};branch when{expected!=selected&&(mismatch<0||ordinal<mismatch)=>{mismatch=ordinal;missing=expected;},else=>unit};ordinal=ordinal+1;};};slotId=slotId+1;
  };};
  // Preserve checkpoint/slot diagnostic priority while holding one slot map.
  var ordinal:Int=0;loop over(checkpoints->pages->append(checkpoints->tail) as checks:List<Checkpoint>){loop over(checks as check:Checkpoint){try require(ordinal!=mismatch,span,branch when{missing=>"missing live managed root",else=>"dead or scalar root retained"});try bitmap(body,check->bitmap,span);ordinal=ordinal+1;};};Result<Unit,Diagnostic>::Ok(unit)

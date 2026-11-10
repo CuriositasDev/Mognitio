@@ -28,7 +28,55 @@ let descriptor:Function(Descriptor,Int,List<Int>):Descriptor=function(original:D
 type Mutation=product{offset:Int;kind:Int;mode:Int;change:Int;name:String;};type Coverage=product{count:Int;names:List<String>;};
 let changedCode:Function(Code,Int,Record):Result<Code,Diagnostic>=function(code:Code,index:Int,record:Record):Result<Code,Diagnostic>{Result<Code,Diagnostic>::Ok(Code{records:try replaceItem<Record>(code->records,index,record),nextLabel:code->nextLabel,pending:code->pending})};
 let mutationRegion:Function(Native,Code,Map,Int,Int,List<Mutation>):Result<Coverage,Diagnostic>=function(plan:Native,code:Code,labels:Map,start:Int,end:Int,specs:List<Mutation>):Result<Coverage,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};var cursor:Int=(try get(labels,start))+1;let limit:Int=try get(labels,end);try require(cursor>0&&limit>=cursor,span,"contract mutation region bounds");var offset:Int=0;var count:Int=0;var names:List<String>=List<String>[];loop while(cursor<limit){let record:Record=try lookup<Record>(code->records,cursor);let operand:Int=offset+record->bytes->length();loop over(specs as spec:Mutation){branch when{operand==spec->offset&&record->kind==spec->kind=>{let replacement:Record=Record{kind:record->kind,bytes:record->bytes,value:branch when{spec->mode==0=>record->value+spec->change,spec->mode==2=>spec->change,else=>record->value},target:branch when{spec->mode==1=>spec->change,else=>record->target}};try require(replacement->value!=record->value||replacement->target!=record->target,span,"nontrivial contract code mutation");try reject(machineCheck(plan,try changedCode(code,cursor,replacement)),spec->name);count=count+1;names=names->append(spec->name);},else=>unit};};offset=operand+branch when{record->kind==2||record->kind==3=>4,record->kind==4||record->kind==5=>8,else=>0};cursor=cursor+1;};try require(count==specs->length(),span,"missing contract machine mutation operand");Result<Coverage,Diagnostic>::Ok(Coverage{count:count,names:names})};
-let bitmapMutation:Function(Native,Code,Map,Int,String,Bool):Result<Coverage,Diagnostic>=function(plan:Native,code:Code,labels:Map,label:Int,name:String,nonzero:Bool):Result<Coverage,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};var cursor:Int=(try get(labels,label))+1;try require(cursor>0,span,"contract bitmap mutation label");loop while(cursor<code->records->count){let record:Record=try lookup<Record>(code->records,cursor);branch when{record->kind==1=>{break;},else=>unit};branch when{record->kind==0&&record->bytes->length()>0=>{var found:Bool=false;loop over(record->bytes as octet:Int){found=found||octet!=0;};try require(!nonzero||found,span,"managed receiver bitmap positive control");var replacement:List<Int>=List<Int>[];var index:Int=0;loop over(record->bytes as octet:Int){discard octet;replacement=replacement->append(branch when{!found&&index==0=>1,else=>0});index=index+1;};try reject(machineCheck(plan,try changedCode(code,cursor,Record{kind:record->kind,bytes:replacement,value:record->value,target:record->target})),name);return Result<Coverage,Diagnostic>::Ok(Coverage{count:1,names:List<String>[name]});},else=>unit};cursor=cursor+1;};try require(false,span,"contract bitmap mutation data absent");Result<Coverage,Diagnostic>::Ok(Coverage{count:0,names:List<String>[]})};
+let bitmapMutation:Function(Native,Code,Map,Int,String,Bool):Result<Coverage,Diagnostic>=function(plan:Native,code:Code,labels:Map,label:Int,name:String,nonzero:Bool):Result<Coverage,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ var cursor:Int=(try get(labels,label))+1;
+ try require(cursor>0,span,"contract bitmap mutation label");
+ let count:Record=try lookup<Record>(code->records,cursor);
+ try require(count->kind==4&&count->bytes->length()==0,span,"contract bitmap mutation count");
+ cursor=cursor+1;
+ loop while(cursor<code->records->count){
+  let record:Record=try lookup<Record>(code->records,cursor);
+  branch when{record->kind==1=>{break;},else=>unit};
+  branch when{
+   record->kind==0&&record->bytes->length()>0=>{
+    var found:Bool=false;
+    loop over(record->bytes as octet:Int){found=found||octet!=0;};
+    try require(!nonzero||found,span,"managed receiver bitmap positive control");
+    var replacement:List<Int>=List<Int>[];
+    var index:Int=0;
+    loop over(record->bytes as octet:Int){
+     discard octet;
+     replacement=replacement->append(branch when{!found&&index==0=>1,else=>0});
+     index=index+1;
+    };
+    try reject(machineCheck(plan,try changedCode(code,cursor,Record{kind:record->kind,bytes:replacement,value:record->value,target:record->target})),name);
+    return Result<Coverage,Diagnostic>::Ok(Coverage{count:1,names:List<String>[name]});
+   },
+   record->kind==4=>{
+    var selected:Int=cursor;
+    var found:Bool=false;
+    var scan:Int=cursor;
+    loop while(scan<code->records->count){
+     let word:Record=try lookup<Record>(code->records,scan);
+     branch when{word->kind==1=>{break;},else=>unit};
+     try require(word->kind==4&&word->bytes->length()==0,span,"contract bitmap mutation word");
+     branch when{!found&&word->value!=0=>{selected=scan;found=true;},else=>unit};
+     scan=scan+1;
+    };
+    try require(!nonzero||found,span,"managed receiver bitmap positive control");
+    let word:Record=try lookup<Record>(code->records,selected);
+    let replacement:Record=Record{kind:word->kind,bytes:word->bytes,value:branch when{found=>0,else=>1},target:word->target};
+    try reject(machineCheck(plan,try changedCode(code,selected,replacement)),name);
+    return Result<Coverage,Diagnostic>::Ok(Coverage{count:1,names:List<String>[name]});
+   },
+   else=>unit
+  };
+  cursor=cursor+1;
+ };
+ try require(false,span,"contract bitmap mutation data absent");
+ Result<Coverage,Diagnostic>::Ok(Coverage{count:0,names:List<String>[]})
+};
 let machineMutants:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);try machineCheck(plan,code);var labels:Map=create();var ordinal:Int=0;loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1=>{labels=try put(labels,record->target,ordinal);},else=>unit};ordinal=ordinal+1;};};var count:Int=0;var covered:List<String>=List<String>[];
  let abi:Coverage=try mutationRegion(plan,code,labels,abiRevisionLabel,descriptorTableLabel,List<Mutation>[Mutation{offset:0,kind:4,mode:0,change:1,name:"private value ABI stamp"}]);count=count+abi->count;covered=covered->append("private value ABI stamp");
  var owner:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);var position:Int=0;loop over(block->operations as op:Operation){branch when{(op->code=="package"||op->code=="dispatch")&&op->unavailable->length()==0=>{let start:Int=try atList<Int>(markers,position);let end:Int=branch when{position+1<markers->length()=>try atList<Int>(markers,position+1),else=>try lookup<Int>(procedure->terminatorLabels,blockId)};var specs:List<Mutation>=List<Mutation>[];

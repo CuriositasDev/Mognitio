@@ -107,9 +107,12 @@ def expression_core(data,text,families):
   answers=set()
   for rid,children in families[key]:
    name=data['rules'][rid]['name']
-   if name in ['integer','name','true','false']:
-    label='int' if name=='integer' else 'name' if name=='name' else 'bool'
+   if name in ['integer','name','type_name','true','false']:
+    label='int' if name=='integer' else 'name' if name in ['name','type_name'] else 'bool'
     answers.add((label,tokens.tokens[key[1]//2][0]))
+   elif name=='package':
+    # This golden core records application spelling; full families are checked separately.
+    for receiver,value in itertools.product(visit(children[0]),visit(children[2])):answers.add(('call',receiver,(value,)))
    elif name.startswith('binary_'):
     for left,right in itertools.product(visit(children[0]),visit(children[2])):answers.add((name[7:],left,right))
    elif name=='group':answers.update(('group',x) for x in visit(children[1]))

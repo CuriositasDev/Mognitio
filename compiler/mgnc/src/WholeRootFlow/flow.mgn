@@ -4,7 +4,7 @@ use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\WholeIR\{Body,Block,Operation};
 use Mgnc\Facts\{combine,equal,define,mask,at};
-use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\PruneMemo\{Map,create,get,put};
 public type Instruction=product{output:Parent;inputs:List<Int>;span:Span;};
 public type Flow=product{versions:Paged<List<Bits<64>>>;heads:Map;};
 type Summary=product{used:List<Bits<64>>;defined:List<Bits<64>>;empty:Bool;};

@@ -54,9 +54,27 @@ public let addItem:Function(ItemStore,ChartItem):ItemStore=function(table:ItemSt
 };
 public let getItem:Function(ItemStore,Int):Result<ChartItem,Diagnostic>=function(table:ItemStore,index:Int):Result<ChartItem,Diagnostic>{
  branch when{index<0||index>=table->count=>{return Result<ChartItem,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid item arena index"));},else=>unit};
- branch when{index/16==table->pages->count=>{return atList<ChartItem>(table->tail,index%16);},else=>unit};
- let page:ItemPage=try lookup<ItemPage>(table->pages,index/16);
- Result<ChartItem,Diagnostic>::Ok(readPage(page,index%16))
+ let pageIndex:Int=index/16;let lane:Int=index%16;
+ branch when{pageIndex==table->pages->count=>{return atList<ChartItem>(table->tail,lane);},else=>unit};
+ let page:ItemPage=try lookup<ItemPage>(table->pages,pageIndex);
+ Result<ChartItem,Diagnostic>::Ok(branch when{
+lane==0=>ChartItem{slot:page->slot0,origin:page->origin0,node:page->node0},
+lane==1=>ChartItem{slot:page->slot1,origin:page->origin1,node:page->node1},
+lane==2=>ChartItem{slot:page->slot2,origin:page->origin2,node:page->node2},
+lane==3=>ChartItem{slot:page->slot3,origin:page->origin3,node:page->node3},
+lane==4=>ChartItem{slot:page->slot4,origin:page->origin4,node:page->node4},
+lane==5=>ChartItem{slot:page->slot5,origin:page->origin5,node:page->node5},
+lane==6=>ChartItem{slot:page->slot6,origin:page->origin6,node:page->node6},
+lane==7=>ChartItem{slot:page->slot7,origin:page->origin7,node:page->node7},
+lane==8=>ChartItem{slot:page->slot8,origin:page->origin8,node:page->node8},
+lane==9=>ChartItem{slot:page->slot9,origin:page->origin9,node:page->node9},
+lane==10=>ChartItem{slot:page->slot10,origin:page->origin10,node:page->node10},
+lane==11=>ChartItem{slot:page->slot11,origin:page->origin11,node:page->node11},
+lane==12=>ChartItem{slot:page->slot12,origin:page->origin12,node:page->node12},
+lane==13=>ChartItem{slot:page->slot13,origin:page->origin13,node:page->node13},
+lane==14=>ChartItem{slot:page->slot14,origin:page->origin14,node:page->node14},
+else=>ChartItem{slot:page->slot15,origin:page->origin15,node:page->node15},
+})
 };
 public let setItem:Function(ItemStore,Int,ChartItem):Result<ItemStore,Diagnostic>=function(table:ItemStore,index:Int,value:ChartItem):Result<ItemStore,Diagnostic>{
  let checked:ChartItem=try getItem(table,index);

@@ -53,11 +53,11 @@ public let parseSnapshot:Function(Snapshot):Result<SyntaxForest,Diagnostic>=func
       },else=>{branch when{cursor>farthest=>{farthest=cursor;},else=>unit};}};
      },
      shape->next>0=>{
-      var seen:Bool=false;loop over(predicted as previous:Int){branch when{previous==shape->next=>{seen=true;break;},else=>unit};};
+      var seen:Bool=false;var predictedOffset:Int=0;loop while(predictedOffset<predicted->length()){let previous:Int=try atList<Int>(predicted,predictedOffset);predictedOffset=predictedOffset+1;branch when{previous==shape->next=>{seen=true;break;},else=>unit};};
       branch when{!seen=>{
        predicted=predicted->append(shape->next);
        let choices:List<Prediction>=try lookup<List<Prediction>>(predictions,shape->next);
-       loop over(choices as choice:Prediction){
+       var choiceOffset:Int=0;loop while(choiceOffset<choices->length()){let choice:Prediction=try atList<Prediction>(choices,choiceOffset);choiceOffset=choiceOffset+1;
         branch when{possible(choice,ahead)=>{active=try addItem(active,choice->slot,cursor,-1,-1,cursor);},else=>{branch when{cursor>farthest=>{farthest=cursor;},else=>unit};}};
        };
       },else=>unit};

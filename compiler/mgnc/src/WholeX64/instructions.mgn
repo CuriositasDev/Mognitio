@@ -2,7 +2,10 @@ namespace Mgnc\WholeX64;
 use Mgnc\Machine\{Code,raw,field,reference};
 // Registers use the architectural encoding: RAX=0, RCX=1, ..., R15=15.
 // Every memory operand has a checked signed 32-bit displacement at Encode.
-let rex:Function(Code,Int,Int,Bool):Code=function(code:Code,reg:Int,base:Int,wide:Bool):Code{raw(code,List<Int>[64+branch when{wide=>8,else=>0}+reg/8*4+base/8])};
+let rex:Function(Code,Int,Int,Bool):Code=function(code:Code,reg:Int,base:Int,wide:Bool):Code{
+ let prefix:Int=64+branch when{wide=>8,else=>0}+reg/8*4+base/8;
+ Code{records:code->records,nextLabel:code->nextLabel,pending:code->pending->append(prefix)}
+};
 let memory:Function(Code,Int,Int,Int):Code=function(code:Code,reg:Int,base:Int,displacement:Int):Code{
  var result:Code=raw(code,List<Int>[128+reg%8*8+base%8]);branch when{base%8==4=>{result=raw(result,List<Int>[36]);},else=>unit};field(result,3,displacement)
 };

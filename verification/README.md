@@ -202,3 +202,6 @@ immutable facts and old snapshots while bounding current flow storage.
 root IDs and expansion order while avoiding repeated flat-list prefix copies.
 
 - [Cached fact reads and queue membership](v1.8.0-cached-facts-and-queue.md): reduce verifier temporary values while retaining diagnostic and worklist behavior.
+
+[Reader storage and bitmap emission](v1.8.0-reader-storage.md) records checked
+indexed reads, persistent root maps and byte-equivalent bitmap encoding.

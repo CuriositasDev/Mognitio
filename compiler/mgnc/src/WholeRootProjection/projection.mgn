@@ -8,7 +8,8 @@ use Mgnc\WholeRootFlow\{Instruction};
 use Mgnc\WholeLayout\{managed};
 use Mgnc\WholeChecks\{require};
 use Mgnc\Facts\{mask,at,fromSlots};
-use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\PruneMemo\{Map,create,get,put};
+use Mgnc\Tables\{atList};
 public type Projection=product{references:Paged<Int>;operations:Paged<Paged<Instruction>>;terms:Paged<List<Int>>;};
 let selected:Function(Map,List<Int>,Int,Span):Result<List<Int>,Diagnostic>=function(ids:Map,slots:List<Int>,count:Int,span:Span):Result<List<Int>,Diagnostic>{
  var result:List<Int>=List<Int>[];
@@ -41,6 +42,6 @@ public let project:Function(Store,Body):Result<Projection,Diagnostic>=function(s
 // original graph and slot numbers, never this compact analysis.
 public let expand:Function(Paged<Int>,List<Bits<64>>,Int,Span):Result<List<Bits<64>>,Diagnostic>=function(references:Paged<Int>,compact:List<Bits<64>>,count:Int,span:Span):Result<List<Bits<64>>,Diagnostic>{
  var live:List<Int>=List<Int>[];var id:Int=0;
- loop over(references->pages->append(references->tail) as page:List<Int>){loop over(page as slot:Int){branch when{(try at(compact,id/64,span))->and(try mask(id,span))!=Bits<64>{0}=>{live=live->append(slot);},else=>unit};id=id+1;};};
+ loop over(references->pages->append(references->tail) as page:List<Int>){var referenceCursor:Int=0;loop while(referenceCursor<page->length()){let slot:Int=try atList<Int>(page,referenceCursor);referenceCursor=referenceCursor+1;branch when{(try at(compact,id/64,span))->and(try mask(id,span))!=Bits<64>{0}=>{live=live->append(slot);},else=>unit};id=id+1;};};
  fromSlots(count,live,span)
 };

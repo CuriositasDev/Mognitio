@@ -14,7 +14,10 @@ public let addItem:Function(Column,Int,Int,Int,Int,Int):Result<Column,Diagnostic
  let shape:Slot=try lookup<Slot>(slots,slot);
  let bin:Int=(slot+origin)%16;
  let row:List<Int>=bucket(state->itemBins,bin);
- loop over(row as index:Int){
+ var rowOffset:Int=0;
+ loop while(rowOffset<row->length()){
+  let index:Int=try atList<Int>(row,rowOffset);
+  rowOffset=rowOffset+1;
   let previous:ChartItem=try getItem(state->items,index);
   branch when{previous->slot==slot&&previous->origin==origin=>{
    branch when{shape->dot<2=>{return Result<Column,Diagnostic>::Ok(state);},else=>unit};
@@ -42,7 +45,10 @@ public let addItem:Function(Column,Int,Int,Int,Int,Int):Result<Column,Diagnostic
 public let addSymbol:Function(Column,Int,Int,Int,Int):Result<Column,Diagnostic>=function(state:Column,symbol:Int,origin:Int,rule:Int,left:Int):Result<Column,Diagnostic>{
  let bin:Int=branch when{symbol<0=>(-symbol)%16,else=>symbol%16};
  let row:List<Int>=bucket(state->symbolBins,bin);
- loop over(row as index:Int){
+ var rowOffset:Int=0;
+ loop while(rowOffset<row->length()){
+  let index:Int=try atList<Int>(row,rowOffset);
+  rowOffset=rowOffset+1;
   let previous:ForestNode=try getNode(state->nodes,index);
   branch when{previous->symbol==symbol&&previous->start==origin=>{
    branch when{symbol<0||(previous->rule==rule&&previous->left==left)=>{

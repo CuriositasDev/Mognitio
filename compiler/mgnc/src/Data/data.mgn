@@ -61,7 +61,39 @@ function(phase: String, span: Span, message: String): Diagnostic {
     Diagnostic{phase: phase, span: span, message: message}
 };
 public template lookup<T> = function(table: Paged<T>, index: Int): Result<T, Diagnostic> {
-    branch on item<T>(table, index) {
+    branch when {index < 0 || index >= table->count => {
+        return Result<T, Diagnostic>::Err(
+            Diagnostic{phase: "internal", span: Span{start: 0, end: 0, line: 1, column: 1}, message: "invalid arena index"});
+    }, else => unit};
+    let page: Int = index / 64;
+    let pageCount: Int = table->pages->length();
+    let values: List<T> = branch when {
+        page == pageCount => table->tail,
+        else => {
+            branch when {page < 0 || page >= pageCount => {
+                return Result<T, Diagnostic>::Err(
+                    Diagnostic{phase: "internal", span: Span{start: 0, end: 0, line: 1, column: 1}, message: "invalid arena index"});
+            }, else => unit};
+            let group: List<List<T>> = branch when {
+                page / 64 == table->groups->length() => table->group,
+                else => branch on table->groups->at(page / 64) {
+                    Result<List<List<T>>, IndexError>::Ok(found: List<List<T>>) => found,
+                    Result<List<List<T>>, IndexError>::Err(error: IndexError) => {
+                        return Result<T, Diagnostic>::Err(
+                            Diagnostic{phase: "internal", span: Span{start: 0, end: 0, line: 1, column: 1}, message: "invalid arena index"});
+                    },
+                },
+            };
+            branch on group->at(page % 64) {
+                Result<List<T>, IndexError>::Ok(found: List<T>) => found,
+                Result<List<T>, IndexError>::Err(error: IndexError) => {
+                    return Result<T, Diagnostic>::Err(
+                        Diagnostic{phase: "internal", span: Span{start: 0, end: 0, line: 1, column: 1}, message: "invalid arena index"});
+                },
+            }
+        },
+    };
+    branch on values->at(index % 64) {
         Result<T, IndexError>::Ok(value: T) => Result<T, Diagnostic>::Ok(value),
         Result<T, IndexError>::Err(error: IndexError) => Result<T, Diagnostic>::Err(
             Diagnostic{phase: "internal", span: Span{start: 0, end: 0, line: 1, column: 1}, message: "invalid arena index"}),

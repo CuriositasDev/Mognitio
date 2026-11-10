@@ -4,7 +4,7 @@ use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
 use Mgnc\WholeIR\{Body,Block,Operation,Terminator};
 use Mgnc\WholeChecks\{require as invariant,present};
-use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\PruneMemo\{Map,create,get,put};
 use Mgnc\Tables\{atList};
 use Mgnc\Facts\{words,combine,equal,define,require,mask,fromSlots,WordEdit,beginEdit,finishEdit,defineEdit,requireEdit};
 type Guard=product{slot:Int;sumType:Int;variant:Int;};

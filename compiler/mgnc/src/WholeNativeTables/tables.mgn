@@ -1,5 +1,5 @@
 namespace Mgnc\WholeNativeTables;
-use Std\Numeric\{Bits};
+use Std\Numeric\{Bits,Signed,IntegerConversionError};
 use Mgnc\Data\{Span,Diagnostic,lookup};
 use Mgnc\Machine\{Code,Record,label,field,reference,raw};
 use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel,abiRevisionLabel};
@@ -9,14 +9,16 @@ use Mgnc\WholeRuntimeTypes\{resolve};
 use Mgnc\WholeFrameData\{Point};
 use Mgnc\IntMap\{get};
 use Mgnc\Tables\{atList};
-use Mgnc\Facts\{mask};
+use Mgnc\Facts\{at};
 use Mgnc\WholeChecks\{require};
 public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=function(initial:Code,count:Int,words:List<Bits<64>>):Result<Code,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var code:Code=field(initial,4,count);
- loop over(words as word:Bits<64>){var bit:Int=0;var value:Int=0;var power:Int=1;loop while(bit<64){
-  branch when{word->and(try mask(bit,span))!=Bits<64>{0}=>{value=value+power;},else=>unit};bit=bit+1;power=power*2;
-  branch when{bit%8==0=>{code=raw(code,List<Int>[value]);value=0;power=1;},else=>unit};
- };};Result<Code,Diagnostic>::Ok(code)
+ var wordCursor:Int=0;loop while(wordCursor<words->length()){let word:Bits<64>=try at(words,wordCursor,span);wordCursor=wordCursor+1;
+  let scalar:Int=branch on word->asInteger<Signed>()->convertTo<Int>(){
+   Result<Int,IntegerConversionError>::Ok(value:Int)=>value,
+   Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{try require(false,span,"root bitmap word conversion");0},
+  };code=field(code,4,scalar);
+ };Result<Code,Diagnostic>::Ok(code)
 };
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){var recordCursor0:Int=0;loop while(recordCursor0<page->length()){let record:Record=try atList<Record>(page,recordCursor0);recordCursor0=recordCursor0+1;extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};

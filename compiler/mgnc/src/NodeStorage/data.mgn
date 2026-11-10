@@ -54,9 +54,27 @@ public let addNode:Function(NodeStore,ForestNode):NodeStore=function(table:NodeS
 };
 public let getNode:Function(NodeStore,Int):Result<ForestNode,Diagnostic>=function(table:NodeStore,index:Int):Result<ForestNode,Diagnostic>{
  branch when{index<0||index>=table->count=>{return Result<ForestNode,Diagnostic>::Err(problem("internal",Span{start:0,end:0,line:1,column:1},"invalid node arena index"));},else=>unit};
- branch when{index/16==table->pages->count=>{return atList<ForestNode>(table->tail,index%16);},else=>unit};
- let page:NodePage=try lookup<NodePage>(table->pages,index/16);
- Result<ForestNode,Diagnostic>::Ok(readPage(page,index%16))
+ let pageIndex:Int=index/16;let lane:Int=index%16;
+ branch when{pageIndex==table->pages->count=>{return atList<ForestNode>(table->tail,lane);},else=>unit};
+ let page:NodePage=try lookup<NodePage>(table->pages,pageIndex);
+ Result<ForestNode,Diagnostic>::Ok(branch when{
+lane==0=>ForestNode{symbol:page->symbol0,slot:page->slot0,start:page->start0,end:page->end0,rule:page->rule0,left:page->left0,right:page->right0,split:page->split0,alternatives:page->alternatives0},
+lane==1=>ForestNode{symbol:page->symbol1,slot:page->slot1,start:page->start1,end:page->end1,rule:page->rule1,left:page->left1,right:page->right1,split:page->split1,alternatives:page->alternatives1},
+lane==2=>ForestNode{symbol:page->symbol2,slot:page->slot2,start:page->start2,end:page->end2,rule:page->rule2,left:page->left2,right:page->right2,split:page->split2,alternatives:page->alternatives2},
+lane==3=>ForestNode{symbol:page->symbol3,slot:page->slot3,start:page->start3,end:page->end3,rule:page->rule3,left:page->left3,right:page->right3,split:page->split3,alternatives:page->alternatives3},
+lane==4=>ForestNode{symbol:page->symbol4,slot:page->slot4,start:page->start4,end:page->end4,rule:page->rule4,left:page->left4,right:page->right4,split:page->split4,alternatives:page->alternatives4},
+lane==5=>ForestNode{symbol:page->symbol5,slot:page->slot5,start:page->start5,end:page->end5,rule:page->rule5,left:page->left5,right:page->right5,split:page->split5,alternatives:page->alternatives5},
+lane==6=>ForestNode{symbol:page->symbol6,slot:page->slot6,start:page->start6,end:page->end6,rule:page->rule6,left:page->left6,right:page->right6,split:page->split6,alternatives:page->alternatives6},
+lane==7=>ForestNode{symbol:page->symbol7,slot:page->slot7,start:page->start7,end:page->end7,rule:page->rule7,left:page->left7,right:page->right7,split:page->split7,alternatives:page->alternatives7},
+lane==8=>ForestNode{symbol:page->symbol8,slot:page->slot8,start:page->start8,end:page->end8,rule:page->rule8,left:page->left8,right:page->right8,split:page->split8,alternatives:page->alternatives8},
+lane==9=>ForestNode{symbol:page->symbol9,slot:page->slot9,start:page->start9,end:page->end9,rule:page->rule9,left:page->left9,right:page->right9,split:page->split9,alternatives:page->alternatives9},
+lane==10=>ForestNode{symbol:page->symbol10,slot:page->slot10,start:page->start10,end:page->end10,rule:page->rule10,left:page->left10,right:page->right10,split:page->split10,alternatives:page->alternatives10},
+lane==11=>ForestNode{symbol:page->symbol11,slot:page->slot11,start:page->start11,end:page->end11,rule:page->rule11,left:page->left11,right:page->right11,split:page->split11,alternatives:page->alternatives11},
+lane==12=>ForestNode{symbol:page->symbol12,slot:page->slot12,start:page->start12,end:page->end12,rule:page->rule12,left:page->left12,right:page->right12,split:page->split12,alternatives:page->alternatives12},
+lane==13=>ForestNode{symbol:page->symbol13,slot:page->slot13,start:page->start13,end:page->end13,rule:page->rule13,left:page->left13,right:page->right13,split:page->split13,alternatives:page->alternatives13},
+lane==14=>ForestNode{symbol:page->symbol14,slot:page->slot14,start:page->start14,end:page->end14,rule:page->rule14,left:page->left14,right:page->right14,split:page->split14,alternatives:page->alternatives14},
+else=>ForestNode{symbol:page->symbol15,slot:page->slot15,start:page->start15,end:page->end15,rule:page->rule15,left:page->left15,right:page->right15,split:page->split15,alternatives:page->alternatives15},
+})
 };
 public let setNode:Function(NodeStore,Int,ForestNode):Result<NodeStore,Diagnostic>=function(table:NodeStore,index:Int,value:ForestNode):Result<NodeStore,Diagnostic>{
  let checked:ForestNode=try getNode(table,index);

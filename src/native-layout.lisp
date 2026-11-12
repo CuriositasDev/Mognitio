@@ -137,7 +137,7 @@
       (:lea-meta ,descriptor) (:store-word :rdx 16 :rax) (:imm-rax ,variant) (:store-word :rdx 24 :rax))))
 
 
-(defun ordered-address-dispatch (rows register prefix missing &optional counter)
+(defun ordered-address-dispatch (rows register prefix missing &optional counter range-check)
   ;; ROWS are emitted in this same order within one static metadata/text unit.
   ;; Only exact known starts reach a handler; candidates are never dereferenced.
   (let ((entries (coerce rows 'vector)))
@@ -156,4 +156,16 @@
                            (list :jmp (target (1+ mid) hi)))
                      (emit lo mid) (emit (1+ mid) hi))))))
       (if (zerop (length entries)) (list (list :jmp missing))
-          (emit 0 (length entries))))))
+          (append
+            ;; Heap pointers normally exceed all static starts. Reject that
+            ;; range first without dereferencing the candidate. Exact endpoints
+            ;; and holes inside the range still use the checked search below.
+            (when (and range-check (> (length entries) 1))
+              (append
+                (when counter (bump counter))
+                (list (first (aref entries (1- (length entries))))
+                      (list :cmp-reg :rax register) (list :jb missing))
+                (when counter (bump counter))
+                (list (first (aref entries 0))
+                      (list :cmp-reg :rax register) (list :ja missing))))
+            (emit 0 (length entries)))))))

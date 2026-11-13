@@ -208,3 +208,6 @@ indexed reads, persistent root maps and byte-equivalent bitmap encoding.
 
 [Storage getter regeneration](v1.8.0-storage-generator.md) binds the scalar-page
 generator to the existing optimized reader source.
+
+[Static-root range rejection](v1.8.0-static-root-range.md) bounds Lisp-generated
+GC lookup for candidates outside the static tables while retaining exact membership.

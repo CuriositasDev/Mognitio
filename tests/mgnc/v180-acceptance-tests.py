@@ -79,6 +79,32 @@ class AcceptanceTests(unittest.TestCase):
         result=evaluate_matrix(self.store,{self.contract["cell"]:self.contract,other["cell"]:other},
                                [self.put("Execution",**self.execution)])
         self.assertEqual(result,{self.contract["cell"]:"Passed",other["cell"]:"NotRun"})
+    def test_matrix_rejects_cross_context_receipt_reuse(self):
+        # The cells have different generations, userlands and expected exits.
+        other = dict(self.contract, cell="A/24/check-positive", generation="A",
+            producer=self.graph[0], generation_graph=[self.graph[0]],
+            environment=self.put("Environment", userland="24"),
+            expected=self.put("Expected", exit=0, stdout_hex="",
+                stderr={"exact_hex":""}, observables={}))
+        contracts = {self.contract["cell"]:self.contract, other["cell"]:other}
+        original = self.put("Execution", **self.execution)
+        # Changing only the cell label must not transfer a passing receipt.
+        relabelled = dict(self.execution, cell=other["cell"])
+        with self.assertRaises(ValueError):
+            evaluate_matrix(self.store, contracts,
+                [original, self.put("Execution", **relabelled)])
+        # Even matching labels cannot make exit 1 satisfy exit 0.
+        relabelled.update(other)
+        result = evaluate_matrix(self.store, contracts,
+            [original, self.put("Execution", **relabelled)])
+        self.assertEqual(result, {self.contract["cell"]:"Passed", other["cell"]:"Failed"})
+        self.assertEqual(evaluate_matrix(self.store, contracts, [original]),
+            {self.contract["cell"]:"Passed", other["cell"]:"NotRun"})
+        # Generation observations have no execution contract and are ineligible.
+        observation = self.store.get(self.producer)["observation"]
+        with self.assertRaises(ValueError):
+            evaluate_matrix(self.store, contracts, [observation])
+
     def test_runtime_exit_four_cannot_be_relabelled_as_two(self):
         expected=self.put("Expected",exit=4,stdout_hex="",stderr={"exact_hex":""},observables={})
         self.contract["expected"]=expected;self.execution["expected"]=expected

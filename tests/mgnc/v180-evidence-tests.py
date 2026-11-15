@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adversarial checks for candidate, graph, suite and restored raw evidence."""
+"""Adversarial checks for candidate, graph and restored raw evidence."""
 import copy
 import os
 import tempfile
@@ -130,21 +130,6 @@ class EvidenceTests(unittest.TestCase):
         b.write_bytes(a.read_bytes());b.chmod(0o700)
         self.assertEqual(compare_files(a,b)["status"],"Failed")
         self.assertIsNone(compare_files(a,b)["first_difference"])
-
-    def test_suite_missing_environment_and_expected(self):
-        cells=["A/24/check","A/26/check","B/24/check","B/26/check","C/24/check","C/26/check"]
-        suite=self.store.put(dict(schema=1,kind="Suite",cells=cells,expected={c:"e"*64 for c in cells}))
-        run=dict(schema=1,kind="Run",candidate=self.candidate,suite=suite,cell=cells[0],
-                 expected="e"*64,status="Failed",receipts=[])
-        key=self.store.put(run)
-        statuses=evaluate_suite(self.store,self.candidate,suite,[key])
-        self.assertEqual(statuses[cells[0]],"Failed")
-        self.assertEqual(list(statuses.values()).count("NotRun"),5)
-        for changes in (dict(expected="d"*64),dict(candidate="d"*64),dict(status="Passed")):
-            bad=dict(run,**changes)
-            with self.assertRaises(ValueError):
-                evaluate_suite(self.store,self.candidate,suite,[self.store.put(bad)])
-        self.assertEqual(self.store.get(key)["status"],"Failed")
 
     @unittest.skipIf(os.geteuid() == 0, "permission controls require non-root")
     def test_inaccessible_descendants_are_not_omitted(self):

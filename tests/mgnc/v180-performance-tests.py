@@ -12,7 +12,7 @@ class PerformanceTests(unittest.TestCase):
             peak_rss_bytes=kernel, sampled_peak_rss_bytes=sampled,
             rss_missing_samples=0)
             for kind,seconds,kernel,sampled in zip(KINDS,
-                [100, 1, 9, 2], [999999, 10, 11, 12], [999999, 20, None, 15])]
+                [10, 1, 9, 2], [30, 10, 11, 12], [30, 20, None, 15])]
         self.limit = dict(wall_median_seconds=2, rss_max_bytes=20,
                           wall_guard_seconds=10, rss_guard_bytes=30)
     def test_exact_median_and_max_without_warmup_or_outlier_removal(self):
@@ -21,6 +21,23 @@ class PerformanceTests(unittest.TestCase):
                                       wall_median_seconds=2, rss_max_bytes=20))
         self.runs[2]["peak_rss_bytes"] = 31
         self.assertFalse(score(self.runs, self.limit)["passed"])
+    def test_all_starts_obey_numeric_guards_without_cutoff_labels(self):
+        for index, kind in enumerate(KINDS):
+            for field, value in [("seconds", 10.01), ("peak_rss_bytes", 31),
+                                 ("sampled_peak_rss_bytes", 31)]:
+                rows = copy.deepcopy(self.runs)
+                rows[index][field] = value
+                with self.subTest(kind=kind, field=field):
+                    result = score(rows, self.limit)
+                    self.assertTrue(result["correct"])
+                    self.assertFalse(result["passed"])
+                    self.assertFalse(result["within_budget"])
+        # A measured wall outlier must fail even when the median still passes.
+        rows = copy.deepcopy(self.runs)
+        rows[2]["seconds"] = 100
+        self.assertEqual(score(rows, self.limit)["wall_median_seconds"], 2)
+        self.assertFalse(score(rows, self.limit)["passed"])
+
     def test_null_sampler_uses_kernel_without_subtracting_floor(self):
         for row in self.runs:row["sampled_peak_rss_bytes"] = None
         self.assertEqual(score(self.runs)["rss_max_bytes"], 12)

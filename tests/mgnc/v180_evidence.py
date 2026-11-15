@@ -218,30 +218,6 @@ def compare_files(left, right):
                 right_context=b[max(0,(offset or 0)-8):(offset or 0)+9].hex() if offset is not None else "")
 
 
-def evaluate_suite(store, candidate_id, suite_id, run_ids):
-    store.get(candidate_id, "Candidate")
-    suite = store.get(suite_id, "Suite")
-    required = suite["cells"]
-    require(len(required) == len(set(required)) and bool(required), "invalid suite cells")
-    found = {}
-    for key in run_ids:
-        run = store.get(key, "Run")
-        require(run["candidate"] == candidate_id and run["suite"] == suite_id, "run binding mismatch")
-        cell = run["cell"]
-        require(cell in required and cell not in found, "unexpected or duplicated cell")
-        require(run["status"] in STATES, "invalid status")
-        require(run["expected"] == suite["expected"][cell], "expected digest mismatch")
-        if run["status"] == "Passed":
-            require(bool(run["receipts"]), "missing execution evidence")
-            for receipt in run["receipts"]:
-                observation = store.get(receipt, "Observation")
-                require(observation["candidate"] == candidate_id and observation["status"] == "Passed",
-                        "unsuccessful or unrelated execution evidence")
-                store.get(observation["raw"], "Raw")
-        found[cell] = run["status"]
-    return {cell: found.get(cell, "NotRun") for cell in required}
-
-
 def ledger(root):
     """Bind lossless filesystem names, bytes, modes and link topology."""
     import base64

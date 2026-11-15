@@ -51,7 +51,7 @@ def valid_sample(sample):
     )
 
 def score(runs, limits=None):
-    """Keep the warmup mandatory, but aggregate exactly three recorded runs."""
+    """Check all four start guards; aggregate only the three recorded runs."""
     if limits is not None:
         validate_limits(limits)
     valid = (isinstance(runs, list) and len(runs) == 4
@@ -64,8 +64,11 @@ def score(runs, limits=None):
     wall = statistics.median(x["seconds"] for x in runs[1:])
     rss = max(max(x["peak_rss_bytes"], x["sampled_peak_rss_bytes"] or 0)
               for x in runs[1:])
-    within = limits is None or (wall <= limits["wall_median_seconds"]
-                               and rss <= limits["rss_max_bytes"])
+    within = limits is None or (
+        wall <= limits["wall_median_seconds"] and rss <= limits["rss_max_bytes"]
+        and all(x["seconds"] <= limits["wall_guard_seconds"]
+                and max(x["peak_rss_bytes"], x["sampled_peak_rss_bytes"] or 0)
+                <= limits["rss_guard_bytes"] for x in runs))
     return dict(passed=within, correct=True,
                 within_budget=within if limits is not None else None,
                 wall_median_seconds=wall, rss_max_bytes=rss)

@@ -37,9 +37,11 @@ The retained v0.11 [72-case ledger](v0.11.0-testing.md) and
 [process evidence](v0.11.0-process.md) describe the inherited runner.
 The [runner review fixes](v0.11.0-review.md) cover host storage recovery,
 helper frame-register preservation, and committed-result diagnostics.
-The current accepted compiler release record is
-[v1.7.0](v1.7.0-release.md); publication is established by its signed release.
-The prior release record is [v1.6.0](v1.6.0-release.md).
+The current accepted compiler record is [v1.8.0](v1.8.0-release.md).
+Signed publication remains a separate gate; the record distinguishes accepted
+implementation evidence from pending distribution checks.
+The prior release records are [v1.7.0](v1.7.0-release.md) and
+[v1.6.0](v1.6.0-release.md).
 The retained stable release record is [v1.0.0](v1.0.0-release.md).
 The retained source release record is [v0.14.0](v0.14.0-release.md).
 Run checks from the repository root on a non-root Linux amd64 host with SBCL,
@@ -74,8 +76,10 @@ contents rather than proving that tests passed.
 
 ## Repository review
 
-The [v1.7 implementation review map](v1.7.0-review.md) identifies the current
-source, completed acceptance evidence and the release-review boundary.
+The [v1.8 acceptance and release record](v1.8.0-release.md) identifies the current
+source, completed acceptance evidence and outstanding publication gates.
+The retained [v1.7 implementation review map](v1.7.0-review.md) applies to its
+fixed historical source.
 
 Include new files in review. Check changed Markdown links and fences, UTF-8,
 LF endings, final newlines, executable launchers, and whitespace.

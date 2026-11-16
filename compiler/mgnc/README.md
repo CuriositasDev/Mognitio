@@ -1,21 +1,23 @@
 # Experimental native compiler
 
-This source project extends the accepted Mognitio 1.6 experimental compiler
-toward 1.7. The implementation includes native assertions, normal-build `@test`
+Version 1.8 accepts repeated native generation of this source project, including
+B/C byte identity and repeated outputs, complete functional and isolation checks,
+and inherited and new formal performance gates. The
+[acceptance and release record](../../verification/v1.8.0-release.md) fixes the
+source, qualified seed and generated compiler identities.
+The expanded 1.7 native profile includes assertions, normal-build `@test`
 metadata, named contracts and witness dispatch, fixed-width arithmetic, numeric
 Results, Bytes operations and encoding, directory/path inspection, and binary
-publication. Complete 1.7 acceptance, including whole-generation and formal
-performance gates, remains pending.
-Final 1.6 conformance and performance acceptance are complete; see the
-[acceptance record](../../verification/v1.6.0-final-acceptance.md).
-It remains experimental and is not included in the regular Debian package,
-APT repository, or installer bundle. All 1.6 implementation and performance stages are accepted; see the
-[acceptance and release record](../../verification/v1.6.0-release.md).
+publication. Historical acceptance records remain tied to their original sources.
+
+The compiler remains experimental and source-built. It is not included in the
+regular Debian package, APT repository, or installer bundle. Replacing the normal
+CLI, test runner, language server and distribution belongs to version 1.9.
 
 ## Build
 
-Use the [qualified first-fit-bound Lisp seed](../../verification/v1.7.0-seed-fit-lower-bounds.md), whose accepted
-source revision is 9cc663be54f9101f0b596578b37207bb2695856c.
+Use the [qualified 1.8 frozen Lisp seed](../../verification/v1.8.0-release.md#accepted-compiler),
+whose accepted source revision is 643896e53c7dc1335d9d5ca27f89bf9a381335a9.
 Verify its complete component inventory and external receipt before invoking
 the launcher by an explicit path:
 
@@ -55,8 +57,8 @@ unreachable operands. Independent checks cover source membership, resolved
 identities, operand order, lexical captures, definite assignment, current-value
 variant guards and owner-typed Result reconstruction. Lower accepts the same
 single-file and project inputs as check and neither evaluates user code nor
-writes an artifact. The [final acceptance record](../../verification/v1.6.0-final-acceptance.md)
-records complete-corpus, native backend and performance validation separately.
+writes an artifact. The [1.8 acceptance record](../../verification/v1.8.0-release.md)
+records complete-corpus, repeated-generation and performance validation separately.
 
 Build lowers the complete semantic result and selects the closed native profile
 for single files and manifests. It supports Int, Bool, Unit, String, persistent

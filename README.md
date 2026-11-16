@@ -2,16 +2,14 @@
 
 Mognitio is a typed language with immutable data, persistent lists, explicit
 contracts and generic templates, and first-class functions with snapshot captures.
-Version 1.7.0 expands the experimental [mgnc compiler](compiler/mgnc/README.md)
-with fixed-width numeric and binary operations, directory and path inspection,
-transactional publication, named contracts and witnesses, metadata, and located
-assertions. The native compiler builds both the previous and current compiler
-corpora; their generated compilers pass the required execution probes.
-Independent functional, isolation, resource and formal performance gates are
-accepted. Build mgnc explicitly with the qualified frozen Lisp seed. Debian
-packages, APT installations and offline bundles contain the normal toolchain;
-mgnc remains source-built. See the
-[1.7 acceptance and release record](verification/v1.7.0-release.md).
+Version 1.8.0 accepts repeated native generation with the experimental
+[mgnc compiler](compiler/mgnc/README.md). The fixed compiler produces identical
+B/C generations and repeated outputs, with independent functional, isolation,
+resource, performance and evidence-restoration acceptance. Build mgnc explicitly
+with the qualified frozen Lisp seed. Debian packages, APT installations and
+offline bundles contain the normal toolchain; mgnc remains source-built.
+See the [1.8 acceptance and release record](verification/v1.8.0-release.md).
+Acceptance and signed release publication are recorded separately.
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -25,12 +23,12 @@ The static analyzer, stdio language server, build identities and Linux packaging
 remain part of the toolchain.
 The compiler targets Linux amd64. Official Linux packages and installer bundles
 are published in [GitHub Releases](https://github.com/ProjectCuriositas/Mognitio/releases).
-Follow the [APT repository instructions](https://projectcuriositas.github.io/apt/)
+Follow the [APT repository instructions](https://curiositasdev.github.io/apt/)
 for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runtime;
 a host SBCL installation is required only for source development.
 The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=mognitio.mognitio)
 is versioned independently. Use a client version whose compatibility table
-explicitly includes the 1.7.0 server;
+explicitly includes the 1.8.0 server;
 a compatible extension update is a separate project.
 
 ## Inherited version 1.5 capabilities
@@ -53,11 +51,11 @@ budgets and all version 1.5 implementation stages are accepted.
 
 - [Examples](examples/): executable projects, including [multiple modules](examples/modules/).
 - [Test coverage](tests/README.md): current project cases and internal regression oracles.
-- [Release validation](verification/v1.7.0-release.md): accepted 1.7.0 identities and distribution gates.
+- [Release validation](verification/v1.8.0-release.md): accepted 1.8.0 identities and distribution gates.
 - [Language tests](examples/testing/README.md): `@test`, `assert`, and `mgn test`.
 - [File converter](examples/file-converter/README.md): arguments and text I/O.
 - [Directory converter](examples/directory-converter/README.md): explicit tree traversal.
-- [Implementation verification](verification/v1.7.0-review.md): complete compiler evidence and limits.
+- [Implementation verification](verification/v1.8.0-release.md): repeated-generation evidence and limits.
 - [Verification commands](verification/README.md): reproduce the checks.
 - [Toolchain distribution](packaging/README.md): pinned builds, APT staging, and offline installation.
 - [Compatibility policy](COMPATIBILITY.md): backward compatibility within a major version.

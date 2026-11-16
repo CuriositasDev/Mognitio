@@ -23,7 +23,7 @@ The static analyzer, stdio language server, build identities and Linux packaging
 remain part of the toolchain.
 The compiler targets Linux amd64. Official Linux packages and installer bundles
 are published in [GitHub Releases](https://github.com/ProjectCuriositas/Mognitio/releases).
-Follow the [APT repository instructions](https://projectcuriositas.github.io/apt/)
+Follow the [APT repository instructions](https://curiositasdev.github.io/apt/)
 for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runtime;
 a host SBCL installation is required only for source development.
 The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=mognitio.mognitio)

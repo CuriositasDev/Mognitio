@@ -1,0 +1,17 @@
+namespace Mgnc\GrammarPart10;
+use Mgnc\Data\{Paged,push};
+use Mgnc\GrammarData\{Slot};
+// Generated fixed grammar slots; every part is included in the C1 inventory.
+public let extend:Function(Paged<Slot>):Paged<Slot>=function(initial:Paged<Slot>):Paged<Slot>{
+ var result:Paged<Slot>=initial;
+ loop over(List<Slot>[
+ Slot{lhs:69,rule:184,dot:3,next:0},
+ Slot{lhs:69,rule:185,dot:0,next:69},
+ Slot{lhs:69,rule:185,dot:1,next:-64},
+ Slot{lhs:69,rule:185,dot:2,next:-3},
+ Slot{lhs:69,rule:185,dot:3,next:62},
+ Slot{lhs:69,rule:185,dot:4,next:63},
+ Slot{lhs:69,rule:185,dot:5,next:0},
+ ] as value:Slot){result=push<Slot>(result,value);};
+ result
+};

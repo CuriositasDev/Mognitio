@@ -25,7 +25,6 @@ FALLBACK = {"interface": "type", "typeParameter": "type", "function": "variable"
             "parameter": "variable", "property": "variable", "method": "function",
             "enumMember": "variable", "namespace": "variable"}
 
-from payload import payload_identity
 from budget import MemoryBudget
 from projection import diagnostics_steps
 
@@ -270,6 +269,13 @@ class Server:
             else:
                 self.log("Invalid notification: " + str(error))
 
+    def start_worker(self, generation):
+        command = [sys.executable, "-I", "-B", str(self.payload / "lsp/worker_exec.py"), str(os.getpid()),
+                   str(self.payload / "runtime/sbcl"), "--core", str(self.payload / "runtime/mognitio.core"),
+                   "--noinform", "--no-sysinit", "--no-userinit", "--mognitio-worker"]
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return process, None
+
     def run_analysis(self):
         if not self.dirty or self.state != "running" or self.retiring:
             return
@@ -286,15 +292,16 @@ class Server:
         for uri, reason in snapshot.get("unavailable", {}).items():
             self.notify("window/showMessage", {"type": 2, "message": reason + ": " + uri})
         generation = self.generation
-        command = [sys.executable, "-I", "-B", str(self.payload / "lsp/worker_exec.py"), str(os.getpid()),
-                   str(self.payload / "runtime/sbcl"), "--core", str(self.payload / "runtime/mognitio.core"),
-                   "--noinform", "--no-sysinit", "--no-userinit", "--mognitio-worker"]
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process, cleanup = self.start_worker(generation)
         self.worker = (process, generation, time.monotonic())
         body = (json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
 
         def communicate():
-            stdout, stderr = process.communicate(body)
+            try:
+                stdout, stderr = process.communicate(body)
+            finally:
+                if cleanup is not None:
+                    cleanup()
             self.events.put((process, generation, stdout, stderr))
         threading.Thread(target=communicate, daemon=True).start()
 
@@ -431,6 +438,7 @@ class Server:
             self.memory.close()
 
 def main():
+    from payload import payload_identity
     if sys.argv[1:] not in (["--stdio"], ["--version"]):
         print("usage: mognitio-lsp --stdio | --version", file=sys.stderr)
         return 2

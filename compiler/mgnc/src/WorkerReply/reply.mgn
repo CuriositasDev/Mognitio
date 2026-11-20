@@ -7,7 +7,7 @@ use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
 use Mgnc\Project\{projectSources,single};
 use Mgnc\Semantic\{checkSources};
 use Mgnc\SemanticValues\{State};
-use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\WorkerAnalysis\{analyze};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\TestPlan\{TestCase,discover};
 use Mgnc\TextUtil\{at};
@@ -24,21 +24,11 @@ public let respond:Function(List<String>):Int=function(fields:List<String>):Int{
   Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
   Result<ProjectInput,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
  };
- branch when{profile=="syntax"=>{
-  let source:SourceUnit=branch on input->sources->at(0){
-   Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,
-   Result<SourceUnit,IndexError>::Err(error:IndexError)=>{return 3;}
-  };
-  return branch on analyzeSyntax(source->text){
-   Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>branch when{send(header(fields,"ok"))=>0,else=>3},
-   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>diagnostic(fields,branch when{error->phase=="internal"=>3,else=>1},source->displayPath,error,true)
-  };
- },else=>unit};
+ branch when{profile=="syntax"||profile=="analysis"=>{return analyze(fields,input);},else=>unit};
  let state:State=branch on checkSources(input){
   Result<State,InputError>::Ok(value:State)=>value,
   Result<State,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
  };
- branch when{profile=="analysis"=>{return branch when{send(header(fields,"ok"))=>0,else=>3};},else=>unit};
  let cases:Paged<TestCase>=branch on discover(state){
   Result<Paged<TestCase>,Diagnostic>::Ok(value:Paged<TestCase>)=>value,
   Result<Paged<TestCase>,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}

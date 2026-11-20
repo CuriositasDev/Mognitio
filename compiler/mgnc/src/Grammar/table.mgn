@@ -12,6 +12,7 @@ use Mgnc\GrammarPart6\{extend as extend6};
 use Mgnc\GrammarPart7\{extend as extend7};
 use Mgnc\GrammarPart8\{extend as extend8};
 use Mgnc\GrammarPart9\{extend as extend9};
+use Mgnc\GrammarPart10\{extend as extend10};
 // Generated structural table. Production IDs are independent of source partitioning.
 public alias Slot=StoredSlot;
 public alias Prediction=StoredPrediction;
@@ -27,6 +28,7 @@ let makeSlots:Function():Paged<Slot>=function():Paged<Slot>{
  result=extend7(result);
  result=extend8(result);
  result=extend9(result);
+ result=extend10(result);
  result
 };
 public let slots:Paged<Slot>=makeSlots();
@@ -100,6 +102,8 @@ let makePredictions:Function():Paged<List<Prediction>>=function():Paged<List<Pre
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:598,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:606,first:0,second:0,nullable:true},Prediction{slot:607,first:4,second:0,nullable:false}]);
  result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:610,first:4,second:0,nullable:false}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:623,first:299445399048472100,second:15,nullable:true}]);
+ result=push<List<Prediction>>(result,List<Prediction>[Prediction{slot:626,first:0,second:0,nullable:true},Prediction{slot:627,first:299445399048472100,second:15,nullable:false},Prediction{slot:630,first:299445399048472100,second:15,nullable:false},Prediction{slot:633,first:299445399048472100,second:15,nullable:false},Prediction{slot:637,first:299445399048472100,second:15,nullable:false},Prediction{slot:641,first:299445399048472100,second:15,nullable:false}]);
  result
 };
 public let predictions:Paged<List<Prediction>>=makePredictions();
@@ -170,6 +174,8 @@ public let ntContractMethods:Int=64;
 public let ntContractMethod:Int=65;
 public let ntWitnessMethods:Int=66;
 public let ntWitnessMethod:Int=67;
+public let ntStandalone:Int=68;
+public let ntStandaloneItems:Int=69;
 public let ruleModule:Int=0;
 public let ruleNamespace:Int=1;
 public let rulePathName:Int=2;
@@ -349,6 +355,13 @@ public let ruleWitnessMethodsEmpty:Int=175;
 public let ruleWitnessMethodsAppend:Int=176;
 public let ruleWitnessMethod:Int=177;
 public let rulePackage:Int=178;
+public let ruleStandalone:Int=179;
+public let ruleStandaloneEmpty:Int=180;
+public let ruleStandaloneStatement:Int=181;
+public let ruleStandaloneCompile:Int=182;
+public let ruleStandalonePublicCompile:Int=183;
+public let ruleStandalonePublicLet:Int=184;
+public let ruleStandaloneAttributed:Int=185;
 public let closeTerminal:Int=-18;
 public type Lookahead=product{ordinary:Int;extra:Int;high:Int;};
 public let lookahead:Function(Lexeme,Lexeme):Lookahead=function(token:Lexeme,close:Lexeme):Lookahead{

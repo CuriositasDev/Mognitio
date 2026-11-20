@@ -1,6 +1,8 @@
 """Use the private sequenced-packet channel of an identity-bearing compiler."""
 from dataclasses import dataclass
 import os
+from pathlib import Path
+import sys
 import re
 import secrets
 import selectors
@@ -70,6 +72,10 @@ def validate(reply, profile, stage):
         start, end, line, column = (decimal(v, 999999999) for v in fields[5:9])
         if end < start or not line or not column:
             raise WorkerError("Invalid diagnostic span")
+    elif reply.status == "analysis" and profile in ("syntax", "analysis"):
+        allowed = ("syntax",) if profile == "syntax" else ("checked", "partial")
+        if not fields or fields[0] not in allowed:
+            raise WorkerError("Invalid analysis completion state")
     elif reply.status == "plan" and profile == "tests":
         if not fields or len(fields) != 1 + 5 * decimal(fields[0], MAX_REPLY // 10):
             raise WorkerError("Invalid test plan size")
@@ -140,7 +146,10 @@ def request(compiler, build, profile, *, path="", generation="", timeout=None, o
         return value
 
     parent, child = socket.socketpair(type=socket.SOCK_SEQPACKET)
-    with parent, child, subprocess.Popen([EXEC_NAME], executable=compiler, stdin=child, stdout=child,
+    guard = Path(__file__).resolve().parents[1] / "lsp/worker_exec.py"
+    launch = [sys.executable, "-I", "-B", str(guard), str(os.getpid()), "--argv0", EXEC_NAME,
+              os.path.abspath(compiler)]
+    with parent, child, subprocess.Popen(launch, stdin=child, stdout=child,
                                         stderr=subprocess.PIPE, close_fds=True) as process:
         try:
             child.close()

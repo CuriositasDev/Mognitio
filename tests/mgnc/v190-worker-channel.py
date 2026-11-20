@@ -55,16 +55,19 @@ def check(compiler, build):
         file = src / "checks.mgn"
         text = 'namespace App;\n// 🐈\n@test let ok:Function():Unit=function():Unit{assert true;};\n'
         file.write_text(text)
-        assert query("analysis", path=manifest, generation="3").status == "ok"
+        checked = query("analysis", path=manifest, generation="3")
+        assert checked.status == "analysis" and checked.fields[:2] == ("checked", "T"), checked
         plan = query("tests", path=manifest)
         assert plan.status == "plan"
         assert plan.fields == ("1", "0", "src/checks.mgn", "App", "ok", str(text.encode().index(b"@"))), plan
         file.write_text("namespace App;\nlet unused:Int=true;\n")
         diagnostic = query("analysis", path=manifest, generation="4")
-        assert diagnostic.status == "diagnostic" and diagnostic.fields[:3] == ("1", "src/checks.mgn", "type"), diagnostic
-        assert query("syntax", path=file, generation="4").status == "ok"
+        assert diagnostic.status == "analysis" and diagnostic.fields[:4] == ("partial", "D", "src/checks.mgn", "type"), diagnostic
+        syntax = query("syntax", path=file, generation="4")
+        assert syntax.fields[:2] == ("syntax", "T"), syntax
         file.write_text("namespace App;\nlet = ;\n")
-        assert query("syntax", path=file, generation="5").status == "diagnostic"
+        syntax = query("syntax", path=file, generation="5")
+        assert syntax.fields[:2] == ("syntax", "D"), syntax
         public = subprocess.run([compiler, "check", manifest], capture_output=True, timeout=10)
         assert public.returncode == 2, public
     print("Native public startup, private handshake, identity, test plan and snapshot diagnostics passed")

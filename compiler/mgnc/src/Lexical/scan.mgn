@@ -40,7 +40,9 @@ let chunkSource:Function(String):Result<List<String>,Diagnostic>=function(source
   };chunks=next;
  };Result<List<String>,Diagnostic>::Ok(chunks)
 };
-public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(source:String):Result<Snapshot,Diagnostic>{
+public type Scan=product{snapshot:Snapshot;issues:List<Diagnostic>;};
+public let scan:Function(String,Bool):Result<Scan,Diagnostic>=function(source:String,recover:Bool):Result<Scan,Diagnostic>{
+ var issues:List<Diagnostic>=List<Diagnostic>[];
  var tokens:TokenStore=emptyTokens();
  var cache:List<WidthEntry>=List<WidthEntry>[];
  // 0 normal, 1 identifier, 2 decimal, 3 comment, 4 pending operator,
@@ -60,10 +62,10 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
    branch when{scalar==ascii13=>{line=line+1;column=1;},scalar==ascii10=>{branch when{!previousCR=>{line=line+1;},else=>unit};column=1;},else=>{column=column+1;}};
    previousCR=scalar==ascii13;
    // Materialize diagnostic spans only on error paths.
-   branch when{hereStart==0 && scalar=="\u{feff}"=>{return Result<Snapshot,Diagnostic>::Err(problem("source",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"BOM is not allowed"));},else=>unit};
+   branch when{hereStart==0 && scalar=="\u{feff}"=>{let issue:Diagnostic=problem("source",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"BOM is not allowed");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=0;continue;},else=>unit};
    branch when{state==3=>{branch when{scalar!=ascii13 && scalar!=ascii10=>{continue;},else=>{state=0;}};},else=>unit};
    branch when{state>=5=>{
-    branch when{scalar==ascii13||scalar==ascii10=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"newline in string"));},else=>unit};
+    branch when{scalar==ascii13||scalar==ascii10=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"newline in string");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=0;continue;},else=>unit};
     branch when{
      state==5=>{
       branch when{scalar==ascii34=>{
@@ -71,15 +73,15 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
       },scalar==ascii92=>{state=6;},else=>unit};
      },
      state==6=>{
-      branch when{scalar==ascii34||scalar==ascii92||scalar==ascii110||scalar==ascii114||scalar==ascii116||scalar==ascii48=>{state=5;},scalar==ascii117=>{state=7;},else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid escape"));}};
+      branch when{scalar==ascii34||scalar==ascii92||scalar==ascii110||scalar==ascii114||scalar==ascii116||scalar==ascii48=>{state=5;},scalar==ascii117=>{state=7;},else=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid escape");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=5;continue;}};
      },
-     state==7=>{branch when{scalar!=ascii123=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"expected unicode brace"));},else=>unit};hexValue=0;hexCount=0;state=8;},
+     state==7=>{branch when{scalar!=ascii123=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"expected unicode brace");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=5;continue;},else=>unit};hexValue=0;hexCount=0;state=8;},
      else=>{
       branch when{scalar==ascii125=>{
-       branch when{hexCount==0||hexValue>1114111||(hexValue>=55296&&hexValue<=57343)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode scalar"));},else=>unit};state=5;
+       branch when{hexCount==0||hexValue>1114111||(hexValue>=55296&&hexValue<=57343)=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode scalar");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=5;continue;},else=>unit};state=5;
       },else=>{
        let digit:Int=hexDigit(scalar);
-       branch when{digit<0||hexCount==6=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode escape"));},else=>unit};hexValue=hexValue*16+digit;hexCount=hexCount+1;
+       branch when{digit<0||hexCount==6=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid unicode escape");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=5;continue;},else=>unit};hexValue=hexValue*16+digit;hexCount=hexCount+1;
       }};
      },
     };
@@ -87,10 +89,10 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
    },else=>unit};
    branch when{state==1&&(isLetter(scalar)||isDigit(scalar))=>{fragments=fragments->append(scalar);continue;},else=>unit};
    branch when{state==2&&isDigit(scalar)=>{
-    branch when{leadingZero=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"leading zero in decimal"));},else=>unit};continue;
+    branch when{leadingZero=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"leading zero in decimal");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};leadingZero=false;},else=>unit};continue;
    },else=>unit};
    branch when{state==1||state==2=>{
-    branch when{state==2&&isLetter(scalar)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid decimal suffix"));},else=>unit};
+    branch when{state==2&&isLetter(scalar)=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid decimal suffix");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};},else=>unit};
     let name:String=branch when{state==1=>canonical(fragments->join("")),else=>""};
     tokens=addToken(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),else=>2},text:name,start:start,end:hereStart,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn});state=0;
    },else=>unit};
@@ -100,7 +102,7 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
      pair=="//"=>{state=3;continue;},
      pairKind(pair)=>{tokens=addToken(tokens,Lexeme{kind:3,text:pair,start:start,end:offset,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});state=0;continue;},
      else=>{
-      branch when{(text==ascii38||text==ascii124)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:start,end:hereStart,line:startLine,column:startColumn},"incomplete operator"));},else=>unit};
+      branch when{(text==ascii38||text==ascii124)=>{let issue:Diagnostic=problem("lexical",Span{start:start,end:hereStart,line:startLine,column:startColumn},"incomplete operator");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};},else=>unit};
       tokens=addToken(tokens,Lexeme{kind:3,text:text,start:start,end:hereStart,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:hereScalar,endLine:hereLine,endColumn:hereColumn});state=0;
      },
     };
@@ -114,18 +116,21 @@ public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(sour
     scalar==ascii123||scalar==ascii125||scalar==ascii40||scalar==ascii41||scalar==ascii59||scalar==ascii44||scalar==ascii92||scalar==ascii42||scalar==ascii37||scalar==ascii91||scalar==ascii93||scalar==ascii64=>{
      tokens=addToken(tokens,Lexeme{kind:3,text:scalar,start:hereStart,end:offset,line:hereLine,column:hereColumn,scalarStart:hereScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
     },
-    else=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid source character"));},
+    else=>{let issue:Diagnostic=problem("lexical",Span{start:hereStart,end:offset,line:hereLine,column:hereColumn},"invalid source character");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};state=0;continue;},
    };
    start=hereStart;startLine=hereLine;startColumn=hereColumn;startScalar=hereScalar;
   };
  };
  let endSite:Site=Site{span:Span{start:offset,end:offset,line:line,column:column},scalarStart:scalarIndex,scalarEnd:scalarIndex,endLine:line,endColumn:column};
- branch when{state>=5=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",endSite->span,"unterminated string"));},else=>unit};
+ branch when{state>=5=>{let issue:Diagnostic=problem("lexical",endSite->span,"unterminated string");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};},else=>unit};
  branch when{state==1||state==2||state==4=>{
-  branch when{state==4&&(text==ascii38||text==ascii124)=>{return Result<Snapshot,Diagnostic>::Err(problem("lexical",Span{start:start,end:offset,line:startLine,column:startColumn},"incomplete operator"));},else=>unit};
+  branch when{state==4&&(text==ascii38||text==ascii124)=>{let issue:Diagnostic=problem("lexical",Span{start:start,end:offset,line:startLine,column:startColumn},"incomplete operator");branch when{!recover=>{return Result<Scan,Diagnostic>::Err(issue);},issues->length()<201=>{issues=issues->append(issue);},else=>unit};},else=>unit};
   let name:String=branch when{state==1=>canonical(fragments->join("")),state==4=>text,else=>""};
   tokens=addToken(tokens,Lexeme{kind:branch when{state==1=>wordKind(name),state==2=>2,else=>3},text:name,start:start,end:offset,line:startLine,column:startColumn,scalarStart:startScalar,scalarEnd:scalarIndex,endLine:line,endColumn:column});
  },else=>unit};
  tokens=addToken(tokens,Lexeme{kind:0,text:"",start:endSite->span->start,end:endSite->span->end,line:endSite->span->line,column:endSite->span->column,scalarStart:endSite->scalarStart,scalarEnd:endSite->scalarEnd,endLine:endSite->endLine,endColumn:endSite->endColumn});
- Result<Snapshot,Diagnostic>::Ok(Snapshot{text:source,tokens:tokens,end:endSite})
+ Result<Scan,Diagnostic>::Ok(Scan{snapshot:Snapshot{text:source,tokens:tokens,end:endSite},issues:issues})
+};
+public let scanSource:Function(String):Result<Snapshot,Diagnostic>=function(source:String):Result<Snapshot,Diagnostic>{
+ let result:Scan=try scan(source,false);Result<Snapshot,Diagnostic>::Ok(result->snapshot)
 };

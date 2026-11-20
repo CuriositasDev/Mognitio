@@ -30,7 +30,7 @@ def load(path):
   while todo:
    x=todo.pop();assert x!=n,('zero-consumption cycle',n)
    if x not in seen:seen.add(x);todo.extend(graph[x])
- reached={1}
+ reached={ns['Module'],ns['Standalone']}
  while True:
   more={x for r in rules if r['lhs'] in reached for x in r['rhs'] if x>0}
   if more<=reached:break

@@ -24,6 +24,8 @@ public let argumentType:Function(Type,Int,Span):Result<Int,Diagnostic>=function(
 public let fixed:Function(Int,List<Int>):Descriptor=function(bytes:Int,references:List<Int>):Descriptor{Descriptor{mode:0,size:branch when{bytes<32=>32,else=>bytes},references:references,variants:List<List<Int>>[],elementManaged:false}};
 public let build:Function(Plan,Closures):Result<Layouts,Diagnostic>=function(plan:Plan,closures:Closures):Result<Layouts,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let completed:Paged<Int>=try emissionTypes(plan);var seen:Map=create();loop over(completed->pages->append(completed->tail) as page:List<Int>){loop over(page as id:Int){seen=try put(seen,id,1);};};
+ // The emitter also creates static String objects for runtime messages and assertion sites.
+ seen=try put(seen,3,1);
  // Descriptor order follows structural type identity, independent of interning order.
  var entries:Paged<Entry>=empty<Entry>();var typeCursor:Int=0;
  loop while(typeCursor<plan->types->types->count){

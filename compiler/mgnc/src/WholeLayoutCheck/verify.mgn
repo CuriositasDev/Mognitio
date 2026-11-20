@@ -16,7 +16,7 @@ let fixed:Function(Descriptor,Int,List<Int>,Span):Result<Unit,Diagnostic>=functi
  try require(descriptor->mode==0&&descriptor->size==size&&integers(descriptor->references,refs)&&descriptor->variants->length()==0&&!descriptor->elementManaged,span,"fixed descriptor layout");Result<Unit,Diagnostic>::Ok(unit)
 };
 public let verify:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:Plan,layouts:Layouts):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};var roots:Paged<Int>=empty<Int>();var needed:Map=create();var payloads:Map=create();try require(layouts->boxes->count==plan->types->types->count,span,"payload box compiler domain extent");
+ let span:Span=Span{start:0,end:0,line:1,column:1};var roots:Paged<Int>=push<Int>(empty<Int>(),3);var needed:Map=create();var payloads:Map=create();try require(layouts->boxes->count==plan->types->types->count,span,"payload box compiler domain extent");
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){roots=push<Int>(roots,instance->body->resultType);
   loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){roots=push<Int>(roots,slot->valueType);};};
   loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as operation:Operation){loop over(operation->arguments as value:Argument){branch on value{Argument::Type(id:Int)=>{roots=push<Int>(roots,id);},Argument::Value(term:ValueTerm)=>unit};};};};};

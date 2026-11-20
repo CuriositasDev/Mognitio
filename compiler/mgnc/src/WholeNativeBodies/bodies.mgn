@@ -27,7 +27,7 @@ public let emit:Function(Code,Native,Mode):Result<Code,Diagnostic>=function(init
     name=="switch"=>{code=load(code,0,5,offset(try atList<Int>(term->inputs,0)));code=load(code,0,0,24);var position:Int=0;loop over(term->variants as variant:Int){code=constant(code,7,0,variant);code=jump(code,List<Int>[15,132],procedure->blocks+(try atList<Int>(term->targets,position)));position=position+1;};code=jump(code,List<Int>[233],2);},
     name=="return"=>{code=load(code,0,5,offset(try atList<Int>(term->inputs,0)));code=end(code,procedure->frame);},
     name=="assertion"=>{let location:Int=try literal(plan,owner,blockId,-1,term->origin->span);
-     branch on mode{Mode::Ordinary=>{code=symbol(code,7,location);},Mode::Testing(suite:Suite)=>{
+     branch on mode{Mode::Ordinary=>{code=symbol(code,7,location);},Mode::Application=>{code=symbol(code,7,location);},Mode::Testing(suite:Suite)=>{
       let site:Int=try findSite(suite->byLabel,location);try require(site>=0,term->origin->span,"unmapped test assertion site");
       code=immediate(code,0,site);code=store(code,15,suiteOffset(plan)+24,0);
      }};

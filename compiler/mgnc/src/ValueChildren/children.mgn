@@ -17,7 +17,7 @@ public let child:Function(State,SyntaxForest,Frame):Result<ChildEnvironment,Diag
  var scope:Environment=frame->environment;var canReach:Bool=scope->reachable;var mapping:List<Int>=frame->mapping;var binders:List<Parent>=frame->binders;
  branch when{rule==ruleBlock&&next>0=>{
   let previous:Node=try lookup<Node>(state->nodes,try item(frame->children,next-1));
-  branch when{!previous->normal=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("semantic",try site(tree,try item(expression->children,next)),"unreachable block element"));},else=>unit};
+  branch when{!previous->normal=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("semantic",try site(tree,try item(expression->children,next)),"Unreachable block element"));},else=>unit};
  },else=>unit};
  branch when{rule==ruleFunction=>{
   let owner:Int=branch on frame->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<ChildEnvironment,Diagnostic>::Err(problem("internal",expression->span,"function owner invariant"));}};

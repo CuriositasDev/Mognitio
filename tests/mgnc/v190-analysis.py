@@ -31,6 +31,17 @@ def check(compiler, build, reference):
     assert [d["start"] for d in recovered["diagnostics"]] == [broken.index(";"), broken.index(";", broken.index(";")+1)], recovered
     assert len(recovered["tokens"]["file:///multi.mgn"]) == 3, recovered
 
+    duplicate = "namespace App; // 🐈\n@test @test let check:Function():Unit=function():Unit{assert true;};"
+    path = "src/app.mgn"
+    annotated = run({"root": "/project", "sources": {path: duplicate},
+                     "manifest": '[project]\nname="app"\nroot_namespace="App"\n'})
+    primary, = annotated["diagnostics"]
+    note, = primary["related"]
+    encoded = duplicate.encode()
+    first, second = encoded.index(b"@test"), encoded.rindex(b"@test")
+    assert (primary["message"], primary["start"], primary["end"]) == ("Duplicate attribute", second, second + 5)
+    assert note == dict(path=path, message="First attribute", start=first, end=first+5)
+
     count = 0
     for manifest in sorted((ROOT / "examples").glob("*/mognitio.toml")):
         sources = {path.relative_to(manifest.parent).as_posix(): path.read_bytes().decode()

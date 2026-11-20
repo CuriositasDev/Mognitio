@@ -1,5 +1,5 @@
 namespace Mgnc\MetadataSyntax;
-use Mgnc\Data\{Span,Diagnostic,problem};
+use Mgnc\Data\{Span,Diagnostic,Related,problem};
 use Mgnc\SemanticData\{Attribute};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\Projection\{parts,item,text,site};
@@ -11,8 +11,18 @@ public let read:Function(SyntaxForest,List<Int>):Result<List<Attribute>,Diagnost
   values=try parts(tree,try item(values,2));branch when{values->length()==0=>{break;},else=>unit};
  };Result<List<Attribute>,Diagnostic>::Ok(result)
 };
-public let targets:Function(List<Attribute>,Bool):Result<Unit,Diagnostic>=function(attributes:List<Attribute>,valid:Bool):Result<Unit,Diagnostic>{
- var seen:Bool=false;loop over(attributes as attribute:Attribute){
-  branch when{attribute->name!="test"=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->nameSpan,"unknown compiler attribute (unsupported in this version)"));},seen=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->span,"duplicate attribute"));},!valid=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->span,"test requires a module-level let declaration"));},else=>unit};seen=true;
+let withNote:Function(Span,String,Span,String):Diagnostic=function(span:Span,message:String,other:Span,note:String):Diagnostic{
+ Diagnostic{phase:"semantic",span:span,message:message,related:List<Related>[Related{path:"",span:other,message:note}]}
+};
+public let targets:Function(List<Attribute>,Bool,Span):Result<Unit,Diagnostic>=function(attributes:List<Attribute>,valid:Bool,target:Span):Result<Unit,Diagnostic>{
+ var seen:Bool=false;var first:Span=target;
+ loop over(attributes as attribute:Attribute){
+  branch when{
+   attribute->name!="test"=>{return Result<Unit,Diagnostic>::Err(problem("semantic",attribute->nameSpan,"Unknown compiler attribute "+attribute->name+" (unsupported in this version)"));},
+   seen=>{return Result<Unit,Diagnostic>::Err(withNote(attribute->span,"Duplicate attribute",first,"First attribute"));},
+   !valid=>{return Result<Unit,Diagnostic>::Err(withNote(attribute->span,"test requires a module-level let declaration",target,"Invalid attribute target"));},
+   else=>unit
+  };
+  seen=true;first=attribute->span;
  };Result<Unit,Diagnostic>::Ok(unit)
 };

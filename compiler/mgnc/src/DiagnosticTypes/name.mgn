@@ -1,0 +1,59 @@
+namespace Mgnc\DiagnosticTypes;
+use Mgnc\Data\{Diagnostic,Paged,Span,empty,push,lookup,problem,number};
+use Mgnc\TypeData\{Argument,ValueTerm,Store,Type};
+use Mgnc\TypeOps\{argumentAt,functionKind,parameterKind};
+use Mgnc\Syntax\{Parent};
+use Mgnc\SemanticData\{Declaration,Parameter};
+use Mgnc\TextUtil\{at};
+
+type Part=product{id:Int;text:String;next:Int;};
+let parameter:Function(Store,Int,Int,Span):Result<String,Diagnostic>=function(store:Store,id:Int,index:Int,span:Span):Result<String,Diagnostic>{
+ let decl:Declaration=try lookup<Declaration>(store->headers->declarations,id);
+ branch on decl->parameters->at(index){
+  Result<Parameter,IndexError>::Ok(param:Parameter)=>Result<String,Diagnostic>::Ok(param->name),
+  Result<Parameter,IndexError>::Err(error:IndexError)=>Result<String,Diagnostic>::Err(problem("internal",span,"missing diagnostic type parameter"))
+ }
+};
+let valueName:Function(Store,ValueTerm,Span):Result<String,Diagnostic>=function(store:Store,value:ValueTerm,span:Span):Result<String,Diagnostic>{
+ branch on value->parameter{
+  Parent::None=>Result<String,Diagnostic>::Ok(number(value->value)),
+  Parent::Some(index:Int)=>parameter(store,value->owner,index,span)
+ }
+};
+// Expand only the arguments in the reported type. Nominal members can be
+// recursive and are deliberately not part of its displayed spelling.
+public let display:Function(Store,Int,Span):Result<String,Diagnostic>=function(store:Store,root:Int,span:Span):Result<String,Diagnostic>{
+ var parts:Paged<Part>=push<Part>(empty<Part>(),Part{id:root,text:"",next:-1});var current:Int=0;
+ var words:List<String>=List<String>[];
+ loop while(current>=0){
+  let part:Part=try lookup<Part>(parts,current);current=part->next;
+  branch when{part->id<0=>{words=words->append(part->text);continue;},else=>unit};
+  let shape:Type=try lookup<Type>(store->types,part->id);let kind:Int=shape->kind;
+  var name:String=branch when{kind>=0&&kind<6=>at(List<String>["Unit","Int","Bool","String","IndexError","SliceError"],kind),
+   kind==10=>"List",kind==11=>"Result",kind==functionKind=>"Function",kind==23=>"Int",else=>""};
+  branch when{kind==parameterKind=>{
+   let owner:Int=branch on shape->owner{Parent::Some(id:Int)=>id,Parent::None=>{return Result<String,Diagnostic>::Err(problem("internal",span,"missing parameter owner"));}};
+   let value:Argument=try argumentAt(shape->arguments,0,span);
+   branch on value{Argument::Value(term:ValueTerm)=>{words=words->append(try parameter(store,owner,term->value,span));},Argument::Type(id:Int)=>{return Result<String,Diagnostic>::Err(problem("internal",span,"missing parameter ordinal"));}};
+   continue;
+  },name==""=>{branch on shape->owner{
+   Parent::Some(id:Int)=>{let decl:Declaration=try lookup<Declaration>(store->headers->declarations,id);name=decl->name;},
+   Parent::None=>{return Result<String,Diagnostic>::Err(problem("internal",span,"missing diagnostic type name"));}
+  };},else=>unit};
+  words=words->append(name);let count:Int=shape->arguments->length();
+  branch when{count==0=>{continue;},else=>unit};
+  words=words->append(branch when{kind==functionKind=>"(",else=>"<"});
+  branch when{kind!=functionKind=>{parts=push<Part>(parts,Part{id:-1,text:">",next:current});current=parts->count-1;},else=>unit};
+  var i:Int=count;
+  loop while(i>0){
+   i=i-1;let argument:Argument=try argumentAt(shape->arguments,i,span);
+   let arg:Part=branch on argument{
+    Argument::Type(id:Int)=>Part{id:id,text:"",next:current},
+    Argument::Value(term:ValueTerm)=>Part{id:-1,text:try valueName(store,term,span),next:current}
+   };
+   parts=push<Part>(parts,arg);current=parts->count-1;
+   let separator:String=branch when{kind==functionKind&&i==count-1=>"): ",i>0=>", ",else=>""};
+   branch when{separator!=""=>{parts=push<Part>(parts,Part{id:-1,text:separator,next:current});current=parts->count-1;},else=>unit};
+  };
+ };Result<String,Diagnostic>::Ok(words->join(""))
+};

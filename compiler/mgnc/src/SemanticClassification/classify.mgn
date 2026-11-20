@@ -8,7 +8,7 @@ use Mgnc\SemanticData\{Headers,Module,Declaration,Introduction,Parameter};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{getNode};
-use Mgnc\Projection\{parts,item,text,site,selected,concrete};
+use Mgnc\Projection\{parts,item,text,site,selected};
 use Mgnc\HeaderRead\{rightList};
 use Mgnc\BridgeLists\{expressions as callArguments};
 use Mgnc\Tables\{replaceItem};
@@ -16,6 +16,18 @@ use Mgnc\Classification\{prune};
 use Mgnc\Grammar\{ruleWitnessMethod,rulePackage,ruleArgumentType,ruleArgumentValue,ruleCall,ruleVariant,ruleBlock,ruleFunction,ruleLetBinding,ruleVarBinding,ruleLoopOver,ruleOnArm,ruleGenericApply,ruleName,ruleTypeName,ruleTypeApply,ruleConstructName,ruleConstructGeneric,ruleValueReference};
 public type Binding=product{name:String;kind:Int;after:Int;until:Int;};
 public type BindingIndex=product{slots:IntMap;buckets:Paged<List<Binding>>;required:Bool;};
+// An unclassified call receiver may itself have competing call/package
+// interpretations. Only a single unparenthesized variant is a constructor.
+let bareVariant:Function(SyntaxForest,Int):Result<Bool,Diagnostic>=function(tree:SyntaxForest,root:Int):Result<Bool,Diagnostic>{
+ var id:Int=root;
+ loop while(true){
+  let node:ForestNode=try getNode(tree->nodes,id);
+  branch when{node->alternatives>=0=>{return Result<Bool,Diagnostic>::Ok(false);},
+              node->rule==ruleVariant=>{return Result<Bool,Diagnostic>::Ok(true);},node->left<0=>{break;},else=>unit};
+  let child:ForestNode=try getNode(tree->nodes,node->left);
+  branch when{child->symbol<=0=>{break;},else=>unit};id=node->left;
+ };Result<Bool,Diagnostic>::Ok(false)
+};
 let introduce:Function(BindingIndex,Binding):Result<BindingIndex,Diagnostic>=function(index:BindingIndex,binding:Binding):Result<BindingIndex,Diagnostic>{
  let key:Int=hash("",binding->name);let slot:Int=try mapGet(index->slots,key);
  branch when{slot<0=>Result<BindingIndex,Diagnostic>::Ok(BindingIndex{slots:try mapPut(index->slots,key,index->buckets->count),buckets:push<List<Binding>>(index->buckets,List<Binding>[binding]),required:index->required}),else=>{
@@ -108,8 +120,7 @@ public let classifyPrepared:Function(Headers,Int,Int,Parent,BindingIndex):Result
    let choice:ForestNode=try getNode(tree->nodes,family);
    branch when{choice->rule==ruleCall=>{
     let fields:List<Int>=try selected(tree,id,ruleCall);
-    let callee:Int=try concrete(tree,try item(fields,0));let calleeNode:ForestNode=try getNode(tree->nodes,callee);
-    branch when{calleeNode->rule==ruleVariant&&(try callArguments(tree,try item(fields,2)))->length()==1=>{rejected=rejected->append(family);},else=>unit};
+    branch when{(try bareVariant(tree,try item(fields,0)))&&(try callArguments(tree,try item(fields,2)))->length()==1=>{rejected=rejected->append(family);},else=>unit};
    },choice->rule==rulePackage=>{
     let fields:List<Int>=try selected(tree,id,rulePackage);let annotation:Int=try item(fields,0);
     let kind:Int=try kindAt(bindings,try text(tree,annotation),choice->start);

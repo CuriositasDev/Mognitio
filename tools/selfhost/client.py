@@ -67,11 +67,12 @@ def inspect_reply(wire, expected):
 def validate(reply, profile, stage):
     fields = reply.fields
     if reply.status == "diagnostic":
-        if len(fields) != 12 or fields[0] not in ("1", "2", "3") or fields[4] not in ("0", "1"):
+        if len(fields) < 12 or (len(fields)-12) % 6 or fields[0] not in ("1", "2", "3") or fields[4] not in ("0", "1"):
             raise WorkerError("Invalid compiler diagnostic")
-        start, end, line, column = (decimal(v, 999999999) for v in fields[5:9])
-        if end < start or not line or not column:
-            raise WorkerError("Invalid diagnostic span")
+        for index in (5, *range(14, len(fields), 6)):
+            start, end, line, column = (decimal(v, 999999999) for v in fields[index:index+4])
+            if end < start or not line or not column:
+                raise WorkerError("Invalid diagnostic span")
     elif reply.status == "analysis" and profile in ("syntax", "analysis"):
         allowed = ("syntax",) if profile == "syntax" else ("checked", "partial")
         if not fields or fields[0] not in allowed:
@@ -94,7 +95,12 @@ def validate(reply, profile, stage):
     elif reply.status == "publication" and profile in ("build", "suite"):
         if not stage or len(fields) != 2 or fields[0] != stage:
             raise WorkerError("Unexpected publication result")
-    elif reply.status != "ok" or profile not in ("syntax", "identity", "analysis") or fields:
+    elif reply.status == "application" and profile == "application" and not fields:
+        return reply
+    elif reply.status == "ok" and profile == "identity":
+        if len(fields) != 2 or not fields[0] or not re.fullmatch("[0-9a-f]{64}", fields[1]):
+            raise WorkerError("Invalid embedded compiler identity")
+    else:
         raise WorkerError("Unexpected compiler result")
     return reply
 
@@ -120,12 +126,13 @@ def send_body(sock, body):
     packet(sock, b"")
 
 
-def request(compiler, build, profile, *, path="", generation="", timeout=None, on_ready=None):
+def request(compiler, build, profile, *, path="", generation="", timeout=None, on_ready=None, on_application=None):
     if not re.fullmatch("[0-9a-f]{64}", build):
         raise ValueError("Invalid compiler identity")
-    if profile not in ("identity", "analysis", "syntax", "tests", "build", "suite"):
+    if profile not in ("identity", "analysis", "syntax", "tests", "build", "suite", "application"):
         raise ValueError("Unsupported worker profile")
     if (bool(generation) != (profile in ("analysis", "syntax"))
+            or (on_application is not None) != (profile == "application")
             or bool(path) != (profile != "identity") or (on_ready is not None) != (profile in ("build", "suite"))):
         raise ValueError("Incorrect worker request fields")
     rid = secrets.token_hex(16)
@@ -154,6 +161,7 @@ def request(compiler, build, profile, *, path="", generation="", timeout=None, o
         try:
             child.close()
             wire = bytearray()
+            application_reply = False
             diagnostics = bytearray()
             hello = b"MGN-WORKER/1\0" + build.encode() + b"\0"
             admission = None
@@ -204,6 +212,11 @@ def request(compiler, build, profile, *, path="", generation="", timeout=None, o
                         else:
                             if not wire and data.startswith(b"MGN-RESULT/1\0"):
                                 wire.extend(data)
+                                if on_application is not None:
+                                    first = inspect_reply(wire, expected)
+                                    application_reply = first.status == "application" and not first.fields
+                            elif application_reply and data.startswith(b"R"):
+                                on_application(decode_fields(data[1:]))
                             elif wire and data.startswith(b"R"):
                                 wire.extend(data[1:])
                             else:

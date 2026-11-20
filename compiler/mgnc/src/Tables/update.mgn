@@ -1,5 +1,5 @@
 namespace Mgnc\Tables;
-use Mgnc\Data\{Paged,Diagnostic,lookup,pageAt,problem,Span};
+use Mgnc\Data\{Related,Paged,Diagnostic,lookup,pageAt,problem,Span};
 public template replaceList<T> = function(values:List<T>,index:Int,value:T):List<T>{
  var result:List<T>=List<T>[];var cursor:Int=0;
  loop over(values as previous:T){result=result->append(branch when{cursor==index=>value,else=>previous});cursor=cursor+1;};
@@ -11,7 +11,7 @@ public template replaceItem<T> = function(table:Paged<T>,index:Int,value:T):Resu
  branch when{page==table->pages->length()=>Result<Paged<T>,Diagnostic>::Ok(Paged<T>{
   pages:table->pages,groups:table->groups,group:table->group,
   tail:replaceList<T>(table->tail,index%64,value),count:table->count}),else=>{
-  let previous:List<T>=branch on pageAt<T>(table,page){Result<List<T>,IndexError>::Ok(found:List<T>)=>found,Result<List<T>,IndexError>::Err(error:IndexError)=>{return Result<Paged<T>,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"missing page"});}};
+  let previous:List<T>=branch on pageAt<T>(table,page){Result<List<T>,IndexError>::Ok(found:List<T>)=>found,Result<List<T>,IndexError>::Err(error:IndexError)=>{return Result<Paged<T>,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"missing page"});}};
   let changed:List<T>=replaceList<T>(previous,index%64,value);
   var groups:List<List<List<T>>>=table->groups;var group:List<List<T>>=table->group;
   branch when{page/64==groups->length()=>{group=replaceList<List<T>>(group,page%64,changed);},else=>{
@@ -22,5 +22,5 @@ public template replaceItem<T> = function(table:Paged<T>,index:Int,value:T):Resu
  }}
 };
 public template atList<T> = function(values:List<T>,index:Int):Result<T,Diagnostic>{
- branch on values->at(index){Result<T,IndexError>::Ok(value:T)=>Result<T,Diagnostic>::Ok(value),Result<T,IndexError>::Err(error:IndexError)=>Result<T,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"invalid table index"})}
+ branch on values->at(index){Result<T,IndexError>::Ok(value:T)=>Result<T,Diagnostic>::Ok(value),Result<T,IndexError>::Err(error:IndexError)=>Result<T,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"invalid table index"})}
 };

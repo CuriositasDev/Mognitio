@@ -14,7 +14,7 @@ use Mgnc\SemanticData\{Declaration,Attribute,Module};
 public type Entry=product{test:TestCase;span:Span;cell:Int;init:Initialization;};
 public type Site=product{label:Int;origin:Origin;};
 public type Suite=product{entries:Paged<Entry>;sites:Paged<Site>;byLabel:Map;};
-public type Mode=sum{Ordinary;Testing(Suite);};
+public type Mode=sum{Ordinary;Application;Testing(Suite);};
 public let build:Function(Native,Paged<TestCase>):Result<Suite,Diagnostic>=function(plan:Native,cases:Paged<TestCase>):Result<Suite,Diagnostic>{
  var entries:Paged<Entry>=empty<Entry>();var byLabel:Map=create();var sites:Paged<Site>=empty<Site>();
  var inits:Paged<Initialization>=empty<Initialization>();var selected:Map=create();

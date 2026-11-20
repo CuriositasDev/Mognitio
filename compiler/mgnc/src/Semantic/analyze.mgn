@@ -2,7 +2,7 @@ namespace Mgnc\Semantic;
 use Mgnc\WitnessVerification\{verify as verifyWitnesses};
 use Mgnc\NameIndex\{create as createIndex};
 use Mgnc\InputDiagnostics\{escapePath};
-use Mgnc\Data\{Diagnostic,lookup,problem,Span,Paged,empty,push};
+use Mgnc\Data\{Related,Diagnostic,lookup,problem,Span,Paged,empty,push};
 use Mgnc\Syntax\{Parent};
 use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
@@ -30,7 +30,7 @@ use Mgnc\VariantSupport\{memberType};
 use Mgnc\Tables\{replaceItem};
 public type SemanticProject=product{state:State;entry:Int;};
 let internal:Function(Diagnostic):InputError=function(error:Diagnostic):InputError{
- InputError{status:3,path:"compiler",diagnostic:Diagnostic{phase:"internal",span:error->span,message:error->message},positionKnown:false,operation:"",kind:"",ioPhase:""}
+ InputError{status:3,path:"compiler",diagnostic:Diagnostic{related:List<Related>[],phase:"internal",span:error->span,message:error->message},positionKnown:false,operation:"",kind:"",ioPhase:""}
 };
 let atDeclaration:Function(Headers,Int,Diagnostic):InputError=function(headers:Headers,id:Int,error:Diagnostic):InputError{
  let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(failure:Diagnostic)=>{return internal(failure);}};
@@ -137,7 +137,7 @@ public let checkSources:Function(ProjectInput):Result<State,InputError>=function
   loop over(module->declarations as id:Int){
    let declared:Declaration=branch on lookup<Declaration>(headers->declarations,id){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>{return Result<State,InputError>::Err(internal(error));}};
    branch when{runtimeDeclaration(declared->kind)=>{
-    branch when{!reachable=>{return Result<State,InputError>::Err(atDeclaration(headers,id,problem("semantic",declared->span,"unreachable module declaration")));},else=>unit};
+    branch when{!reachable=>{return Result<State,InputError>::Err(atDeclaration(headers,id,problem("semantic",declared->span,"Unreachable module declaration")));},else=>unit};
     state=branch on body(state,id,bindings){Result<State,Diagnostic>::Ok(value:State)=>value,Result<State,Diagnostic>::Err(error:Diagnostic)=>{return Result<State,InputError>::Err(atDeclaration(headers,id,error));}};
     let completed:BodyState=branch on lookup<BodyState>(state->bodies,id){Result<BodyState,Diagnostic>::Ok(value:BodyState)=>value,Result<BodyState,Diagnostic>::Err(error:Diagnostic)=>{return Result<State,InputError>::Err(internal(error));}};
     let root:Int=branch on completed{BodyState::Complete(value:Int)=>value,BodyState::NotRequired=>{return Result<State,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));},BodyState::Pending=>{return Result<State,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));},BodyState::Checking=>{return Result<State,InputError>::Err(internal(problem("internal",declared->span,"module body is incomplete")));}};

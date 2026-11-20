@@ -1,0 +1,10 @@
+Mognitio native toolchain for Linux amd64
+ProjectCuriositas
+
+The compiler and generated application runtime use Linux system calls.
+The command and language-server coordinators use the system Python 3 standard library.
+
+On a finite inherited file-size limit, the private application process uses
+AsmJit to link compiler-produced references in memory. Its license is
+included in ASMJIT-LICENSE.txt. The system C and C++ runtimes supply the
+shared-library ABI.

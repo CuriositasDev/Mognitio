@@ -1,7 +1,7 @@
 namespace Mgnc\Project;
 use Std\Io\{readTextFile,readDirectory,inspectPath,joinPath,IoError,PathInfo,PathInfoError,FileIdentity,DirectoryEntry,DirectoryEntryKind};
 use Mgnc\InputData\{InputError,SourceUnit,ProjectInput,failure,fromIo,fromInspection,kindName};
-use Mgnc\Data\{Diagnostic};
+use Mgnc\Data\{Related,Diagnostic};
 use Mgnc\TextUtil\{at,code,cut,starts,ends,identifier};
 use Mgnc\Manifest\{Manifest,parse};
 type Pending=product{path:String;relative:String;nameSpace:String;valid:Bool;info:PathInfo;order:Int;name:String;};
@@ -28,7 +28,7 @@ let read:Function(String,Bool):Result<String,InputError>=function(path:String,ma
   branch when{kindName(error->kind)=="InvalidEncoding"=>{
    let original:InputError=fromIo(error);
    return Result<String,InputError>::Err(InputError{status:branch when{manifest=>2,else=>1},path:original->path,
-    diagnostic:Diagnostic{phase:branch when{manifest=>"manifest",else=>"source"},span:original->diagnostic->span,message:"InvalidEncoding"},
+    diagnostic:Diagnostic{related:List<Related>[],phase:branch when{manifest=>"manifest",else=>"source"},span:original->diagnostic->span,message:"Invalid UTF-8 encoding"},
     positionKnown:false,operation:original->operation,kind:original->kind,ioPhase:original->ioPhase});
   },else=>unit};
   Result<String,InputError>::Err(fromIo(error))
@@ -87,7 +87,7 @@ let load:Function(String,Bool):Result<ProjectInput,InputError>=function(path:Str
    loop over(pending as rest:Pending){children=children->append(rest);};pending=children;
   },ends(current->relative,".mgn")=>{
    branch when{!regular(current->info->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","source must be a regular file"));},
-    !current->valid=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","invalid namespace directory"));},else=>unit};
+    !current->valid=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","Invalid namespace directory"));},else=>unit};
    loop over(identities as seen:FileIdentity){branch when{seen==current->info->identity=>{return Result<ProjectInput,InputError>::Err(failure(2,current->path,"io","duplicate physical input"));},else=>unit};};
    identities=identities->append(current->info->identity);
    let source:String=try read(current->path,false);
@@ -95,7 +95,7 @@ let load:Function(String,Bool):Result<ProjectInput,InputError>=function(path:Str
    sources=sources->append(SourceUnit{path:current->path,displayPath:"src/"+current->relative,relativePath:current->relative,expectedNamespace:current->nameSpace,text:source});
   },else=>unit};
  };
- branch when{requireEntry&&entry<0=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:Diagnostic{phase:"manifest",span:manifest->nameSpan,message:"entry source is missing"},positionKnown:true,operation:"",kind:"",ioPhase:""});},else=>unit};
+ branch when{requireEntry&&entry<0=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:Diagnostic{related:List<Related>[],phase:"manifest",span:manifest->nameSpan,message:"entry source is missing"},positionKnown:true,operation:"",kind:"",ioPhase:""});},else=>unit};
  Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:path,manifestText:manifestText,rootNamespace:manifest->root,entry:entry,sources:sources})
 };
 

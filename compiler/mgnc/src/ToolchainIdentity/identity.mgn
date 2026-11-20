@@ -1,3 +1,5 @@
 namespace Mgnc\ToolchainIdentity;
-// The payload builder freezes this field in the candidate sources before bootstrap.
+// The payload builder freezes these fields in the candidate sources before bootstrap.
 public let build:String="";
+public let upstream:String="";
+public let source:String="";

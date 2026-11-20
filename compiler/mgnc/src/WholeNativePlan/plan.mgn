@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativePlan;
+use Mgnc\WholeEntryPlan\{Initialization,forModule};
 use Mgnc\WholeValueABI\{revision as valueABI};
 use Mgnc\WholeRuntimeTypes\{Info as RuntimeTypes,build as runtimeTypeIds};
 use Mgnc\Data\{Paged,Span,Diagnostic,empty,push,lookup};
@@ -65,15 +66,8 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  var stream:Int=0;loop over(List<List<Int>>[List<Int>[115,116,100,105,110],List<Int>[115,116,100,111,117,116],List<Int>[115,116,100,101,114,114]] as bytes:List<Int>){
   literals=push<Literal>(literals,Literal{instance:-1,block:-1,operation:stream,label:140+stream,bytes:bytes,scalars:bytes->length()});stream=stream+1;
  };
- // All bodies remain concrete; only entry-reachable modules run initializers.
- var reachable:Map=create();var pending:Paged<Int>=push<Int>(empty<Int>(),plan->types->headers->input->entry);var cursor:Int=0;
- loop while(cursor<pending->count){let file:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(reachable,file))>=0=>{continue;},else=>unit};reachable=try put(reachable,file,1);
-  loop over(plan->types->headers->names->pages->append(plan->types->headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){
-   branch when{name->imported&&name->file==file=>{pending=push<Int>(pending,(try lookup<Declaration>(plan->types->headers->declarations,name->declaration))->file);},else=>unit};
-  };};
- };
- var modules:List<Int>=List<Int>[];loop over(source->moduleOrder as file:Int){branch when{(try get(reachable,file))>=0&&!(try lookup<Module>(plan->types->headers->modules,file))->standard=>{modules=modules->append(file);},else=>unit};};
- var initializers:List<Int>=List<Int>[];loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,try present(instance->body->declaration,span,"initializer source"));branch when{(try get(reachable,declaration->file))>=0=>{initializers=initializers->append(initializer);},else=>unit};};
+ let entryFile:Int=(try lookup<Declaration>(plan->types->headers->declarations,source->entry))->file;
+ let init:Initialization=try forModule(plan,entryFile,span);
  let entryGlobal:Int=try get(globalDeclarations,source->entry);try require(entryGlobal>=0,span,"native entry global");
- Result<Native,Diagnostic>::Ok(Native{abiRevision:valueABI,dispatchTables:dispatchTables,runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:initializers,modules:modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
+ Result<Native,Diagnostic>::Ok(Native{abiRevision:valueABI,dispatchTables:dispatchTables,runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:init->initializers,modules:init->modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
 };

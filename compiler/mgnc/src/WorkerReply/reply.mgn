@@ -1,5 +1,6 @@
 namespace Mgnc\WorkerReply;
 use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected};
+use Mgnc\WorkerSuite\{suiteImage};
 use Mgnc\WorkerBuild\{prepareArtifact};
 use Mgnc\Data\{Diagnostic,Paged,number};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
@@ -18,7 +19,7 @@ public let respond:Function(List<String>):Int=function(fields:List<String>):Int{
   return branch when{send(header(fields,"ok"))=>0,else=>3};
  },else=>unit};
  branch when{profile=="build"&&generation==""&&path!=""=>{return prepareArtifact(fields,path);},else=>unit};
- branch when{path=="" || !((profile=="syntax"||profile=="analysis")&&generation!=""||profile=="tests"&&generation=="")=>{return 3;},else=>unit};
+ branch when{path=="" || !((profile=="syntax"||profile=="analysis")&&generation!=""||(profile=="tests"||profile=="suite")&&generation=="")=>{return 3;},else=>unit};
  let input:ProjectInput=branch on branch when{profile=="syntax"=>single(path),else=>projectSources(path)}{
   Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
   Result<ProjectInput,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
@@ -42,6 +43,7 @@ public let respond:Function(List<String>):Int=function(fields:List<String>):Int{
   Result<Paged<TestCase>,Diagnostic>::Ok(value:Paged<TestCase>)=>value,
   Result<Paged<TestCase>,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}
  };
+ branch when{profile=="suite"=>{return suiteImage(fields,state,cases,input);},else=>unit};
  branch when{!send(header(fields,"plan"))||!record(List<String>[number(cases->count)])=>{return 3;},else=>unit};
  loop over(cases->pages->append(cases->tail) as page:List<TestCase>){
   loop over(page as testCase:TestCase){

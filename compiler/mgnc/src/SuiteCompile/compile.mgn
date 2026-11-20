@@ -1,0 +1,31 @@
+namespace Mgnc\SuiteCompile;
+use Std\Binary\{Bytes};
+use Mgnc\Data\{Diagnostic,Paged,Span,problem,lookup};
+use Mgnc\InputData\{InputError};
+use Mgnc\Semantic\{SemanticProject};
+use Mgnc\SemanticValues\{State};
+use Mgnc\TestPlan\{TestCase};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeProfile\{validate};
+use Mgnc\WholePipeline\{prepare as prepareNative};
+use Mgnc\SuitePlan\{Suite,Mode,build};
+use Mgnc\WholeNativeEmit\{emitMode};
+use Mgnc\WholeMachineCheck\{verify};
+use Mgnc\Encode\{encode};
+use Mgnc\Machine\{Code};
+public type Prepared=product{native:Native;suite:Suite;};
+let failure:Function(Diagnostic):InputError=function(error:Diagnostic):InputError{
+ InputError{status:3,path:"compiler",diagnostic:error,positionKnown:false,operation:"",kind:"",ioPhase:""}
+};
+public let prepare:Function(State,Paged<TestCase>):Result<Prepared,InputError>=function(state:State,cases:Paged<TestCase>):Result<Prepared,InputError>{
+ let first:TestCase=branch on lookup<TestCase>(cases,0){
+  Result<TestCase,Diagnostic>::Ok(value:TestCase)=>value,Result<TestCase,Diagnostic>::Err(error:Diagnostic)=>{return Result<Prepared,InputError>::Err(failure(error));}
+ };
+ let source:SemanticProject=SemanticProject{state:state,entry:first->declaration};try validate(source);
+ let plan:Native=branch on prepareNative(source){Result<Native,Diagnostic>::Ok(value:Native)=>value,Result<Native,Diagnostic>::Err(error:Diagnostic)=>{return Result<Prepared,InputError>::Err(failure(error));}};
+ let suite:Suite=branch on build(plan,cases){Result<Suite,Diagnostic>::Ok(value:Suite)=>value,Result<Suite,Diagnostic>::Err(error:Diagnostic)=>{return Result<Prepared,InputError>::Err(failure(error));}};
+ Result<Prepared,InputError>::Ok(Prepared{native:plan,suite:suite})
+};
+public let compile:Function(Prepared):Result<Bytes,Diagnostic>=function(prepared:Prepared):Result<Bytes,Diagnostic>{
+ let code:Code=try emitMode(prepared->native,Mode::Testing(prepared->suite));try verify(prepared->native,code);encode(code)
+};

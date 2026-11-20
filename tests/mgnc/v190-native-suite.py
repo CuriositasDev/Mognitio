@@ -23,7 +23,7 @@ def exercise(compiler, build, root):
     common.write_text("namespace App; @test let ordinary:Function():Unit=function():Unit{assert true;};")
     simple = invoke()
     assert simple.returncode == 0 and b"total=1 passed=1" in simple.stdout, simple
-    common.write_text("namespace App;\\nlet main:Int=6;\\n")
+    common.write_text("namespace App;\nlet main:Int=6;\n")
     for name in ("Checks", "Broken", "Unused"):
         (src / name).mkdir()
     (src / "Unused/other.mgn").write_text('namespace App\\Unused;\nlet never:Int=panic{"unreachable initializer"};\n')

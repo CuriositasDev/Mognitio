@@ -9,6 +9,18 @@ class MemoryBudget:
         self.group = None
         self.parent = None
         self.enabled_controller = False
+        self.process_stat = self.main_children = None
+        self._setup_group()
+        if self.group is None:
+            try:
+                self.process_stat = open("/proc/self/stat", "rb")
+                self.main_children = open(f"/proc/self/task/{os.getpid()}/children", "rb")
+            except OSError:
+                if self.process_stat:
+                    self.process_stat.close()
+                self.process_stat = None
+
+    def _setup_group(self):
         group = parent = None
         moved = enabled = False
         try:
@@ -60,6 +72,21 @@ class MemoryBudget:
     def check(self):
         if self.group:
             return  # Kernel-enforced ceiling covers this process and all descendants.
+        # A single-threaded coordinator owns children only through its main task.
+        # Reuse these proc files so an idle budget tick acquires no transient fds.
+        if self.process_stat and self.main_children:
+            try:
+                self.process_stat.seek(0)
+                fields = self.process_stat.read().rsplit(b")", 1)[1].split()
+                if int(fields[17]) == 1:  # num_threads, field 20 of proc_pid_stat
+                    self.main_children.seek(0)
+                    if not self.main_children.read().strip():
+                        rss = int(fields[21]) * os.sysconf("SC_PAGE_SIZE")  # rss, field 24
+                        self._check_limit(rss)
+                        return
+            except (OSError, ValueError, IndexError):
+                pass
+
         pending, seen, total = [os.getpid()], set(), 0
         while pending:
             pid = pending.pop()
@@ -72,10 +99,18 @@ class MemoryBudget:
                     pending.extend(int(value) for value in (task / "children").read_text().split())
             except (OSError, ValueError, IndexError):
                 continue
+        self._check_limit(total)
+
+    @staticmethod
+    def _check_limit(total):
         if total > LIMIT:
             raise RuntimeError("Session memory budget exceeded (best-effort RSS observer)")
 
     def close(self):
+        if self.process_stat:
+            self.process_stat.close()
+        if self.main_children:
+            self.main_children.close()
         if self.group:
             try:
                 if self.enabled_controller:

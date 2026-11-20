@@ -1,0 +1,36 @@
+namespace Mgnc;
+use Std\Io\{writeStdout,writeStderr};
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Mgnc\Project\{projectSources};
+use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\InputDiagnostics\{message};
+use Mgnc\Data\{Paged,Diagnostic,number};
+use Mgnc\TextUtil\{at};
+use Mgnc\Semantic\{checkSources};
+use Mgnc\SemanticValues\{State};
+use Mgnc\TestPlan\{TestCase,discover};
+use Mgnc\SuiteCompile\{Prepared,prepare,compile};
+use Mgnc\SuitePlan\{Site};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let input:ProjectInput=branch on projectSources(at(args,0)){
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,Result<ProjectInput,InputError>::Err(e:InputError)=>{discard writeStderr(message(e));return e->status;}
+ };
+ let state:State=branch on checkSources(input){
+  Result<State,InputError>::Ok(value:State)=>value,Result<State,InputError>::Err(e:InputError)=>{discard writeStderr(message(e));return e->status;}
+ };
+ let cases:Paged<TestCase>=branch on discover(state){
+  Result<Paged<TestCase>,Diagnostic>::Ok(value:Paged<TestCase>)=>value,Result<Paged<TestCase>,Diagnostic>::Err(e:Diagnostic)=>{discard writeStderr(e->message);return 3;}
+ };
+ branch when{cases->count==0=>{return 0;},else=>unit};
+ let plan:Prepared=branch on prepare(state,cases){
+  Result<Prepared,InputError>::Ok(value:Prepared)=>value,Result<Prepared,InputError>::Err(e:InputError)=>{discard writeStderr(message(e));return e->status;}
+ };
+ let image:Bytes=branch on compile(plan){
+  Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(e:Diagnostic)=>{discard writeStderr(e->message);return 3;}
+ };
+ branch on publishFile(at(args,1),image,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(u:Unit)=>unit,Result<Unit,BinaryOutputError>::Err(e:BinaryOutputError)=>{return 2;}};
+ discard writeStdout(number(cases->count)+" "+number(plan->suite->sites->count)+"\n");
+ loop over(plan->suite->sites->pages->append(plan->suite->sites->tail) as page:List<Site>){loop over(page as site:Site){
+  discard writeStdout(number(site->origin->file)+" "+number(site->origin->span->start)+" "+number(site->origin->span->end)+"\n");
+ };};0
+};

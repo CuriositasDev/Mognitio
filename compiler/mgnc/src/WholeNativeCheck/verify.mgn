@@ -36,6 +36,26 @@ let global:Function(SemanticProject,Native,Int,Span):Result<Int,Diagnostic>=func
  try require(value->declaration==declaration&&value->valueType==symbol->valueType&&(try get(plan->globalDeclarations,declaration))==cell,span,"global alias identity");Result<Int,Diagnostic>::Ok(cell)
 };
 // Independently inspect each plan table after concrete/source correspondence.
+public let verifyInitialization:Function(Native,Int,List<Int>,List<Int>):Result<Unit,Diagnostic>=function(plan:Native,entryFile:Int,actualModules:List<Int>,actualInitializers:List<Int>):Result<Unit,Diagnostic>{
+ let headers:Headers=plan->concrete->types->headers;let span:Span=Span{start:0,end:0,line:1,column:1};
+ // Reconstruct entry dependency closure by repeated edge propagation, independently
+ // from the producer's queue. Type-only and unused imports are included.
+ var reachable:Map=try put(create(),entryFile,1);var changed:Bool=true;
+ loop while(changed){changed=false;loop over(headers->names->pages->append(headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){branch when{name->imported&&(try get(reachable,name->file))>=0=>{
+  let target:Int=(try lookup<Declaration>(headers->declarations,name->declaration))->file;branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,1);changed=true;},else=>unit};
+ },else=>unit};};};};
+ var modules:List<Int>=List<Int>[];var initializers:List<Int>=List<Int>[];
+ loop over(headers->order as file:Int){let module:Module=try lookup<Module>(headers->modules,file);branch when{module->standard||(try get(reachable,file))<0=>{continue;},else=>unit};modules=modules->append(file);
+  loop over(module->declarations as declaration:Int){let declared:Declaration=try lookup<Declaration>(headers->declarations,declaration);branch when{declared->kind!=4&&declared->kind!=5=>{continue;},else=>unit};
+   var match:Int= -1;var id:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+    let isInitializer:Bool=branch on instance->body->functionOwner{Parent::None=>true,Parent::Some(value:Int)=>false};let sameDeclaration:Bool=branch on instance->body->declaration{Parent::Some(value:Int)=>value==declaration,Parent::None=>false};
+    branch when{isInitializer&&sameDeclaration&&instance->key->bindings->length()==0=>{try require(match<0,span,"duplicate initializer instance");match=id;},else=>unit};id=id+1;
+   };};try require(match>=0,span,"missing module initializer");initializers=initializers->append(match);
+  };
+ };
+ try require(same(modules,actualModules)&&same(initializers,actualInitializers),span,"runtime module initialization order");
+ Result<Unit,Diagnostic>::Ok(unit)
+};
 public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Native):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};try require(plan->abiRevision==2,span,"native private value ABI revision");let headers:Headers=semantic->state->types->headers;
  discard try dispatchEdges(semantic,source,plan->concrete);try dispatchCanonical(plan->concrete);try require(plan->dispatchTables->count==plan->concrete->pairs->count,span,"dispatch table label membership");try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
@@ -89,22 +109,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
  try require(plan->descriptors->count==plan->layouts->descriptors->count&&plan->variants->count==plan->descriptors->count,span,"descriptor label membership");
  loop over(plan->descriptors->pages->append(plan->descriptors->tail) as entries:List<Int>){loop over(entries as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};};
  var descriptorId:Int=0;loop over(plan->variants->pages->append(plan->variants->tail) as pages:List<List<Int>>){loop over(pages as entries:List<Int>){try require(entries->length()==(try lookup<Descriptor>(plan->layouts->descriptors,descriptorId))->variants->length(),span,"descriptor variant label membership");descriptorId=descriptorId+1;loop over(entries as entry:Int){labels=try claim(labels,entry,plan->nextLabel,span);};};};
- // Reconstruct entry dependency closure by repeated edge propagation, independently
- // from the producer's queue. Type-only and unused imports are included.
- var reachable:Map=try put(create(),headers->input->entry,1);var changed:Bool=true;
- loop while(changed){changed=false;loop over(headers->names->pages->append(headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){branch when{name->imported&&(try get(reachable,name->file))>=0=>{
-  let target:Int=(try lookup<Declaration>(headers->declarations,name->declaration))->file;branch when{(try get(reachable,target))<0=>{reachable=try put(reachable,target,1);changed=true;},else=>unit};
- },else=>unit};};};};
- var modules:List<Int>=List<Int>[];var initializers:List<Int>=List<Int>[];
- loop over(headers->order as file:Int){let module:Module=try lookup<Module>(headers->modules,file);branch when{module->standard||(try get(reachable,file))<0=>{continue;},else=>unit};modules=modules->append(file);
-  loop over(module->declarations as declaration:Int){let declared:Declaration=try lookup<Declaration>(headers->declarations,declaration);branch when{declared->kind!=4&&declared->kind!=5=>{continue;},else=>unit};
-   var match:Int= -1;var id:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
-    let isInitializer:Bool=branch on instance->body->functionOwner{Parent::None=>true,Parent::Some(value:Int)=>false};let sameDeclaration:Bool=branch on instance->body->declaration{Parent::Some(value:Int)=>value==declaration,Parent::None=>false};
-    branch when{isInitializer&&sameDeclaration&&instance->key->bindings->length()==0=>{try require(match<0,span,"duplicate initializer instance");match=id;},else=>unit};id=id+1;
-   };};try require(match>=0,span,"missing module initializer");initializers=initializers->append(match);
-  };
- };
- try require(same(modules,plan->modules)&&same(initializers,plan->initializers),span,"runtime module initialization order");
+ try verifyInitialization(plan,(try lookup<Declaration>(headers->declarations,semantic->entry))->file,plan->modules,plan->initializers);
  // All concrete initializer cells are retained, including non-runtime modules.
  loop over(plan->concrete->initializers as id:Int){let instance:Instance=try lookup<Instance>(plan->concrete->instances,id);let declaration:Int=try present(instance->body->declaration,span,"initializer declaration");let symbolId:Int=try present(try lookup<Parent>(semantic->state->globals,declaration),span,"initializer symbol");let cell:Int=try global(semantic,plan,symbolId,span);used=try put(used,cell,1);};
  var declarations:Map=create();var index:Int=0;try require(plan->globalRoots->length()==(plan->globals->count+63)/64,span,"global root shape");

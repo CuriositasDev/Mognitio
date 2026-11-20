@@ -1,0 +1,45 @@
+namespace Mgnc\SuiteMachine;
+use Mgnc\Machine\{Code,label,jump,fresh,raw};
+use Mgnc\WholeX64\{immediate,store,load,mov,constant,alu,byteLoad,multiply};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeABI\{contextSize};
+
+// Four non-pointer words follow the application globals and module table.
+public let offset:Function(Native):Int=function(plan:Native):Int{contextSize+(plan->globals->count+plan->moduleCount)*8};
+public let stop:Function(Code,Int):Code=function(initial:Code,status:Int):Code{
+ var code:Code=immediate(initial,7,status);code=immediate(code,0,60);raw(code,List<Int>[15,5,15,11])
+};
+// R15 is the runtime context. Preserve all callee-saved registers. Each 40-byte
+// write fits in PIPE_BUF and a short write is a broken private transport.
+public let event:Function(Code,Int,Int,Int):Code=function(initial:Code,base:Int,tag:Int,kind:Int):Code{
+ var code:Code=constant(initial,5,4,40);let retry:Int=code->nextLabel;let ok:Int=retry+1;code=fresh(code,2);
+ code=immediate(code,0,1414416205+4*4294967296+tag*281474976710656);code=store(code,4,0,0);
+ code=load(code,0,15,base);code=store(code,4,8,0);code=load(code,0,15,base+8);code=store(code,4,16,0);
+ code=constant(code,0,0,1);code=store(code,15,base+8,0);
+ code=load(code,0,15,base+16);code=store(code,4,24,0);code=immediate(code,0,kind);code=store(code,4,28,0);
+ code=load(code,0,15,base+24);code=store(code,4,32,0);
+ code=label(code,retry);code=immediate(code,0,1);code=immediate(code,7,3);code=mov(code,6,4);code=immediate(code,2,40);code=raw(code,List<Int>[15,5]);
+ code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],retry);code=constant(code,7,0,40);code=jump(code,List<Int>[15,132],ok);
+ code=stop(code,124);code=label(code,ok);constant(code,0,4,40)
+};
+public let stage:Function(Code,Int,Int):Code=function(initial:Code,base:Int,value:Int):Code{
+ var code:Code=immediate(initial,0,value);code=store(code,15,base+16,0);event(code,base,2,0)
+};
+// R12 points to the original Linux process stack. Accept one decimal ordinal.
+public let selectCase:Function(Code,Int,Int):Code=function(initial:Code,base:Int,count:Int):Code{
+ let invalid:Int=initial->nextLabel;let digit:Int=invalid+1;let selected:Int=invalid+2;let first:Int=invalid+3;
+ var code:Code=fresh(initial,4);code=load(code,0,12,0);code=constant(code,7,0,2);code=jump(code,List<Int>[15,133],invalid);
+ code=load(code,6,12,16);code=byteLoad(code,0,6,0);code=constant(code,7,0,48);code=jump(code,List<Int>[15,133],first);
+ code=byteLoad(code,0,6,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],invalid);
+ code=label(code,first);code=immediate(code,8,0);code=immediate(code,9,10);
+ code=label(code,digit);code=byteLoad(code,0,6,0);code=constant(code,5,0,48);code=constant(code,7,0,9);code=jump(code,List<Int>[15,135],invalid);
+ code=multiply(code,8,9);code=alu(code,1,8,0);code=constant(code,7,8,count);code=jump(code,List<Int>[15,131],invalid);
+ code=constant(code,0,6,1);code=byteLoad(code,0,6,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],digit);code=jump(code,List<Int>[233],selected);
+ code=label(code,invalid);code=stop(code,123);code=label(code,selected);code=store(code,15,base,8);code=immediate(code,0,-1);code=store(code,15,base+24,0);
+ code=event(code,base,1,0);
+ let wait:Int=code->nextLabel;let admitted:Int=wait+1;let broken:Int=wait+2;code=fresh(code,3);code=constant(code,5,4,8);
+ code=label(code,wait);code=immediate(code,0,0);code=immediate(code,7,4);code=mov(code,6,4);code=immediate(code,2,1);code=raw(code,List<Int>[15,5]);
+ code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],wait);code=constant(code,7,0,1);code=jump(code,List<Int>[15,133],broken);
+ code=byteLoad(code,0,4,0);code=constant(code,7,0,1);code=jump(code,List<Int>[15,132],admitted);code=label(code,broken);code=stop(code,124);
+ code=label(code,admitted);code=constant(code,0,4,8);stage(code,base,1)
+};

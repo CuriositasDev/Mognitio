@@ -1,0 +1,19 @@
+namespace Mgnc\WholeEntryPlan;
+use Mgnc\Data\{Paged,Diagnostic,Span,lookup,push,empty};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\SemanticData\{Introduction,Declaration,Module};
+use Mgnc\WholeConcrete\{Plan,Instance};
+use Mgnc\WholeChecks\{present};
+public type Initialization=product{modules:List<Int>;initializers:List<Int>;};
+public let forModule:Function(Plan,Int,Span):Result<Initialization,Diagnostic>=function(plan:Plan,entryFile:Int,span:Span):Result<Initialization,Diagnostic>{
+ // All bodies remain concrete; only entry-reachable modules run initializers.
+ var reachable:Map=create();var pending:Paged<Int>=push<Int>(empty<Int>(),entryFile);var cursor:Int=0;
+ loop while(cursor<pending->count){let file:Int=try lookup<Int>(pending,cursor);cursor=cursor+1;branch when{(try get(reachable,file))>=0=>{continue;},else=>unit};reachable=try put(reachable,file,1);
+  loop over(plan->types->headers->names->pages->append(plan->types->headers->names->tail) as page:List<Introduction>){loop over(page as name:Introduction){
+   branch when{name->imported&&name->file==file=>{pending=push<Int>(pending,(try lookup<Declaration>(plan->types->headers->declarations,name->declaration))->file);},else=>unit};
+  };};
+ };
+ var modules:List<Int>=List<Int>[];loop over(plan->types->headers->order as file:Int){branch when{(try get(reachable,file))>=0&&!(try lookup<Module>(plan->types->headers->modules,file))->standard=>{modules=modules->append(file);},else=>unit};};
+ var initializers:List<Int>=List<Int>[];loop over(plan->initializers as initializer:Int){let instance:Instance=try lookup<Instance>(plan->instances,initializer);let declaration:Declaration=try lookup<Declaration>(plan->types->headers->declarations,try present(instance->body->declaration,span,"initializer source"));branch when{(try get(reachable,declaration->file))>=0=>{initializers=initializers->append(initializer);},else=>unit};};
+ Result<Initialization,Diagnostic>::Ok(Initialization{modules:modules,initializers:initializers})
+};

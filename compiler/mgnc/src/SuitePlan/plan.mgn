@@ -1,0 +1,39 @@
+namespace Mgnc\SuitePlan;
+use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup,Span};
+use Mgnc\TestPlan\{TestCase};
+use Mgnc\WholeNativeData\{Native,Literal,Global};
+use Mgnc\WholeEntryPlan\{Initialization,forModule};
+use Mgnc\WholeNativeCheck\{verifyInitialization};
+use Mgnc\WholeChecks\{require};
+use Mgnc\WholeIR\{Block,Origin};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\IntMap\{Map,create,get,put};
+public type Entry=product{test:TestCase;cell:Int;init:Initialization;};
+public type Site=product{label:Int;origin:Origin;};
+public type Suite=product{entries:Paged<Entry>;sites:Paged<Site>;byLabel:Map;};
+public type Mode=sum{Ordinary;Testing(Suite);};
+public let build:Function(Native,Paged<TestCase>):Result<Suite,Diagnostic>=function(plan:Native,cases:Paged<TestCase>):Result<Suite,Diagnostic>{
+ var entries:Paged<Entry>=empty<Entry>();var byLabel:Map=create();var sites:Paged<Site>=empty<Site>();
+ var inits:Paged<Initialization>=empty<Initialization>();var selected:Map=create();
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ loop over(cases->pages->append(cases->tail) as page:List<TestCase>){loop over(page as test:TestCase){
+  let cell:Int=try get(plan->globalDeclarations,test->declaration);
+  try require(test->ordinal==entries->count&&cell>=0&&(try lookup<Global>(plan->globals,cell))->declaration==test->declaration,span,"test entry identity");
+  var index:Int=try get(selected,test->file);
+  branch when{index<0=>{
+   let initialization:Initialization=try forModule(plan->concrete,test->file,span);
+   try verifyInitialization(plan,test->file,initialization->modules,initialization->initializers);
+   index=inits->count;selected=try put(selected,test->file,index);inits=push<Initialization>(inits,initialization);
+  },else=>unit};
+  entries=push<Entry>(entries,Entry{test:test,cell:cell,init:try lookup<Initialization>(inits,index)});
+ };};
+ loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){
+  branch when{literal->instance>=0&&literal->operation== -1=>{
+   let instance:Instance=try lookup<Instance>(plan->concrete->instances,literal->instance);
+   let block:Block=try lookup<Block>(instance->body->blocks,literal->block);
+   try require(block->terminator->code=="assertion"&&(try get(byLabel,literal->label))<0,span,"assertion site identity");
+   byLabel=try put(byLabel,literal->label,sites->count);sites=push<Site>(sites,Site{label:literal->label,origin:block->terminator->origin});
+  },else=>unit};
+ };};
+ Result<Suite,Diagnostic>::Ok(Suite{entries:entries,byLabel:byLabel,sites:sites})
+};

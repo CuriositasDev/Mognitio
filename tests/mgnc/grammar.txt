@@ -177,3 +177,10 @@ WitnessMethods | witness_methods_empty |
 WitnessMethods | witness_methods_append | WitnessMethods WitnessMethod
 WitnessMethod | witness_method | #id ( ParamsOpt ) : Type Block
 Primary | package | Type ( Expr )
+Standalone | standalone | StandaloneItems Tail
+StandaloneItems | standalone_empty |
+StandaloneItems | standalone_statement | StandaloneItems Statement
+StandaloneItems | standalone_compile | StandaloneItems Compile
+StandaloneItems | standalone_public_compile | StandaloneItems public Compile
+StandaloneItems | standalone_public_let | StandaloneItems public Let
+StandaloneItems | standalone_attributed | StandaloneItems @ #id AttributeRest AttributedDeclaration

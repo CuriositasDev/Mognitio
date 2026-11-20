@@ -20,7 +20,7 @@ let isProduct:Function(Type):Bool=function(shape:Type):Bool{
 };
 public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic>=function(initial:State,tree:SyntaxForest,original:Frame):Result<Evaluated,Diagnostic>{
  var state:State=initial;var frame:Frame=original;let expression:Expression=frame->expression;let rule:Int=expression->rule;let environment:Environment=frame->environment;
- var valueType:Int=0;var normal:Bool=true;var operation:String="";var literal:List<Integer>=List<Integer>[];
+ var memberStart:Int= -1;var valueType:Int=0;var normal:Bool=true;var operation:String="";var literal:List<Integer>=List<Integer>[];
  loop over(frame->children as id:Int){normal=normal&&(try lookup<Node>(state->nodes,id))->normal;};
  branch when{rule==ruleProduct||rule==ruleList||rule==ruleVariant||rule==ruleVariantPayload||rule==ruleScalarLiteral=>{
   valueType=branch on frame->annotation{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"constructor type invariant"));}};
@@ -67,6 +67,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
    };valueType=try memberType(shape->arguments,shape->arguments->length()-1,expression->span);operation="call";
   },else=>{
    let label:Label=branch on expression->labels->at(0){Result<Label,IndexError>::Ok(value:Label)=>value,Result<Label,IndexError>::Err(error:IndexError)=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"member label invariant"));}};
+   memberStart=label->span->start;
    branch when{rule==ruleField=>{
     branch when{!isProduct(shape)=>{return Result<Evaluated,Diagnostic>::Err(problem("semantic",label->span,"receiver has no accessible Product fields"));},else=>unit};
     let selected:Int=try ordinal(shape->members,label->name,label->span);let member:Member=try memberAt(shape->members,selected,label->span);
@@ -101,6 +102,6 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   }};
  }};
  let base:Node=makeNode(frame,Structure::Known(valueType),normal,operation,Parent::None,0,false);
- let value:Node=Node{file:base->file,cursor:base->cursor,rule:base->rule,flag:base->flag,structure:base->structure,normal:base->normal,operation:base->operation,binding:base->binding,target:base->target,children:base->children,span:base->span,integer:base->integer,minimum:base->minimum,literal:literal,text:base->text,binder:base->binder,binders:base->binders,functionOwner:base->functionOwner,mapping:base->mapping,arguments:base->arguments};
+ let value:Node=Node{memberStart:memberStart,file:base->file,cursor:base->cursor,rule:base->rule,flag:base->flag,structure:base->structure,normal:base->normal,operation:base->operation,binding:base->binding,target:base->target,children:base->children,span:base->span,integer:base->integer,minimum:base->minimum,literal:literal,text:base->text,binder:base->binder,binders:base->binders,functionOwner:base->functionOwner,mapping:base->mapping,arguments:base->arguments};
  Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:value,environment:environment})
 };

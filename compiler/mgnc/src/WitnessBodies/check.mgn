@@ -24,7 +24,7 @@ public let check:Function(State,Int,BindingIndex):Result<State,Diagnostic>=funct
   let node:Node=try lookup<Node>(state->nodes,checked->root);let owner:Int=branch on node->target{Parent::Some(value:Int)=>value,Parent::None=>{return Result<State,Diagnostic>::Err(problem("internal",node->span,"witness method function missing"));}};
   let info:FunctionInfo=try lookup<FunctionInfo>(state->functions,owner);branch when{info->captures->length()!=0=>{return Result<State,Diagnostic>::Err(problem("internal",node->span,"witness method captured an outer runtime value"));},else=>unit};
  };
- let value:Node=Node{file:declared->file,cursor:(try getNode(module->tree->nodes,declared->node))->start,rule:ruleWitnessDeclaration,flag:false,structure:Structure::Known(0),normal:true,operation:"witness",binding:Parent::None,target:Parent::None,children:roots,span:declared->span,integer:0,minimum:false,literal:List<Integer>[],text:"",binder:Parent::None,binders:List<Parent>[],functionOwner:Parent::None,mapping:List<Int>[],arguments:List<Argument>[]};
+ let value:Node=Node{memberStart:-1,file:declared->file,cursor:(try getNode(module->tree->nodes,declared->node))->start,rule:ruleWitnessDeclaration,flag:false,structure:Structure::Known(0),normal:true,operation:"witness",binding:Parent::None,target:Parent::None,children:roots,span:declared->span,integer:0,minimum:false,literal:List<Integer>[],text:"",binder:Parent::None,binders:List<Parent>[],functionOwner:Parent::None,mapping:List<Int>[],arguments:List<Argument>[]};
  let emitted:Checked=emit(state,value);state=emitted->state;
  Result<State,Diagnostic>::Ok(withBodies(state,try replaceItem<BodyState>(state->bodies,id,BodyState::Complete(emitted->root))))
 };

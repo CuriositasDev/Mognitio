@@ -81,6 +81,8 @@ def verify_payload(payload):
         raise ValueError("Payload identity mismatch")
     if identity["inputs"]["target"] != "linux-amd64":
         raise ValueError("Wrong payload target")
+    if version_tuple(identity["version"]) >= (1, 9, 0) and identity.get("schema") != 2:
+        raise ValueError("Mognitio 1.9 and later require a native payload")
     if identity.get("schema") == 2:
         for name, item in expected.items():
             if item.get("mode") != (payload / name).stat().st_mode & 0o7777:

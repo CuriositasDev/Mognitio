@@ -2,14 +2,11 @@
 
 Mognitio is a typed language with immutable data, persistent lists, explicit
 contracts and generic templates, and first-class functions with snapshot captures.
-Version 1.8.0 accepts repeated native generation with the experimental
-[mgnc compiler](compiler/mgnc/README.md). The fixed compiler produces identical
-B/C generations and repeated outputs, with independent functional, isolation,
-resource, performance and evidence-restoration acceptance. Build mgnc explicitly
-with the qualified frozen Lisp seed. Debian packages, APT installations and
-offline bundles contain the normal toolchain; mgnc remains source-built.
-See the [1.8 acceptance and release record](verification/v1.8.0-release.md).
-Acceptance and signed release publication are recorded separately.
+The 1.9 source tree builds its CLI, test runner, and stdio language server
+around a native self-hosted compiler. Debian packages and offline bundles are
+built from the same fixed-point compiler. The [packaging guide](packaging/README.md)
+describes how to reproduce it. The latest published 1.8 toolchain and its
+qualification are recorded in the [1.8 release record](verification/v1.8.0-release.md).
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -28,7 +25,7 @@ for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runt
 a host SBCL installation is required only for source development.
 The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=mognitio.mognitio)
 is versioned independently. Use a client version whose compatibility table
-explicitly includes the 1.8.0 server;
+explicitly includes the installed server version;
 a compatible extension update is a separate project.
 
 ## Inherited version 1.5 capabilities

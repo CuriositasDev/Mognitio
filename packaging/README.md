@@ -1,34 +1,32 @@
 # Linux toolchain distribution
 
-The standard payload contains the compiler, shared frontend and standard
-catalog in a saved Lisp core, a pinned SBCL executable, and the stdio language
-server. It does not consult a host SBCL installation, ASDF cache, or user init
-file when launched. Ubuntu 24.04 and 26.04 amd64 are the supported userlands.
-Python 3.12 or later, glibc, libzstd1, and util-linux are OS dependencies.
+Mognitio 1.9 packages use the same verified native compiler for the CLI, test
+runner, and language server. Both Ubuntu 24.04 and 26.04 amd64 use CPython
+3.12 or later, glibc, libstdc++, and util-linux. The qualified Lisp seed is a
+build input for the first compiler generation.
 
-## Build an immutable payload
+## Build an immutable 1.9 payload
 
-Use the runtime, input core, copyright notice, and Ubuntu image digest in
-[build-lock.json](build-lock.json). The release mode checks every locked digest.
-Build inside that Ubuntu image with a clean checkout and an empty HOME.
-Development builds may use other explicit runtime inputs and embed their full
-identity rather than claiming a formal release.
+From a clean checkout, set GRAPH to a fresh build directory, SEED_RECEIPT and
+SEED_ARCHIVE to the verified 1.8 seed receipt and archive, and HOST_BUILD to
+a directory on the build filesystem. ASMJIT_SOURCE and PYTHON_HEADERS identify
+the exact upstream archives in [the native host lock](native-host-lock.json).
+The host builder checks the input hashes, compiler version, and output digest.
 
-Invoke scripts/build-toolchain.py with --runtime, --core, --runtime-notice,
---image-digest, and --output. Use --mode release only for an intentional formal
-candidate from a clean source tree; the default is development.
-The script prints the immutable payload directory. Add its bin directory to
-PATH or invoke bin/mgn and bin/mognitio-lsp directly.
+    python3 -IB tools/selfhost/freeze.py "$GRAPH/inputs" --mode release --seed-receipt "$SEED_RECEIPT"
+    python3 -IB "$GRAPH/inputs/tools/selfhost/bootstrap.py" "$GRAPH" --seed-archive "$SEED_ARCHIVE"
+    python3 -IB "$GRAPH/inputs/scripts/build-native-host.py" --asmjit-source "$ASMJIT_SOURCE" --python-headers "$PYTHON_HEADERS" --output "$HOST_BUILD/_application.abi3.so"
+    python3 -IB "$GRAPH/inputs/scripts/build-native-toolchain.py" "$GRAPH" --output "$HOST_BUILD/payload" --host-adapter "$HOST_BUILD/_application.abi3.so"
+    python3 -IB "$GRAPH/inputs/scripts/package-toolchain.py" "$HOST_BUILD/payload" --output "$HOST_BUILD/packages"
 
-Both tools accept --version. The server accepts --stdio. CLI run/build/test
-commands remain unchanged. The source checkout's older bin/mgn is a contributor
-bootstrap and does not provide a built toolchain identity; use a generated
-payload for version and LSP acceptance.
+Bootstrap generates A, B, an independent B repeat, C, and an independent C
+repeat. Packaging verifies the raw fixed point and embeds B. The native host
+adapter lets an ordinary run honor an inherited file-size limit throughout
+compilation and program execution. See [the build lock](build-lock.json)
+for the historical saved-core inputs used with releases through 1.8.
 
-VERSION is the upstream release version. Development versions additionally
-identify the full commit, source digest, dirty state, and complete build
-fingerprint. Artifact checksums are recorded after generation separately from
-the build fingerprint. Never replace an immutable published release.
+The installed tools accept --version. The language server accepts --stdio.
+The source checkout's bin/mgn is the contributor bootstrap.
 
 ## Package and verify
 

@@ -30,7 +30,8 @@ def normalize_permissions(root):
 
 def run(args):
     payload = args.payload.resolve()
-    schema = json.loads((payload / "identity.json").read_bytes()).get("schema")
+    identity = json.loads((payload / "identity.json").read_bytes())
+    schema = identity.get("schema")
     if schema == 2:
         sys.path.insert(0, str(ROOT))
         from tools.selfhost.payload import payload_identity
@@ -41,6 +42,9 @@ def run(args):
                 raise ValueError("Distribution input differs from its frozen source: " + member)
         dependencies = "libc6 (>= 2.38), libstdc++6, python3 (>= 3.12), util-linux"
     elif schema == 1:
+        version = identity["inputs"]["baseVersion"]
+        if identity["version"] != version or tuple(map(int, version.split("."))) >= (1, 9, 0):
+            raise ValueError("Legacy release packaging requires an upstream version before 1.9")
         spec = importlib.util.spec_from_file_location("legacy_payload", ROOT / "tools/lsp/payload.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

@@ -1,7 +1,7 @@
 namespace Mgnc\WorkerWire;
 use Std\Io\{writeStdout,readStdin,IoError};
-use Mgnc\Data\{Diagnostic,Span,number};
-use Mgnc\InputData\{InputError};
+use Mgnc\Data\{Diagnostic,Span,number,contains};
+use Mgnc\InputData\{InputError,ProjectInput,SourceUnit};
 use Mgnc\TextUtil\{at,code,cut};
 use Mgnc\Width\{scalarWidth};
 use Mgnc\ToolchainIdentity\{build};
@@ -56,4 +56,12 @@ public let receive:Function():String=function():String{
  let value:String=turn();var bytes:Int=0;
  loop over(value->scalars() as c:String){bytes=bytes+scalarWidth(c);branch when{bytes>count=>{return "";},else=>unit};};
  branch when{bytes==count=>value,else=>""}
+};
+public let prepareStage:Function(List<String>,ProjectInput):String=function(fields:List<String>,input:ProjectInput):String{
+ branch when{!send(header(fields,"ready"))||!record(List<String>[number(input->sources->length()+1),input->manifestPath])=>{return "";},else=>unit};
+ loop over(input->sources as source:SourceUnit){
+  branch when{!record(List<String>[source->path])=>{return "";},else=>unit};
+ };
+ branch when{!send("MGN-PREPARED/1\0"+at(fields,2)+"\0")=>{return "";},else=>unit};
+ let stage:String=receive();branch when{contains(stage,"\0")=>"",else=>stage}
 };

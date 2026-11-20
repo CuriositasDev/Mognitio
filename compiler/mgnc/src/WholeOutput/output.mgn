@@ -1,7 +1,7 @@
 namespace Mgnc\WholeOutput;
 use Std\Io\{inspectPath,readTextFile,PathInfo,PathInfoError,FileIdentity,IoError};
 use Mgnc\InputData\{ProjectInput,SourceUnit,InputError,failure,fromInspection,fromIo};
-use Mgnc\Project\{project};
+use Mgnc\Project\{project,projectSources};
 use Mgnc\TextUtil\{cut,ends};
 public type Identity=product{path:String;value:FileIdentity;text:String;};
 public type Snapshot=product{files:List<Identity>;};
@@ -19,13 +19,13 @@ public let capture:Function(ProjectInput):Result<Snapshot,InputError>=function(i
  loop over(input->sources as source:SourceUnit){files=files->append(Identity{path:source->path,value:(try inspect(source->path))->identity,text:source->text});};
  Result<Snapshot,InputError>::Ok(Snapshot{files:files})
 };
-public let verify:Function(ProjectInput,Snapshot,String):Result<Unit,InputError>=function(input:ProjectInput,snapshot:Snapshot,output:String):Result<Unit,InputError>{
+public let verifyProfile:Function(ProjectInput,Snapshot,String,Bool):Result<Unit,InputError>=function(input:ProjectInput,snapshot:Snapshot,output:String,ordinary:Bool):Result<Unit,InputError>{
  loop over(snapshot->files as file:Identity){
   let info:PathInfo=try inspect(file->path);let text:String=branch on readTextFile(file->path){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>{return Result<Unit,InputError>::Err(fromIo(error));}};
   branch when{info->identity!=file->value||text!=file->text=>{return Result<Unit,InputError>::Err(failure(2,file->path,"io","compiler input changed before publication"));},else=>unit};
  };
  branch when{input->manifestPath!=""=>{
-  let current:ProjectInput=try project(input->manifestPath);
+  let current:ProjectInput=try branch when{ordinary=>project(input->manifestPath),else=>projectSources(input->manifestPath)};
   branch when{current->manifestText!=input->manifestText||current->sources->length()!=input->sources->length()=>{return Result<Unit,InputError>::Err(failure(2,input->manifestPath,"io","project membership changed before publication"));},else=>unit};
   var index:Int=0;loop over(current->sources as source:SourceUnit){let previous:SourceUnit=branch on input->sources->at(index){Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,Result<SourceUnit,IndexError>::Err(error:IndexError)=>panic{"source membership invariant"}};
    branch when{source->relativePath!=previous->relativePath||source->text!=previous->text=>{return Result<Unit,InputError>::Err(failure(2,source->path,"io","project input changed before publication"));},else=>unit};index=index+1;
@@ -40,3 +40,4 @@ public let verify:Function(ProjectInput,Snapshot,String):Result<Unit,InputError>
  },else=>unit};
  Result<Unit,InputError>::Ok(unit)
 };
+public let verify:Function(ProjectInput,Snapshot,String):Result<Unit,InputError>=function(input:ProjectInput,snapshot:Snapshot,output:String):Result<Unit,InputError>{verifyProfile(input,snapshot,output,true)};

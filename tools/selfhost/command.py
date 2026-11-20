@@ -6,13 +6,15 @@ import subprocess
 
 from .client import WorkerError, request
 from .publication import Artifact
+from .testplan import cases_from
+from ..runner.suite import run_suite
 
 
 class UsageError(Exception):
     pass
 
 
-class Interrupted(BaseException):
+class Interrupted(KeyboardInterrupt):
     def __init__(self, signum):
         self.signum = signum
 
@@ -74,17 +76,19 @@ def application(image, arguments):
 
 def prepare_and_run(compiler, build, argv):
     if len(argv) < 2:
-        raise UsageError("Expected run or build and an explicit mognitio.toml")
+        raise UsageError("Expected run, build or test and an explicit mognitio.toml")
     command, raw_manifest = argv[:2]
     manifest = path_arg(raw_manifest)
     if manifest.startswith("-") or os.path.basename(manifest) != "mognitio.toml":
         raise UsageError("Expected an explicit mognitio.toml")
     if command == b"build" and len(argv) == 4 and argv[2] == b"-o":
         output, arguments = path_arg(argv[3]), []
+    elif command == b"test" and len(argv) == 2:
+        output, arguments = None, []
     elif command == b"run" and (len(argv) == 2 or argv[2] == b"--"):
         output, arguments = None, argv[3:]
     else:
-        raise UsageError("Expected run <manifest> [-- arguments...] or build <manifest> -o <artifact>")
+        raise UsageError("Expected test <manifest>, run <manifest> [-- arguments...] or build <manifest> -o <artifact>")
     with Artifact(output) as artifact:
         def ready(inputs):
             # Linux argv bytes belong to the generated program. Decode solely
@@ -96,7 +100,8 @@ def prepare_and_run(compiler, build, argv):
                     raise UsageError("Invalid UTF-8 in application argument") from error
             return artifact.prepare(inputs)
 
-        result = request(compiler, build, "build", path=manifest, on_ready=ready)
+        profile = "suite" if command == b"test" else "build"
+        result = request(compiler, build, profile, path=manifest, on_ready=ready)
         if result.status == "diagnostic":
             status, path, phase, message, known, start, end, line, column, operation, kind, io_phase = result.fields
             location = f"{line}:{column} [{start},{end})" if known == "1" else "position unknown"
@@ -105,6 +110,11 @@ def prepare_and_run(compiler, build, argv):
             return report(int(status), f"{phase}: {path!r}: {location}: {message}{detail}")
         if result.status == "publication":
             return report(2, result.fields[1].rstrip("\n"))
+        if command == b"test":
+            cases = cases_from(result.fields)
+            if cases:
+                artifact.verify_image()
+            return run_suite(artifact.leaf, cases)
         if output is not None:
             artifact.publish()
             return 0

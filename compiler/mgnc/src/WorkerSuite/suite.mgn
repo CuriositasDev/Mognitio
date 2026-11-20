@@ -1,0 +1,34 @@
+namespace Mgnc\WorkerSuite;
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Mgnc\Data\{Span,Diagnostic,Paged,number,lookup};
+use Mgnc\Driver\{publicationMessage};
+use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\SemanticData\{Module};
+use Mgnc\SemanticValues\{State};
+use Mgnc\TestPlan\{TestCase};
+use Mgnc\SuiteCompile\{Prepared,prepare,compile};
+use Mgnc\SuitePlan\{Site,Entry};
+use Mgnc\WholeOutput\{Snapshot,capture,verifyProfile};
+use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected,prepareStage};
+public let suiteImage:Function(List<String>,State,Paged<TestCase>,ProjectInput):Int=function(fields:List<String>,state:State,cases:Paged<TestCase>,input:ProjectInput):Int{
+ branch when{cases->count==0=>{return branch when{send(header(fields,"suite"))&&record(List<String>["","0","0"])=>0,else=>3};},else=>unit};
+ let snapshot:Snapshot=branch on capture(input){Result<Snapshot,InputError>::Ok(value:Snapshot)=>value,Result<Snapshot,InputError>::Err(error:InputError)=>{return rejected(fields,error);}};
+ let bundle:Prepared=branch on prepare(state,cases){Result<Prepared,InputError>::Ok(value:Prepared)=>value,Result<Prepared,InputError>::Err(error:InputError)=>{return rejected(fields,error);}};
+ let stage:String=prepareStage(fields,input);branch when{stage==""=>{return 3;},else=>unit};
+ let bytes:Bytes=branch on compile(bundle){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}};
+ branch on verifyProfile(input,snapshot,stage,false){Result<Unit,InputError>::Ok(u:Unit)=>unit,Result<Unit,InputError>::Err(error:InputError)=>{return rejected(fields,error);}};
+ branch on publishFile(stage,bytes,BinaryFileMode::Executable){Result<Unit,BinaryOutputError>::Ok(u:Unit)=>unit,Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>{
+  return branch when{send(header(fields,"publication"))&&record(List<String>[stage,publicationMessage(error)])=>0,else=>3};
+ }};
+ let sites:Paged<Site>=bundle->suite->sites;
+ branch when{!send(header(fields,"suite"))||!record(List<String>[stage,number(cases->count),number(sites->count)])=>{return 3;},else=>unit};
+ loop over(bundle->suite->entries->pages->append(bundle->suite->entries->tail) as page:List<Entry>){loop over(page as entry:Entry){
+  let test:TestCase=entry->test;let span:Span=entry->span;
+  branch when{!record(List<String>[number(test->ordinal),test->path,test->nameSpace,test->name,number(span->start),number(span->end),number(span->line),number(span->column)])=>{return 3;},else=>unit};
+ };};
+ loop over(sites->pages->append(sites->tail) as page:List<Site>){loop over(page as site:Site){
+  let module:Module=branch on lookup<Module>(state->types->headers->modules,site->origin->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>{return 3;}};
+  let span:Span=site->origin->span;
+  branch when{!record(List<String>[module->source->displayPath,number(span->start),number(span->end),number(span->line),number(span->column)])=>{return 3;},else=>unit};
+ };};0
+};

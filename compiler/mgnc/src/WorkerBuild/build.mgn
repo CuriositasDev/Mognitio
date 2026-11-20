@@ -7,7 +7,7 @@ use Mgnc\Driver\{prepareBuild,publicationMessage};
 use Mgnc\WholeOutput\{Snapshot,capture,verify};
 use Mgnc\WholeNativeData\{Native};
 use Mgnc\WholePipeline\{compile};
-use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected,receive};
+use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected,prepareStage};
 use Mgnc\TextUtil\{at};
 
 public let prepareArtifact:Function(List<String>,String):Int=function(fields:List<String>,manifest:String):Int{
@@ -23,13 +23,7 @@ public let prepareArtifact:Function(List<String>,String):Int=function(fields:Lis
   Result<Native,InputError>::Ok(value:Native)=>value,
   Result<Native,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
  };
- branch when{!send(header(fields,"ready"))||!record(List<String>[number(input->sources->length()+1),manifest])=>{return 3;},else=>unit};
- loop over(input->sources as source:SourceUnit){
-  branch when{!record(List<String>[source->path])=>{return 3;},else=>unit};
- };
- branch when{!send("MGN-PREPARED/1\0"+at(fields,2)+"\0")=>{return 3;},else=>unit};
- let stage:String=receive();
- branch when{stage==""||contains(stage,"\0")=>{return 3;},else=>unit};
+ let stage:String=prepareStage(fields,input);branch when{stage==""=>{return 3;},else=>unit};
  let bytes:Bytes=branch on compile(program){
   Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,
   Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,branch when{error->phase=="internal"=>3,else=>1},manifest,error,false);}

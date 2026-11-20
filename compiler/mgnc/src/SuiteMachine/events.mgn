@@ -12,14 +12,15 @@ public let stop:Function(Code,Int):Code=function(initial:Code,status:Int):Code{
 // R15 is the runtime context. Preserve all callee-saved registers. Each 40-byte
 // write fits in PIPE_BUF and a short write is a broken private transport.
 public let event:Function(Code,Int,Int,Int):Code=function(initial:Code,base:Int,tag:Int,kind:Int):Code{
- var code:Code=constant(initial,5,4,40);let retry:Int=code->nextLabel;let ok:Int=retry+1;code=fresh(code,2);
+ var code:Code=constant(initial,5,4,40);let retry:Int=code->nextLabel;let ok:Int=retry+1;let check:Int=retry+2;code=fresh(code,3);
  code=immediate(code,0,1414416205+4*4294967296+tag*281474976710656);code=store(code,4,0,0);
  code=load(code,0,15,base);code=store(code,4,8,0);code=load(code,0,15,base+8);code=store(code,4,16,0);
  code=constant(code,0,0,1);code=store(code,15,base+8,0);
  code=load(code,0,15,base+16);code=store(code,4,24,0);code=immediate(code,0,kind);code=store(code,4,28,0);
  code=load(code,0,15,base+24);code=store(code,4,32,0);
- code=label(code,retry);code=immediate(code,0,1);code=immediate(code,7,3);code=mov(code,6,4);code=immediate(code,2,40);code=raw(code,List<Int>[15,5]);
- code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],retry);code=constant(code,7,0,40);code=jump(code,List<Int>[15,132],ok);
+ code=immediate(code,10,16);code=label(code,retry);code=immediate(code,0,1);code=immediate(code,7,3);code=mov(code,6,4);code=immediate(code,2,40);code=raw(code,List<Int>[15,5]);
+ code=constant(code,7,0,-4);code=jump(code,List<Int>[15,133],check);code=constant(code,5,10,1);code=jump(code,List<Int>[15,133],retry);
+ code=label(code,check);code=constant(code,7,0,40);code=jump(code,List<Int>[15,132],ok);
  code=stop(code,124);code=label(code,ok);constant(code,0,4,40)
 };
 public let stage:Function(Code,Int,Int):Code=function(initial:Code,base:Int,value:Int):Code{
@@ -37,9 +38,10 @@ public let selectCase:Function(Code,Int,Int):Code=function(initial:Code,base:Int
  code=constant(code,0,6,1);code=byteLoad(code,0,6,0);code=alu(code,133,0,0);code=jump(code,List<Int>[15,133],digit);code=jump(code,List<Int>[233],selected);
  code=label(code,invalid);code=stop(code,123);code=label(code,selected);code=store(code,15,base,8);code=immediate(code,0,-1);code=store(code,15,base+24,0);
  code=event(code,base,1,0);
- let wait:Int=code->nextLabel;let admitted:Int=wait+1;let broken:Int=wait+2;code=fresh(code,3);code=constant(code,5,4,8);
- code=label(code,wait);code=immediate(code,0,0);code=immediate(code,7,4);code=mov(code,6,4);code=immediate(code,2,1);code=raw(code,List<Int>[15,5]);
- code=constant(code,7,0,-4);code=jump(code,List<Int>[15,132],wait);code=constant(code,7,0,1);code=jump(code,List<Int>[15,133],broken);
+ let wait:Int=code->nextLabel;let admitted:Int=wait+1;let broken:Int=wait+2;let checkGate:Int=wait+3;code=fresh(code,4);code=constant(code,5,4,8);
+ code=immediate(code,10,16);code=label(code,wait);code=immediate(code,0,0);code=immediate(code,7,4);code=mov(code,6,4);code=immediate(code,2,1);code=raw(code,List<Int>[15,5]);
+ code=constant(code,7,0,-4);code=jump(code,List<Int>[15,133],checkGate);code=constant(code,5,10,1);code=jump(code,List<Int>[15,133],wait);
+ code=label(code,checkGate);code=constant(code,7,0,1);code=jump(code,List<Int>[15,133],broken);
  code=byteLoad(code,0,4,0);code=constant(code,7,0,1);code=jump(code,List<Int>[15,132],admitted);code=label(code,broken);code=stop(code,124);
- code=label(code,admitted);code=constant(code,0,4,8);stage(code,base,1)
+ code=label(code,admitted);code=immediate(code,0,3);code=immediate(code,7,4);code=raw(code,List<Int>[15,5]);code=constant(code,0,4,8);stage(code,base,1)
 };

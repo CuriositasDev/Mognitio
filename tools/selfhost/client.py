@@ -78,10 +78,14 @@ def validate(reply, profile, stage):
             if ordinal != str(index) or not path or not name or not namespace:
                 raise WorkerError("Invalid test case identity")
             decimal(offset, 999999999)
+    elif reply.status == "suite" and profile == "suite":
+        if (len(fields) < 3 or fields[0] != (stage or "") or (not stage and fields != ("", "0", "0"))
+                or (stage and fields[1] == "0")):
+            raise WorkerError("Unexpected suite artifact")
     elif reply.status == "built" and profile == "build":
         if not stage or fields != (stage,):
             raise WorkerError("Unexpected compiler artifact")
-    elif reply.status == "publication" and profile == "build":
+    elif reply.status == "publication" and profile in ("build", "suite"):
         if not stage or len(fields) != 2 or fields[0] != stage:
             raise WorkerError("Unexpected publication result")
     elif reply.status != "ok" or profile not in ("syntax", "identity", "analysis") or fields:
@@ -113,10 +117,10 @@ def send_body(sock, body):
 def request(compiler, build, profile, *, path="", generation="", timeout=None, on_ready=None):
     if not re.fullmatch("[0-9a-f]{64}", build):
         raise ValueError("Invalid compiler identity")
-    if profile not in ("identity", "analysis", "syntax", "tests", "build"):
+    if profile not in ("identity", "analysis", "syntax", "tests", "build", "suite"):
         raise ValueError("Unsupported worker profile")
     if (bool(generation) != (profile in ("analysis", "syntax"))
-            or bool(path) != (profile != "identity") or (on_ready is not None) != (profile == "build")):
+            or bool(path) != (profile != "identity") or (on_ready is not None) != (profile in ("build", "suite"))):
         raise ValueError("Incorrect worker request fields")
     rid = secrets.token_hex(16)
     parts = ["MGN-REQUEST/1", build, rid, profile, generation, os.fspath(path)]

@@ -8,7 +8,10 @@ use Mgnc\WholeChecks\{require};
 use Mgnc\WholeIR\{Block,Origin};
 use Mgnc\WholeConcrete\{Instance};
 use Mgnc\IntMap\{Map,create,get,put};
-public type Entry=product{test:TestCase;cell:Int;init:Initialization;};
+use Mgnc\WitnessSyntax\{extent};
+use Mgnc\Tables\{atList};
+use Mgnc\SemanticData\{Declaration,Attribute,Module};
+public type Entry=product{test:TestCase;span:Span;cell:Int;init:Initialization;};
 public type Site=product{label:Int;origin:Origin;};
 public type Suite=product{entries:Paged<Entry>;sites:Paged<Site>;byLabel:Map;};
 public type Mode=sum{Ordinary;Testing(Suite);};
@@ -25,7 +28,11 @@ public let build:Function(Native,Paged<TestCase>):Result<Suite,Diagnostic>=funct
    try verifyInitialization(plan,test->file,initialization->modules,initialization->initializers);
    index=inits->count;selected=try put(selected,test->file,index);inits=push<Initialization>(inits,initialization);
   },else=>unit};
-  entries=push<Entry>(entries,Entry{test:test,cell:cell,init:try lookup<Initialization>(inits,index)});
+  let decl:Declaration=try lookup<Declaration>(plan->concrete->types->headers->declarations,test->declaration);
+  let module:Module=try lookup<Module>(plan->concrete->types->headers->modules,test->file);
+  let first:Span=(try atList<Attribute>(decl->attributes,0))->span;let last:Span=try extent(module->tree,decl->node);
+  let declarationSpan:Span=Span{start:first->start,end:last->end,line:first->line,column:first->column};
+  entries=push<Entry>(entries,Entry{test:test,span:declarationSpan,cell:cell,init:try lookup<Initialization>(inits,index)});
  };};
  loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){
   branch when{literal->instance>=0&&literal->operation== -1=>{

@@ -15,7 +15,11 @@ from ..runner.suite import run_suite
 
 
 class UsageError(Exception):
-    pass
+    origin = "mgn"
+
+
+class ArgumentEncodingError(UsageError):
+    origin = "runtime"
 
 
 class Interrupted(KeyboardInterrupt):
@@ -40,8 +44,8 @@ def interruptible():
             signal.signal(sig, previous)
 
 
-def report(code, message):
-    data = ("mgn: " + message + "\n").encode("utf-8", "backslashreplace")
+def report(code, message, origin="mgn"):
+    data = (origin + ": " + message + "\n").encode("utf-8", "backslashreplace")
     try:
         while data:
             size = os.write(2, data)
@@ -126,7 +130,7 @@ def prepare_and_run(compiler, build, argv):
                 try:
                     arg.decode("utf-8", "strict")
                 except UnicodeDecodeError as error:
-                    raise UsageError("Invalid UTF-8 in application argument") from error
+                    raise ArgumentEncodingError("invalid UTF-8 runtime argument") from error
             return artifact.prepare(inputs)
 
         profile = "suite" if command == b"test" else "build"
@@ -153,7 +157,7 @@ def compile_command(compiler, build, argv):
         with interruptible():
             return prepare_and_run(compiler, build, argv)
     except UsageError as error:
-        return report(2, str(error))
+        return report(2, str(error), error.origin)
     except Interrupted as interrupt:
         return -interrupt.signum
     except (MemoryError, WorkerError, ValueError) as error:

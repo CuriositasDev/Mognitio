@@ -1,0 +1,30 @@
+namespace Mgnc;
+use Std\Io\{writeStdout,writeStderr};
+use Mgnc\Project\{projectSources};
+use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\InputDiagnostics\{message};
+use Mgnc\Data\{Paged,Diagnostic,number};
+use Mgnc\TextUtil\{at};
+use Mgnc\Semantic\{checkSources};
+use Mgnc\SemanticValues\{State};
+use Mgnc\AnalysisTokens\{Row,forFile};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let input:ProjectInput=branch on projectSources(at(args,0)){
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
+  Result<ProjectInput,InputError>::Err(e:InputError)=>{discard writeStderr(message(e));return e->status;}
+ };
+ let state:State=branch on checkSources(input){
+  Result<State,InputError>::Ok(value:State)=>value,
+  Result<State,InputError>::Err(e:InputError)=>{discard writeStderr(message(e));return e->status;}
+ };
+ var file:Int=0;
+ loop while(file<input->sources->length()){
+  let rows:Paged<Row>=branch on forFile(state,file){
+   Result<Paged<Row>,Diagnostic>::Ok(value:Paged<Row>)=>value,
+   Result<Paged<Row>,Diagnostic>::Err(e:Diagnostic)=>{discard writeStderr(e->phase+" "+e->message);return 3;}
+  };
+  loop over(rows->pages->append(rows->tail) as page:List<Row>){loop over(page as row:Row){
+   discard writeStdout(number(file)+" "+number(row->start)+" "+number(row->end)+" "+number(row->role)+" "+number(row->modifiers)+"\n");
+  };};file=file+1;
+ };0
+};

@@ -6,7 +6,7 @@ use Mgnc\Expressions\{Expression};
 use Mgnc\Syntax\{Parent};
 use Mgnc\TypeData\{Store,Structure,Argument,Obligation};
 public type Symbol=product{file:Int;name:String;valueType:Int;mutable:Bool;functionOwner:Parent;declaration:Parent;span:Span;};
-public type Node=product{file:Int;cursor:Int;rule:Int;flag:Bool;structure:Structure;normal:Bool;operation:String;binding:Parent;target:Parent;children:List<Int>;span:Span;integer:Int;minimum:Bool;literal:List<Integer>;text:String;binder:Parent;binders:List<Parent>;functionOwner:Parent;mapping:List<Int>;arguments:List<Argument>;};
+public type Node=product{file:Int;memberStart:Int;cursor:Int;rule:Int;flag:Bool;structure:Structure;normal:Bool;operation:String;binding:Parent;target:Parent;children:List<Int>;span:Span;integer:Int;minimum:Bool;literal:List<Integer>;text:String;binder:Parent;binders:List<Parent>;functionOwner:Parent;mapping:List<Int>;arguments:List<Argument>;};
 public type FunctionInfo=product{file:Int;cursor:Int;valueType:Int;parameters:List<Int>;body:Parent;captures:List<Int>;parent:Parent;templateOwner:Parent;};
 public type Loop=product{kind:Int;breaks:List<Int>;};
 public type BodyState=sum{NotRequired;Pending;Checking;Complete(Int);};

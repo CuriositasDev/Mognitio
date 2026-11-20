@@ -1,0 +1,142 @@
+namespace Mgnc\AnalysisTokens;
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import};
+use Mgnc\SemanticValues\{State,Symbol,Node,FunctionInfo};
+use Mgnc\TypeData\{Type,Structure};
+use Mgnc\TypeOps\{functionKind};
+use Mgnc\TypeNames\{declaration,parameter};
+use Mgnc\Syntax\{Parent};
+use Mgnc\Source\{Snapshot,Lexeme};
+use Mgnc\TokenStorage\{getToken};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{item,parts,site,text};
+use Mgnc\Tables\{atList};
+use Mgnc\SemanticClassification\{BindingIndex,prepare,classifyPrepared};
+use Mgnc\Grammar\{ruleName,ruleTypeName,ruleTypeApply,ruleTypeFunction,ruleConstructName,ruleConstructGeneric,ruleFieldsAppend,ruleFieldValue,ruleField,ruleMethod,ruleGenericMethod,ruleVariant,ruleVariantPayload,rulePatternEmpty,rulePatternPayload,ruleVariantsEmptyPayload,ruleVariantsPayload,ruleContractMethod,ruleWitnessMethod,ruleGenericApply,ruleImportName,ruleImportAlias,ruleArgumentType,ruleArgumentValue};
+use Mgnc\TextUtil\{starts};
+
+public type Row=product{start:Int;end:Int;role:Int;modifiers:Int;};
+// Packed maps are keyed by original UTF-8 byte offset. Emit rows in lexical
+// order after semantic identities and syntax roles have been joined.
+let mark:Function(Map,Span,Int,Int):Result<Map,Diagnostic>=function(map:Map,span:Span,role:Int,mods:Int):Result<Map,Diagnostic>{
+ put(map,span->start,role*8+mods)
+};
+let shapeRole:Function(State,Int):Result<Int,Diagnostic>=function(state:State,typeId:Int):Result<Int,Diagnostic>{
+ let shape:Type=try lookup<Type>(state->types->types,typeId);Result<Int,Diagnostic>::Ok(branch when{shape->kind==functionKind=>4,else=>5})
+};
+let declaredRole:Function(State,Int):Result<Int,Diagnostic>=function(state:State,id:Int):Result<Int,Diagnostic>{
+ let decl:Declaration=try lookup<Declaration>(state->types->headers->declarations,id);
+ branch when{decl->kind<3=>{return Result<Int,Diagnostic>::Ok(1);},decl->kind==6=>{return Result<Int,Diagnostic>::Ok(2);},
+ decl->kind==3=>{return Result<Int,Diagnostic>::Ok(4);},else=>unit};
+ branch on try lookup<Parent>(state->types->declarations,id){Parent::Some(typeId:Int)=>shapeRole(state,typeId),Parent::None=>Result<Int,Diagnostic>::Ok(5)}
+};
+let standard:Function(Headers,Int):Result<Int,Diagnostic>=function(headers:Headers,id:Int):Result<Int,Diagnostic>{
+ let decl:Declaration=try lookup<Declaration>(headers->declarations,id);let module:Module=try lookup<Module>(headers->modules,decl->file);
+ Result<Int,Diagnostic>::Ok(branch when{module->standard=>4,else=>0})
+};
+let typeRole:Function(Headers,Int,Parent,String):Result<Int,Diagnostic>=function(headers:Headers,file:Int,owner:Parent,name:String):Result<Int,Diagnostic>{
+ branch on try parameter(headers,owner,name){Parent::Some(n:Int)=>{return Result<Int,Diagnostic>::Ok(24);},Parent::None=>unit};
+ branch on try declaration(headers,file,name){Parent::None=>Result<Int,Diagnostic>::Ok(12),Parent::Some(id:Int)=>{
+  let decl:Declaration=try lookup<Declaration>(headers->declarations,id);
+  Result<Int,Diagnostic>::Ok(branch when{decl->kind==6=>16,else=>8}+(try standard(headers,id)))
+ }}
+};
+let symbols:Function(State,Int):Result<Map,Diagnostic>=function(state:State,file:Int):Result<Map,Diagnostic>{
+ var tokens:Map=create();var parameters:Map=create();var bindings:Map=create();
+ loop over(state->functions->pages->append(state->functions->tail) as page:List<FunctionInfo>){loop over(page as fn:FunctionInfo){
+  branch when{fn->file==file=>{loop over(fn->parameters as id:Int){parameters=try put(parameters,id,1);};},else=>unit};
+ };};
+ var index:Int=0;
+ loop over(state->symbols->pages->append(state->symbols->tail) as page:List<Symbol>){loop over(page as sym:Symbol){
+  branch when{sym->file==file=>{
+   let role:Int=branch when{(try get(parameters,index))>=0=>6,else=>try shapeRole(state,sym->valueType)};
+   let mods:Int=branch when{sym->mutable=>0,else=>2}+branch on sym->declaration{Parent::Some(id:Int)=>try standard(state->types->headers,id),Parent::None=>0};
+   bindings=try put(bindings,index,role*8+mods);tokens=try mark(tokens,sym->span,role,mods+1);
+  },else=>unit};index=index+1;
+ };};
+ loop over(state->nodes->pages->append(state->nodes->tail) as page:List<Node>){loop over(page as node:Node){
+  branch when{node->file!=file=>{continue;},node->rule==ruleName=>{
+   branch on node->binding{Parent::Some(id:Int)=>{let value:Int=try get(bindings,id);branch when{value>=0=>{tokens=try put(tokens,node->span->start,value);},else=>unit};},Parent::None=>unit};
+  },node->memberStart>=0=>{
+   let receiver:Node=try lookup<Node>(state->nodes,try atList<Int>(node->children,0));
+   let role:Int=branch when{node->operation=="field-call"||node->operation=="field"=>7,else=>8};
+   var modifiers:Int=branch when{starts(node->operation,"method:")=>4,else=>0};
+   branch on receiver->structure{Structure::Known(typeId:Int)=>{
+    let shape:Type=try lookup<Type>(state->types->types,typeId);
+    branch on shape->owner{Parent::Some(id:Int)=>{modifiers=try standard(state->types->headers,id);},Parent::None=>unit};
+   },Structure::Unknown=>unit};
+   tokens=try put(tokens,node->memberStart,role*8+modifiers);
+  },else=>unit};
+ };};
+ Result<Map,Diagnostic>::Ok(tokens)
+};
+let walk:Function(State,Int,Parent,SyntaxForest,Int,Map):Result<Map,Diagnostic>=function(state:State,file:Int,owner:Parent,tree:SyntaxForest,root:Int,prior:Map):Result<Map,Diagnostic>{
+ let headers:Headers=state->types->headers;
+ var pending:Paged<Int>=push<Int>(empty<Int>(),root);var i:Int=0;var seen:Map=create();var map:Map=prior;
+ loop while(i<pending->count){
+  let id:Int=try lookup<Int>(pending,i);i=i+1;branch when{(try get(seen,id))>=0=>{continue;},else=>unit};seen=try put(seen,id,1);
+  let node:ForestNode=try getNode(tree->nodes,id);
+  branch when{node->alternatives>=0&&(node->rule==ruleArgumentType||node->rule==ruleArgumentValue)=>{
+   // The two families share a single identifier. The checker has resolved its
+   // type or value parameter in this declaration's scope.
+   let spot:Span=try site(tree,id);map=try put(map,spot->start,try typeRole(headers,file,owner,try text(tree,id)));
+  },else=>unit};
+  branch when{node->symbol<0||node->alternatives>=0=>{continue;},else=>unit};
+  branch when{node->left>=0=>{pending=push<Int>(pending,node->left);},else=>unit};branch when{node->right>=0=>{pending=push<Int>(pending,node->right);},else=>unit};
+  branch when{node->symbol==0=>{continue;},else=>unit};
+  let rule:Int=node->rule;var position:Int= -1;var code:Int= -1;
+  branch when{rule==ruleTypeName||rule==ruleTypeApply||rule==ruleConstructName||rule==ruleConstructGeneric=>{
+   position=0;code=try typeRole(headers,file,owner,try text(tree,id));
+  },rule==ruleTypeFunction=>{position=0;code=12;},
+  rule==ruleFieldsAppend=>{position=1;code=57;},rule==ruleFieldValue=>{position=0;code=56;},
+  rule==ruleVariantsEmptyPayload||rule==ruleVariantsPayload=>{position=1;code=73;},
+  rule==ruleVariant||rule==ruleVariantPayload||rule==rulePatternEmpty||rule==rulePatternPayload=>{position=2;code=72+(try typeRole(headers,file,owner,try text(tree,id)))%8;},
+  rule==ruleContractMethod||rule==ruleWitnessMethod=>{position=0;code=65;},rule==ruleGenericApply=>{position=0;code=32;},
+  rule==ruleImportName||rule==ruleImportAlias=>{
+   let fields:List<Int>=try parts(tree,id);let local:Int=try item(fields,branch when{rule==ruleImportAlias=>2,else=>0});
+   branch on try declaration(headers,file,try text(tree,local)){Parent::Some(target:Int)=>{
+    let d:Declaration=try lookup<Declaration>(headers->declarations,target);
+    code=(try declaredRole(state,target))*8+(try standard(headers,target))+branch when{d->kind==4=>2,else=>0};
+    position=0;map=try put(map,(try site(tree,local))->start,code);
+   },Parent::None=>unit};
+  },else=>unit};
+  branch when{position>=0&&code>=0=>{
+   let field:Int=try item(try parts(tree,id),position);let spot:Span=try site(tree,field);map=try put(map,spot->start,code);
+  },else=>unit};
+ };
+ Result<Map,Diagnostic>::Ok(map)
+};
+public let rows:Function(Snapshot,Map,Bool):Result<Paged<Row>,Diagnostic>=function(source:Snapshot,roles:Map,checked:Bool):Result<Paged<Row>,Diagnostic>{
+ var result:Paged<Row>=empty<Row>();var i:Int=0;var ns:Int= -1;
+ loop while(i<source->tokens->count){
+  let token:Lexeme=try getToken(source->tokens,i);i=i+1;var value:Int=try get(roles,token->start);
+  branch when{checked&&token->text=="namespace"=>{ns=1;},checked&&token->text=="use"=>{ns=0;},token->text=="{"||token->text==";"=>{ns= -1;},else=>unit};
+  branch when{value<0&&token->kind==4=>{value=80;},value<0&&checked&&ns>=0&&token->kind==1=>{value=ns;},else=>unit};
+  branch when{value>=0&&token->end>token->start=>{result=push<Row>(result,Row{start:token->start,end:token->end,role:value/8,modifiers:value%8});},else=>unit};
+ };Result<Paged<Row>,Diagnostic>::Ok(result)
+};
+public let forFile:Function(State,Int):Result<Paged<Row>,Diagnostic>=function(state:State,file:Int):Result<Paged<Row>,Diagnostic>{
+ let headers:Headers=state->types->headers;let module:Module=try lookup<Module>(headers->modules,file);
+ var map:Map=try symbols(state,file);
+ let top:List<Int>=try parts(module->tree,module->tree->root);
+ map=try walk(state,file,Parent::None,module->tree,try item(top,1),map);
+ let shared:BindingIndex=try prepare(headers,file,false);
+ loop over(module->declarations as id:Int){
+  let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+  let owner:Parent=Parent::Some(id);
+  map=try walk(state,file,owner,module->tree,declared->node,map);
+  branch when{declared->kind==3||declared->kind==4||declared->kind==5=>{
+   let generic:Parent=branch when{declared->kind==3=>owner,else=>Parent::None};
+   let binding:BindingIndex=branch when{declared->kind==3=>try prepare(headers,file,true),else=>shared};
+   let body:SyntaxForest=try classifyPrepared(headers,file,declared->body,generic,binding);
+   map=try walk(state,file,owner,body,body->root,map);
+  },else=>unit};
+  let mods:Int=branch when{declared->kind==3||declared->kind==4||declared->kind==7=>3,else=>1};
+  map=try mark(map,declared->span,try declaredRole(state,id),mods);
+  loop over(declared->parameters as param:Parameter){map=try mark(map,param->span,3,1);};
+ };
+ rows(module->tree->source,map,true)
+};

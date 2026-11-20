@@ -39,17 +39,32 @@ def project(reply, names, texts, result):
         if known not in ("0", "1"):
             raise WorkerError("Invalid diagnostic position state")
         item = dict(path=path, phase=phase, message=message, start=start, end=end)
-        if item not in result["diagnostics"] and len(result["diagnostics"]) < 2001:
-            result["diagnostics"].append(item)
+        rows = result["diagnostics"]
+        for row in rows:
+            if all(row.get(k) == v for k, v in item.items()):
+                return row
+        if len(rows) < 2001:
+            rows.append(item)
         if len(result["diagnostics"]) >= 200:
             result["truncated"] = True
+        return item
+
+    def related(row, name, message, first, last):
+        path = source(name)
+        start, end = offsets(path, first, last)
+        note = dict(path=path, message=message, start=start, end=end)
+        notes = row.setdefault("related", [])
+        if note not in notes:
+            notes.append(note)
 
     if reply.status == "diagnostic":
         status, path, phase, message, known, start, end, *_ = reply.fields
         if status == "3":
             raise WorkerError("Compiler analysis failed internally")
         result["complete"] = False
-        diagnostic(path, phase, message, known, start, end)
+        row = diagnostic(path, phase, message, known, start, end)
+        for i in range(12, len(reply.fields), 6):
+            related(row, *reply.fields[i:i+4])
         return
 
     if reply.status != "analysis":
@@ -58,13 +73,18 @@ def project(reply, names, texts, result):
     if fields[0] == "partial":
         result["complete"] = False
     i = 1
+    row = None
     while i < len(fields):
         kind = fields[i]
         if kind == "D" and i + 7 <= len(fields):
-            diagnostic(*fields[i+1:i+7])
+            row = diagnostic(*fields[i+1:i+7])
             result["complete"] = False
             i += 7
+        elif kind == "N" and i + 5 <= len(fields) and row is not None:
+            related(row, *fields[i+1:i+5])
+            i += 5
         elif kind == "T" and i + 6 <= len(fields):
+            row = None
             name, first, last, role, modifiers = fields[i+1:i+6]
             path = source(name)
             start, end = offsets(path, first, last)

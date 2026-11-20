@@ -16,7 +16,7 @@ public let read:Function(SyntaxForest,Int):Result<Expression,Diagnostic>=functio
  let id:Int=try concrete(tree,root);let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
  var children:List<Int>=List<Int>[];var annotations:List<Int>=List<Int>[];var labels:List<Label>=List<Label>[];var patterns:List<Pattern>=List<Pattern>[];var flag:Bool=false;
  let rule:Int=node->rule;let spelling:String=try text(tree,id);
- branch when{rule==ruleAttributedLocalLet||rule==ruleAttributedLocalVar=>{try attributeTargets(try attributes(tree,fields),false);},else=>unit};
+ branch when{rule==ruleAttributedLocalLet||rule==ruleAttributedLocalVar=>{try attributeTargets(try attributes(tree,fields),false,try site(tree,id));},else=>unit};
  branch when{
  rule==ruleInteger||rule==ruleString||rule==ruleTrue||rule==ruleFalse||rule==ruleUnit||rule==ruleName=>unit,
  rule==ruleGenericApply=>{annotations=annotations->append(try item(fields,1));},

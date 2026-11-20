@@ -81,6 +81,13 @@ def verify_payload(payload):
         raise ValueError("Payload identity mismatch")
     if identity["inputs"]["target"] != "linux-amd64":
         raise ValueError("Wrong payload target")
+    if identity.get("schema") == 2:
+        for name, item in expected.items():
+            if item.get("mode") != (payload / name).stat().st_mode & 0o7777:
+                raise ValueError("Native payload permission mismatch: " + name)
+        probe = subprocess.run([payload / "bin/mgn", "--version"], capture_output=True, timeout=15)
+        if probe.returncode or probe.stderr or probe.stdout != ("Mognitio " + identity["version"] + "\n").encode():
+            raise ValueError("Native compiler identity mismatch")
     return identity
 
 def switch(current, target):

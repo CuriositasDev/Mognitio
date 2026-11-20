@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tarfile
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,10 +30,24 @@ def normalize_permissions(root):
 
 def run(args):
     payload = args.payload.resolve()
-    spec = importlib.util.spec_from_file_location("payload_validation", ROOT / "tools/lsp/payload.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    identity = module.payload_identity(payload)
+    schema = json.loads((payload / "identity.json").read_bytes()).get("schema")
+    if schema == 2:
+        sys.path.insert(0, str(ROOT))
+        from tools.selfhost.payload import payload_identity
+        identity = payload_identity(payload)
+        sources = {r["path"]: r for r in json.loads((payload / "inventory.json").read_bytes())}
+        for member in ("packaging/install.py", "packaging/install.sh", "scripts/package-toolchain.py"):
+            if sha(ROOT / member) != sources[member]["sha256"]:
+                raise ValueError("Distribution input differs from its frozen source: " + member)
+        dependencies = "libc6 (>= 2.38), libstdc++6, python3 (>= 3.12), util-linux"
+    elif schema == 1:
+        spec = importlib.util.spec_from_file_location("legacy_payload", ROOT / "tools/lsp/payload.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        identity = module.payload_identity(payload)
+        dependencies = "libc6 (>= 2.34), libzstd1, python3 (>= 3.12), util-linux"
+    else:
+        raise ValueError("Unsupported payload format")
     version = identity["version"]
     if identity["inputs"]["mode"] != "release":
         raise ValueError("Distribution packages require an explicit release-mode build")
@@ -63,7 +78,7 @@ def run(args):
         control.joinpath("control").write_text(
             "Package: mognitio\nVersion: " + version + "-1\nArchitecture: amd64\n"
             "Maintainer: ProjectCuriositas\nSection: devel\nPriority: optional\n"
-            "Depends: libc6 (>= 2.34), libzstd1, python3 (>= 3.12), util-linux\n"
+            f"Depends: {dependencies}\n"
             "Description: Mognitio compiler and language server\n"
             " A fixed compiler, frontend, standard library, and stdio language server.\n")
         normalize_permissions(deb)

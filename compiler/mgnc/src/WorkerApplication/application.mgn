@@ -1,0 +1,36 @@
+namespace Mgnc\WorkerApplication;
+use Std\Numeric\{Bits,Unsigned,IntegerConversionError};
+use Std\Binary\{Bytes};
+use Mgnc\Data\{Diagnostic,number};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeEmit\{emitMode};
+use Mgnc\WholeMachineCheck\{verify};
+use Mgnc\SuitePlan\{Mode};
+use Mgnc\Encode\{encode,size};
+use Mgnc\WorkerWire\{send,header,record,diagnostic};
+use Mgnc\TextUtil\{at,cut};
+
+// Only the fixed compiler supplies this private callable application. Text
+// chunks preserve arbitrary octets on the existing UTF-8 control transport.
+public let application:Function(List<String>,Native):Int=function(fields:List<String>,plan:Native):Int{
+ let code:Code=branch on emitMode(plan,Mode::Application){Result<Code,Diagnostic>::Ok(value:Code)=>flush(value),Result<Code,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}};
+ branch on verify(plan,code){Result<Unit,Diagnostic>::Ok(value:Unit)=>unit,Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}};
+ let bytes:Bytes=branch on encode(code){Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}};
+ branch when{!send(header(fields,"application"))||!record(List<String>[number(bytes->length()-120)])=>{return 3;},else=>unit};
+ let hex:String="0123456789abcdef";var alphabet:List<String>=List<String>[];var i:Int=0;
+ loop while(i<256){let high:Int=i/16;let low:Int=i%16;alphabet=alphabet->append(cut(hex,high,high+1)+cut(hex,low,low+1));i=i+1;};
+ var chunk:List<String>=List<String>[];i=120;
+ loop while(i<bytes->length()){
+  let octet:Bits<8>=branch on bytes->at(i){Result<Bits<8>,IndexError>::Ok(value:Bits<8>)=>value,Result<Bits<8>,IndexError>::Err(error:IndexError)=>{return 3;}};
+  let value:Int=branch on octet->asInteger<Unsigned>()->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(n:Int)=>n,Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{return 3;}};
+  chunk=chunk->append(at(alphabet,value));i=i+1;
+  branch when{chunk->length()==480||i==bytes->length()=>{branch when{!record(List<String>["bytes",chunk->join("")])=>{return 3;},else=>unit};chunk=List<String>[];},else=>unit};
+ };
+ var offset:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as item:Record){
+  branch when{item->kind==5=>{branch when{!record(List<String>["reference",number(offset+item->bytes->length())])=>{return 3;},else=>unit};},else=>unit};
+  offset=offset+size(item);
+ };};
+ branch when{offset==bytes->length()-120=>0,else=>3}
+};

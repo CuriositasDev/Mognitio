@@ -1,12 +1,12 @@
 namespace Mgnc;
-use Mgnc\Data\{Diagnostic,Span,empty};
+use Mgnc\Data\{Related,Diagnostic,Span,empty};
 use Mgnc\WholeHelpers\{Helper,registry,verify};
 use Mgnc\WholeHelperCheck\{verify as linked};
 use Mgnc\WholeChecks\{require};
 use Mgnc\Machine\{Code,Record,label,jump,raw,reference,flush};
 use Std\Io\{writeStdout};
 let rejected:Function(Result<Unit,Diagnostic>,String):Result<Unit,Diagnostic>=function(result:Result<Unit,Diagnostic>,expected:String):Result<Unit,Diagnostic>{
- branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",message:"mutant accepted: "+expected,span:Span{start:0,end:0,line:1,column:1}});},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->message=="whole IR: "+expected,error->span,"wrong helper detector "+expected+": "+error->message);discard writeStdout("MUTANT "+expected+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
+ branch on result{Result<Unit,Diagnostic>::Ok(value:Unit)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",message:"mutant accepted: "+expected,span:Span{start:0,end:0,line:1,column:1}});},Result<Unit,Diagnostic>::Err(error:Diagnostic)=>{try require(error->message=="whole IR: "+expected,error->span,"wrong helper detector "+expected+": "+error->message);discard writeStdout("MUTANT "+expected+"\n");}};Result<Unit,Diagnostic>::Ok(unit)
 };
 let change:Function(List<Helper>,Int,Int):List<Helper>=function(entries:List<Helper>,id:Int,mutation:Int):List<Helper>{
  var result:List<Helper>=List<Helper>[];loop over(entries as h:Helper){
@@ -18,7 +18,7 @@ let change:Function(List<Helper>,Int,Int):List<Helper>=function(entries:List<Hel
 let test:Function():Result<Unit,Diagnostic>=function():Result<Unit,Diagnostic>{
  let entries:List<Helper>=registry(List<Int>[50,51,52,53,54]);try verify(entries);
  try rejected(verify(change(entries,66,0)),"missing runtime helper dependency");
- try rejected(verify(entries->append(branch on entries->at(0){Result<Helper,IndexError>::Ok(h:Helper)=>h,Result<Helper,IndexError>::Err(e:IndexError)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",message:"empty fixture",span:Span{start:0,end:0,line:1,column:1}});}})),"duplicate runtime helper");
+ try rejected(verify(entries->append(branch on entries->at(0){Result<Helper,IndexError>::Ok(h:Helper)=>h,Result<Helper,IndexError>::Err(e:IndexError)=>{return Result<Unit,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",message:"empty fixture",span:Span{start:0,end:0,line:1,column:1}});}})),"duplicate runtime helper");
  try rejected(verify(change(entries,10,2)),"runtime helper callee-save clobber");
  try rejected(verify(change(entries,41,3)),"runtime helper allocation effect");
  try rejected(verify(change(entries,11,4)),"runtime helper failure effect");

@@ -1,7 +1,7 @@
 namespace Mgnc\Imports;
 use Mgnc\InputDiagnostics\{escapePath};
 use Mgnc\NameIndex\{Index,create as createIndex,insert};
-use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
+use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Related,problem};
 use Mgnc\InputData\{InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Import,Introduction,Parameter as MgncParameter};
 use Mgnc\Headers\{sourceError};
@@ -27,7 +27,7 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
     let previous:Declaration=branch on lookup<Declaration>(headers->declarations,earlier){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
     branch when{previous->name==current->name=>{
      let module:Module=branch on lookup<Module>(headers->modules,previous->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
-     branch when{module->nameSpace==owner->nameSpace=>{return Result<Headers,InputError>::Err(sourceError(owner->source,problem("semantic",current->span,"duplicate public name")));},else=>unit};
+     branch when{module->nameSpace==owner->nameSpace=>{return Result<Headers,InputError>::Err(sourceError(owner->source,Diagnostic{phase:"semantic",span:current->span,message:"Duplicate public name",related:List<Related>[Related{path:module->source->displayPath,span:previous->span,message:"Previous declaration"}]}));},else=>unit};
     },else=>unit};
    };
    exports=branch on replaceItem<List<Int>>(exports,key,bucket->append(exportedIndex)){Result<Paged<List<Int>>,Diagnostic>::Ok(value:Paged<List<Int>>)=>value,Result<Paged<List<Int>>,Diagnostic>::Err(error:Diagnostic)=>panic{"export bucket invariant"}};
@@ -64,14 +64,14 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
      branch when{owner->nameSpace==imported->nameSpace=>{target=index;break;},else=>unit};
     },else=>unit};
    };
-   branch when{target<0=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"public import is not defined")));},else=>unit};
+   branch when{target<0=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"Import requires another file's public declaration")));},else=>unit};
    let declaration:Declaration=branch on lookup<Declaration>(headers->declarations,target){Result<Declaration,Diagnostic>::Ok(value:Declaration)=>value,Result<Declaration,Diagnostic>::Err(error:Diagnostic)=>panic{"declaration arena invariant"}};
-   branch when{declaration->file==file=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"cannot import from the same source file")));},
+   branch when{declaration->file==file=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"Import requires another file's public declaration")));},
     reserved(imported->local)=>{return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"reserved import name")));},else=>unit};
    loop over(visible as visibleId:Int){
     let previous:Introduction=branch on lookup<Introduction>(names,visibleId){Result<Introduction,Diagnostic>::Ok(value:Introduction)=>value,Result<Introduction,Diagnostic>::Err(error:Diagnostic)=>panic{"name arena invariant"}};
     branch when{previous->name==imported->local||previous->declaration==target=>{
-     return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"duplicate import name or original declaration")));
+     return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",imported->span,"Duplicate import name or original declaration")));
     },else=>unit};
    };
    visible=visible->append(names->count);
@@ -94,7 +94,7 @@ public let resolve:Function(Headers):Result<Headers,InputError>=function(headers
  loop over(ordered->cycle as edge:Edge){
   let module:Module=branch on lookup<Module>(headers->modules,edge->file){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
   let target:Module=branch on lookup<Module>(headers->modules,edge->target){Result<Module,Diagnostic>::Ok(value:Module)=>value,Result<Module,Diagnostic>::Err(error:Diagnostic)=>panic{"module arena invariant"}};
-  return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->span,"cyclic source imports through "+escapePath(target->source->displayPath))));
+  return Result<Headers,InputError>::Err(sourceError(module->source,problem("semantic",edge->span,"Cyclic source imports through "+escapePath(target->source->displayPath))));
  };
  let order:List<Int>=ordered->values;
  Result<Headers,InputError>::Ok(Headers{input:headers->input,modules:headers->modules,declarations:headers->declarations,names:names,fileNames:fileNames,nameBuckets:nameBuckets,order:order})

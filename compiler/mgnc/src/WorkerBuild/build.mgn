@@ -7,6 +7,7 @@ use Mgnc\Driver\{prepareBuild,publicationMessage};
 use Mgnc\WholeOutput\{Snapshot,capture,verify};
 use Mgnc\WholeNativeData\{Native};
 use Mgnc\WholePipeline\{compile};
+use Mgnc\WorkerApplication\{application};
 use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected,prepareStage};
 use Mgnc\TextUtil\{at};
 
@@ -23,6 +24,10 @@ public let prepareArtifact:Function(List<String>,String):Int=function(fields:Lis
   Result<Native,InputError>::Ok(value:Native)=>value,
   Result<Native,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
  };
+ branch when{at(fields,3)=="application"=>{
+  branch on verify(input,snapshot,""){Result<Unit,InputError>::Ok(value:Unit)=>unit,Result<Unit,InputError>::Err(error:InputError)=>{return rejected(fields,error);}};
+  return application(fields,program);
+ },else=>unit};
  let stage:String=prepareStage(fields,input);branch when{stage==""=>{return 3;},else=>unit};
  let bytes:Bytes=branch on compile(program){
   Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,

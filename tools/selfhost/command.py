@@ -1,7 +1,11 @@
 """Prepare and execute normal build and run commands with the paired native compiler."""
 from contextlib import contextmanager
+import errno
 import os
 import signal
+import resource
+import sys
+from pathlib import Path
 import subprocess
 
 from .client import WorkerError, request
@@ -47,6 +51,28 @@ def report(code, message):
     return code
 
 
+def one_line(text):
+    escaped = {"\\": "\\\\", "\n": "\\n", "\r": "\\r"}
+    return "".join(escaped.get(ch, f"\\u{ord(ch):04X}" if ord(ch) < 32 or
+                               ord(ch) in (127, 0x2028, 0x2029) else ch) for ch in text)
+
+
+def compiler_diagnostic(fields):
+    status, path, phase, message, known, start, end, line, column, operation, kind, io_phase = fields[:12]
+    phase = "lex" if phase == "lexical" else phase
+    source = one_line(path)
+    cause = " / ".join(one_line(value) for value in (operation, kind, io_phase) if value)
+    detail = f" ({cause})" if cause else ""
+    if known == "1":
+        lines = [f"{source}:{line}:{column}: {phase}: {one_line(message)} [bytes {start},{end}){detail}"]
+    else:
+        lines = [f"{source}: {phase}: {one_line(message)} (position unknown){detail}"]
+    for i in range(12, len(fields), 6):
+        path, note, start, end, line, column = fields[i:i+6]
+        lines.append(f"{one_line(path)}:{line}:{column}: {phase}: {one_line(note)} [bytes {start},{end})")
+    return int(status), "\n".join(lines)
+
+
 def path_arg(raw):
     try:
         text = raw.decode("utf-8", "strict")
@@ -89,6 +115,9 @@ def prepare_and_run(compiler, build, argv):
         output, arguments = None, argv[3:]
     else:
         raise UsageError("Expected test <manifest>, run <manifest> [-- arguments...] or build <manifest> -o <artifact>")
+    if command == b"run" and resource.getrlimit(resource.RLIMIT_FSIZE)[0] != resource.RLIM_INFINITY:
+        runner = Path(__file__).with_name("resident.py")
+        return application(sys.executable, [b"-I", b"-B", os.fsencode(runner), os.fsencode(manifest), *arguments])
     with Artifact(output) as artifact:
         def ready(inputs):
             # Linux argv bytes belong to the generated program. Decode solely
@@ -103,11 +132,8 @@ def prepare_and_run(compiler, build, argv):
         profile = "suite" if command == b"test" else "build"
         result = request(compiler, build, profile, path=manifest, on_ready=ready)
         if result.status == "diagnostic":
-            status, path, phase, message, known, start, end, line, column, operation, kind, io_phase = result.fields
-            location = f"{line}:{column} [{start},{end})" if known == "1" else "position unknown"
-            cause = " / ".join(value for value in (operation, kind, io_phase) if value)
-            detail = f" ({cause})" if cause else ""
-            return report(int(status), f"{phase}: {path!r}: {location}: {message}{detail}")
+            status, message = compiler_diagnostic(result.fields)
+            return report(status, message)
         if result.status == "publication":
             return report(2, result.fields[1].rstrip("\n"))
         if command == b"test":
@@ -130,9 +156,11 @@ def compile_command(compiler, build, argv):
         return report(2, str(error))
     except Interrupted as interrupt:
         return -interrupt.signum
-    except (WorkerError, ValueError) as error:
+    except (MemoryError, WorkerError, ValueError) as error:
         return report(3, f"compiler: {error}")
     except OSError as error:
+        if error.errno == errno.ENOMEM:
+            return report(3, "Compiler memory exhausted")
         return report(2, f"I/O: {error}")
 
 

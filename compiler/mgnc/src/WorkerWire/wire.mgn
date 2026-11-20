@@ -1,6 +1,6 @@
 namespace Mgnc\WorkerWire;
 use Std\Io\{writeStdout,readStdin,IoError};
-use Mgnc\Data\{Diagnostic,Span,number,contains};
+use Mgnc\Data\{Diagnostic,Related,Span,number,contains};
 use Mgnc\InputData\{InputError,ProjectInput,SourceUnit};
 use Mgnc\TextUtil\{at,code,cut};
 use Mgnc\Width\{scalarWidth};
@@ -30,8 +30,13 @@ public let record:Function(List<String>):Bool=function(fields:List<String>):Bool
 let errorRecord:Function(List<String>,Int,String,Diagnostic,Bool,List<String>):Int=function(fields:List<String>,status:Int,path:String,error:Diagnostic,known:Bool,details:List<String>):Int{
  branch when{!send(header(fields,"diagnostic"))=>{return 3;},else=>unit};
  let span:Span=error->span;
- branch when{record(List<String>[number(status),path,error->phase,error->message,branch when{known=>"1",else=>"0"},
-                                number(span->start),number(span->end),number(span->line),number(span->column),at(details,0),at(details,1),at(details,2)])=>0,else=>3}
+ var values:List<String>=List<String>[number(status),path,error->phase,error->message,branch when{known=>"1",else=>"0"},
+     number(span->start),number(span->end),number(span->line),number(span->column),at(details,0),at(details,1),at(details,2)];
+ loop over(error->related as note:Related){
+  let location:Span=note->span;
+  values=values->append(branch when{note->path==""=>path,else=>note->path})->append(note->message)->append(number(location->start))->append(number(location->end))->append(number(location->line))->append(number(location->column));
+ };
+ branch when{record(values)=>0,else=>3}
 };
 public let diagnostic:Function(List<String>,Int,String,Diagnostic,Bool):Int=function(fields:List<String>,status:Int,path:String,error:Diagnostic,known:Bool):Int{
  errorRecord(fields,status,path,error,known,List<String>[])

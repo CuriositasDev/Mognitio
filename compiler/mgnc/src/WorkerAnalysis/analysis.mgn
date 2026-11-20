@@ -1,5 +1,5 @@
 namespace Mgnc\WorkerAnalysis;
-use Mgnc\Data\{Diagnostic,Paged,Span,number};
+use Mgnc\Data\{Diagnostic,Related,Paged,Span,number};
 use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
 use Mgnc\Semantic\{checkSources};
 use Mgnc\SemanticValues\{State};
@@ -19,7 +19,10 @@ let tokens:Function(String,Paged<Row>):Bool=function(path:String,result:Paged<Ro
 };
 let errorRow:Function(String,Diagnostic,Bool):Bool=function(path:String,error:Diagnostic,known:Bool):Bool{
  let span:Span=error->span;
- record(List<String>["D",path,error->phase,error->message,branch when{known=>"1",else=>"0"},number(span->start),number(span->end)])
+ branch when{!record(List<String>["D",path,error->phase,error->message,branch when{known=>"1",else=>"0"},number(span->start),number(span->end)])=>{return false;},else=>unit};
+ loop over(error->related as note:Related){
+  branch when{!record(List<String>["N",branch when{note->path==""=>path,else=>note->path},note->message,number(note->span->start),number(note->span->end)])=>{return false;},else=>unit};
+ };true
 };
 let lexical:Function(String,Snapshot):Bool=function(path:String,source:Snapshot):Bool{
  branch on rows(source,create(),false){Result<Paged<Row>,Diagnostic>::Ok(value:Paged<Row>)=>tokens(path,value),Result<Paged<Row>,Diagnostic>::Err(error:Diagnostic)=>false}

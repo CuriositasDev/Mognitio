@@ -1,5 +1,5 @@
 namespace Mgnc;
-use Mgnc\Data\{empty,Diagnostic,Span};
+use Mgnc\Data\{Related,empty,Diagnostic,Span};
 use Mgnc\Machine\{Code,Record,raw,label,jump,field,reference};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,shift};
 use Mgnc\WholeArena\{emit as arena};
@@ -105,7 +105,7 @@ branch when{
 "globals"==mode=>{
  code=allocate(code,32,1);code=store(code,4,0,0);code=immediate(code,0,-1);code=store(code,4,8,0);code=store(code,15,128,4);code=immediate(code,0,2);code=store(code,15,136,0);code=symbol(code,0,119);code=store(code,15,144,0);code=call(code,collectLabel);
 },
-else=>{return Result<Code,Diagnostic>::Err(Diagnostic{phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"unknown runtime fixture"});}};
+else=>{return Result<Code,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",span:Span{start:0,end:0,line:1,column:1},message:"unknown runtime fixture"});}};
 
  code=call(code,100);code=exit(code,0);
  code=exit(label(code,1),71);code=exit(label(code,2),72);code=exit(label(code,3),73);

@@ -52,7 +52,7 @@ public let single:Function(String):Result<ProjectInput,InputError>=function(path
  Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:"",manifestText:"",rootNamespace:"",entry:0,
  sources:List<SourceUnit>[SourceUnit{path:path,displayPath:path,relativePath:path,expectedNamespace:"",text:text}]})
 };
-public let project:Function(String):Result<ProjectInput,InputError>=function(path:String):Result<ProjectInput,InputError>{
+let load:Function(String,Bool):Result<ProjectInput,InputError>=function(path:String,requireEntry:Bool):Result<ProjectInput,InputError>{
  let manifestInfo:PathInfo=try inspect(path);
  branch when{!regular(manifestInfo->kind)=>{return Result<ProjectInput,InputError>::Err(failure(2,path,"io","manifest must be a regular file without a symlink"));},else=>unit};
  let manifestText:String=try read(path,true);
@@ -95,6 +95,13 @@ public let project:Function(String):Result<ProjectInput,InputError>=function(pat
    sources=sources->append(SourceUnit{path:current->path,displayPath:"src/"+current->relative,relativePath:current->relative,expectedNamespace:current->nameSpace,text:source});
   },else=>unit};
  };
- branch when{entry<0=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:Diagnostic{phase:"manifest",span:manifest->nameSpan,message:"entry source is missing"},positionKnown:true,operation:"",kind:"",ioPhase:""});},else=>unit};
+ branch when{requireEntry&&entry<0=>{return Result<ProjectInput,InputError>::Err(InputError{status:2,path:path,diagnostic:Diagnostic{phase:"manifest",span:manifest->nameSpan,message:"entry source is missing"},positionKnown:true,operation:"",kind:"",ioPhase:""});},else=>unit};
  Result<ProjectInput,InputError>::Ok(ProjectInput{manifestPath:path,manifestText:manifestText,rootNamespace:manifest->root,entry:entry,sources:sources})
+};
+
+public let project:Function(String):Result<ProjectInput,InputError>=function(path:String):Result<ProjectInput,InputError>{
+ load(path,true)
+};
+public let projectSources:Function(String):Result<ProjectInput,InputError>=function(path:String):Result<ProjectInput,InputError>{
+ load(path,false)
 };

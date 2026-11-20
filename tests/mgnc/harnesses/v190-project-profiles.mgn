@@ -1,0 +1,43 @@
+namespace Mgnc;
+use Std\Io\{writeStdout,writeStderr};
+use Mgnc\Data\{Diagnostic,Paged,lookup,number};
+use Mgnc\InputData\{ProjectInput,InputError};
+use Mgnc\InputDiagnostics\{message};
+use Mgnc\Project\{project,projectSources};
+use Mgnc\Semantic\{SemanticProject,analyze,checkSources};
+use Mgnc\SemanticValues\{State};
+use Mgnc\TestPlan\{TestCase,discover};
+use Mgnc\TextUtil\{at};
+
+let failure:Function(InputError):Int=function(error:InputError):Int{
+ discard writeStderr(message(error));error->status
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let ordinary:Bool=at(args,0)=="ordinary";
+ let path:String=at(args,1);
+ let input:ProjectInput=branch on branch when{ordinary=>project(path),else=>projectSources(path)}{
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
+  Result<ProjectInput,InputError>::Err(error:InputError)=>{return failure(error);}
+ };
+ branch when{ordinary=>{
+  return branch on analyze(input){
+   Result<SemanticProject,InputError>::Ok(value:SemanticProject)=>0,
+   Result<SemanticProject,InputError>::Err(error:InputError)=>failure(error)
+  };
+ },else=>unit};
+ let state:State=branch on checkSources(input){
+  Result<State,InputError>::Ok(value:State)=>value,
+  Result<State,InputError>::Err(error:InputError)=>{return failure(error);}
+ };
+ branch when{at(args,0)=="analysis"=>{return 0;},else=>unit};
+ let cases:Paged<TestCase>=branch on discover(state){
+  Result<Paged<TestCase>,Diagnostic>::Ok(value:Paged<TestCase>)=>value,
+  Result<Paged<TestCase>,Diagnostic>::Err(error:Diagnostic)=>{discard writeStderr(error->message);return 3;}
+ };
+ loop over(cases->pages->append(cases->tail) as page:List<TestCase>){
+  loop over(page as testCase:TestCase){
+   discard writeStdout(number(testCase->ordinal)+" "+testCase->path+"::"+testCase->nameSpace+"::"+testCase->name+" "+number(testCase->startByte)+"\n");
+  };
+ };
+ 0
+};

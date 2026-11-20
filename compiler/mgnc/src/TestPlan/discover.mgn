@@ -1,0 +1,32 @@
+namespace Mgnc\TestPlan;
+use Mgnc\Data\{Diagnostic,Paged,empty,push,lookup};
+use Mgnc\Tables\{atList};
+use Mgnc\SemanticData\{Headers,Module,Declaration,Attribute};
+use Mgnc\SemanticValues\{State};
+
+public type TestCase=product{
+ ordinal:Int;file:Int;declaration:Int;path:String;nameSpace:String;name:String;startByte:Int;
+};
+
+// The loader supplies normalized source-path order, and each module owns its
+// declarations in source order. Import introductions are not declarations.
+public let discover:Function(State):Result<Paged<TestCase>,Diagnostic>=function(state:State):Result<Paged<TestCase>,Diagnostic>{
+ let headers:Headers=state->types->headers;
+ var cases:Paged<TestCase>=empty<TestCase>();
+ var file:Int=0;
+ loop while(file<headers->input->sources->length()){
+  let sourceModule:Module=try lookup<Module>(headers->modules,file);
+  loop over(sourceModule->declarations as id:Int){
+   let declared:Declaration=try lookup<Declaration>(headers->declarations,id);
+   branch when{declared->attributes->length()>0=>{
+    let attribute:Attribute=try atList<Attribute>(declared->attributes,0);
+    cases=push<TestCase>(cases,TestCase{
+     ordinal:cases->count,file:file,declaration:id,path:sourceModule->source->displayPath,
+     nameSpace:sourceModule->nameSpace,name:declared->name,startByte:attribute->span->start
+    });
+   },else=>unit};
+  };
+  file=file+1;
+ };
+ Result<Paged<TestCase>,Diagnostic>::Ok(cases)
+};

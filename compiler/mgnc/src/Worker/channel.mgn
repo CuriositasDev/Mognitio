@@ -1,0 +1,58 @@
+namespace Mgnc\Worker;
+use Std\Io\{readTextFile,IoError};
+use Mgnc\ToolchainIdentity\{build};
+use Mgnc\TextUtil\{at,code,starts};
+use Mgnc\WorkerReply\{respond};
+use Mgnc\WorkerWire\{send,receive};
+
+// A direct invocation always retains its argument contract. Only an explicit
+// exec name and a duplicated Unix control socket can select a private request.
+let procText:Function(String):String=function(path:String):String{
+ branch on readTextFile(path){Result<String,IoError>::Ok(text:String)=>text,Result<String,IoError>::Err(error:IoError)=>""}
+};
+public let selected:Function(List<String>):Bool=function(args:List<String>):Bool{
+ args->length()==0 && procText("/proc/self/cmdline")=="mognitio-compiler-worker-v1\0"
+};
+let field:Function(String,String):String=function(text:String,prefix:String):String{
+ var line:String="";
+ loop over(text->scalars() as c:String){
+  branch when{c=="\n"=>{
+   branch when{starts(line,prefix)=>{return line;},else=>unit};line="";
+  },else=>{line=line+c;}};
+ }; ""
+};
+let isControlSocket:Function():Bool=function():Bool{
+ let input:String=procText("/proc/self/fdinfo/0");let output:String=procText("/proc/self/fdinfo/1");
+ let inode:String=field(input,"ino:\t");let mount:String=field(input,"mnt_id:\t");
+ inode!="" && mount!="" && field(input,"scm_fds:")!="" &&
+ inode==field(output,"ino:\t") && mount==field(output,"mnt_id:\t") && field(output,"scm_fds:")!=""
+};
+let splitFields:Function(String):List<String>=function(text:String):List<String>{
+ var fields:List<String>=List<String>[];var start:Int=0;var i:Int=0;
+ loop over(text->scalars() as c:String){
+  branch when{c=="\0"=>{
+   branch on text->slice(start,i){
+    Result<String,SliceError>::Ok(part:String)=>{fields=fields->append(part);},
+    Result<String,SliceError>::Err(error:SliceError)=>{return List<String>[];}
+   };
+   start=i+1;
+   branch when{fields->length()>6=>{return List<String>[];},else=>unit};
+  },else=>unit};i=i+1;
+ };
+ branch when{start==i=>fields,else=>List<String>[]}
+};
+let hex:Function(String,Int):Bool=function(text:String,size:Int):Bool{
+ branch when{text->length()!=size=>{return false;},else=>unit};
+ loop over(text->scalars() as c:String){
+  let n:Int=code(c);
+  branch when{!((n>=48&&n<=57)||(n>=97&&n<=102))=>{return false;},else=>unit};
+ };true
+};
+public let serve:Function():Int=function():Int{
+ branch when{!isControlSocket()||!hex(build,64)=>{return 3;},else=>unit};
+ branch when{!send("MGN-WORKER/1\0"+build+"\0")=>{return 3;},else=>unit};
+ let frame:String=receive();
+ let fields:List<String>=splitFields(frame);let id:String=at(fields,2);
+ branch when{fields->length()!=6||at(fields,0)!="MGN-REQUEST/1"||at(fields,1)!=build||!hex(id,32)=>{return 3;},else=>unit};
+ respond(fields)
+};

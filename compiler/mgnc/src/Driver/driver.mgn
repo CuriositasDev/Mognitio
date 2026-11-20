@@ -79,6 +79,12 @@ let front:Function(ProjectInput,Bool,Bool):Result<Analyzed,InputError>=function(
  };
  Result<Analyzed,InputError>::Ok(Analyzed::Native(program))
 };
+public let prepareBuild:Function(ProjectInput):Result<CheckedProgram,InputError>=function(input:ProjectInput):Result<CheckedProgram,InputError>{
+ branch on try front(input,false,false){
+  Analyzed::Native(program:CheckedProgram)=>Result<CheckedProgram,InputError>::Ok(program),
+  Analyzed::Checked=>panic{"native preparation invariant"}
+ }
+};
 public let run:Function(List<String>):Int=function(args:List<String>):Int{
  let command:String=argument(args,0);let sourcePath:String=argument(args,1);
  let parsing:Bool=command=="parse";let checking:Bool=command=="check";let lowering:Bool=command=="lower";

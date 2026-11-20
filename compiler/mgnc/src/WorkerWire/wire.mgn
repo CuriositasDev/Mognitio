@@ -1,0 +1,50 @@
+namespace Mgnc\WorkerWire;
+use Std\Io\{writeStdout,readStdin,IoError};
+use Mgnc\Data\{Diagnostic,Span,number};
+use Mgnc\InputData\{InputError};
+use Mgnc\TextUtil\{at,code};
+use Mgnc\Width\{scalarWidth};
+use Mgnc\ToolchainIdentity\{build};
+
+public let send:Function(String):Bool=function(text:String):Bool{
+ branch on writeStdout(text){Result<Unit,IoError>::Ok(value:Unit)=>true,Result<Unit,IoError>::Err(error:IoError)=>false}
+};
+public let header:Function(List<String>,String):String=function(fields:List<String>,status:String):String{
+ "MGN-RESULT/1\0"+build+"\0"+at(fields,2)+"\0"+at(fields,3)+"\0"+at(fields,4)+"\0"+status+"\0"
+};
+// A counted field can carry newlines, NUL, and non-ASCII diagnostic text.
+public let record:Function(List<String>):Bool=function(fields:List<String>):Bool{
+ var text:String="";
+ loop over(fields as value:String){text=text+number(value->length())+":"+value;};
+ send(text)
+};
+let errorRecord:Function(List<String>,Int,String,Diagnostic,Bool,List<String>):Int=function(fields:List<String>,status:Int,path:String,error:Diagnostic,known:Bool,details:List<String>):Int{
+ branch when{!send(header(fields,"diagnostic"))=>{return 3;},else=>unit};
+ let span:Span=error->span;
+ branch when{record(List<String>[number(status),path,error->phase,error->message,branch when{known=>"1",else=>"0"},
+                                number(span->start),number(span->end),number(span->line),number(span->column),at(details,0),at(details,1),at(details,2)])=>0,else=>3}
+};
+public let diagnostic:Function(List<String>,Int,String,Diagnostic,Bool):Int=function(fields:List<String>,status:Int,path:String,error:Diagnostic,known:Bool):Int{
+ errorRecord(fields,status,path,error,known,List<String>[])
+};
+public let rejected:Function(List<String>,InputError):Int=function(fields:List<String>,error:InputError):Int{
+ errorRecord(fields,error->status,error->path,error->diagnostic,error->positionKnown,List<String>[error->operation,error->kind,error->ioPhase])
+};
+
+// Each turn on the dedicated Linux sequenced-packet socket ends with an empty
+// packet. A writer waits for length admission before sending any body packets.
+let turn:Function():String=function():String{
+ branch on readStdin(){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>""}
+};
+public let receive:Function():String=function():String{
+ let size:String=turn();var count:Int=0;
+ branch when{size->length()==0||size->length()>4=>{return "";},else=>unit};
+ loop over(size->scalars() as c:String){
+  let n:Int=code(c)-48;branch when{n<0||n>9=>{return "";},else=>unit};count=count*10+n;
+ };
+ branch when{count<1||count>8192||number(count)!=size=>{return "";},else=>unit};
+ branch when{!send("MGN-BODY/1\0"+size+"\0")=>{return "";},else=>unit};
+ let value:String=turn();var bytes:Int=0;
+ loop over(value->scalars() as c:String){bytes=bytes+scalarWidth(c);branch when{bytes>count=>{return "";},else=>unit};};
+ branch when{bytes==count=>value,else=>""}
+};

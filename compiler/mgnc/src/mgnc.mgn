@@ -1,3 +1,6 @@
 namespace Mgnc;
 use Mgnc\Driver\{run};
-let main:Function(List<String>):Int=function(args:List<String>):Int{run(args)};
+use Mgnc\Worker\{selected,serve};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ branch when{selected(args)=>serve(),else=>run(args)}
+};

@@ -1,0 +1,47 @@
+namespace Mgnc\WorkerBuild;
+use Std\Binary\{Bytes,publishFile,BinaryFileMode,BinaryOutputError};
+use Mgnc\Data\{Diagnostic,number,contains};
+use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
+use Mgnc\Project\{project};
+use Mgnc\Driver\{prepareBuild,publicationMessage};
+use Mgnc\WholeOutput\{Snapshot,capture,verify};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholePipeline\{compile};
+use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected,receive};
+use Mgnc\TextUtil\{at};
+
+public let prepareArtifact:Function(List<String>,String):Int=function(fields:List<String>,manifest:String):Int{
+ let input:ProjectInput=branch on project(manifest){
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
+  Result<ProjectInput,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
+ };
+ let snapshot:Snapshot=branch on capture(input){
+  Result<Snapshot,InputError>::Ok(value:Snapshot)=>value,
+  Result<Snapshot,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
+ };
+ let program:Native=branch on prepareBuild(input){
+  Result<Native,InputError>::Ok(value:Native)=>value,
+  Result<Native,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
+ };
+ branch when{!send(header(fields,"ready"))||!record(List<String>[number(input->sources->length()+1),manifest])=>{return 3;},else=>unit};
+ loop over(input->sources as source:SourceUnit){
+  branch when{!record(List<String>[source->path])=>{return 3;},else=>unit};
+ };
+ branch when{!send("MGN-PREPARED/1\0"+at(fields,2)+"\0")=>{return 3;},else=>unit};
+ let stage:String=receive();
+ branch when{stage==""||contains(stage,"\0")=>{return 3;},else=>unit};
+ let bytes:Bytes=branch on compile(program){
+  Result<Bytes,Diagnostic>::Ok(value:Bytes)=>value,
+  Result<Bytes,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,branch when{error->phase=="internal"=>3,else=>1},manifest,error,false);}
+ };
+ branch on verify(input,snapshot,stage){
+  Result<Unit,InputError>::Err(error:InputError)=>{return rejected(fields,error);},
+  Result<Unit,InputError>::Ok(value:Unit)=>unit
+ };
+ branch on publishFile(stage,bytes,BinaryFileMode::Executable){
+  Result<Unit,BinaryOutputError>::Err(error:BinaryOutputError)=>{
+   return branch when{send(header(fields,"publication"))&&record(List<String>[stage,publicationMessage(error)])=>0,else=>3};
+  },Result<Unit,BinaryOutputError>::Ok(value:Unit)=>unit
+ };
+ branch when{send(header(fields,"built"))&&record(List<String>[stage])=>0,else=>3}
+};

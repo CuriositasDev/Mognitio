@@ -1,0 +1,51 @@
+namespace Mgnc\WorkerReply;
+use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected};
+use Mgnc\WorkerBuild\{prepareArtifact};
+use Mgnc\Data\{Diagnostic,Paged,number};
+use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
+use Mgnc\Project\{projectSources,single};
+use Mgnc\Semantic\{checkSources};
+use Mgnc\SemanticValues\{State};
+use Mgnc\Structural\{analyzeSyntax};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\TestPlan\{TestCase,discover};
+use Mgnc\TextUtil\{at};
+
+public let respond:Function(List<String>):Int=function(fields:List<String>):Int{
+ let profile:String=at(fields,3);let generation:String=at(fields,4);let path:String=at(fields,5);
+ branch when{profile=="identity"=>{
+  branch when{generation!=""||path!=""=>{return 3;},else=>unit};
+  return branch when{send(header(fields,"ok"))=>0,else=>3};
+ },else=>unit};
+ branch when{profile=="build"&&generation==""&&path!=""=>{return prepareArtifact(fields,path);},else=>unit};
+ branch when{path=="" || !((profile=="syntax"||profile=="analysis")&&generation!=""||profile=="tests"&&generation=="")=>{return 3;},else=>unit};
+ let input:ProjectInput=branch on branch when{profile=="syntax"=>single(path),else=>projectSources(path)}{
+  Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,
+  Result<ProjectInput,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
+ };
+ branch when{profile=="syntax"=>{
+  let source:SourceUnit=branch on input->sources->at(0){
+   Result<SourceUnit,IndexError>::Ok(value:SourceUnit)=>value,
+   Result<SourceUnit,IndexError>::Err(error:IndexError)=>{return 3;}
+  };
+  return branch on analyzeSyntax(source->text){
+   Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>branch when{send(header(fields,"ok"))=>0,else=>3},
+   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>diagnostic(fields,branch when{error->phase=="internal"=>3,else=>1},source->displayPath,error,true)
+  };
+ },else=>unit};
+ let state:State=branch on checkSources(input){
+  Result<State,InputError>::Ok(value:State)=>value,
+  Result<State,InputError>::Err(error:InputError)=>{return rejected(fields,error);}
+ };
+ branch when{profile=="analysis"=>{return branch when{send(header(fields,"ok"))=>0,else=>3};},else=>unit};
+ let cases:Paged<TestCase>=branch on discover(state){
+  Result<Paged<TestCase>,Diagnostic>::Ok(value:Paged<TestCase>)=>value,
+  Result<Paged<TestCase>,Diagnostic>::Err(error:Diagnostic)=>{return diagnostic(fields,3,"compiler",error,false);}
+ };
+ branch when{!send(header(fields,"plan"))||!record(List<String>[number(cases->count)])=>{return 3;},else=>unit};
+ loop over(cases->pages->append(cases->tail) as page:List<TestCase>){
+  loop over(page as testCase:TestCase){
+   branch when{!record(List<String>[number(testCase->ordinal),testCase->path,testCase->nameSpace,testCase->name,number(testCase->startByte)])=>{return 3;},else=>unit};
+  };
+ };0
+};

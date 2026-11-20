@@ -2,7 +2,7 @@ namespace Mgnc\WorkerWire;
 use Std\Io\{writeStdout,readStdin,IoError};
 use Mgnc\Data\{Diagnostic,Span,number};
 use Mgnc\InputData\{InputError};
-use Mgnc\TextUtil\{at,code};
+use Mgnc\TextUtil\{at,code,cut};
 use Mgnc\Width\{scalarWidth};
 use Mgnc\ToolchainIdentity\{build};
 
@@ -14,9 +14,18 @@ public let header:Function(List<String>,String):String=function(fields:List<Stri
 };
 // A counted field can carry newlines, NUL, and non-ASCII diagnostic text.
 public let record:Function(List<String>):Bool=function(fields:List<String>):Bool{
- var text:String="";
- loop over(fields as value:String){text=text+number(value->length())+":"+value;};
- send(text)
+ var part:String="R";
+ loop over(fields as value:String){
+  let size:Int=value->length();let length:String=number(size)+":";
+  branch when{part->length()+length->length()+size<=1024=>{part=part+length+value;},else=>{
+   branch when{!send(part+length)=>{return false;},else=>unit};part="R";var i:Int=0;
+   loop while(i<size){
+    let end:Int=branch when{size-i>1024=>i+1024,else=>size};
+    branch when{!send("R"+cut(value,i,end))=>{return false;},else=>unit};i=end;
+   };
+  }};
+ };
+ branch when{part->length()>1=>send(part),else=>true}
 };
 let errorRecord:Function(List<String>,Int,String,Diagnostic,Bool,List<String>):Int=function(fields:List<String>,status:Int,path:String,error:Diagnostic,known:Bool,details:List<String>):Int{
  branch when{!send(header(fields,"diagnostic"))=>{return 3;},else=>unit};

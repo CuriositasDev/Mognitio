@@ -189,7 +189,12 @@ def request(compiler, build, profile, *, path="", generation="", timeout=None, o
                             admission = offer(parent, body)
                             wire.clear()
                         else:
-                            wire.extend(data)
+                            if not wire and data.startswith(b"MGN-RESULT/1\0"):
+                                wire.extend(data)
+                            elif wire and data.startswith(b"R"):
+                                wire.extend(data[1:])
+                            else:
+                                raise WorkerError("Unexpected control packet in compiler result")
                             if len(wire) > MAX_REPLY:
                                 raise WorkerError("Compiler response exceeds limit")
             code = process.wait(timeout=remaining())

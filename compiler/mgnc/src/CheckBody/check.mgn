@@ -33,7 +33,7 @@ function(program:Program,root:Int,returnType:Int,initialValues:Paged<Value>,init
     let previous:Value=try lookup<Value>(values,try childId(node,child-1));
     branch when{!previous->normal=>{
      let unreachable:Node=try lookup<Node>(program->nodes,id);
-     return Result<Body,Diagnostic>::Err(problem("semantic",unreachable->span,"unreachable block element"));
+     return Result<Body,Diagnostic>::Err(problem("semantic",unreachable->span,"Unreachable block element"));
     },else=>unit};
    },else=>unit};
    frames=push<Frame>(frames,Frame{parent:parent,node:nodeId,child:child+1,environment:before,loopTarget:loopTarget,allowMinimum:allowMinimum});

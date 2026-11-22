@@ -18,7 +18,7 @@ function(labels:Map,value:Label,span:Span):Result<Map,Diagnostic>{
  branch when{(try get(labels,value->id))>=0=>{return Result<Map,Diagnostic>::Err(problem("internal",span,"duplicate machine label"));},else=>unit};
  put(labels,value->id,value->offset)
 };
-let size:Function(Record):Int=function(record:Record):Int{
+public let size:Function(Record):Int=function(record:Record):Int{
  record->bytes->length()+branch when{record->kind==0 || record->kind==1=>0,
  record->kind==2 || record->kind==3=>4,else=>8}
 };

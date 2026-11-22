@@ -46,6 +46,8 @@ def identity(root, mode, runtime, core, image, notice):
     version = (root / "VERSION").read_text().strip()
     if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version):
         raise ValueError("VERSION must be a plain release version")
+    if mode == "release" and tuple(map(int, version.split("."))) >= (1, 9, 0):
+        raise ValueError("Mognitio 1.9 and later require the native fixed-point payload builder")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=all"], cwd=root))
     if mode == "release" and dirty:

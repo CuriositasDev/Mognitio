@@ -11,7 +11,7 @@ use Mgnc\WholeABI\{globalBase};
 use Mgnc\SuitePlan\{Suite,Entry};
 use Mgnc\SuiteMachine\{offset,selectCase,stage,event,stop};
 public let emit:Function(Code,Native,Suite):Result<Code,Diagnostic>=function(initial:Code,plan:Native,suite:Suite):Result<Code,Diagnostic>{
- let base:Int=offset(plan);var code:Code=try context(initial,plan,32);code=selectCase(code,base,suite->entries->count);
+ let base:Int=offset(plan);var code:Code=try context(initial,plan,32,false);code=selectCase(code,base,suite->entries->count);
  code=immediate(code,0,0);code=push(code,0);
  let frame:Frame=Frame{slots:3,outgoing:8,extent:160,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};
  code=try begin(code,frame,List<Int>[],List<Int>[],131);code=try standardValues(code,plan);

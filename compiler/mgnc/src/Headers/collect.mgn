@@ -21,7 +21,7 @@ public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Int
  let children:List<Int>=try parts(tree,tree->root);let ns:List<Int>=try parts(tree,try item(children,0));
  let nameSpace:String=try path(tree,try item(ns,1));
  branch when{!standard&&(nameSpace=="Std"||starts(nameSpace,"Std\\"))=>{return Result<Headers,Diagnostic>::Err(problem("semantic",try site(tree,try item(ns,1)),"reserved namespace"));},
- source->expectedNamespace!=""&&source->expectedNamespace!=nameSpace=>{return Result<Headers,Diagnostic>::Err(problem("semantic",try site(tree,try item(ns,1)),"namespace does not match source directory"));},else=>unit};
+ source->expectedNamespace!=""&&source->expectedNamespace!=nameSpace=>{return Result<Headers,Diagnostic>::Err(problem("semantic",try site(tree,try item(ns,1)),"Namespace does not match source directory"));},else=>unit};
  let uses:List<Int>=try leftList(tree,try item(children,1));var imported:List<Import>=List<Import>[];
  loop over(uses as useNode:Int){loop over((try imports(tree,useNode)) as entry:Import){imported=imported->append(entry);};};
  let tops:List<Int>=try leftList(tree,try item(children,2));var owned:List<Int>=List<Int>[];var declaredNames:Index=createIndex();
@@ -37,7 +37,7 @@ public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Int
   let node:ForestNode=try getNode(tree->nodes,id);let fields:List<Int>=try parts(tree,id);
   let nameNode:Int=try item(fields,1);let name:String=try text(tree,nameNode);
   let kind:Int=branch when{node->rule==ruleTypeProduct=>0,node->rule==ruleTypeSum=>1,node->rule==ruleAlias=>2,node->rule==ruleTemplate=>3,node->rule==ruleLetBinding=>4,node->rule==ruleContractDeclaration=>6,node->rule==ruleWitnessDeclaration=>7,else=>5};
-  try attributeTargets(metadata,kind==4);
+  branch when{metadata->length()>0=>{try attributeTargets(metadata,kind==4,try site(tree,id));},else=>unit};
   let generic:List<Parameter>=branch when{kind<4=>try parameters(tree,try item(fields,2),kind!=3),else=>List<Parameter>[]};
   let annotation:Int=branch when{kind>=6=>try item(fields,3),kind<2=>try item(fields,6),kind==2=>try item(fields,4),kind==3=>try item(fields,4),else=>try item(fields,3)};
   let body:Int=branch when{kind==7=>try item(fields,5),kind==6=>annotation,kind==3=>annotation,kind>=4=>try item(fields,5),else=>annotation};

@@ -59,7 +59,11 @@ let main:Function(List<String>):Int=function(args:List<String>):Int{
         result = run(*cmd, target)
         assert result.returncode == 2 and not result.stdout, (target, result)
     assert output.read_bytes() == image and not (src / "future.mgn").exists()
-    assert run("run", manifest, "--", b"\xff").returncode == 2
+    invalid_run = run("run", manifest, "--", b"\xff")
+    invalid_image = subprocess.run([output, b"\xff"], capture_output=True)
+    assert (invalid_run.returncode, invalid_run.stdout, invalid_run.stderr) == (
+        invalid_image.returncode, invalid_image.stdout, invalid_image.stderr) == (
+        2, b"", b"runtime: invalid UTF-8 runtime argument\n")
     native_source = entry.read_bytes()
     entry.write_bytes(b"namespace App;\nlet bad:Int=true;\n")
     assert run("run", manifest, "--", b"\xff").returncode == 1

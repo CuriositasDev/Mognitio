@@ -1,10 +1,10 @@
 namespace Mgnc\WholeFrame;
-use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\Data\{Related,Diagnostic,Span};
 use Mgnc\Machine\{Code,raw,label,jump,fresh};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,constant,push,pop,alu};
 use Mgnc\WholeFrameData\{Frame};
 use Mgnc\WholeABI\{rootHead};
-let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(valid:Bool,span:Span,message:String):Result<Unit,Diagnostic>{branch when{valid=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(Diagnostic{phase:"internal",span:span,message:message})}};
+let require:Function(Bool,Span,String):Result<Unit,Diagnostic>=function(valid:Bool,span:Span,message:String):Result<Unit,Diagnostic>{branch when{valid=>Result<Unit,Diagnostic>::Ok(unit),else=>Result<Unit,Diagnostic>::Err(Diagnostic{related:List<Related>[],phase:"internal",span:span,message:message})}};
 public let offset:Function(Int):Int=function(slot:Int):Int{-72-slot*8};
 public let select:Function(Code,Int):Code=function(initial:Code,bitmap:Int):Code{store(symbol(initial,0,bitmap),5,-48,0)};
 public let begin:Function(Code,Frame,List<Int>,List<Int>,Int):Result<Code,Diagnostic>=function(initial:Code,frame:Frame,parameters:List<Int>,captures:List<Int>,bitmap:Int):Result<Code,Diagnostic>{

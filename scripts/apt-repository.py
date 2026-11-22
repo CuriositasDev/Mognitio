@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Prepare a signed static APT tree. Does not upload or publish it."""
 import argparse
+from datetime import timedelta
+from email.utils import format_datetime, parsedate_to_datetime
 from pathlib import Path
 import shutil
 import subprocess
@@ -25,7 +27,9 @@ def run(args):
         "-o", "APT::FTPArchive::Release::Components=main",
         "release", "dists/stable"], cwd=args.output)
     path = args.output / "dists/stable/Release"
-    path.write_bytes(release)
+    date, = (line[6:] for line in release.splitlines() if line.startswith(b"Date: "))
+    expires = parsedate_to_datetime(date.decode("ascii")) + timedelta(days=14)
+    path.write_bytes(b"Valid-Until: " + format_datetime(expires, usegmt=True).encode("ascii") + b"\n" + release)
     for mode, target in [("--clearsign", "InRelease"), ("--detach-sign", "Release.gpg")]:
         subprocess.run(["gpg", "--batch", "--local-user", args.signing_key, "--output",
                         str(path.with_name(target)), mode, str(path)], check=True)

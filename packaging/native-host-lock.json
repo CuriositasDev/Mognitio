@@ -1,0 +1,15 @@
+{
+  "abi": "cpython-abi3-3.12-linux-amd64",
+  "asmjit": {
+    "source": "asmjit_0.0~git20231115.1da9e4d.orig.tar.xz",
+    "sha256": "361308fc510137aa87d4dd6587ec84949b01ad654b77feea8ef145046587d493",
+    "noticeSha256": "a80880a56c0f7f1e8cf838544ff193d30e66dd562c117e07acba58c9063c62f9"
+  },
+  "pythonHeaders": {
+    "package": "libpython3.14-dev",
+    "version": "3.14.4-1ubuntu0.2",
+    "sha256": "6f2e99c80311934d0a031bb12fe2faca684b05e5b6bb225fe9a07a5c05fdb3da"
+  },
+  "compiler": "15.2.0",
+  "adapterSha256": "afdd60ebf9746584038c089d1f79e5774501cd29f07cd50c589282f75c7da5e2"
+}

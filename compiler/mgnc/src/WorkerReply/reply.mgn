@@ -1,4 +1,5 @@
 namespace Mgnc\WorkerReply;
+use Mgnc\ToolchainIdentity\{upstream,source as sourceFingerprint};
 use Mgnc\WorkerWire\{send,header,record,diagnostic,rejected};
 use Mgnc\WorkerSuite\{suiteImage};
 use Mgnc\WorkerBuild\{prepareArtifact};
@@ -16,9 +17,9 @@ public let respond:Function(List<String>):Int=function(fields:List<String>):Int{
  let profile:String=at(fields,3);let generation:String=at(fields,4);let path:String=at(fields,5);
  branch when{profile=="identity"=>{
   branch when{generation!=""||path!=""=>{return 3;},else=>unit};
-  return branch when{send(header(fields,"ok"))=>0,else=>3};
+  return branch when{send(header(fields,"ok"))&&record(List<String>[upstream,sourceFingerprint])=>0,else=>3};
  },else=>unit};
- branch when{profile=="build"&&generation==""&&path!=""=>{return prepareArtifact(fields,path);},else=>unit};
+ branch when{(profile=="build"||profile=="application")&&generation==""&&path!=""=>{return prepareArtifact(fields,path);},else=>unit};
  branch when{path=="" || !((profile=="syntax"||profile=="analysis")&&generation!=""||(profile=="tests"||profile=="suite")&&generation=="")=>{return 3;},else=>unit};
  let input:ProjectInput=branch on branch when{profile=="syntax"=>single(path),else=>projectSources(path)}{
   Result<ProjectInput,InputError>::Ok(value:ProjectInput)=>value,

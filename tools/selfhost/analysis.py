@@ -105,6 +105,7 @@ def analyze(compiler, build, generation, directory, snapshot):
     def query(profile, path):
         answer = request(compiler, build, profile, generation=str(generation), path=path, timeout=10)
         project(answer, names, texts, result)
+        return answer
 
     if snapshot.get("root") is not None:
         manifest = snapshot_file(directory, "mognitio.toml", snapshot["manifest"])
@@ -115,7 +116,13 @@ def analyze(compiler, build, generation, directory, snapshot):
             if not name.startswith("src/") or not name.endswith(".mgn"):
                 raise WorkerError("Unexpected captured project member")
             names[snapshot_file(directory, name, text)] = name
-        query("analysis", manifest)
+        answer = query("analysis", manifest)
+        if answer.status == "diagnostic" and answer.fields[0] in ("1", "2"):
+            # The compiler rejected the project input before syntax recovery.
+            # All source paths still designate this generation's frozen bytes.
+            for path, name in names.items():
+                if name in sources:
+                    query("syntax", path)
     else:
         for index, (uri, text) in enumerate(sources.items()):
             path = snapshot_file(directory, f"source-{index}.mgn", text)

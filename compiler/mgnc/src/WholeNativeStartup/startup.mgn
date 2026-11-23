@@ -14,15 +14,18 @@ use Mgnc\Tables\{atList};
 use Mgnc\Machine\{Code,label,jump,fresh,raw,field};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,symbol,alu,constant,push,byteLoad,indirect};
 use Mgnc\WholeABI\{contextSize,descriptorTable,descriptorCount,staticTable,staticCount,globalBase,globalCount,globalMask,allocateLabel};
-public let context:Function(Code,Native,Int,Bool):Result<Code,Diagnostic>=function(initial:Code,plan:Native,extra:Int,callable:Bool):Result<Code,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};
- try require(plan->globals->count<134217600&&plan->moduleCount<134217600,span,"native global table size");let size:Int=((contextSize+plan->globals->count*8+plan->moduleCount*8+extra+4095)/4096)*4096;
+public let entryStack:Function(Code,Bool):Code=function(initial:Code,callable:Bool):Code{
  var code:Code=label(initial,0);branch when{callable=>{
   // The private application entry receives its original argument block in
   // the first System V argument register. Account for the normal call frame.
   code=mov(code,12,7);code=constant(code,5,4,8);
- },else=>{code=mov(code,12,4);}};code=immediate(code,15,0);
- code=immediate(code,0,9);code=immediate(code,7,0);code=immediate(code,6,size);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],1);code=mov(code,15,0);code=store(code,15,216,12);
+ },else=>{code=mov(code,12,4);}};immediate(code,15,0)
+};
+public let acquireContext:Function(Code,Native,Int,Int):Result<Code,Diagnostic>=function(initial:Code,plan:Native,extra:Int,onFailure:Int):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};
+ try require(plan->globals->count<134217600&&plan->moduleCount<134217600,span,"native global table size");let size:Int=((contextSize+plan->globals->count*8+plan->moduleCount*8+extra+4095)/4096)*4096;
+ var code:Code=initial;
+ code=immediate(code,0,9);code=immediate(code,7,0);code=immediate(code,6,size);code=immediate(code,2,3);code=immediate(code,10,34);code=immediate(code,8,-1);code=immediate(code,9,0);code=raw(code,List<Int>[15,5]);code=constant(code,7,0,-4095);code=jump(code,List<Int>[15,131],onFailure);code=mov(code,15,0);code=store(code,15,216,12);
  code=symbol(code,0,descriptorTableLabel);code=store(code,15,descriptorTable,0);code=immediate(code,0,plan->layouts->descriptors->count);code=store(code,15,descriptorCount,0);
  code=symbol(code,0,staticTableLabel);code=store(code,15,staticTable,0);code=immediate(code,0,plan->literals->count);code=store(code,15,staticCount,0);
  code=address(code,0,15,contextSize);code=store(code,15,globalBase,0);code=immediate(code,0,plan->globals->count);code=store(code,15,globalCount,0);code=symbol(code,0,globalRootsLabel);code=store(code,15,globalMask,0);code=address(code,0,15,contextSize+plan->globals->count*8);code=store(code,15,200,0);code=immediate(code,0,plan->moduleCount);code=store(code,15,208,0);
@@ -56,7 +59,7 @@ public let emit:Function(Code,Native,Bool):Result<Code,Diagnostic>=function(init
  let span:Span=Span{start:0,end:0,line:1,column:1};let main:Global=try lookup<Global>(plan->globals,plan->entryGlobal);let signature:Type=try lookup<Type>(plan->concrete->types->types,main->valueType);
  let listType:Int=branch on try atList<Argument>(signature->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,span,"startup argument type");0}};
  let listDescriptor:Int=try get(plan->layouts->types,listType);let stringDescriptor:Int=try get(plan->layouts->types,3);try require(listDescriptor>=0&&stringDescriptor>=0,span,"startup descriptors");
- var code:Code=try context(initial,plan,0,callable);
+ var code:Code=try acquireContext(entryStack(initial,callable),plan,0,1);
  code=load(code,14,12,0);code=constant(code,5,14,1);code=address(code,13,12,16);code=immediate(code,0,0);code=push(code,0);
  let frame:Frame=Frame{slots:3,outgoing:8,extent:160,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};
  code=try begin(code,frame,List<Int>[],List<Int>[],131);

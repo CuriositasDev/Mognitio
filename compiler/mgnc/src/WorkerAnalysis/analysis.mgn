@@ -1,17 +1,19 @@
 namespace Mgnc\WorkerAnalysis;
 use Mgnc\Data\{Diagnostic,Related,Paged,Span,number};
 use Mgnc\InputData\{ProjectInput,SourceUnit,InputError};
-use Mgnc\Semantic\{checkSources};
+use Mgnc\Semantic\{checkProfile};
 use Mgnc\SemanticValues\{State};
 use Mgnc\AnalysisTokens\{Row,rows,forFile};
 use Mgnc\Source\{Snapshot,Lexeme,Site};
 use Mgnc\Lexical\{scan,Scan};
+use Mgnc\AnalysisDepth\{bounded};
 use Mgnc\Structural\{parseDocument};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\IntMap\{create};
 use Mgnc\WorkerWire\{send,header,record,rejected};
 use Mgnc\TextUtil\{at,cut};
 use Mgnc\TokenStorage\{TokenStore,getToken,addToken,emptyTokens};
+let parse:Function(Snapshot):Result<SyntaxForest,Diagnostic>=function(source:Snapshot):Result<SyntaxForest,Diagnostic>{bounded(try parseDocument(source))};
 let tokens:Function(String,Paged<Row>):Bool=function(path:String,result:Paged<Row>):Bool{
  loop over(result->pages->append(result->tail) as page:List<Row>){loop over(page as row:Row){
   branch when{!record(List<String>["T",path,number(row->start),number(row->end),number(row->role),number(row->modifiers)])=>{return false;},else=>unit};
@@ -42,7 +44,7 @@ let recoverDeclarations:Function(String,Snapshot,Int):Bool=function(path:String,
     let span:Span=Span{start:token->end,end:token->end,line:token->endLine,column:token->endColumn};
     let end:Site=Site{span:span,scalarStart:token->scalarEnd,scalarEnd:token->scalarEnd,endLine:token->endLine,endColumn:token->endColumn};
     let eof:Lexeme=Lexeme{kind:0,text:"",start:span->start,end:span->end,line:span->line,column:span->column,scalarStart:end->scalarStart,scalarEnd:end->scalarEnd,endLine:end->endLine,endColumn:end->endColumn};
-    branch on parseDocument(Snapshot{text:source->text,tokens:addToken(part,eof),end:end}){
+    branch on parse(Snapshot{text:source->text,tokens:addToken(part,eof),end:end}){
      Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>unit,
      Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{
       branch when{error->phase=="internal"||!errorRow(path,error,true)=>{return false;},else=>unit};emitted=emitted+1;
@@ -58,7 +60,7 @@ let syntax:Function(SourceUnit):Bool=function(source:SourceUnit):Bool{
  let scanned:Scan=branch on scan(source->text,true){Result<Scan,Diagnostic>::Ok(value:Scan)=>value,Result<Scan,Diagnostic>::Err(error:Diagnostic)=>{return false;}};
  loop over(scanned->issues as issue:Diagnostic){branch when{!errorRow(path,issue,true)=>{return false;},else=>unit};};
  let snapshot:Snapshot=scanned->snapshot;
- branch on parseDocument(snapshot){Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>unit,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{
+ branch on parse(snapshot){Result<SyntaxForest,Diagnostic>::Ok(tree:SyntaxForest)=>unit,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{
   branch when{error->phase=="internal"||!errorRow(path,error,true)||!recoverDeclarations(path,snapshot,error->span->start)=>{return false;},else=>unit};
  }};
  lexical(path,snapshot)
@@ -69,7 +71,7 @@ public let analyze:Function(List<String>,ProjectInput):Int=function(fields:List<
   branch when{!send(header(fields,"analysis"))||!record(List<String>["syntax"])=>{return 3;},else=>unit};
   loop over(input->sources as source:SourceUnit){branch when{!syntax(source)=>{return 3;},else=>unit};};return 0;
  },else=>unit};
- let state:State=branch on checkSources(input){Result<State,InputError>::Ok(value:State)=>value,Result<State,InputError>::Err(error:InputError)=>{
+ let state:State=branch on checkProfile(input,true){Result<State,InputError>::Ok(value:State)=>value,Result<State,InputError>::Err(error:InputError)=>{
   branch when{error->status!=1=>{return rejected(fields,error);},else=>unit};
   branch when{!send(header(fields,"analysis"))||!record(List<String>["partial"])||!errorRow(error->path,error->diagnostic,error->positionKnown)=>{return 3;},else=>unit};
   loop over(input->sources as source:SourceUnit){branch when{!syntax(source)=>{return 3;},else=>unit};};return 0;

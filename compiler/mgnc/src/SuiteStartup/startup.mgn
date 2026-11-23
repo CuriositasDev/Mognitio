@@ -1,17 +1,35 @@
 namespace Mgnc\SuiteStartup;
 use Std\Numeric\{Bits};
 use Mgnc\Data\{Diagnostic,empty};
-use Mgnc\Machine\{Code,label,jump,fresh,field};
-use Mgnc\WholeX64\{immediate,store,load,constant,push,indirect};
+use Mgnc\Machine\{Code,label,jump,fresh,field,raw};
+use Mgnc\WholeX64\{immediate,store,load,constant,push,indirect,mov,symbol,alu};
 use Mgnc\WholeNativeData\{Native};
-use Mgnc\WholeNativeStartup\{context,standardValues,initialize};
+use Mgnc\WholeNativeStartup\{entryStack,acquireContext,standardValues,initialize};
 use Mgnc\WholeFrameData\{Frame,Point};
 use Mgnc\WholeFrame\{begin,select};
 use Mgnc\WholeABI\{globalBase};
 use Mgnc\SuitePlan\{Suite,Entry};
 use Mgnc\SuiteMachine\{offset,selectCase,stage,event,stop};
 public let emit:Function(Code,Native,Suite):Result<Code,Diagnostic>=function(initial:Code,plan:Native,suite:Suite):Result<Code,Diagnostic>{
- let base:Int=offset(plan);var code:Code=try context(initial,plan,32,false);code=selectCase(code,base,suite->entries->count);
+ let base:Int=offset(plan);var code:Code=entryStack(initial,false);
+ // The gate and initialization event must precede even the first allocation.
+ // Until mmap succeeds, R15 points to four protocol words on the process stack.
+ code=constant(code,5,4,32);code=mov(code,15,4);code=immediate(code,0,0);
+ loop over(List<Int>[8,16,24] as word:Int){code=store(code,15,word,0);};
+ // Protect private writes before the runtime installs its signal dispositions.
+ code=immediate(code,0,1);code=store(code,15,0,0);code=immediate(code,0,13);code=immediate(code,7,13);
+ code=mov(code,6,15);code=immediate(code,2,0);code=immediate(code,10,8);code=raw(code,List<Int>[15,5]);
+ let guarded:Int=code->nextLabel;code=fresh(code,1);code=alu(code,133,0,0);code=jump(code,List<Int>[15,132],guarded);
+ code=stop(code,123);code=label(code,guarded);code=selectCase(code,0,suite->entries->count);
+ let failed:Int=code->nextLabel;let prepared:Int=failed+1;code=fresh(code,2);
+ code=try acquireContext(code,plan,32,failed);
+ loop over(List<Int>[0,8,16,24] as word:Int){
+  code=load(code,0,4,word);code=store(code,15,base+word,0);
+ };
+ code=constant(code,0,4,32);code=jump(code,List<Int>[233],prepared);
+ code=label(code,failed);code=symbol(code,7,151);code=immediate(code,6,34);
+ code=jump(code,List<Int>[232],65);code=event(code,0,3,9);code=stop(code,4);
+ code=label(code,prepared);
  code=immediate(code,0,0);code=push(code,0);
  let frame:Frame=Frame{slots:3,outgoing:8,extent:160,entry:List<Bits<64>>[Bits<64>{1}],points:empty<Point>()};
  code=try begin(code,frame,List<Int>[],List<Int>[],131);code=try standardValues(code,plan);

@@ -61,27 +61,39 @@ class LineProgress:
 
 
 @contextmanager
-def report_fd(fd, flags):
-    # A reopened FIFO has an independent file description. Shell pipelines
-    # commonly share the original description with other processes.
+def report_fd(fd, blocking_pipe):
     private = None
-    mode = os.fstat(fd).st_mode
     try:
-        if (not flags & os.O_NONBLOCK and (flags & os.O_ACCMODE) != os.O_RDONLY
-                and stat.S_ISFIFO(mode)):
+        if blocking_pipe:
             with _defer_interrupts():
                 try:
                     private = os.open(f"/proc/self/fd/{fd}", os.O_WRONLY | os.O_NONBLOCK)
                 except OSError:
-                    pass  # An inherited pipe may have no permission to reopen it.
-        if private is None:
-            yield fd, not (flags & os.O_NONBLOCK or stat.S_ISREG(mode))
-        else:
-            yield private, False
+                    pass  # The original write end can remain usable when reopening fails.
+        yield private if private is not None else fd
     finally:
         if private is not None:
             with _defer_interrupts():
                 os.close(private)
+
+
+def write_shared_pipe(fd, data):
+    # NOWAIT is per call. Named FIFOs on some supported kernels lack it.
+    try:
+        return os.pwritev(fd, (data,), -1, os.RWF_NOWAIT)
+    except OSError as error:
+        if error.errno not in (errno.EOPNOTSUPP, errno.ENOSYS, errno.ESPIPE):
+            raise
+
+    # Stage at most one atomic pipe write. Only the splice commits bytes to
+    # the report stream, and both pipes keep their original status flags.
+    reader, writer = os.pipe2(os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        size = os.write(writer, memoryview(data)[:select.PIPE_BUF])
+        return os.splice(reader, fd, size, flags=os.SPLICE_F_NONBLOCK)
+    finally:
+        os.close(reader)
+        os.close(writer)
 
 
 class Output:
@@ -89,44 +101,63 @@ class Output:
         self.fd = fd
         self.failed = False
         self.recovering = False
+        self.pending = None
 
     def write(self, data, progress=None):
         if self.failed:
             raise OSError("Test report stream is unavailable")
+        # Finish the record that owns this stream before admitting any other
+        # record, including a secondary diagnostic generated during recovery.
+        if self.pending is not None:
+            self._flush()
         if progress is None:
             progress = LineProgress()
         if progress.done or not data:
             return
-        try:
-            flags = fcntl.fcntl(self.fd, fcntl.F_GETFL)
-            with report_fd(self.fd, flags) as (fd, set_nonblocking):
-                while not progress.done:
-                    start = progress.base + progress.count
-                    remaining = len(data) - start
-                    chunk = memoryview(data)[start:] if start else data
-                    try:
-                        self._write_chunk(fd, set_nonblocking, chunk, start, remaining, progress)
-                    except BlockingIOError:
-                        if self.recovering or flags & os.O_NONBLOCK:
-                            raise
-                        waiter = select.poll()
-                        waiter.register(fd, select.POLLOUT)
-                        waiter.poll()
-        except OSError:
-            self.failed = True
-            raise
+        self.pending = data, progress
+        self._flush()
 
-    def _write_chunk(self, fd, set_nonblocking, chunk, start, remaining, progress):
+    def _flush(self):
+        data, progress = self.pending
+        if not progress.done:
+            try:
+                self._emit(data, progress)
+            except OSError:
+                self.failed = True
+                raise
+        self.pending = None
+
+    def _emit(self, data, progress):
+        flags = fcntl.fcntl(self.fd, fcntl.F_GETFL)
+        mode = os.fstat(self.fd).st_mode
+        blocking = not flags & os.O_NONBLOCK
+        blocking_pipe = blocking and stat.S_ISFIFO(mode)
+        writable_pipe = blocking_pipe and (flags & os.O_ACCMODE) != os.O_RDONLY
+        set_nonblocking = blocking and not blocking_pipe and not stat.S_ISREG(mode)
+        with report_fd(self.fd, writable_pipe) as fd:
+            write = write_shared_pipe if blocking_pipe and fd == self.fd else os.write
+            while not progress.done:
+                start = progress.base + progress.count
+                remaining = len(data) - start
+                chunk = memoryview(data)[start:] if start else data
+                try:
+                    self._write_chunk(write, fd, set_nonblocking, chunk, start, remaining, progress)
+                except BlockingIOError:
+                    if self.recovering or not blocking:
+                        raise
+                    waiter = select.poll()
+                    waiter.register(fd, select.POLLOUT)
+                    waiter.poll()
+
+    def _write_chunk(self, write, fd, set_nonblocking, chunk, start, remaining, progress):
         with _defer_interrupts():
             if set_nonblocking:
                 os.set_blocking(fd, False)
             try:
-                # Store the count and completion before restoring
-                # flags or delivering any deferred signal.
                 progress.base = start
                 progress.count = 0
                 try:
-                    count = os.write(fd, chunk)
+                    count = write(fd, chunk)
                 except MemoryError:
                     # The syscall wrapper could not return a count.
                     # Its effect is unknown, so never replay it.
@@ -177,10 +208,14 @@ def run_suite(image, cases, stdout_fd=1, stderr_fd=2, *, cleanup=None):
     summary_progress = LineProgress()
     reports = []
     primary = None
+    secondary = []
 
     def diagnose(error):
         if not err.failed:
-            err.write(f"mgn: {one_line(str(error) or type(error).__name__)}\n".encode())
+            try:
+                err.write(f"mgn: {one_line(str(error) or type(error).__name__)}\n".encode())
+            except FAILURES:
+                pass
 
     def record(error):
         nonlocal primary
@@ -189,8 +224,8 @@ def run_suite(image, cases, stdout_fd=1, stderr_fd=2, *, cleanup=None):
             primary = error
         else:
             try:
-                diagnose(error)
-            except FAILURES:
+                secondary.append(error)
+            except MemoryError:
                 pass
 
     def attempt(action, *args):
@@ -245,7 +280,11 @@ def run_suite(image, cases, stdout_fd=1, stderr_fd=2, *, cleanup=None):
     if not attempt(finish) and not out.failed:
         attempt(finish)
     if primary is not None:
-        attempt(diagnose, primary)
+        # stdout and stderr may have been redirected to the same destination.
+        # Finish the suite records before rendering queued command diagnostics.
+        for error in secondary:
+            diagnose(error)
+        diagnose(primary)
         if isinstance(primary, OSError) and primary.errno == errno.ENOMEM:
             return 3
         return 3 if isinstance(primary, (ProtocolError, MemoryError)) else 2

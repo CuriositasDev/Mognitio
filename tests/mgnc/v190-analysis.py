@@ -51,7 +51,7 @@ def check(compiler, build, reference):
         directory = Path(tmp)
         (directory / "src").mkdir()
         (directory / "mognitio.toml").write_text(manifest)
-        (directory / path).write_text("namespace App; let main:Function():Int=function():Int{"
+        (directory / path).write_text("namespace App; let main:Function(List<String>):Int=function(args:List<String>):Int{"
                                       + "-" * 254 + "1};")
         command = [sys.executable, ROOT / "tests/mgnc/v190-normal-commands.py", "--child",
                    compiler, build, "run", directory / "mognitio.toml"]

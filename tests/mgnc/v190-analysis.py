@@ -47,6 +47,11 @@ def check(compiler, build, reference):
                 assert result["complete"] == complete, (root, count, result["diagnostics"])
                 limited = [d for d in result["diagnostics"] if d["message"] == "Syntax nesting budget exceeded"]
                 assert bool(limited) != complete and all(d["path"] == path for d in limited), limited
+        for count, complete in ((253, True), (254, False)):
+            source = prefix + "type T=sum{Case;}; let value:T=" + "(" * count + "T::Case" + ")" * count + ";"
+            result = run({"root": root, "manifest": manifest, "sources": {path: source}})
+            assert result["complete"] == complete, (root, count, result["diagnostics"])
+            assert [d["message"] for d in result["diagnostics"]] == ([] if complete else ["Syntax nesting budget exceeded"])
     with tempfile.TemporaryDirectory() as tmp:
         directory = Path(tmp)
         (directory / "src").mkdir()

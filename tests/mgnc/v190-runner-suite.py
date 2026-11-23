@@ -3,6 +3,9 @@
 from pathlib import Path
 import os
 import errno
+import fcntl
+import select
+import subprocess
 import signal
 from unittest.mock import patch
 import sys
@@ -90,17 +93,20 @@ class SuiteTests(unittest.TestCase):
         self.assertTrue(image.exists())
 
     def test_signal_after_each_report_write(self):
-        write = Output.write
+        write = os.write
         for marker in (b"PASS ", b": test:", b": assertion:", b"FAIL ", b"tests: "):
             with self.subTest(marker=marker):
                 fired = False
-                def interrupt(stream, data):
+                def interrupt(fd, data):
                     nonlocal fired
-                    write(stream, data)
-                    if not fired and marker in data:
+                    count = write(fd, data)
+                    if not fired and marker in bytes(data):
                         fired = True
                         os.kill(os.getpid(), signal.SIGINT)
-                with patch.object(Output, "write", interrupt):
+                    return count
+                previous = signal.signal(signal.SIGINT, signal.default_int_handler)
+                self.addCleanup(signal.signal, signal.SIGINT, previous)
+                with patch.object(os, "write", interrupt):
                     code, out, err = self.invoke(2)
                 self.assertTrue(fired)
                 self.assertEqual(code, 2)
@@ -110,6 +116,102 @@ class SuiteTests(unittest.TestCase):
                     self.assertEqual(out.count(b"FAIL "), 1)
                     self.assertEqual(err.count(b": test:"), 1)
                     self.assertEqual(err.count(b": assertion:"), 1)
+
+    def test_interrupt_while_summary_pipe_is_full(self):
+        script = """
+import os, signal, sys
+from tools.runner.suite import run_suite
+from tools.selfhost.command import interruptible
+for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+    signal.signal(sig, signal.SIG_DFL)
+with interruptible():
+    result = run_suite(None, [], cleanup=lambda record: os.write(2, b'ready\\n'))
+sys.exit(result)
+"""
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            with self.subTest(signal=sig):
+                reader, writer = os.pipe()
+                with os.fdopen(reader, "rb", buffering=0), os.fdopen(writer, "wb", buffering=0):
+                    capacity = fcntl.fcntl(writer, fcntl.F_GETPIPE_SZ)
+                    self.assertEqual(os.write(writer, b"x" * capacity), capacity)
+                    with subprocess.Popen([sys.executable, "-c", script], cwd=Path(__file__).resolve().parents[2],
+                                          stdout=writer, stderr=subprocess.PIPE) as child:
+                        try:
+                            self.assertTrue(select.select([child.stderr], [], [], 5)[0])
+                            self.assertEqual(child.stderr.readline(), b"ready\n")
+                            with self.assertRaises(subprocess.TimeoutExpired):
+                                child.wait(timeout=0.1)
+                            self.assertTrue(os.get_blocking(writer))
+                            child.send_signal(sig)
+                            self.assertEqual(child.wait(timeout=3), 2)
+                        finally:
+                            if child.poll() is None:
+                                child.kill()
+                    self.assertTrue(os.get_blocking(writer))
+
+    def test_pipe_resumes_after_partial_write(self):
+        reader, writer = os.pipe()
+        with os.fdopen(reader, "rb", buffering=0) as source, os.fdopen(writer, "wb", buffering=0):
+            capacity = fcntl.fcntl(writer, fcntl.F_GETPIPE_SZ)
+            size = capacity * 3 + 13
+            script = ("from tools.runner.suite import Output; import sys; "
+                      "Output(1).write(b'x' * int(sys.argv[1]) + b'end')")
+            with subprocess.Popen([sys.executable, "-c", script, str(size)],
+                                  cwd=Path(__file__).resolve().parents[2], stdout=writer) as child:
+                try:
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        child.wait(timeout=0.1)
+                    self.assertTrue(os.get_blocking(writer))
+                    data = bytearray()
+                    while len(data) < size + 3:
+                        self.assertTrue(select.select([reader], [], [], 3)[0])
+                        data.extend(source.read(4096))
+                    self.assertEqual(child.wait(timeout=3), 0)
+                    self.assertEqual(data, b"x" * size + b"end")
+                finally:
+                    if child.poll() is None:
+                        child.kill()
+            self.assertTrue(os.get_blocking(writer))
+
+    def test_memory_failure_after_result_write(self):
+        write = Output.write
+        fired = False
+        def exhaust(stream, data, progress=None):
+            nonlocal fired
+            write(stream, data, progress)
+            if not fired and data.startswith(b"PASS "):
+                fired = True
+                raise MemoryError("after complete write")
+        with patch.object(Output, "write", exhaust):
+            code, out, err = self.invoke(1)
+        self.assertTrue(fired)
+        self.assertEqual(code, 3)
+        self.assertEqual(out.count(b"PASS "), 1)
+        self.assertIn(b"total=1 passed=1", out)
+        self.assertIn(b"after complete write", err)
+
+    def test_memory_failure_after_partial_result_write(self):
+        write = os.write
+        state = "initial"
+        def short(fd, data):
+            nonlocal state
+            if state == "initial" and bytes(data).startswith(b"PASS "):
+                state = "short"
+                return write(fd, data[:3])
+            return write(fd, data)
+        def view(data):
+            nonlocal state
+            if state == "short":
+                state = "interrupted"
+                raise MemoryError("resuming partial write")
+            return memoryview(data)
+        with patch.object(os, "write", short), patch("tools.runner.suite.memoryview", view, create=True):
+            code, out, err = self.invoke(1)
+        self.assertEqual(state, "interrupted")
+        self.assertEqual(code, 3)
+        self.assertEqual(out.splitlines()[0], b"PASS src/a.mgn::App::a")
+        self.assertIn(b"total=1 passed=1", out)
+        self.assertIn(b"resuming partial write", err)
 
     def test_secondary_resource_failure_preserves_io_failure(self):
         def fail(image, arguments, outcome, application, diagnostic):

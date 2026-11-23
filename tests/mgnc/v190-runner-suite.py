@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check suite output, process exit aggregation, and reporting failures."""
+from contextlib import nullcontext
 from pathlib import Path
 import os
 import errno
@@ -231,6 +232,122 @@ sys.exit(result)
         self.assertIn(b"aborted=1 not_run=1", out)
         self.assertIn(b"primary capture failure", err)
         self.assertIn(b"secondary reporting failure", err)
+
+    def test_shared_pipe_keeps_blocking_during_write(self):
+        # Sample from a separate process at the syscall boundary, even if the
+        # runner would restore the shared flags immediately after the syscall.
+        peer = """import os, sys
+sys.stdin.buffer.read(1)
+if not os.get_blocking(1):
+    try:
+        os.write(1, b'p')
+    except BlockingIOError:
+        sys.exit("ordinary writer got EAGAIN")
+print("blocking", file=sys.stderr, flush=True)
+os.write(1, b'p')
+"""
+        for named in (False, True):
+            with self.subTest(named=named):
+                if named:
+                    fifo = self.root / "report"
+                    os.mkfifo(fifo)
+                    reader = os.open(fifo, os.O_RDONLY | os.O_NONBLOCK)
+                    writer = os.open(fifo, os.O_WRONLY)
+                else:
+                    reader, writer = os.pipe()
+                with os.fdopen(reader, "rb", buffering=0), os.fdopen(writer, "wb", buffering=0):
+                    capacity = fcntl.fcntl(writer, fcntl.F_GETPIPE_SZ)
+                    self.assertEqual(os.write(writer, b"x" * capacity), capacity)
+                    os.fchmod(writer, 0)
+                    with subprocess.Popen([sys.executable, "-c", peer], stdin=subprocess.PIPE,
+                                          stdout=writer, stderr=subprocess.PIPE) as other:
+                        observed = []
+                        def sample(frame, event, function):
+                            if not observed and event == "c_call" and function in (os.write, os.pwritev, os.splice):
+                                sys.setprofile(None)
+                                other.stdin.write(b"?")
+                                other.stdin.flush()
+                                if not select.select([other.stderr], [], [], 3)[0]:
+                                    raise AssertionError("peer did not inspect the shared pipe")
+                                observed.append(other.stderr.readline().strip())
+                                self.assertEqual(os.read(reader, capacity), b"x" * capacity)
+                        try:
+                            # On a privileged test host enforce the same reopen denial.
+                            denial = patch.object(os, "open", side_effect=PermissionError) if os.geteuid() == 0 else nullcontext()
+                            with denial:
+                                sys.setprofile(sample)
+                                try:
+                                    Output(writer).write(b"r")
+                                finally:
+                                    sys.setprofile(None)
+                            self.assertEqual(observed, [b"blocking"])
+                            self.assertEqual(other.wait(timeout=3), 0)
+                            self.assertEqual(sorted(os.read(reader, 2)), sorted(b"pr"))
+                        finally:
+                            if other.poll() is None:
+                                other.kill()
+
+    def test_secondary_failure_during_partial_diagnostic(self):
+        for marker, abort in ((b": test:", True), (b": test:", False), (b": assertion:", False)):
+            with self.subTest(marker=marker, abort=abort):
+                original_display, write = Report.display, os.write
+                state = "normal"
+                def interrupt(row, out, err):
+                    nonlocal state
+                    if not abort and state == "normal" and row.outcome.state == "failed":
+                        state = "recovering"
+                        signal.raise_signal(signal.SIGINT)
+                    return original_display(row, out, err)
+                def short(fd, data):
+                    nonlocal state
+                    if abort and state == "normal" and data == b"\x01":
+                        count = write(fd, data)
+                        state = "recovering"
+                        signal.raise_signal(signal.SIGINT)
+                        return count
+                    if state == "recovering" and marker in bytes(data):
+                        state = "partial"
+                        return write(fd, data[:3])
+                    return write(fd, data)
+                def allocate(data):
+                    nonlocal state
+                    if state == "partial":
+                        state = "exhausted"
+                        raise MemoryError("resuming diagnostic")
+                    return memoryview(data)
+
+                previous = signal.signal(signal.SIGINT, signal.default_int_handler)
+                self.addCleanup(signal.signal, signal.SIGINT, previous)
+                with patch.object(Report, "display", interrupt), patch.object(os, "write", short), \
+                        patch("tools.runner.suite.memoryview", allocate, create=True):
+                    code, out, err = self.invoke(2)
+                self.assertEqual(state, "exhausted")
+                self.assertEqual(code, 2)
+                lines = err.splitlines()
+                if abort:
+                    self.assertIn(b"aborted=1 not_run=1", out)
+                    expected = [b"src/a.mgn:2:3: test: src/a.mgn::App::a; kind=aborted; stage=unknown [bytes 12,18)"]
+                else:
+                    self.assertIn(b"total=2 passed=1 failed=1", out)
+                    expected = [b"src/a.mgn:2:3: test: src/a.mgn::App::b; kind=assertion; stage=body [bytes 12,18)",
+                                b"src/a.mgn:2:3: assertion: assertion failed [bytes 12,18)"]
+                for line in expected + [b"mgn: resuming diagnostic", b"mgn: KeyboardInterrupt"]:
+                    self.assertEqual(lines.count(line), 1, lines)
+
+    def test_partial_record_before_another_producer(self):
+        # A different producer writes the next record, without retrying the first.
+        write = os.write
+        def short(fd, data):
+            return write(fd, data[:3])
+        with tempfile.TemporaryFile() as output:
+            stream = Output(output.fileno())
+            with patch.object(os, "write", short), patch("tools.runner.suite.memoryview",
+                                                         side_effect=MemoryError, create=True):
+                with self.assertRaises(MemoryError):
+                    stream.write(b"diagnostic one\\n")
+            stream.write(b"diagnostic two\\n")
+            output.seek(0)
+            self.assertEqual(output.read(), b"diagnostic one\\ndiagnostic two\\n")
 
     def test_write_failure(self):
         with open("/dev/full", "wb", buffering=0) as out, tempfile.TemporaryFile() as err:

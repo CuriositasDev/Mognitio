@@ -19,8 +19,9 @@ def regular_input(path):
 
 
 class Artifact:
-    def __init__(self, output=None):
+    def __init__(self, output=None, *, on_cleanup_error=None):
         self.output = output
+        self.on_cleanup_error = on_cleanup_error
         self.directory = None
         self.leaf = None
         self.inputs = {}
@@ -32,15 +33,21 @@ class Artifact:
         return self
 
     def __exit__(self, exc_type, exc, tb):
+        self.cleanup(self.on_cleanup_error)
+
+    def cleanup(self, on_error=None):
         if self.directory is None:
             return
-        # Only these two private names are ours. A cleanup failure cannot
-        # reverse a completed replacement or an application's exit status.
+        # Release each owned name, including after a partially prepared image.
         for remove, path in ((os.unlink, self.leaf), (os.rmdir, self.directory)):
             try:
                 remove(path)
-            except OSError:
+            except FileNotFoundError:
                 pass
+            except OSError as error:
+                if on_error is not None:
+                    on_error(OSError(error.errno, error.strerror or str(error), path))
+        self.directory = None
 
     def prepare(self, paths):
         if self.directory is not None or not paths:

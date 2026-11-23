@@ -122,7 +122,12 @@ def prepare_and_run(compiler, build, argv):
     if command == b"run" and resource.getrlimit(resource.RLIMIT_FSIZE)[0] != resource.RLIM_INFINITY:
         runner = Path(__file__).with_name("resident.py")
         return application(sys.executable, [b"-I", b"-B", os.fsencode(runner), os.fsencode(manifest), *arguments])
-    with Artifact(output) as artifact:
+    # Setup can fail after creating the private directory but before a suite
+    # owns it. Preserve that failure and identify any remaining private names.
+    def cleanup_diagnostic(error):
+        report(2, str(error))
+
+    with Artifact(output, on_cleanup_error=cleanup_diagnostic if command == b"test" else None) as artifact:
         def ready(inputs):
             # Linux argv bytes belong to the generated program. Decode solely
             # for validation after the complete project passed static checking.
@@ -144,7 +149,7 @@ def prepare_and_run(compiler, build, argv):
             cases = cases_from(result.fields)
             if cases:
                 artifact.verify_image()
-            return run_suite(artifact.leaf, cases)
+            return run_suite(artifact.leaf, cases, cleanup=artifact.cleanup)
         if output is not None:
             artifact.publish()
             return 0

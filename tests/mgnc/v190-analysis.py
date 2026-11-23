@@ -31,6 +31,36 @@ def check(compiler, build, reference):
     assert [d["start"] for d in recovered["diagnostics"]] == [broken.index(";"), broken.index(";", broken.index(";")+1)], recovered
     assert len(recovered["tokens"]["file:///multi.mgn"]) == 3, recovered
 
+    manifest = '[project]\nname="app"\nroot_namespace="App"\n'
+    path = "src/app.mgn"
+    incomplete = run({"root": "/project", "manifest": '[project]\nname="app"\n',
+                      "sources": {path: "namespace App; let bad:Int=;", "src/ok.mgn": "namespace App; let ok:Int=1;"}})
+    assert not incomplete["complete"] and {d["path"] for d in incomplete["diagnostics"]} == {"mognitio.toml", path}, incomplete
+    assert all(incomplete["tokens"].values()), incomplete
+
+    for root in (None, "/project"):
+        prefix = "namespace App; " if root else ""
+        for count, complete in ((253, True), (254, False)):
+            for expression in ("-" * count + "1", "(" * count + "1" + ")" * count, "1+" * count + "1"):
+                result = run({"root": root, "manifest": manifest,
+                              "sources": {path: prefix + "let value:Int=" + expression + ";"}})
+                assert result["complete"] == complete, (root, count, result["diagnostics"])
+                limited = [d for d in result["diagnostics"] if d["message"] == "Syntax nesting budget exceeded"]
+                assert bool(limited) != complete and all(d["path"] == path for d in limited), limited
+    with tempfile.TemporaryDirectory() as tmp:
+        directory = Path(tmp)
+        (directory / "src").mkdir()
+        (directory / "mognitio.toml").write_text(manifest)
+        (directory / path).write_text("namespace App; let main:Function():Int=function():Int{"
+                                      + "-" * 254 + "1};")
+        command = [sys.executable, ROOT / "tests/mgnc/v190-normal-commands.py", "--child",
+                   compiler, build, "run", directory / "mognitio.toml"]
+        ordinary = subprocess.run(command, capture_output=True, timeout=30)
+        assert ordinary.returncode == 1 and not ordinary.stderr, ordinary
+
+    wide = run({"root": None, "sources": {path: "let xs:List<Int>=List<Int>[" + ",".join(["1"]*300) + "];"}})
+    assert wide["complete"], wide["diagnostics"]
+
     duplicate = "namespace App; // 🐈\n@test @test let check:Function():Unit=function():Unit{assert true;};"
     path = "src/app.mgn"
     annotated = run({"root": "/project", "sources": {path: duplicate},

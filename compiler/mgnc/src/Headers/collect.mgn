@@ -4,6 +4,7 @@ use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,problem};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\SemanticData\{Headers,Module,Declaration,Parameter,Import,Introduction,Attribute,Evidence};
 use Mgnc\MetadataSyntax\{read as attributes,targets as attributeTargets};
+use Mgnc\AnalysisDepth\{bounded};
 use Mgnc\Structural\{analyzeSyntax};
 use Mgnc\Classification\{prune};
 use Mgnc\Forest\{SyntaxForest};
@@ -51,10 +52,14 @@ public let scan:Function(ProjectInput,Paged<Module>,Paged<Declaration>,Paged<Int
  let modules:Paged<Module>=push<Module>(previousModules,Module{source:source,tree:tree,nameSpace:nameSpace,declarations:owned,imports:imported,standard:standard});
  Result<Headers,Diagnostic>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),nameBuckets:empty<Index>(),order:List<Int>[]})
 };
-public let collect:Function(ProjectInput):Result<Headers,InputError>=function(input:ProjectInput):Result<Headers,InputError>{
+public let collectProfile:Function(ProjectInput,Bool):Result<Headers,InputError>=function(input:ProjectInput,analysis:Bool):Result<Headers,InputError>{
  var modules:Paged<Module>=empty<Module>();var declarations:Paged<Declaration>=empty<Declaration>();var names:Paged<Introduction>=empty<Introduction>();
  loop over(input->sources as source:SourceUnit){
   let parsed:SyntaxForest=branch on analyzeSyntax(source->text){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
+  branch when{analysis=>{branch on bounded(parsed){
+   Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>unit,
+   Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}
+  };},else=>unit};
   // Retain every family reachable from the module root; discard failed parse paths.
   let tree:SyntaxForest=branch on prune(parsed,parsed->root,List<Int>[]){Result<SyntaxForest,Diagnostic>::Ok(value:SyntaxForest)=>value,Result<SyntaxForest,Diagnostic>::Err(error:Diagnostic)=>{return Result<Headers,InputError>::Err(sourceError(source,error));}};
   let scanned:Result<Headers,Diagnostic>=scan(input,modules,declarations,names,source,tree,false);
@@ -63,3 +68,4 @@ public let collect:Function(ProjectInput):Result<Headers,InputError>=function(in
  };
  Result<Headers,InputError>::Ok(Headers{input:input,modules:modules,declarations:declarations,names:names,fileNames:empty<List<Int>>(),nameBuckets:empty<Index>(),order:List<Int>[]})
 };
+public let collect:Function(ProjectInput):Result<Headers,InputError>=function(input:ProjectInput):Result<Headers,InputError>{collectProfile(input,false)};

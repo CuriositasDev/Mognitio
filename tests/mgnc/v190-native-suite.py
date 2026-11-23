@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Run a mainless project through the native suite generator and parent runner."""
 from pathlib import Path
+import os
+import shutil
 import subprocess
+from unittest.mock import patch
 import sys
 import tempfile
 
@@ -23,6 +26,14 @@ def exercise(compiler, build, root):
     common.write_text("namespace App; @test let ordinary:Function():Unit=function():Unit{assert true;};")
     simple = invoke()
     assert simple.returncode == 0 and b"total=1 passed=1" in simple.stdout, simple
+    common.write_text("namespace App; @test let first:Function():Unit=function():Unit{}; "
+                      "@test let second:Function():Unit=function():Unit{};")
+    injected = subprocess.run([sys.executable, __file__, "--fail-first-map", compiler, build, manifest],
+                              capture_output=True, cwd=root, timeout=30)
+    assert injected.returncode == 4, injected
+    assert b"ERROR allocation-failed src/app.mgn::App::first" in injected.stdout, injected
+    assert b"PASS src/app.mgn::App::second" in injected.stdout and b"passed=1 failed=0 errors=1" in injected.stdout, injected
+    assert b"stage=initialization" in injected.stderr and b"allocation failure" in injected.stderr, injected
     common.write_text("namespace App;\nlet main:Int=6;\n")
     for name in ("Checks", "Broken", "Unused"):
         (src / name).mkdir()
@@ -68,5 +79,20 @@ var zero:Int=0;
 
 
 if __name__ == "__main__":
+    if sys.argv[1] == "--fail-first-map":
+        sys.path.insert(0, str(ROOT))
+        from tools.runner.supervisor import supervise
+        from tools.selfhost.command import compile_command
+        tracer = shutil.which("strace")
+        if tracer is None:
+            raise RuntimeError("The first mmap failure fixture requires strace")
+        def one_failed_child(image, arguments, outcome, application, diagnostic):
+            if outcome.ordinal == 0:
+                arguments = ["-qq", "-o", os.devnull, "-e", "inject=mmap:error=ENOMEM:when=1",
+                             "--", os.fspath(image), *arguments]
+                image = tracer
+            supervise(image, arguments, outcome, application, diagnostic)
+        with patch("tools.runner.suite.supervise", one_failed_child):
+            sys.exit(compile_command(sys.argv[2], sys.argv[3], [b"test", os.fsencode(sys.argv[4])]))
     with tempfile.TemporaryDirectory() as tmp:
         exercise(Path(sys.argv[1]).resolve(), sys.argv[2], Path(tmp))

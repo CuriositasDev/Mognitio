@@ -7,7 +7,7 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\DeclarationKinds\{runtimeDeclaration,compileDeclaration,typeDeclaration};
 use Mgnc\InputData\{ProjectInput,InputError,SourceUnit};
 use Mgnc\SemanticData\{Headers,Module,Declaration};
-use Mgnc\Headers\{collect,sourceError};
+use Mgnc\Headers\{collectProfile,sourceError};
 use Mgnc\Catalog\{attach};
 use Mgnc\Imports\{resolve};
 use Mgnc\DependencyGraph\{Graph,Edge,Order,sort};
@@ -89,8 +89,8 @@ let entry:Function(State):Result<Int,InputError>=function(state:State):Result<In
  };
  Result<Int,InputError>::Err(sourceError(module->source,problem("semantic",module->tree->source->end->span,"entry file has no main declaration")))
 };
-public let checkSources:Function(ProjectInput):Result<State,InputError>=function(input:ProjectInput):Result<State,InputError>{
- let collected:Headers=try collect(input);
+public let checkProfile:Function(ProjectInput,Bool):Result<State,InputError>=function(input:ProjectInput,analysis:Bool):Result<State,InputError>{
+ let collected:Headers=try collectProfile(input,analysis);
  let catalog:Headers=branch on attach(collected){Result<Headers,Diagnostic>::Ok(value:Headers)=>value,Result<Headers,Diagnostic>::Err(error:Diagnostic)=>{return Result<State,InputError>::Err(internal(error));}};
  let headers:Headers=try resolve(catalog);
  let typesGraph:Graph=branch on typeGraph(headers){Result<Graph,Diagnostic>::Ok(value:Graph)=>value,Result<Graph,Diagnostic>::Err(error:Diagnostic)=>{return Result<State,InputError>::Err(internal(error));}};
@@ -157,6 +157,7 @@ public let checkSources:Function(ProjectInput):Result<State,InputError>=function
  try verifyWitnesses(state);
  Result<State,InputError>::Ok(state)
 };
+public let checkSources:Function(ProjectInput):Result<State,InputError>=function(input:ProjectInput):Result<State,InputError>{checkProfile(input,false)};
 public let analyze:Function(ProjectInput):Result<SemanticProject,InputError>=function(input:ProjectInput):Result<SemanticProject,InputError>{
  let state:State=try checkSources(input);
  let selected:Int=try entry(state);

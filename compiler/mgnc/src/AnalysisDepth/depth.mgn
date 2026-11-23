@@ -1,0 +1,62 @@
+namespace Mgnc\AnalysisDepth;
+use Mgnc\Data\{Diagnostic,problem,Paged,empty,push,lookup};
+use Mgnc\Forest\{SyntaxForest};
+use Mgnc\ForestData\{ForestNode};
+use Mgnc\NodeStorage\{getNode};
+use Mgnc\Projection\{site};
+use Mgnc\PruneMemo\{Map,create,get,put};
+use Mgnc\Grammar\{ruleTypeProduct,ruleTemplate,ruleValueParameter,ruleTypeName,ruleTypeApply,ruleTypeFunction,ruleValueDigits,ruleScalarGroup,ruleLetBinding,ruleFunction,ruleParameter,ruleBlock,ruleStatementReturn,ruleStatementExpression,ruleBinaryOr,ruleBinaryAnd,ruleBinaryLt,ruleBinaryNe,ruleBinaryAdd,ruleBinarySub,ruleBinaryMul,ruleBinaryRem,ruleUnaryNeg,ruleUnaryTry,ruleCall,ruleGenericMethod,ruleInteger,ruleUnit,ruleGroup,ruleLoopForever,ruleVariantPayload,ruleConstructGeneric,ruleFieldValue,ruleOnArm,rulePatternPayload,ruleStatementAssert,ruleContractDeclaration,ruleWitnessDeclaration,ruleContractMethod,ruleWitnessMethod,rulePackage,ruleFieldsAppend,ruleVariantsEmptyPayload,ruleVariantsPayload,ruleConditionsAppend,ruleBranchWhen,ruleName,ntFields,ntVariants,ntConditions};
+
+type Visit=product{id:Int;depth:Int;};
+// Count source syntax constructs. Precedence, list spines and the binary
+// prefixes used to store productions have no counterpart in the syntax tree.
+let weight:Function(Int):Int=function(rule:Int):Int{
+ branch when{
+  rule==ruleInteger||rule==ruleName=>2,
+  rule>=ruleTypeProduct&&rule<=ruleTemplate||rule==ruleValueParameter=>1,
+  rule>=ruleTypeName&&rule<=ruleTypeFunction||rule>=ruleValueDigits&&rule<=ruleScalarGroup=>1,
+  rule>=ruleLetBinding&&rule<=ruleFunction||rule==ruleParameter||rule==ruleBlock=>1,
+  rule>=ruleStatementReturn&&rule<=ruleStatementExpression||rule==ruleStatementAssert=>1,
+  rule==ruleBinaryOr||rule==ruleBinaryAnd||rule>=ruleBinaryLt&&rule<=ruleBinaryNe=>1,
+  rule>=ruleBinaryAdd&&rule<=ruleBinarySub||rule>=ruleBinaryMul&&rule<=ruleBinaryRem=>1,
+  rule>=ruleUnaryNeg&&rule<=ruleUnaryTry||rule>=ruleCall&&rule<=ruleGenericMethod=>1,
+  rule>=ruleInteger&&rule<=ruleUnit||rule==ruleGroup||rule>=ruleLoopForever&&rule<=ruleVariantPayload=>1,
+  rule==ruleConstructGeneric||rule==ruleFieldValue||rule>=ruleOnArm&&rule<=rulePatternPayload=>1,
+  rule==ruleContractDeclaration||rule==ruleWitnessDeclaration||rule==ruleContractMethod||rule==ruleWitnessMethod||rule==rulePackage=>1,
+  else=>0,
+ }
+};
+let memberDepth:Function(Int,Int):Int=function(rule:Int,symbol:Int):Int{
+ branch when{
+  rule==ruleFieldsAppend&&symbol!=ntFields||((rule==ruleVariantsEmptyPayload||rule==ruleVariantsPayload)&&symbol!=ntVariants)=>1,
+  rule==ruleConditionsAppend&&symbol!=ntConditions||rule==ruleBranchWhen&&symbol!=ntConditions=>1,
+  else=>0,
+ }
+};
+public let bounded:Function(SyntaxForest):Result<SyntaxForest,Diagnostic>=function(tree:SyntaxForest):Result<SyntaxForest,Diagnostic>{
+ // No production adds more than two syntax nodes per consumed source token.
+ branch when{tree->source->tokens->count<=100=>{return Result<SyntaxForest,Diagnostic>::Ok(tree);},else=>unit};
+ var todo:Paged<Visit>=push<Visit>(empty<Visit>(),Visit{id:tree->root,depth:0});
+ var seen:Map=create();var cursor:Int=0;
+ loop while(cursor<todo->count){
+  let visit:Visit=try lookup<Visit>(todo,cursor);cursor=cursor+1;
+  branch when{(try get(seen,visit->id))>=visit->depth=>{continue;},else=>unit};
+  seen=try put(seen,visit->id,visit->depth);
+  let node:ForestNode=try getNode(tree->nodes,visit->id);var family:ForestNode=node;
+  loop while(true){
+   let depth:Int=visit->depth+branch when{node->symbol>0=>weight(family->rule),else=>0};
+   branch when{depth>256=>{return Result<SyntaxForest,Diagnostic>::Err(problem("parse",try site(tree,visit->id),"Syntax nesting budget exceeded"));},else=>unit};
+   loop over(List<Int>[family->left,family->right] as id:Int){
+    branch when{id>=0=>{
+     let child:ForestNode=try getNode(tree->nodes,id);
+     branch when{child->symbol>=0=>{
+      let member:Int=branch when{child->symbol>0=>memberDepth(family->rule,child->symbol),else=>0};
+      todo=push<Visit>(todo,Visit{id:id,depth:depth+member});
+     },else=>unit};
+    },else=>unit};
+   };
+   branch when{family->alternatives<0=>{break;},else=>unit};family=try getNode(tree->nodes,family->alternatives);
+  };
+ };
+ Result<SyntaxForest,Diagnostic>::Ok(tree)
+};

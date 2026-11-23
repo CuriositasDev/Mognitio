@@ -5,7 +5,7 @@ use Mgnc\ForestData\{ForestNode};
 use Mgnc\NodeStorage\{getNode};
 use Mgnc\Projection\{site};
 use Mgnc\PruneMemo\{Map,create,get,put};
-use Mgnc\Grammar\{ruleTypeProduct,ruleTemplate,ruleValueParameter,ruleTypeName,ruleTypeApply,ruleTypeFunction,ruleValueDigits,ruleScalarGroup,ruleLetBinding,ruleFunction,ruleParameter,ruleBlock,ruleStatementReturn,ruleStatementExpression,ruleBinaryOr,ruleBinaryAnd,ruleBinaryLt,ruleBinaryNe,ruleBinaryAdd,ruleBinarySub,ruleBinaryMul,ruleBinaryRem,ruleUnaryNeg,ruleUnaryTry,ruleCall,ruleGenericMethod,ruleInteger,ruleUnit,ruleGroup,ruleLoopForever,ruleVariantPayload,ruleConstructGeneric,ruleFieldValue,ruleOnArm,rulePatternPayload,ruleStatementAssert,ruleContractDeclaration,ruleWitnessDeclaration,ruleContractMethod,ruleWitnessMethod,rulePackage,ruleFieldsAppend,ruleVariantsEmptyPayload,ruleVariantsPayload,ruleConditionsAppend,ruleBranchWhen,ruleName,ntFields,ntVariants,ntConditions};
+use Mgnc\Grammar\{ruleTypeProduct,ruleTemplate,ruleValueParameter,ruleTypeName,ruleTypeApply,ruleTypeFunction,ruleValueDigits,ruleScalarGroup,ruleLetBinding,ruleFunction,ruleParameter,ruleBlock,ruleStatementReturn,ruleStatementExpression,ruleBinaryOr,ruleBinaryAnd,ruleBinaryLt,ruleBinaryNe,ruleBinaryAdd,ruleBinarySub,ruleBinaryMul,ruleBinaryRem,ruleUnaryNeg,ruleUnaryTry,ruleCall,ruleGenericMethod,ruleInteger,ruleUnit,ruleGroup,ruleLoopForever,ruleVariantPayload,ruleConstructName,ruleConstructGeneric,ruleFieldValue,ruleOnArm,rulePatternPayload,ruleStatementAssert,ruleContractDeclaration,ruleWitnessDeclaration,ruleContractMethod,ruleWitnessMethod,rulePackage,ruleFieldsAppend,ruleVariantsEmptyPayload,ruleVariantsPayload,ruleConditionsAppend,ruleBranchWhen,ruleName,ntFields,ntVariants,ntConditions};
 
 type Visit=product{id:Int;depth:Int;};
 // Count source syntax constructs. Precedence, list spines and the binary
@@ -21,7 +21,7 @@ let weight:Function(Int):Int=function(rule:Int):Int{
   rule>=ruleBinaryAdd&&rule<=ruleBinarySub||rule>=ruleBinaryMul&&rule<=ruleBinaryRem=>1,
   rule>=ruleUnaryNeg&&rule<=ruleUnaryTry||rule>=ruleCall&&rule<=ruleGenericMethod=>1,
   rule>=ruleInteger&&rule<=ruleUnit||rule==ruleGroup||rule>=ruleLoopForever&&rule<=ruleVariantPayload=>1,
-  rule==ruleConstructGeneric||rule==ruleFieldValue||rule>=ruleOnArm&&rule<=rulePatternPayload=>1,
+  rule==ruleConstructName||rule==ruleConstructGeneric||rule==ruleFieldValue||rule>=ruleOnArm&&rule<=rulePatternPayload=>1,
   rule==ruleContractDeclaration||rule==ruleWitnessDeclaration||rule==ruleContractMethod||rule==ruleWitnessMethod||rule==rulePackage=>1,
   else=>0,
  }

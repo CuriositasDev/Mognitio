@@ -5,8 +5,8 @@ contracts and generic templates, and first-class functions with snapshot capture
 The 1.9 source tree builds its CLI, test runner, and stdio language server
 around a native self-hosted compiler. Debian packages and offline bundles are
 built from the same fixed-point compiler. The [packaging guide](packaging/README.md)
-describes how to reproduce it. The latest published 1.8 toolchain and its
-qualification are recorded in the [1.8 release record](verification/v1.8.0-release.md).
+describes how to reproduce it. See the [1.9 verification record](verification/v1.9.0-release.md)
+for the native toolchain and its qualification history.
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
@@ -19,7 +19,7 @@ refines failed-commit classification rather than enabling execution. See the
 The static analyzer, stdio language server, build identities and Linux packaging
 remain part of the toolchain.
 The compiler targets Linux amd64. Official Linux packages and installer bundles
-are published in [GitHub Releases](https://github.com/ProjectCuriositas/Mognitio/releases).
+are published in [GitHub Releases](https://github.com/CuriositasDev/Mognitio/releases).
 Follow the [APT repository instructions](https://curiositasdev.github.io/apt/)
 for Ubuntu 24.04 and 26.04 amd64. The packaged toolchain includes its fixed runtime;
 a host SBCL installation is required only for source development.
@@ -48,11 +48,11 @@ budgets and all version 1.5 implementation stages are accepted.
 
 - [Examples](examples/): executable projects, including [multiple modules](examples/modules/).
 - [Test coverage](tests/README.md): current project cases and internal regression oracles.
-- [Release validation](verification/v1.8.0-release.md): accepted 1.8.0 identities and distribution gates.
+- [Release validation](verification/v1.9.0-release.md): native package qualification and distribution.
 - [Language tests](examples/testing/README.md): `@test`, `assert`, and `mgn test`.
 - [File converter](examples/file-converter/README.md): arguments and text I/O.
 - [Directory converter](examples/directory-converter/README.md): explicit tree traversal.
-- [Implementation verification](verification/v1.8.0-release.md): repeated-generation evidence and limits.
+- [Previous release](verification/v1.8.0-release.md): the bootstrap and distribution baseline for 1.8.
 - [Verification commands](verification/README.md): reproduce the checks.
 - [Toolchain distribution](packaging/README.md): pinned builds, APT staging, and offline installation.
 - [Compatibility policy](COMPATIBILITY.md): backward compatibility within a major version.

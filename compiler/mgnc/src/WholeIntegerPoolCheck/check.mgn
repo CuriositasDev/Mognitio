@@ -1,0 +1,28 @@
+namespace Mgnc\WholeIntegerPoolCheck;
+use Mgnc\Data\{Span,Diagnostic,Paged,empty,push,lookup};
+use Mgnc\WholeIntegerPool\{Constant};
+use Mgnc\WholeIntegerPoolProof\{verify as proof};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeIR\{Block,Operation};
+use Mgnc\TypeData\{Argument,ValueTerm};
+use Mgnc\MathValue\{Integer,fits,equal};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+// Reconstruct first-occurrence membership/order from instantiated operations.
+public let verify:Function(Native):Result<Unit,Diagnostic>=function(plan:Native):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var seen:Paged<Integer>=empty<Integer>();
+ loop over(plan->integers->pages->append(plan->integers->tail) as page:List<Constant>){loop over(page as entry:Constant){try proof(entry,span);};};
+ loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
+  loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){loop over(block->operations as op:Operation){
+   branch when{op->code=="integer"||op->code=="value-parameter"=>{
+    let value:Integer=branch when{op->code=="integer"=>try atList<Integer>(op->wide,0),else=>branch on try atList<Argument>(op->arguments,0){Argument::Value(term:ValueTerm)=>term->mathematical,Argument::Type(id:Int)=>{try require(false,op->origin->span,"integer pool value argument");Integer{negative:false,digits:"0"}}}};
+    branch when{!fits(value,63,true)=>{
+     var repeated:Bool=false;loop over(seen->pages->append(seen->tail) as values:List<Integer>){loop over(values as previous:Integer){branch when{equal(previous,value)=>{repeated=true;break;},else=>unit};};};
+     branch when{!repeated=>{let entry:Constant=try lookup<Constant>(plan->integers,seen->count);try require(equal(entry->value,value),span,"integer pool stable source membership");seen=push<Integer>(seen,value);},else=>unit};
+    },else=>unit};
+   },else=>unit};
+  };};};
+ };};
+ try require(seen->count==plan->integers->count,span,"integer pool duplicate or extra value");Result<Unit,Diagnostic>::Ok(unit)
+};

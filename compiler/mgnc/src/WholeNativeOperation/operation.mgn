@@ -29,10 +29,10 @@ public let emit:Function(Code,Native,Int,Int,Int,Operation):Result<Code,Diagnost
  branch when{op->unavailable->length()>0=>{return Result<Code,Diagnostic>::Ok(jump(code,List<Int>[233],2));},else=>unit};
  branch when{try allocating(plan->concrete->types,body,op)=>{code=select(code,try roots(procedure,block,operation,op->origin->span));},else=>unit};
  let output:Int=branch on op->output{Parent::None=>-1,Parent::Some(value:Int)=>value};
- branch when{name=="integer"=>{code=try ordinaryLiteral(code,try atList<Integer>(op->wide,0),op->origin->span);},
+ branch when{name=="integer"=>{code=try ordinaryLiteral(code,plan,try atList<Integer>(op->wide,0),op->origin->span);},
  name=="boolean"||name=="unit"=>{code=immediate(code,0,branch when{op->minimum=>-9223372036854775808,else=>op->integer});},
  name=="typed-integer"=>{code=try numericLiteral(code,try atList<Integer>(op->wide,0),op->origin->span);},
- name=="value-parameter"=>{let term:ValueTerm=branch on try atList<Argument>(op->arguments,0){Argument::Value(value:ValueTerm)=>value,Argument::Type(id:Int)=>{return Result<Code,Diagnostic>::Err(problem("internal",op->origin->span,"expected concrete numeric value argument"));}};code=try ordinaryLiteral(code,term->mathematical,op->origin->span);},
+ name=="value-parameter"=>{let term:ValueTerm=branch on try atList<Argument>(op->arguments,0){Argument::Value(value:ValueTerm)=>value,Argument::Type(id:Int)=>{return Result<Code,Diagnostic>::Err(problem("internal",op->origin->span,"expected concrete numeric value argument"));}};code=try ordinaryLiteral(code,plan,term->mathematical,op->origin->span);},
  name=="string"=>{code=symbol(code,0,try literal(plan,owner,block,operation,op->origin->span));},
  name=="copy"=>{code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));},
  name=="global-load"||name=="global-store"=>{

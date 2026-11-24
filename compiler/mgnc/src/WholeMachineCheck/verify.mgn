@@ -1,4 +1,5 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeIntegerPoolMachine\{verify as integerPoolMachine};
 use Mgnc\WholeContractMachine\{verify as contracts};
 use Mgnc\WholeDirectoryMachine\{verify as directory};
 use Mgnc\WholePathMachine\{verify as paths};
@@ -75,7 +76,7 @@ let rootsAt:Function(PointIndex,Paged<Int>,Int):Result<Map,Diagnostic>=function(
 };
 
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
+ let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);try integerPoolMachine(plan,code);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
  // Index emitted standard pointers independently in one pass. Preserve each
  // global's register failure before its identity-count failure.

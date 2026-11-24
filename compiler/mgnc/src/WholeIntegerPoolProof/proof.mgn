@@ -1,0 +1,27 @@
+namespace Mgnc\WholeIntegerPoolProof;
+use Mgnc\Data\{Span,Diagnostic};
+use Mgnc\WholeIntegerPool\{Constant};
+use Mgnc\MathValue\{Integer,fits,equal,normalize};
+use Mgnc\WholeChecks\{require};
+use Mgnc\TextUtil\{code};
+use Mgnc\Tables\{atList};
+// Independent reverse proof: divide radix2^30 limbs by1e9 and compare each
+// little-endian decimal chunk with the canonical source digits. No producer
+// conversion routine is called and no intermediate decimal string is built.
+public let verify:Function(Constant,Span):Result<Unit,Diagnostic>=function(entry:Constant,span:Span):Result<Unit,Diagnostic>{
+ let value:Integer=entry->value;
+ try require(equal(value,normalize(value->negative,value->digits))&&!fits(value,63,true),span,"integer pool canonical big value");
+ try require(entry->limbs->length()>0&&entry->limbs->length()<=2305843009213693941,span,"integer pool limb extent");
+ loop over(entry->limbs as limb:Int){try require(limb>=0&&limb<1073741824,span,"integer pool limb range");};
+ try require((try atList<Int>(entry->limbs,entry->limbs->length()-1))!=0,span,"integer pool leading limb");
+ let scalars:List<String>=value->digits->scalars();var cursor:Int=scalars->length();var working:List<Int>=entry->limbs;
+ loop while(cursor>0){
+  var expected:Int=0;var scale:Int=1;var digits:Int=0;
+  loop while(cursor>0&&digits<9){cursor=cursor-1;let decimal:Int=code(try atList<String>(scalars,cursor))-48;try require(decimal>=0&&decimal<=9,span,"integer pool proof decimal digit");expected=expected+decimal*scale;scale=scale*10;digits=digits+1;};
+  var reversed:List<Int>=List<Int>[];var remainder:Int=0;var index:Int=working->length();var leading:Bool=true;
+  loop while(index>0){index=index-1;let word:Int=remainder*1073741824+(try atList<Int>(working,index));let quotient:Int=word/1000000000;remainder=word%1000000000;branch when{quotient!=0||!leading=>{reversed=reversed->append(quotient);leading=false;},else=>unit};};
+  try require(remainder==expected,span,"integer pool mathematical data");
+  var next:List<Int>=List<Int>[];index=reversed->length();loop while(index>0){index=index-1;next=next->append(try atList<Int>(reversed,index));};working=next;
+ };
+ try require(working->length()==0,span,"integer pool extra magnitude");Result<Unit,Diagnostic>::Ok(unit)
+};

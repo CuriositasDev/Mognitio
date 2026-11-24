@@ -1,0 +1,37 @@
+namespace Mgnc\WholeIntegerPool;
+use Mgnc\Data\{Paged,Span,Diagnostic,push,problem};
+use Mgnc\MathValue\{Integer,fits,equal,normalize};
+use Mgnc\TextUtil\{code};
+use Mgnc\WholeChecks\{require};
+public type Constant=product{value:Integer;label:Int;limbs:List<Int>;};
+public let find:Function(Paged<Constant>,Integer,Span):Result<Constant,Diagnostic>=function(pool:Paged<Constant>,value:Integer,span:Span):Result<Constant,Diagnostic>{
+ loop over(pool->pages->append(pool->tail) as page:List<Constant>){loop over(page as entry:Constant){branch when{equal(entry->value,value)=>{return Result<Constant,Diagnostic>::Ok(entry);},else=>unit};};};
+ Result<Constant,Diagnostic>::Err(problem("internal",span,"missing ordinary integer constant"))
+};
+// Each short decimal chunk multiplies the little-endian radix2^30 vector.
+// limb*scale+carry is below2^60; no intermediate decimal strings are created.
+public let limbs:Function(Integer,Span):Result<List<Int>,Diagnostic>=function(value:Integer,span:Span):Result<List<Int>,Diagnostic>{
+ try require(equal(value,normalize(value->negative,value->digits)),span,"noncanonical integer pool value");
+ var result:List<Int>=List<Int>[];var chunk:Int=0;var scale:Int=1;var digits:Int=0;var cursor:Int=0;
+ loop over(value->digits->scalars() as scalar:String){
+  let decimal:Int=code(scalar)-48;try require(decimal>=0&&decimal<=9,span,"integer pool decimal digit");
+  chunk=chunk*10+decimal;scale=scale*10;digits=digits+1;cursor=cursor+1;
+  branch when{digits==9||cursor==value->digits->length()=>{
+   var next:List<Int>=List<Int>[];var carry:Int=chunk;
+   loop over(result as limb:Int){let word:Int=limb*scale+carry;next=next->append(word%1073741824);carry=word/1073741824;};
+   loop while(carry>0){try require(next->length()<2305843009213693941,span,"integer constant resource capacity");next=next->append(carry%1073741824);carry=carry/1073741824;};
+   result=next;chunk=0;scale=1;digits=0;
+  },else=>unit};
+ };
+ try require(result->length()<=2305843009213693941,span,"integer constant resource capacity");Result<List<Int>,Diagnostic>::Ok(result)
+};
+// Full canonical sign+magnitude equality is the key; stable source traversal
+// determines the first occurrence's label. Repeated uses never reconvert digits.
+public let intern:Function(Paged<Constant>,Integer,Int,Span):Result<Paged<Constant>,Diagnostic>=function(pool:Paged<Constant>,value:Integer,target:Int,span:Span):Result<Paged<Constant>,Diagnostic>{
+ branch when{fits(value,63,true)=>{return Result<Paged<Constant>,Diagnostic>::Ok(pool);},else=>unit};
+ var total:Int=0;
+ loop over(pool->pages->append(pool->tail) as page:List<Constant>){loop over(page as entry:Constant){branch when{equal(entry->value,value)=>{return Result<Paged<Constant>,Diagnostic>::Ok(pool);},else=>unit};let size:Int=((entry->limbs->length()+1)/2)*8;try require(size>=0&&total<=9223372036854775807-size,span,"integer constant image resource capacity");total=total+size;};};
+ try require(target>=256&&target<9223372036854775807&&pool->count<9223372036854775807,span,"integer constant pool resource capacity");
+ let converted:List<Int>=try limbs(value,span);let size:Int=((converted->length()+1)/2)*8;try require(total<=9223372036854775807-size,span,"integer constant image resource capacity");
+ Result<Paged<Constant>,Diagnostic>::Ok(push<Constant>(pool,Constant{value:value,label:target,limbs:converted}))
+};

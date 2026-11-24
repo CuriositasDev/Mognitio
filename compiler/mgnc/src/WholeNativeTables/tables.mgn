@@ -1,5 +1,6 @@
 namespace Mgnc\WholeNativeTables;
 use Std\Numeric\{Bits,Signed,IntegerConversionError};
+use Mgnc\WholeIntegerPoolData\{emit as integerData};
 use Mgnc\Data\{Span,Diagnostic,lookup};
 use Mgnc\Machine\{Code,Record,label,field,reference,raw};
 use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel,abiRevisionLabel};
@@ -54,5 +55,6 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
   let physical:Int=((40+literal->bytes->length()+7)/8)*8;code=label(code,literal->label);
   loop over(List<Int>[physical,5,stringDescriptor,literal->bytes->length(),literal->scalars] as value:Int){code=field(code,4,value);};
   code=raw(code,literal->bytes);var pad:Int=physical-40-literal->bytes->length();loop while(pad>0){code=raw(code,List<Int>[0]);pad=pad-1;};
- };};Result<Code,Diagnostic>::Ok(code)
+ };};
+ code=try integerData(code,plan->integers);Result<Code,Diagnostic>::Ok(code)
 };

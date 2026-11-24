@@ -16,7 +16,7 @@ let parameter:Function(Store,Int,Int,Span):Result<String,Diagnostic>=function(st
 };
 let valueName:Function(Store,ValueTerm,Span):Result<String,Diagnostic>=function(store:Store,value:ValueTerm,span:Span):Result<String,Diagnostic>{
  branch on value->parameter{
-  Parent::None=>Result<String,Diagnostic>::Ok(number(value->value)),
+  Parent::None=>Result<String,Diagnostic>::Ok(branch when{value->mathematical->negative=>"-",else=>""}+value->mathematical->digits),
   Parent::Some(index:Int)=>parameter(store,value->owner,index,span)
  }
 };

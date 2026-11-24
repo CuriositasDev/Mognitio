@@ -1,5 +1,6 @@
 namespace Mgnc\WholeNativeTables;
 use Std\Numeric\{Bits,Signed,IntegerConversionError};
+use Mgnc\WholeIntegerPoolData\{emit as integerData};
 use Mgnc\Data\{Span,Diagnostic,lookup};
 use Mgnc\Machine\{Code,Record,label,field,reference,raw};
 use Mgnc\WholeNativeData\{Native,Procedure,Literal,descriptorTableLabel,staticTableLabel,globalRootsLabel,abiRevisionLabel};
@@ -7,9 +8,13 @@ use Mgnc\WholeLayout\{Descriptor};
 use Mgnc\WholeDispatchData\{Pair};
 use Mgnc\WholeRuntimeTypes\{resolve};
 use Mgnc\WholeFrameData\{Point};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeIR\{Slot};
+use Mgnc\TypeData\{Type};
+use Mgnc\WholeNativeData\{Global};
 use Mgnc\IntMap\{get};
 use Mgnc\Tables\{atList};
-use Mgnc\Facts\{at};
+use Mgnc\Facts\{at,fromSlots};
 use Mgnc\WholeChecks\{require};
 public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=function(initial:Code,count:Int,words:List<Bits<64>>):Result<Code,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var code:Code=field(initial,4,count);
@@ -20,21 +25,28 @@ public let bitmap:Function(Code,Int,List<Bits<64>>):Result<Code,Diagnostic>=func
   };code=field(code,4,scalar);
  };Result<Code,Diagnostic>::Ok(code)
 };
+// A high count word distinguishes maps with a parallel tagged-Int mask.
+// Unflagged private helper maps remain reference-only.
+public let typedBitmap:Function(Code,Int,List<Bits<64>>,List<Bits<64>>):Result<Code,Diagnostic>=function(initial:Code,count:Int,live:List<Bits<64>>,tags:List<Bits<64>>):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};try require(live->length()==(count+63)/64&&tags->length()==live->length(),span,"tagged root mask extent");var code:Code=try bitmap(initial,count+4294967296,live);
+ loop over(tags as word:Bits<64>){let scalar:Int=branch on word->asInteger<Signed>()->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(value:Int)=>value,Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{try require(false,span,"tagged bitmap conversion");0}};code=field(code,4,scalar);};Result<Code,Diagnostic>::Ok(code)
+};
 public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:Code,plan:Native):Result<Code,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};var extent:Int=initial->pending->length();loop over(initial->records->pages->append(initial->records->tail) as page:List<Record>){var recordCursor0:Int=0;loop while(recordCursor0<page->length()){let record:Record=try atList<Record>(page,recordCursor0);recordCursor0=recordCursor0+1;extent=extent+record->bytes->length()+branch when{record->kind==0||record->kind==1=>0,record->kind==2||record->kind==3=>4,else=>8};};};
  var code:Code=initial;loop while(extent%8!=0){code=raw(code,List<Int>[0]);extent=extent+1;};code=label(code,abiRevisionLabel);code=field(code,4,plan->abiRevision);code=label(code,descriptorTableLabel);
  loop over(plan->descriptors->pages->append(plan->descriptors->tail) as page:List<Int>){loop over(page as target:Int){code=reference(code,5,target);};};
  var index:Int=0;loop over(plan->layouts->descriptors->pages->append(plan->layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
   code=label(code,try lookup<Int>(plan->descriptors,index));let rows:List<Int>=try lookup<List<Int>>(plan->variants,index);index=index+1;
-  loop over(List<Int>[descriptor->mode,descriptor->size,descriptor->references->length(),descriptor->variants->length(),branch when{descriptor->elementManaged=>1,else=>0}] as value:Int){code=field(code,4,value);};
+  loop over(List<Int>[descriptor->mode,descriptor->size,descriptor->references->length(),descriptor->variants->length(),descriptor->elementScan] as value:Int){code=field(code,4,value);};
   loop over(descriptor->references as offset:Int){code=field(code,4,offset);};loop over(rows as target:Int){code=reference(code,5,target);};
   var ordinal:Int=0;loop over(descriptor->variants as refs:List<Int>){code=label(code,try atList<Int>(rows,ordinal));ordinal=ordinal+1;code=field(code,4,refs->length());loop over(refs as offset:Int){code=field(code,4,offset);};};
  };};
- loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){
-  code=try bitmap(label(code,procedure->entryRoots),procedure->frame->slots,procedure->frame->entry);var pointId:Int=0;
-  loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try bitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots);branch when{point->handoff->length()>0=>{code=try bitmap(label(code,(try lookup<Int>(procedure->pointLabels,pointId))+1),procedure->frame->slots,point->handoff);},else=>unit};pointId=pointId+1;};};
+ var procedureId:Int=0;loop over(plan->procedures->pages->append(plan->procedures->tail) as page:List<Procedure>){loop over(page as procedure:Procedure){
+  let instance:Instance=try lookup<Instance>(plan->concrete->instances,procedureId);procedureId=procedureId+1;var taggedSlots:List<Int>=List<Int>[];var slotId:Int=0;loop over(instance->body->slots->pages->append(instance->body->slots->tail) as slots:List<Slot>){loop over(slots as slot:Slot){branch when{(try lookup<Type>(plan->concrete->types->types,slot->valueType))->kind==1=>{taggedSlots=taggedSlots->append(slotId);},else=>unit};slotId=slotId+1;};};let tags:List<Bits<64>>=try fromSlots(procedure->frame->slots,taggedSlots,span);
+  code=try typedBitmap(label(code,procedure->entryRoots),procedure->frame->slots,procedure->frame->entry,tags);var pointId:Int=0;
+  loop over(procedure->frame->points->pages->append(procedure->frame->points->tail) as points:List<Point>){loop over(points as point:Point){code=try typedBitmap(label(code,try lookup<Int>(procedure->pointLabels,pointId)),procedure->frame->slots,point->roots,tags);branch when{point->handoff->length()>0=>{code=try typedBitmap(label(code,(try lookup<Int>(procedure->pointLabels,pointId))+1),procedure->frame->slots,point->handoff,tags);},else=>unit};pointId=pointId+1;};};
  };};
- code=try bitmap(label(code,globalRootsLabel),plan->globals->count,plan->globalRoots);
+ var globalTags:List<Int>=List<Int>[];var globalId:Int=0;loop over(plan->globals->pages->append(plan->globals->tail) as globals:List<Global>){loop over(globals as global:Global){branch when{(try lookup<Type>(plan->concrete->types->types,global->valueType))->kind==1=>{globalTags=globalTags->append(globalId);},else=>unit};globalId=globalId+1;};};code=try typedBitmap(label(code,globalRootsLabel),plan->globals->count,plan->globalRoots,try fromSlots(plan->globals->count,globalTags,span));
  // Dispatch code and type metadata are read-only scalars, outside the GC list.
  var pairIndex:Int=0;loop over(plan->concrete->pairs->pages->append(plan->concrete->pairs->tail) as page:List<Pair>){loop over(page as pair:Pair){code=label(code,try lookup<Int>(plan->dispatchTables,pairIndex));pairIndex=pairIndex+1;code=field(code,4,(try resolve(plan->runtimeTypes,pair->concreteType))->value);code=field(code,4,(try resolve(plan->runtimeTypes,pair->contractType))->value);code=field(code,4,pair->methods->length());var ordinal:Int=0;loop over(pair->methods as method:Int){code=field(code,4,ordinal);code=reference(code,5,(try lookup<Procedure>(plan->procedures,method))->entry);code=field(code,4,(try resolve(plan->runtimeTypes,try atList<Int>(pair->signatures,ordinal)))->value);ordinal=ordinal+1;};};};
  code=label(code,staticTableLabel);loop over(plan->literals->pages->append(plan->literals->tail) as page:List<Literal>){loop over(page as literal:Literal){code=reference(code,5,literal->label);};};
@@ -43,5 +55,6 @@ public let emit:Function(Code,Native):Result<Code,Diagnostic>=function(initial:C
   let physical:Int=((40+literal->bytes->length()+7)/8)*8;code=label(code,literal->label);
   loop over(List<Int>[physical,5,stringDescriptor,literal->bytes->length(),literal->scalars] as value:Int){code=field(code,4,value);};
   code=raw(code,literal->bytes);var pad:Int=physical-40-literal->bytes->length();loop while(pad>0){code=raw(code,List<Int>[0]);pad=pad-1;};
- };};Result<Code,Diagnostic>::Ok(code)
+ };};
+ code=try integerData(code,plan->integers);Result<Code,Diagnostic>::Ok(code)
 };

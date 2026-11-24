@@ -9,7 +9,7 @@ use Mgnc\WholeChecks\{require,present,slotType};
 use Mgnc\VariantSupport\{memberType};
 use Mgnc\Tables\{atList};
 use Mgnc\IntMap\{get};
-public type Expected=product{resultDescriptor:Int;errorDescriptor:Int;fields:Int;};
+public type Expected=product{resultDescriptor:Int;errorDescriptor:Int;fields:Int;conversion:Int;};
 public let selected:Function(Store,Body,Operation):Result<Bool,Diagnostic>=function(store:Store,body:Body,op:Operation):Result<Bool,Diagnostic>{
  branch when{op->unavailable->length()!=0=>{return Result<Bool,Diagnostic>::Ok(false);},op->code=="method:convertTo"||op->code=="method:shiftLeft"||op->code=="method:shiftRight"=>{return Result<Bool,Diagnostic>::Ok(true);},op->code!="method:at"=>{return Result<Bool,Diagnostic>::Ok(false);},else=>unit};
  let kind:Int=(try lookup<Type>(store->types,try slotType(body,try atList<Int>(op->inputs,0))))->kind;Result<Bool,Diagnostic>::Ok(kind==24)
@@ -20,9 +20,10 @@ let nominal:Function(Store,Int,String,List<String>,Span):Result<Unit,Diagnostic>
 };
 public let expected:Function(Native,Body,Operation):Result<Expected,Diagnostic>=function(plan:Native,body:Body,op:Operation):Result<Expected,Diagnostic>{
  let store:Store=plan->concrete->types;let span:Span=op->origin->span;let input:Int=try slotType(body,try atList<Int>(op->inputs,0));let receiver:Type=try lookup<Type>(store->types,input);let output:Int=try slotType(body,try present(op->output,span,"numeric checked result"));let result:Type=try lookup<Type>(store->types,output);
- try require(result->kind==11&&result->arguments->length()==2,span,"numeric checked Result shape");let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);var fields:Int=2;
- branch when{op->code=="method:convertTo"=>{let target:Type=try lookup<Type>(store->types,payload);try require((receiver->kind==1||receiver->kind==23)&&(target->kind==1||target->kind==23)&&op->arguments->length()==1&&(try memberType(op->arguments,0,span))==payload,span,"integer conversion signature");try nominal(store,error,"IntegerConversionError",List<String>[],span);fields=0;},else=>{
+ try require(result->kind==11&&result->arguments->length()==2,span,"numeric checked Result shape");let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);var fields:Int=2;var conversion:Int=0;
+ branch when{op->code=="method:convertTo"=>{let target:Type=try lookup<Type>(store->types,payload);try require((receiver->kind==1||receiver->kind==23)&&(target->kind==1||target->kind==23)&&op->arguments->length()==1&&(try memberType(op->arguments,0,span))==payload,span,"integer conversion signature");try nominal(store,error,"IntegerConversionError",List<String>[],span);fields=branch when{target->kind==1=>-1,else=>0};
+ branch when{receiver->kind==1&&target->kind==23=>{conversion=209;},receiver->kind==23&&target->kind==1=>{let sign:Type=try lookup<Type>(store->types,try memberType(receiver->arguments,1,span));conversion=branch when{sign->kind==27=>207,else=>208};},else=>unit};},else=>{
   try require(receiver->kind==24&&op->inputs->length()==2&&op->arguments->length()==0&&(try slotType(body,try atList<Int>(op->inputs,1)))==1,span,"checked bit signature");
   branch when{op->code=="method:at"=>{try require(payload==2&&error==4,span,"bit access Result identity");},else=>{try require((op->code=="method:shiftLeft"||op->code=="method:shiftRight")&&payload==input,span,"bit shift Result identity");try nominal(store,error,"BitShiftError",List<String>["count","width"],span);}};
- }};let resultDescriptor:Int=try get(plan->layouts->types,output);let errorDescriptor:Int=try get(plan->layouts->types,error);try require(resultDescriptor>=0&&errorDescriptor>=0,span,"numeric checked descriptor membership");Result<Expected,Diagnostic>::Ok(Expected{resultDescriptor:resultDescriptor,errorDescriptor:errorDescriptor,fields:fields})
+ }};let resultDescriptor:Int=try get(plan->layouts->types,output);let errorDescriptor:Int=try get(plan->layouts->types,error);try require(resultDescriptor>=0&&errorDescriptor>=0,span,"numeric checked descriptor membership");Result<Expected,Diagnostic>::Ok(Expected{resultDescriptor:resultDescriptor,errorDescriptor:errorDescriptor,fields:fields,conversion:conversion})
 };

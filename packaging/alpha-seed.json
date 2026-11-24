@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "candidate": "2.0.0-alpha",
+  "version": "1.9.0",
+  "build": "9530751d9d506ae2c280eb4093608ce2453b88d44152fa4418478b9be475f255",
+  "compilerSha256": "d8fe9e5cdc9cb057ee1c95e4edecbdf60fea6cb14c772f0d75aad755b28fc196",
+  "receipt": {
+    "schema": 1,
+    "bytes": 5163956,
+    "sha256": "e0039a04fc461e67ae53a0e18f1dcd5b83a4d1eddc94be42553c486e0672be01",
+    "manifestSha256": "22b6f19c91ac42ad0a92fe7d275c766e7a7d7d049dd89a8860860dbaf4b1601b",
+    "sourceCommit": "6802d793222ed2ede3bb922fb8d5cdbeafce0942"
+  }
+}

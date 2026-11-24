@@ -1,5 +1,8 @@
 # Verification
 
+The [2.0.0-alpha candidate record](v2.0.0-alpha.md) identifies the signed seed,
+reproduced compiler and verified arbitrary-precision integer behavior.
+
 The accepted [1.5 Lisp capability](v1.5.0-lisp.md) supplies path inspection.
 The accepted [replacement seed](v1.5.0-seed2.md) bootstraps the
 [1.5 compiler implementation](v1.5.0-compiler.md); source and artifact identities

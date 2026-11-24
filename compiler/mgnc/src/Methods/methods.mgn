@@ -33,7 +33,8 @@ public let resolve:Function(Store,Int,String,List<Argument>,Span):Result<Signatu
    branch when{target->kind!=intKind&&target->kind!=fixedKind=>{return Result<Signature,Diagnostic>::Err(problem("type",span,"integer conversion target must be an integer type"));},else=>unit};
    let error:Formed=try standard(store,"Std\\Numeric","IntegerConversionError",List<Argument>[],span);store=error->store;errorType=Parent::Some(error->value);
   },name=="toBits"=>{
-   let width:Argument=branch when{shape->kind==intKind=>Argument::Value(concreteValue(64)),else=>try argumentAt(shape->arguments,0,span)};
+   branch when{shape->kind==intKind=>{return Result<Signature,Diagnostic>::Err(problem("type",span,"ordinary Int has no width for toBits; convert to a fixed-width integer first"));},else=>unit};
+   let width:Argument=try argumentAt(shape->arguments,0,span);
    let formed:Formed=try standard(store,"Std\\Numeric","Bits",List<Argument>[width],span);store=formed->store;result=formed->value;obligations=formed->obligations;
   },else=>{valid=false;}};
  },shape->kind==bitsKind=>{

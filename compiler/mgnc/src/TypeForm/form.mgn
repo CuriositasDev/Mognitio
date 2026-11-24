@@ -1,6 +1,7 @@
 namespace Mgnc\TypeForm;
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{inSmallRange};
 use Mgnc\Forest\{SyntaxForest};
 use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
 use Mgnc\TypeSyntax\{Child,Request,request,argumentNode,value};
@@ -14,7 +15,7 @@ public let widthRequirements:Function(Store,Int,List<Argument>,Span):Result<List
  let width:ValueTerm=branch on try argumentAt(arguments,0,span){Argument::Value(actual:ValueTerm)=>actual,
  Argument::Type(actual:Int)=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"width requires an Int value"));}};
  branch on width->parameter{
- Parent::None=>{branch when{width->value<1||width->value>64=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"width must be in 1..64"));},else=>unit};},
+ Parent::None=>{branch when{!inSmallRange(width->mathematical,1,64)=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",span,"width must be in 1..64"));},else=>unit};},
  Parent::Some(ordinal:Int)=>{result=result->append(Obligation{owner:width->owner,parameter:ordinal,minimum:1,maximum:64,span:span});}
  };
  branch when{kind==fixedKind=>{

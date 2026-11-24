@@ -1,0 +1,50 @@
+{
+  "check": "complete-source-regression-suite-on-supported-kernel",
+  "status": "passed",
+  "exit": 0,
+  "source_head": "8488576563d970f05f36104acdef84c162902b64",
+  "source_snapshot": "clean immutable detached checkout; copied into guest scratch",
+  "source_tree_sha256": "66c43f11c252c66c46e2fb2f67f9378fac3e80303e1ec1ee0f83eec6d36bb3b6",
+  "source_files": 1046,
+  "guest_input_matches_frozen_source": true,
+  "command": "SBCL_HOME=<extracted SBCL runtime> sbcl --noinform --script scripts/test.lisp",
+  "runtime": "SBCL 2.6.0.debian",
+  "guest_kernel": "Linux 7.0.0-38-generic #38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep 4 09:10:14 UTC 2026 x86_64",
+  "host_kernel_after": "7.0.0-44-generic",
+  "lisp_summary": {
+    "tests": 262,
+    "assertions": 17018030,
+    "processes": 1371,
+    "failures": 0
+  },
+  "additional_drivers": {
+    "groups": 29,
+    "passed": true,
+    "scope": "all ASDF test-op Python drivers through prune_forest.py",
+    "selected_controls": [
+      "filesystem ACL and supplementary-group inheritance",
+      "measurement thresholds, subprocess cleanup, resume/checkpoint negatives",
+      "numeric and binary conversion oracles",
+      "native publication profile and portability controls",
+      "independent native ELF emitter",
+      "path inspection on tmpfs /dev/shm",
+      "witness specialization",
+      "pruning map persistence and recursive forest oracle"
+    ]
+  },
+  "isolation": {
+    "virtual_machine": "QEMU/KVM",
+    "guest_user_uid": 1000,
+    "guest_network": "disabled",
+    "source_and_selected_runtime_tool_shares": "read-only",
+    "writable_share": "test-scratch logs only",
+    "other_writable_state": "disposable guest rootfs/tmpfs",
+    "host_settings_or_kernel_changed": false,
+    "guest_shutdown": "clean poweroff"
+  },
+  "input_setup_note": "Guest-only ACL/compiler tools, supplementary group, /dev/shm tmpfs, unique local machine-id and public userspace os-release were supplied. No product or test source changes were made for this gate.",
+  "stdout_sha256": "ffd71e1160f0451247f0173e1b227a05892c9593af593817dd0aa225db26bca7",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_bytes": 0,
+  "elapsed_guest_seconds": 844.082087
+}

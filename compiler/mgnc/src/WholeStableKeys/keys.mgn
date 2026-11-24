@@ -1,11 +1,12 @@
 namespace Mgnc\WholeStableKeys;
 use Mgnc\Data\{Paged,Diagnostic,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
+use Mgnc\TextUtil\{code};
 use Mgnc\TypeData\{Store,Type,Argument,ValueTerm};
 public type Entry=product{id:Int;tokens:Paged<Int>;};
 public let vector:Function(List<Int>):Paged<Int>=function(values:List<Int>):Paged<Int>{var out:Paged<Int>=empty<Int>();loop over(values as value:Int){out=push<Int>(out,value);};out};
 let value:Function(ValueTerm):List<Int>=function(term:ValueTerm):List<Int>{
- branch on term->parameter{Parent::None=>List<Int>[0,term->value],Parent::Some(ordinal:Int)=>List<Int>[1,term->owner,ordinal]}
+ branch on term->parameter{Parent::None=>{var tokens:List<Int>=List<Int>[0,branch when{term->mathematical->negative=>1,else=>0},term->mathematical->digits->length()];loop over(term->mathematical->digits->scalars() as digit:String){tokens=tokens->append(code(digit));};tokens},Parent::Some(ordinal:Int)=>List<Int>[1,term->owner,ordinal]}
 };
 // Interned TypeId is an allocation identity, not a stable layout key.
 // Nominal identity uses the original declaration; members need not be unfolded.

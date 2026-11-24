@@ -7,7 +7,10 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\Semantic\{SemanticProject};
 use Mgnc\SemanticValues\{Symbol};
 use Mgnc\SemanticData\{Declaration,Module,Introduction};
-use Mgnc\TypeData\{Type};
+use Mgnc\TypeData\{Type,Argument,ValueTerm};
+use Mgnc\MathValue\{Integer};
+use Mgnc\WholeIntegerPool\{Constant,intern};
+use Mgnc\Tables\{atList};
 use Mgnc\WholeIR\{Project,Body,Block,Operation,TextPart};
 use Mgnc\AssertionSites\{message as assertionMessage};
 use Mgnc\WholeConcrete\{Plan,Instance};
@@ -28,7 +31,7 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  loop over(layouts->descriptors->pages->append(layouts->descriptors->tail) as page:List<Descriptor>){loop over(page as descriptor:Descriptor){
   descriptors=push<Int>(descriptors,next);next=next+1;var rows:List<Int>=List<Int>[];loop over(descriptor->variants as refs:List<Int>){discard refs;rows=rows->append(next);next=next+1;};variants=push<List<Int>>(variants,rows);
  };};
- var constructors:Paged<Constructor>=empty<Constructor>();var procedures:Paged<Procedure>=empty<Procedure>();var literals:Paged<Literal>=empty<Literal>();var instanceId:Int=0;var neededGlobals:Map=create();
+ var integers:Paged<Constant>=empty<Constant>();var constructors:Paged<Constructor>=empty<Constructor>();var procedures:Paged<Procedure>=empty<Procedure>();var literals:Paged<Literal>=empty<Literal>();var instanceId:Int=0;var neededGlobals:Map=create();
  loop over(plan->instances->pages->append(plan->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){
   let frame:Frame=try lookup<Frame>(frames,instanceId);let entry:Int=next;let blocks:Int=next+1;let entryRoots:Int=blocks+instance->body->blocks->count;next=entryRoots+1;var pointLabels:Paged<Int>=empty<Int>();
   loop over(frame->points->pages->append(frame->points->tail) as points:List<Point>){loop over(points as point:Point){pointLabels=push<Int>(pointLabels,next);next=next+branch when{point->handoff->length()>0=>2,else=>1};};};
@@ -39,6 +42,10 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
   let endLabel:Int=next;next=next+1;procedures=push<Procedure>(procedures,Procedure{entry:entry,blocks:blocks,entryRoots:entryRoots,pointLabels:pointLabels,operationLabels:operationLabels,terminatorLabels:terminatorLabels,endLabel:endLabel,frame:frame});
   var blockId:Int=0;loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocksPage:List<Block>){loop over(blocksPage as block:Block){var operationId:Int=0;loop over(block->operations as operation:Operation){
    branch when{operation->code=="function"||operation->code=="list"||operation->code=="package"&&operation->unavailable->length()==0=>{constructors=push<Constructor>(constructors,Constructor{instance:instanceId,block:blockId,operation:operationId,entry:next,roots:next+1});next=next+2;},else=>unit};
+   branch when{operation->code=="integer"||operation->code=="value-parameter"=>{
+    let value:Integer=branch when{operation->code=="integer"=>try atList<Integer>(operation->wide,0),else=>branch on try atList<Argument>(operation->arguments,0){Argument::Value(term:ValueTerm)=>term->mathematical,Argument::Type(id:Int)=>{try require(false,operation->origin->span,"integer constant value argument");Integer{negative:false,digits:"0"}}}};
+    let previous:Int=integers->count;integers=try intern(integers,value,next,operation->origin->span);branch when{integers->count>previous=>{next=next+1;},else=>unit};
+   },else=>unit};
    branch when{operation->code=="string"=>{let encoded:Encoded=try encode(operation->text,operation->origin->span);literals=push<Literal>(literals,Literal{instance:instanceId,block:blockId,operation:operationId,label:next,bytes:encoded->bytes,scalars:encoded->scalars});next=next+1;},
     operation->code=="global-load"||operation->code=="global-store"=>{neededGlobals=try put(neededGlobals,try present(operation->symbol,span,"native global symbol"),1);},else=>unit};operationId=operationId+1;
   };branch when{block->terminator->code=="assertion"=>{
@@ -69,5 +76,5 @@ public let build:Function(SemanticProject,Project,Plan):Result<Native,Diagnostic
  let entryFile:Int=(try lookup<Declaration>(plan->types->headers->declarations,source->entry))->file;
  let init:Initialization=try forModule(plan,entryFile,span);
  let entryGlobal:Int=try get(globalDeclarations,source->entry);try require(entryGlobal>=0,span,"native entry global");
- Result<Native,Diagnostic>::Ok(Native{abiRevision:valueABI,dispatchTables:dispatchTables,runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:init->initializers,modules:init->modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
+ Result<Native,Diagnostic>::Ok(Native{abiRevision:valueABI,integers:integers,dispatchTables:dispatchTables,runtimeTypes:runtimeTypes,concrete:plan,closures:closures,layouts:layouts,procedures:procedures,literals:literals,constructors:constructors,globals:globals,globalSymbols:globalSymbols,globalDeclarations:globalDeclarations,globalRoots:try fromSlots(globals->count,references,span),initializers:init->initializers,modules:init->modules,moduleCount:plan->types->headers->modules->count,descriptors:descriptors,variants:variants,entryGlobal:entryGlobal,nextLabel:next})
 };

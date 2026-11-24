@@ -1,7 +1,8 @@
 namespace Mgnc\WholeABI;
 use Mgnc\Machine\{Code,raw};
 use Mgnc\WholeX64\{mov,constant,push,pop};
-public let revision:Int=2;
+public let revision:Int=3;
+public let integerDescriptor:Int=0;
 public let assertionFailure:Int=67;
 public let rootHead:Int=0;
 public let arenaHead:Int=8;

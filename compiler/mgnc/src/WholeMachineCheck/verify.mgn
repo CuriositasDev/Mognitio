@@ -1,4 +1,5 @@
 namespace Mgnc\WholeMachineCheck;
+use Mgnc\WholeIntegerPoolMachine\{verify as integerPoolMachine};
 use Mgnc\WholeContractMachine\{verify as contracts};
 use Mgnc\WholeDirectoryMachine\{verify as directory};
 use Mgnc\WholePathMachine\{verify as paths};
@@ -44,7 +45,8 @@ let occurrences:Function(List<Int>,List<Int>):Int=function(data:List<Int>,patter
 };
 let numeric:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
  let expected:Expected=try numericExpected(plan,body,op);var position:Int=0;loop over(List<Int>[expected->resultDescriptor,expected->errorDescriptor,expected->fields] as value:Int){let prefix:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(40+position*8,4));try require(occurrences(part->bytes,prefix)==1,span,"numeric Result helper metadata");position=position+1;};
- var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==68,span,"numeric Result helper target");},else=>unit};};try require(calls==1,span,"numeric Result helper call count");Result<Unit,Diagnostic>::Ok(unit)
+ let targets:List<Int>=branch when{expected->conversion==0=>List<Int>[68],else=>List<Int>[expected->conversion,68]};var calls:Int=0;
+ loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{try require(calls<targets->length()&&reference->target==(try atList<Int>(targets,calls)),span,"numeric Result helper target");calls=calls+1;},else=>unit};};try require(calls==targets->length(),span,"numeric Result helper call count");Result<Unit,Diagnostic>::Ok(unit)
 };
 let binary:Function(Native,Body,Operation,Fragment,Span):Result<Unit,Diagnostic>=function(plan:Native,body:Body,op:Operation,part:Fragment,span:Span):Result<Unit,Diagnostic>{
  let proof:Proof=try binaryExpected(plan,body,op);var position:Int=proof->start;loop over(proof->metadata as value:Int){let pattern:List<Int>=append(append(append(List<Int>[72,184],bytes(value,8)),List<Int>[72,137,132,36]),bytes(position,4));try require(occurrences(part->bytes,pattern)==1,span,"binary helper descriptor metadata");position=position+8;};var calls:Int=0;loop over(part->references as reference:Reference){branch when{reference->kind==2&&reference->offset>0&&(try atList<Int>(part->bytes,reference->offset-1))==232=>{calls=calls+1;try require(reference->target==proof->helper,span,"binary helper target");},else=>unit};};try require(calls==1,span,"binary helper call count");Result<Unit,Diagnostic>::Ok(unit)
@@ -74,7 +76,7 @@ let rootsAt:Function(PointIndex,Paged<Int>,Int):Result<Map,Diagnostic>=function(
 };
 
 public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var callable:Map=create();var index:Int=0;
+ let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);try integerPoolMachine(plan,code);var labels:Map=create();var callable:Map=create();var index:Int=0;
  var io:List<Int>=List<Int>[];loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as item:Global){branch when{item->standard!=""=>{io=io->append((try standardHelper(plan,item)));},else=>unit};};};
  // Index emitted standard pointers independently in one pass. Preserve each
  // global's register failure before its identity-count failure.
@@ -87,7 +89,7 @@ public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Na
  loop over(plan->constructors->pages->append(plan->constructors->tail) as page:List<Constructor>){loop over(page as item:Constructor){callable=try put(callable,item->entry,1);};};
 
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){var recordCursor1:Int=0;loop while(recordCursor1<page->length()){let record:Record=try atList<Record>(page,recordCursor1);recordCursor1=recordCursor1+1;branch when{record->kind==1=>{try require(record->target>=0&&record->target<code->nextLabel&&(try get(labels,record->target))<0,span,"machine label ownership");labels=try put(labels,record->target,index);},else=>unit};index=index+1;};};
- let abiPosition:Int=try get(labels,abiRevisionLabel);try require(plan->abiRevision==2&&abiPosition>=0,span,"machine private value ABI membership");let abiWord:Record=try lookup<Record>(code->records,abiPosition+1);let afterABI:Record=try lookup<Record>(code->records,abiPosition+2);try require(abiWord->kind==4&&abiWord->bytes->length()==0&&abiWord->value==2&&afterABI->kind==1&&afterABI->target==descriptorTableLabel,span,"machine private value ABI revision data");
+ let abiPosition:Int=try get(labels,abiRevisionLabel);try require(plan->abiRevision==3&&abiPosition>=0,span,"machine private value ABI membership");let abiWord:Record=try lookup<Record>(code->records,abiPosition+1);let afterABI:Record=try lookup<Record>(code->records,abiPosition+2);try require(abiWord->kind==4&&abiWord->bytes->length()==0&&abiWord->value==3&&afterABI->kind==1&&afterABI->target==descriptorTableLabel,span,"machine private value ABI revision data");
  loop over(entries as helper:Helper){try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");};
  loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){branch when{value->standard!=""=>{try standardAllocations(plan,code,labels,value,span);},else=>unit};};};
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){var recordCursor2:Int=0;loop while(recordCursor2<page->length()){let record:Record=try atList<Record>(page,recordCursor2);recordCursor2=recordCursor2+1;

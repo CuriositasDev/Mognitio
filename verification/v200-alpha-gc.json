@@ -1,0 +1,120 @@
+{
+  "source_head": "8488576563d970f05f36104acdef84c162902b64",
+  "compiler_sha256": "b03ded04d251b0a0487165530835621b845f525a211295f9ebcdb0eab2a6846a",
+  "status": "passed",
+  "retention": [
+    {
+      "case": "retention",
+      "source_sha256": "616f249bf9cf4c8d8daf82608f96dccd959e301e0c3b44c8ceb700351d166d52",
+      "commands": [
+        {
+          "command": "check",
+          "exit": 0,
+          "seconds": 0.21863643500000762
+        },
+        {
+          "command": "lower",
+          "exit": 0,
+          "seconds": 0.24570016300003772
+        },
+        {
+          "command": "build",
+          "exit": 0,
+          "seconds": 0.44266467400029796
+        },
+        {
+          "command": "native",
+          "exit": 0,
+          "seconds": 0.0008883460004653898
+        },
+        {
+          "command": "stress",
+          "exit": 0,
+          "seconds": 0.059705194999878586
+        }
+      ],
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 306,
+        "collections": 307,
+        "live": 13264,
+        "resources": 0,
+        "primary": 0
+      },
+      "artifact_sha256": "36276d0e66cd2da0b2803eb1309b9238aeb3eba94ccc0730e4968f8c883c4b03"
+    },
+    {
+      "case": "io-retention",
+      "source_sha256": "3c97f9436575039ac158cea9a7275a95d30036534706984e0b2d31267881be20",
+      "commands": [
+        {
+          "command": "check",
+          "exit": 0,
+          "seconds": 0.26821351000035065
+        },
+        {
+          "command": "lower",
+          "exit": 0,
+          "seconds": 0.309274617000483
+        },
+        {
+          "command": "build",
+          "exit": 0,
+          "seconds": 1.0728848989992912
+        },
+        {
+          "command": "native",
+          "exit": 0,
+          "seconds": 0.0004975989995728014
+        },
+        {
+          "command": "stress",
+          "exit": 0,
+          "seconds": 0.055043151999598194
+        }
+      ],
+      "heap": {
+        "mapped": 1069056,
+        "allocations": 75,
+        "collections": 76,
+        "live": 1112,
+        "resources": 0,
+        "primary": 0
+      },
+      "artifact_sha256": "c1fd196bf02e3e0b8cee089f7bc323de0196c67d2e5c95386b4c8e62fe0cf65e"
+    }
+  ],
+  "reclamation": {
+    "compiler_sha256": "b03ded04d251b0a0487165530835621b845f525a211295f9ebcdb0eab2a6846a",
+    "passed": true,
+    "runs": [
+      {
+        "iterations": 64,
+        "source_sha256": "f226a19ea144b135c3844ea2ae61972cf43394cc515b967ca8e1896dabfee7b3",
+        "artifact_sha256": "9085bdff32c287877a027cccb4c842cb482dbeb5c59ff4e3ed6a086570284e8f",
+        "heap": {
+          "mapped": 1069056,
+          "allocations": 197,
+          "collections": 198,
+          "live": 184,
+          "resources": 0,
+          "primary": 0
+        }
+      },
+      {
+        "iterations": 4096,
+        "source_sha256": "d05e40edb0262a67427dbdf33bab4464b385ec5c014c8254d277f5d59ff497f4",
+        "artifact_sha256": "6e6db8bbfc5e1fcb2cba595fa4b4a0400dc46ef68acf39eaed38669d31835658",
+        "heap": {
+          "mapped": 1069056,
+          "allocations": 12293,
+          "collections": 12294,
+          "live": 184,
+          "resources": 0,
+          "primary": 0
+        }
+      }
+    ],
+    "interpretation": "64 times more temporary workload and collections with bounded final live and mapped heap; temporaries are reclaimed after their last uses."
+  }
+}

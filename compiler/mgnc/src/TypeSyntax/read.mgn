@@ -9,8 +9,8 @@ use Mgnc\HeaderRead\{rightList};
 use Mgnc\SemanticData\{Headers,Declaration,Parameter};
 use Mgnc\TypeData\{Store,Argument,ValueTerm};
 use Mgnc\TypeNames\{declaration,parameter,valueParameter};
-use Mgnc\TypeOps\{argumentAt,concreteValue,intKind,unitKind,boolKind,stringKind,indexKind,sliceKind,listKind,resultKind,functionKind,fixedKind};
-use Mgnc\MathValue\{normalize,ordinary};
+use Mgnc\TypeOps\{argumentAt,mathematicalValue,intKind,unitKind,boolKind,stringKind,indexKind,sliceKind,listKind,resultKind,functionKind,fixedKind};
+use Mgnc\MathValue\{normalize};
 use Mgnc\Grammar\{ruleTypeFunction,ruleArgumentType,ruleArgumentValue,ruleValueReference,ruleValueNegative,ruleScalarNegative,ruleValueGroup,ruleScalarGroup,rulePositiveGroup};
 public type Child=product{node:Int;kind:Int;argument:Bool;};
 public type Request=product{kind:Int;declaration:Parent;immediate:Parent;children:List<Child>;span:Span;};
@@ -21,7 +21,7 @@ public let value:Function(Store,SyntaxForest,Int,Parent,List<Argument>):Result<V
   branch when{shape->rule==ruleValueGroup||shape->rule==ruleScalarGroup||shape->rule==rulePositiveGroup=>{current=try item(children,1);},
    shape->rule==ruleValueNegative||shape->rule==ruleScalarNegative=>{negative=true;current=try item(children,1);},
    shape->rule==ruleValueReference=>{return valueParameter(store->headers,owner,arguments,try text(tree,current),try site(tree,current));},
-   else=>{return Result<ValueTerm,Diagnostic>::Ok(concreteValue(try ordinary(normalize(negative,try text(tree,current)),try site(tree,current))));}
+   else=>{return Result<ValueTerm,Diagnostic>::Ok(mathematicalValue(normalize(negative,try text(tree,current))));}
   };
  };panic{"value argument traversal invariant"}
 };

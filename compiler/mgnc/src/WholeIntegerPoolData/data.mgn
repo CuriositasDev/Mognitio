@@ -1,0 +1,15 @@
+namespace Mgnc\WholeIntegerPoolData;
+use Mgnc\Data\{Paged,Span,Diagnostic};
+use Mgnc\WholeIntegerPool\{Constant};
+use Mgnc\Machine\{Code,label,raw};
+use Mgnc\WholeChecks\{require};
+public let emit:Function(Code,Paged<Constant>):Result<Code,Diagnostic>=function(initial:Code,entries:Paged<Constant>):Result<Code,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};var code:Code=initial;
+ // Raw limb pools are not managed objects and never enter staticTable. Their
+ // 8-byte-aligned placement follows deterministic first-occurrence order.
+ loop over(entries->pages->append(entries->tail) as page:List<Constant>){loop over(page as entry:Constant){
+  try require(entry->limbs->length()>0&&entry->limbs->length()<=2305843009213693941,span,"integer pool data resource capacity");code=label(code,entry->label);
+  loop over(entry->limbs as limb:Int){try require(limb>=0&&limb<1073741824,span,"integer pool limb");var word:Int=limb;var byte:Int=0;loop while(byte<4){code=raw(code,List<Int>[word%256]);word=word/256;byte=byte+1;};};
+  branch when{entry->limbs->length()%2!=0=>{code=raw(code,List<Int>[0,0,0,0]);},else=>unit};
+ };}; Result<Code,Diagnostic>::Ok(code)
+};

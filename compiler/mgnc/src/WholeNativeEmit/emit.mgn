@@ -1,4 +1,5 @@
 namespace Mgnc\WholeNativeEmit;
+use Mgnc\WholeInteger\{emit as integerRuntime};
 use Mgnc\WholeDirectory\{emit as directory};
 use Mgnc\WholePathFunctions\{emit as paths};
 use Mgnc\WholeInspection\{emit as inspection};
@@ -33,6 +34,6 @@ public let emitMode:Function(Native,Mode):Result<Code,Diagnostic>=function(plan:
  var code:Code=Code{records:empty<Record>(),nextLabel:plan->nextLabel,pending:List<Int>[]};
  var testBase:Int= -1;
  branch on mode{Mode::Ordinary=>{code=try startup(code,plan,false);},Mode::Application=>{code=try startup(code,plan,true);},Mode::Testing(suite:Suite)=>{testBase=suiteOffset(plan);code=try testStartup(code,plan,suite);}};
- code=try bodies(code,plan,mode);code=try constructors(code,plan);code=try numericResult(try text(try bounds(code)));code=try bytesSlice(try binaryEncoding(code));code=try paths(code,plan);code=try directory(code,plan);code=try inspection(code,plan);code=try publication(code,plan);code=try binaryFrom(code,plan);code=try io(code,plan);code=feed(resources(code));code=utf8(collect(sweep(mark(arena(code)))));tables(terminal(code,testBase),plan)
+ code=try bodies(code,plan,mode);code=try constructors(code,plan);code=try numericResult(try text(try bounds(code)));code=try bytesSlice(try binaryEncoding(code));code=try paths(code,plan);code=try directory(code,plan);code=try inspection(code,plan);code=try publication(code,plan);code=try binaryFrom(code,plan);code=try io(code,plan);code=feed(resources(code));code=integerRuntime(utf8(collect(sweep(mark(arena(code))))));tables(terminal(code,testBase),plan)
 };
 public let emit:Function(Native):Result<Code,Diagnostic>=function(plan:Native):Result<Code,Diagnostic>{emitMode(plan,Mode::Ordinary)};

@@ -1,0 +1,18 @@
+namespace Mgnc\WholeIntegerLiteral;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\MathValue\{Integer,fits,small};
+use Mgnc\WholeNativeData\{Native};
+use Mgnc\WholeNativeLookup\{integer};
+use Mgnc\WholeIntegerPool\{Constant};
+use Mgnc\Machine\{Code,raw,reference,jump};
+use Mgnc\WholeX64\{immediate};
+use Mgnc\WholeInteger\{constructLabel};
+// Every big use references its unique deterministic read-only limb pool entry.
+// Native rel32 RIP-relative LEA is linked in memory images and standalone ELF.
+public let emit:Function(Code,Native,Integer,Span):Result<Code,Diagnostic>=function(initial:Code,plan:Native,value:Integer,span:Span):Result<Code,Diagnostic>{
+ branch when{fits(value,63,true)=>{let number:Int=try small(value,span);return Result<Code,Diagnostic>::Ok(immediate(initial,0,number*2+1));},else=>unit};
+ let entry:Constant=try integer(plan,value,span);
+ var code:Code=reference(raw(initial,List<Int>[72,141,53]),2,entry->label);
+ code=immediate(code,1,entry->limbs->length());code=immediate(code,2,branch when{value->negative=>-1,else=>1});code=jump(code,List<Int>[232],constructLabel);
+ Result<Code,Diagnostic>::Ok(code)
+};

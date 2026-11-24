@@ -5,7 +5,8 @@ use Mgnc\WholeHelpers\{Helper,contains,verify as contracts};
 use Mgnc\WholeChecks\{require};
 use Mgnc\IntMap\{Map,create,get,put};
 use Mgnc\Tables\{atList};
-// Runtime entries use reserved labels below 128; fixed data occupies 128..255.
+// Runtime entries use labels below 128 and tagged integer labels200..210.
+// Fixed data occupies the other reserved labels below256.
 // Source entries and local labels are allocated from 256. Inspect the actual
 // emitted reference graph, separately from the declared dependency closure.
 public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(entries:List<Helper>,initial:Code):Result<Unit,Diagnostic>{
@@ -22,6 +23,12 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
  loop over(entries as helper:Helper){
   try require((try get(labels,helper->id))>=0,span,"unlinked runtime helper");
   loop over(helper->roots as root:Int){try require((try get(labels,root))>=0,span,"unlinked runtime root descriptor");};
+  branch when{helper->id>=200&&helper->id<=210=>{
+   let allocating:Bool=helper->id!=205&&helper->id!=209;
+   let expected:List<Int>=branch when{helper->id<=205=>List<Int>[1,1],helper->id==206||helper->id==209=>List<Int>[1],helper->id==210=>List<Int>[2,0,0],else=>List<Int>[0]};
+   try require(!helper->stack&&!helper->terminal&&helper->managedAllocation==allocating&&helper->mayFail==allocating&&helper->result==branch when{allocating=>1,else=>0}&&helper->roots->length()==0&&helper->arguments->length()==expected->length(),span,"tagged integer helper effects");
+   var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==(try atList<Int>(expected,ordinal)),span,"tagged integer helper argument kinds");ordinal=ordinal+1;};
+  },else=>unit};
   branch when{helper->id>=69&&helper->id<=71=>{
    let expected:List<Int>=branch when{helper->id==69=>List<Int>[0,0,0,3,3,3],helper->id==70=>List<Int>[1,0,0,3,3],else=>List<Int>[1,0,0,3,3,3]};try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==expected->length(),span,"binary helper signature");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==(try atList<Int>(expected,ordinal)),span,"binary helper argument kinds");ordinal=ordinal+1;};
   },else=>unit};
@@ -30,7 +37,7 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
   branch when{helper->id>=85&&helper->id<=88=>{let expected:List<Int>=branch when{helper->id==87=>List<Int>[2,2,0,0],helper->id==88=>List<Int>[2,2,0],else=>List<Int>[2,2,2]};try require(!helper->stack&&!helper->managedAllocation&&!helper->mayFail&&!helper->terminal&&helper->result==0&&helper->roots->length()==0&&helper->arguments->length()==expected->length(),span,"directory raw helper effects");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==(try atList<Int>(expected,ordinal)),span,"directory raw helper argument kinds");ordinal=ordinal+1;};},else=>unit};
   branch when{helper->id==76=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==1&&(try atList<Int>(helper->arguments,0))==1&&helper->roots->length()==1&&contains(helper->roots,172),span,"inspection helper signature");},else=>unit};
   branch when{helper->id==75=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==3&&helper->roots->length()==1&&contains(helper->roots,171),span,"publication helper signature");loop over(helper->arguments as kind:Int){try require(kind==1,span,"publication argument kinds");};},else=>unit};
-  branch when{helper->id==68=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==7&&helper->roots->length()==2&&contains(helper->roots,144)&&contains(helper->roots,145),span,"numeric Result helper signature");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==branch when{ordinal==4||ordinal==5=>3,else=>0},span,"numeric Result helper argument kinds");ordinal=ordinal+1;};},else=>unit};
+  branch when{helper->id==68=>{try require(helper->stack&&helper->managedAllocation&&helper->mayFail&&!helper->terminal&&helper->result==1&&helper->arguments->length()==7&&helper->roots->length()==3&&contains(helper->roots,144)&&contains(helper->roots,145)&&contains(helper->roots,211),span,"numeric Result helper signature");var ordinal:Int=0;loop over(helper->arguments as kind:Int){try require(kind==branch when{ordinal==4||ordinal==5=>3,else=>0},span,"numeric Result helper argument kinds");ordinal=ordinal+1;};},else=>unit};
  };
  branch when{(try get(helpers,68))>=0=>{
  loop over(List<Int>[144,145] as root:Int){let rootPosition:Int=try get(labels,root);try require(rootPosition>=0,span,"numeric helper root descriptor");let size:Record=try lookup<Record>(code->records,rootPosition+1);let bits:Record=try lookup<Record>(code->records,rootPosition+2);let next:Record=try lookup<Record>(code->records,rootPosition+3);try require(size->kind==4&&size->bytes->length()==0&&size->value==1&&bits->kind==4&&bits->bytes->length()==0&&bits->value==root-144&&next->kind==1,span,"numeric helper root descriptor");};
@@ -40,18 +47,29 @@ public let verify:Function(List<Helper>,Code):Result<Unit,Diagnostic>=function(e
  branch when{(try get(helpers,75))>=0=>{let position:Int=try get(labels,171);try require(position>=0,span,"publication helper bitmap");let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(count->kind==4&&count->bytes->length()==0&&count->value==7&&bits->kind==4&&bits->bytes->length()==0&&bits->value==127&&next->kind==1,span,"publication helper bitmap");},else=>unit};
  branch when{(try get(helpers,76))>=0=>{let position:Int=try get(labels,172);let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(position>=0&&count->kind==4&&count->bytes->length()==0&&count->value==4&&bits->kind==4&&bits->bytes->length()==0&&bits->value==15&&next->kind==1,span,"inspection helper bitmap");},else=>unit};
  loop over(List<Int>[77,78,79] as helper:Int){branch when{(try get(helpers,helper))>=0=>{let position:Int=try get(labels,helper+96);try require(position>=0,span,"directory helper bitmap");let count:Record=try lookup<Record>(code->records,position+1);let bits:Record=try lookup<Record>(code->records,position+2);let next:Record=try lookup<Record>(code->records,position+3);try require(count->kind==4&&count->bytes->length()==0&&count->value==branch when{helper==79=>8,else=>6}&&bits->kind==4&&bits->bytes->length()==0&&bits->value==branch when{helper==79=>255,else=>63}&&next->kind==1,span,"directory helper bitmap");},else=>unit};};
+ // New typed maps keep the generic numeric Result payload and List item live.
+ loop over(List<Int>[211,212] as root:Int){
+  let helper:Int=branch when{root==211=>68,else=>41};
+  branch when{(try get(helpers,helper))>=0=>{
+   try require(contains((try atList<Helper>(entries,try get(helpers,helper)))->roots,root),span,"tagged helper root declaration");
+   let position:Int=try get(labels,root);try require(position>=0,span,"tagged helper root descriptor");
+   let count:Record=try lookup<Record>(code->records,position+1);let live:Record=try lookup<Record>(code->records,position+2);let tags:Record=try lookup<Record>(code->records,position+3);let next:Record=try lookup<Record>(code->records,position+4);
+   let slots:Int=branch when{root==211=>1,else=>2};let mask:Int=branch when{root==211=>1,else=>2};
+   try require(count->kind==4&&count->bytes->length()==0&&count->value==4294967296+slots&&live->kind==4&&live->bytes->length()==0&&live->value==mask&&tags->kind==4&&tags->bytes->length()==0&&tags->value==mask&&next->kind==1,span,"tagged helper root bitmap");
+  },else=>unit};
+ };
  var owner:Int= -1;
  loop over(code->records->pages->append(code->records->tail) as page:List<Record>){var recordCursor1:Int=0;loop while(recordCursor1<page->length()){let record:Record=try atList<Record>(page,recordCursor1);recordCursor1=recordCursor1+1;
   branch when{record->kind==1=>{
    let found:Int=try get(helpers,record->target);
    branch when{found>=0=>{owner=found;},record->target<256=>{
-    try require(record->target==0||record->target>=128,span,"unregistered runtime entry");owner= -1;
+    try require(record->target==0||record->target>=128&&(record->target<200||record->target>210),span,"unregistered runtime entry");owner= -1;
    },else=>unit};
   },owner>=0&&(record->kind==2||record->kind==5)=>{
    let helper:Helper=try atList<Helper>(entries,owner);let target:Int=try get(helpers,record->target);
    branch when{record->kind==2&&target>=0&&record->target!=helper->id=>{
     try require(contains(helper->dependencies,record->target),span,"undeclared runtime helper dependency");
-   },record->kind==5&&record->target>=134&&(record->target<=145||record->target>=160&&record->target<=164||record->target>=167&&record->target<=175)&&record->target!=140&&record->target!=141&&record->target!=142=>{
+   },record->kind==5&&record->target>=134&&(record->target<=145||record->target>=160&&record->target<=164||record->target>=167&&record->target<=175||record->target==211||record->target==212)&&record->target!=140&&record->target!=141&&record->target!=142=>{
     try require(contains(helper->roots,record->target),span,"undeclared runtime root descriptor");
    },else=>unit};
   },else=>unit};

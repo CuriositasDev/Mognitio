@@ -1,0 +1,45 @@
+namespace Mgnc\WholeIntegerPoolMachine;
+use Mgnc\Data\{Diagnostic,Span,lookup};
+use Mgnc\Machine\{Code,Record,flush};
+use Mgnc\WholeNativeData\{Native,Procedure};
+use Mgnc\WholeIntegerPool\{Constant,find};
+use Mgnc\WholeConcrete\{Instance};
+use Mgnc\WholeIR\{Block,Operation};
+use Mgnc\TypeData\{Argument,ValueTerm};
+use Mgnc\MathValue\{Integer,fits,small};
+use Mgnc\IntMap\{Map,create,get,put};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Tables\{atList};
+type Reference=product{offset:Int;kind:Int;target:Int;};
+let bytes:Function(Int,Int):List<Int>=function(value:Int,count:Int):List<Int>{var remaining:Int=value;var result:List<Int>=List<Int>[];var index:Int=0;loop while(index<count){let rem:Int=remaining%256;result=result->append(branch when{rem<0=>rem+256,else=>rem});remaining=remaining/256-branch when{rem<0=>1,else=>0};index=index+1;};result};
+let append:Function(List<Int>,List<Int>):List<Int>=function(left:List<Int>,right:List<Int>):List<Int>{var result:List<Int>=left;loop over(right as value:Int){result=result->append(value);};result};
+let same:Function(List<Int>,List<Int>):Bool=function(left:List<Int>,right:List<Int>):Bool{branch when{left->length()!=right->length()=>{return false;},else=>unit};var index:Int=0;loop over(left as value:Int){branch on right->at(index){Result<Int,IndexError>::Ok(other:Int)=>{branch when{value!=other=>{return false;},else=>unit};},Result<Int,IndexError>::Err(error:IndexError)=>{return false;}};index=index+1;};true};
+let tail:Function(List<Int>,Int,Int):List<Int>=function(values:List<Int>,skip:Int,omit:Int):List<Int>{var result:List<Int>=List<Int>[];var index:Int=0;loop over(values as value:Int){branch when{index>=skip&&index<values->length()-omit=>{result=result->append(value);},else=>unit};index=index+1;};result};
+// Index the complete stream once. Use-site regions are then disjoint indexed
+// slices; this never rescans the full image for each constant occurrence.
+public let verify:Function(Native,Code):Result<Unit,Diagnostic>=function(plan:Native,initial:Code):Result<Unit,Diagnostic>{
+ let span:Span=Span{start:0,end:0,line:1,column:1};let code:Code=flush(initial);var labels:Map=create();var recordId:Int=0;
+ loop over(code->records->pages->append(code->records->tail) as page:List<Record>){loop over(page as record:Record){branch when{record->kind==1=>{labels=try put(labels,record->target,recordId);},else=>unit};recordId=recordId+1;};};
+ loop over(plan->integers->pages->append(plan->integers->tail) as page:List<Constant>){loop over(page as entry:Constant){
+  let position:Int=try get(labels,entry->label);try require(position>=0,span,"unlinked integer pool data");let record:Record=try lookup<Record>(code->records,position+1);var expected:List<Int>=List<Int>[];
+  loop over(entry->limbs as limb:Int){expected=append(expected,bytes(limb,4));};branch when{entry->limbs->length()%2!=0=>{expected=append(expected,List<Int>[0,0,0,0]);},else=>unit};
+  try require(record->kind==0&&same(record->bytes,expected),span,"integer pool emitted magnitude");
+ };};
+ var owner:Int=0;loop over(plan->concrete->instances->pages->append(plan->concrete->instances->tail) as page:List<Instance>){loop over(page as instance:Instance){let procedure:Procedure=try lookup<Procedure>(plan->procedures,owner);owner=owner+1;var blockId:Int=0;
+  loop over(instance->body->blocks->pages->append(instance->body->blocks->tail) as blocks:List<Block>){loop over(blocks as block:Block){let markers:List<Int>=try lookup<List<Int>>(procedure->operationLabels,blockId);let terminal:Int=try lookup<Int>(procedure->terminatorLabels,blockId);blockId=blockId+1;var operationId:Int=0;
+   loop over(block->operations as op:Operation){branch when{(op->code=="integer"||op->code=="value-parameter")&&op->unavailable->length()==0=>{
+    let value:Integer=branch when{op->code=="integer"=>try atList<Integer>(op->wide,0),else=>branch on try atList<Argument>(op->arguments,0){Argument::Value(term:ValueTerm)=>term->mathematical,Argument::Type(id:Int)=>{try require(false,op->origin->span,"machine integer value argument");Integer{negative:false,digits:"0"}}}};
+    let end:Int=branch when{operationId+1<markers->length()=>try atList<Int>(markers,operationId+1),else=>terminal};var cursor:Int=(try get(labels,try atList<Int>(markers,operationId)))+1;let limit:Int=try get(labels,end);try require(cursor>0&&limit>=cursor,span,"integer use machine region");var data:List<Int>=List<Int>[];var refs:List<Reference>=List<Reference>[];
+    loop while(cursor<limit){let record:Record=try lookup<Record>(code->records,cursor);data=append(data,record->bytes);branch when{record->kind==2||record->kind==5=>{refs=refs->append(Reference{offset:data->length(),kind:record->kind,target:record->target});data=append(data,bytes(0,branch when{record->kind==2=>4,else=>8}));},record->kind==3||record->kind==4=>{data=append(data,bytes(record->value,branch when{record->kind==3=>4,else=>8}));},else=>unit};cursor=cursor+1;};
+    branch when{fits(value,63,true)=>{
+     let number:Int=try small(value,span);try require(data->length()>=17&&same(tail(data,data->length()-17,7),append(List<Int>[72,184],bytes(number*2+1,8))),span,"integer immediate encoding");loop over(refs as ref:Reference){try require(ref->kind==5&&ref->offset<data->length()-17,span,"unexpected immediate integer relocation");};
+    },else=>{
+     let entry:Constant=try find(plan->integers,value,span);let start:Int=data->length()-39;try require(start>=0,span,"integer pool use extent");
+     let expected:List<Int>=append(append(append(append(append(List<Int>[72,141,53,0,0,0,0,72,185],bytes(entry->limbs->length(),8)),List<Int>[72,186]),bytes(branch when{value->negative=>-1,else=>1},8)),List<Int>[232]),List<Int>[0,0,0,0]);
+     try require(same(tail(data,start,7),expected),span,"integer pool use instruction encoding");var dataRefs:Int=0;var calls:Int=0;
+     loop over(refs as ref:Reference){branch when{ref->kind==2&&ref->offset==start+3=>{try require(ref->target==entry->label,span,"integer pool use canonical target");dataRefs=dataRefs+1;},ref->kind==2&&ref->offset==start+28=>{try require(ref->target==210,span,"integer pool constructor target");calls=calls+1;},else=>{try require(ref->kind==5&&ref->offset<start,span,"unexpected pooled integer relocation");}};};try require(dataRefs==1&&calls==1,span,"integer pool use relocation count");
+    }};
+   },else=>unit};operationId=operationId+1;};
+  };};
+ };};Result<Unit,Diagnostic>::Ok(unit)
+};

@@ -1,0 +1,32 @@
+{
+  "check": "v200-tagged-gc-native",
+  "status": "passed",
+  "compiler_seed": "installed Mognitio 1.9",
+  "command": "python3 tests/mgnc/v200-tagged-gc-native.py --seed <installed-1.9-compiler>",
+  "product_commit": "8488576563d970f05f36104acdef84c162902b64",
+  "scope": [
+    "actual emitted mark and collect machine code",
+    "frame and global parallel tagged masks",
+    "multiword mask boundary at slots 64/65",
+    "unflagged reference-only helper maps",
+    "Product, selected Sum branch, box, closure and environment, List buffer",
+    "tagged immediate and heap integer, raw zero, omitted pointer-looking raw data"
+  ],
+  "oracle": "independent C-built arena, object headers, descriptors and maps; mark state and exact work count asserted",
+  "limitation": "sweep is stubbed to inspect marking; public alpha retention tests cover collection/reclamation integration",
+  "output": "GC_NATIVE_TAGGED_OK immediate/global/frame/product/variant/box/closure/buffer/raw/multiword/legacy",
+  "source_sha256": {
+    "compiler/mgnc/src/RepresentationInfo/representation.mgn": "3660146144a4dce95cbd8a44c16a2e0ddbe0b6fff5a17c6de0f8f80da666564a",
+    "compiler/mgnc/src/WholeABI/abi.mgn": "40401a4529827bdd30da85291436b05e05c6fc279d7729bd6710f7fb7c81cdcf",
+    "compiler/mgnc/src/WholeCollect/collect.mgn": "99419385d903c61251f490fe3226be348dd2d5cac7edd4a6abc084d1f1f18821",
+    "compiler/mgnc/src/WholeMark/mark.mgn": "a93d52a640fbafddda1429217a2d1c3c80f03ea6763eb001b4b9054113ad4f69",
+    "compiler/mgnc/src/WholeLayout/layout.mgn": "90c3cf288562a21b060c6ca7e0179fca7b32c1b327fa0254e6fe8440a2ce741d",
+    "compiler/mgnc/src/WholeLayoutCheck/verify.mgn": "8e2466aa32fd569321fa28a6e19aa33e18e0adb4804c5fba188c0c46856ad07f",
+    "compiler/mgnc/src/WholeNativeTables/tables.mgn": "a67114c01d6253fc558d556ade8abb51da17dc610a6cd5baf5c5570de9fbaf52",
+    "compiler/mgnc/src/WholeRootCheck/verify.mgn": "d3fda902befee50b1bc41e2fcdbc8dfb520b1aad5cd9564dd03e9e86ed498d30",
+    "compiler/mgnc/src/WholeContractMachine/verify.mgn": "af78a7255d2d02d76e27f34c6acef10558680f665e76169e6182640f9dbf5813",
+    "compiler/mgnc/src/WholeNativeStartup/startup.mgn": "3fd3323fb51e3baad0943241e11c01487ad3795a1d00ad590c883d25bc6d9ebc",
+    "tests/mgnc/v200-tagged-gc-native.py": "63719cd2d2425b1f1eb56fd0e84114624ac1258f67865d5ed7a8ca1970be3572"
+  },
+  "final_payload_compiler_sha256": "b03ded04d251b0a0487165530835621b845f525a211295f9ebcdb0eab2a6846a"
+}

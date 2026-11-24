@@ -94,7 +94,7 @@ def main():
                 expected.append(remaining & ((1 << 30)-1))
                 remaining >>= 30
             for negative in [False, True]:
-                vectors.append(' {let number:Integer=Integer{negative:'+str(negative).lower()+',digits:"'+str(value)+'"};let actual:List<Int>=try convertLimbs(number,span);let wanted:List<Int>=List<Int>['+','.join(map(str,expected))+'];assert actual->length()==wanted->length();var ordinal:Int=0;loop over(actual as limb:Int){assert limb==(try atList<Int>(wanted,ordinal));ordinal=ordinal+1;};try proof(Constant{value:number,label:999,limbs:actual},span);};')
+                vectors.append(' {let chunkValue:Integer=Integer{negative:'+str(negative).lower()+',digits:"'+str(value)+'"};let actual:List<Int>=try convertLimbs(chunkValue,span);let wanted:List<Int>=List<Int>['+','.join(map(str,expected))+'];assert actual->length()==wanted->length();var ordinal:Int=0;loop over(actual as limb:Int){assert limb==(try atList<Int>(wanted,ordinal));ordinal=ordinal+1;};try proof(Constant{value:chunkValue,label:999,limbs:actual},span);};')
         fixture = PROBE.replace('use Mgnc\\Tables\\{replaceItem};', 'use Mgnc\\Tables\\{replaceItem,atList};')
         fixture = fixture.replace(' Result<Unit,Diagnostic>::Ok(unit)\n};', ''.join(vectors)+'\n Result<Unit,Diagnostic>::Ok(unit)\n};')
         (source/'probe.mgn').write_text(fixture)

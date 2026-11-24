@@ -98,6 +98,17 @@ def lsp(payload, directory, manifest, entry):
         entry.write_text(good)
         peer.change(uri, good, 6)
         assert diagnostics(6) == [] and peer.tokens(uri, 26)["result"]["data"]
+        peer.change(uri, bad, 7)
+        peer.send({"id": 27, "method": "textDocument/semanticTokens/full", "params": {"textDocument": {"uri": uri}}})
+        peer.send({"method": "$/cancelRequest", "params": {"id": 27}})
+        assert peer.wait(lambda m: m.get("id") == 27)["error"]["code"] == -32800
+        peer.change(uri, good, 8)
+        assert diagnostics(8) == []
+        cursor = len(peer.events)
+        peer.change(uri, bad, 7)
+        assert peer.tokens(uri, 28)["result"]["data"]
+        assert not any(m.get("method") == "textDocument/publishDiagnostics" and
+                       m["params"].get("version") == 7 for m in peer.events[cursor:])
     finally:
         peer.close()
     print("PASS project CLI/LSP diagnostics, oversized input and recovery", flush=True)

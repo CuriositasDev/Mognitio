@@ -53,7 +53,7 @@ def cases():
             checks.append(assertion('(' + literal(a) + op + literal(b) + ')==' + str(expected).lower()))
     yield 'arithmetic-oracle', source(checks), 0, b''
     hundred = int('9' * 100)
-    yield 'hundred-digits', source([assertion(literal(hundred) + '>18446744073709551616'), assertion('(' + literal(hundred) + '+1)-1==' + literal(hundred)), assertion(literal(-hundred) + '<-18446744073709551616')]), 0, b''
+    yield 'hundred-digits', source([assertion(literal(hundred) + '>18446744073709551616'), assertion('(' + literal(hundred) + '+1)-1==' + literal(hundred)), assertion(literal(-hundred) + '<-18446744073709551616'), assertion('(' + literal(-hundred) + '-1)+1==' + literal(-hundred))]), 0, b''
     # This is a scale sample, not a new literal digit limit.
     long_value = '1' + '0' * 2048
     yield 'long-literal', source([assertion(long_value + '>18446744073709551616')]), 0, b''

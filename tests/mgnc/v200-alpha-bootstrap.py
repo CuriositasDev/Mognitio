@@ -35,6 +35,15 @@ def fixtures():
     yield 'migration-outside-signed64', program('branch on encode(9223372036854775808){Result<Bits<64>,IntegerConversionError>::Ok(value:Bits<64>)=>{assert false;},Result<Bits<64>,IntegerConversionError>::Err(error:IntegerConversionError)=>unit};0', migration), None, 0
     yield 'ordinary-widthless-bits', program('assert 1->toBits()==Bits<64>{1};0'), 0, None
     yield 'unchanged-invalid-width', program('discard Bits<65>{1};0'), None, None
+    for number in ['-9223372036854775809', '-9223372036854775808', '9223372036854775807', '9223372036854775808']:
+        for family, value_type in [('bits', 'Bits<' + number + '>'), ('fixed', 'Int<' + number + ',Signed>')]:
+            yield 'width-' + family + '-' + number, program('discard ' + value_type + '{0};0'), None, None
+    for spelling in ['00', '1_0', '0x10']:
+        yield 'spelling-' + spelling, program('discard ' + spelling + ';0'), None, None
+    yield 'ordinary-max-plus-one', program('let exact:Int=9223372036854775807+1;assert exact>9223372036854775807;branch on exact->convertTo<Int<64,Unsigned>>(){Result<Int<64,Unsigned>,IntegerConversionError>::Ok(value:Int<64,Unsigned>)=>{assert value==Int<64,Unsigned>{9223372036854775808};},Result<Int<64,Unsigned>,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};0'), (4, b'runtime error: integer overflow\n'), 0
+    yield 'fixed-overflow-unchanged', program('discard Int<64,Signed>{9223372036854775807}+Int<64,Signed>{1};0'), (4, b'runtime error: integer overflow\n'), (4, b'runtime error: integer overflow\n')
+    yield 'fixed-min-remainder-unchanged', program('assert Int<64,Signed>{-9223372036854775808}%Int<64,Signed>{-1}==Int<64,Signed>{0};0'), 0, 0
+
 
 
 def digest(path):
@@ -54,9 +63,9 @@ def main():
     def save():
         (args.output / 'results.json').write_text(json.dumps(report, indent=2) + '\n')
 
-    def call(section, name, command, status=0, diagnostic=False, stdout=None, cwd=None):
+    def call(section, name, command, status=0, diagnostic=False, stdout=None, cwd=None, stderr=b''):
         result = subprocess.run(list(map(str, command)), cwd=cwd, capture_output=True, timeout=120)
-        passed = result.returncode == status and (result.stdout == stdout if stdout is not None else (result.stdout == b'' or name.endswith('-test'))) and (bool(result.stderr) if diagnostic else result.stderr == b'')
+        passed = result.returncode == status and (result.stdout == stdout if stdout is not None else (result.stdout == b'' or name.endswith('-test'))) and (bool(result.stderr) if diagnostic else result.stderr == stderr)
         row = {'case': name, 'command': list(map(str, command)), 'exit': result.returncode, 'stdout': result.stdout.decode(errors='replace'), 'stderr': result.stderr.decode(errors='replace'), 'passed': passed}
         report[section].append(row)
         save()
@@ -81,6 +90,9 @@ def main():
             source = folder / 'src/app.mgn'
             source.write_text(text)
             expected = old_status if version == 'seed' else alpha_status
+            expected_stderr = b''
+            if isinstance(expected, tuple):
+                expected, expected_stderr = expected
             report['payloads'][version].setdefault('fixtures', {})[name] = digest(source)
             executable = folder / 'program'
             if expected is None:
@@ -90,9 +102,9 @@ def main():
                     call('cross_version', version + '-' + name + '-' + verb, command, 1, diagnostic=True)
                     assert executable.read_bytes() == b'preserved'
             else:
-                call('cross_version', version + '-' + name + '-run', [payload / 'bin/mgn', 'run', manifest], expected)
+                call('cross_version', version + '-' + name + '-run', [payload / 'bin/mgn', 'run', manifest], expected, stderr=expected_stderr)
                 call('cross_version', version + '-' + name + '-build', [payload / 'bin/mgn', 'build', manifest, '-o', executable])
-                call('cross_version', version + '-' + name + '-elf', [executable], expected)
+                call('cross_version', version + '-' + name + '-elf', [executable], expected, stderr=expected_stderr)
     if not alpha:
         report['pending'] = 'Alpha payload required for cross-version and A12 execution'
         save()
@@ -110,13 +122,16 @@ def main():
 
     def isolated(command, directory='one', payload=True):
         base = ['bwrap', '--unshare-all', '--die-with-parent', '--new-session', '--clearenv', '--ro-bind', '/usr', '/usr', '--tmpfs', '/usr/lib/mognitio', '--symlink', 'usr/bin', '/bin', '--symlink', 'usr/lib', '/lib', '--symlink', 'usr/lib64', '/lib64', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--tmpfs', '/home', '--bind', str(work), '/work', '--chdir', '/work/' + directory, '--setenv', 'PATH', '/usr/bin:/bin', '--setenv', 'HOME', '/tmp']
+        for launcher in ['/usr/bin/mgn', '/usr/bin/mognitio-lsp']:
+            if Path(launcher).exists():
+                base += ['--ro-bind', '/dev/null', launcher]
         if payload:
             base += ['--ro-bind', str(alpha), '/alpha']
         return base + ['--'] + command
 
     forbidden = [str(seed), str(ROOT), '/usr/lib/mognitio/' + next(Path('/usr/lib/mognitio').iterdir()).name, '/home/takuya9622/Projects/Mognitio']
-    attest = 'import os,json;paths=' + repr(forbidden) + ';assert not any(os.path.exists(p) for p in paths);assert not os.listdir("/usr/lib/mognitio");print(json.dumps({"forbidden_absent":paths,"installed_seed_hidden":True}))'
-    call('isolation', 'mount-attestation', isolated(['/usr/bin/python3', '-I', '-c', attest]), stdout=(json.dumps({'forbidden_absent': forbidden, 'installed_seed_hidden': True}) + '\n').encode())
+    attest = 'import os,json;paths=' + repr(forbidden) + ';assert not any(os.path.exists(p) for p in paths);assert not os.listdir("/usr/lib/mognitio");assert not any(os.access(p,os.X_OK) for p in ["/usr/bin/mgn","/usr/bin/mognitio-lsp"]);print(json.dumps({"forbidden_absent":paths,"installed_seed_hidden":True,"installed_launchers_disabled":True}))'
+    call('isolation', 'mount-attestation', isolated(['/usr/bin/python3', '-I', '-c', attest]), stdout=(json.dumps({'forbidden_absent': forbidden, 'installed_seed_hidden': True, 'installed_launchers_disabled': True}) + '\n').encode())
     # The attestation has a structured stdout, unlike language commands.
     call('isolation', 'alpha-cli-run', isolated(['/alpha/bin/mgn', 'run', 'mognitio.toml']))
     call('isolation', 'alpha-cli-build-one', isolated(['/alpha/bin/mgn', 'build', 'mognitio.toml', '-o', 'program']))

@@ -28,6 +28,8 @@ def fixtures():
     yield 'unsigned64-to-ordinary', program('branch on Int<64,Unsigned>{18446744073709551615}->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(value:Int)=>{branch on value->convertTo<Int<64,Unsigned>>(){Result<Int<64,Unsigned>,IntegerConversionError>::Ok(back:Int<64,Unsigned>)=>{assert back==Int<64,Unsigned>{18446744073709551615};},Result<Int<64,Unsigned>,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};17},Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>23}'), 23, 17
     yield 'unsigned64-to-signed64', program('branch on Int<64,Unsigned>{18446744073709551615}->convertTo<Int<64,Signed>>(){Result<Int<64,Signed>,IntegerConversionError>::Ok(value:Int<64,Signed>)=>{assert false;},Result<Int<64,Signed>,IntegerConversionError>::Err(error:IntegerConversionError)=>unit};0'), 0, 0
     yield 'unsigned64-bits', program('assert Int<64,Unsigned>{18446744073709551615}->toBits()==Bits<64>{18446744073709551615};assert Bits<64>{18446744073709551615}->asInteger<Unsigned>()==Int<64,Unsigned>{18446744073709551615};0'), 0, 0
+    yield 'signed64-ordinary-extrema', program('branch on Int<64,Signed>{-9223372036854775808}->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(value:Int)=>{assert value== -9223372036854775808;},Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};branch on Int<64,Signed>{9223372036854775807}->convertTo<Int>(){Result<Int,IntegerConversionError>::Ok(value:Int)=>{assert value==9223372036854775807;},Result<Int,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};0'), 0, 0
+    yield 'adjacent-conversions', program('branch on (9223372036854775808)->convertTo<Int<64,Signed>>(){Result<Int<64,Signed>,IntegerConversionError>::Ok(value:Int<64,Signed>)=>{assert false;},Result<Int<64,Signed>,IntegerConversionError>::Err(error:IntegerConversionError)=>unit};branch on (9223372036854775808)->convertTo<Int<64,Unsigned>>(){Result<Int<64,Unsigned>,IntegerConversionError>::Ok(value:Int<64,Unsigned>)=>{assert value==Int<64,Unsigned>{9223372036854775808};},Result<Int<64,Unsigned>,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};branch on (-9223372036854775809)->convertTo<Int<64,Signed>>(){Result<Int<64,Signed>,IntegerConversionError>::Ok(value:Int<64,Signed>)=>{assert false;},Result<Int<64,Signed>,IntegerConversionError>::Err(error:IntegerConversionError)=>unit};0'), None, 0
     migration = 'let encode:Function(Int):Result<Bits<64>,IntegerConversionError>=function(value:Int):Result<Bits<64>,IntegerConversionError>{branch on value->convertTo<Int<64,Signed>>(){Result<Int<64,Signed>,IntegerConversionError>::Ok(fixed:Int<64,Signed>)=>Result<Bits<64>,IntegerConversionError>::Ok(fixed->toBits()),Result<Int<64,Signed>,IntegerConversionError>::Err(error:IntegerConversionError)=>Result<Bits<64>,IntegerConversionError>::Err(error)}};'
     yield 'explicit-bits-migration', program('branch on encode(-1){Result<Bits<64>,IntegerConversionError>::Ok(value:Bits<64>)=>{assert value==Bits<64>{18446744073709551615};},Result<Bits<64>,IntegerConversionError>::Err(error:IntegerConversionError)=>{assert false;}};0', migration), 0, 0
     yield 'migration-outside-signed64', program('branch on encode(9223372036854775808){Result<Bits<64>,IntegerConversionError>::Ok(value:Bits<64>)=>{assert false;},Result<Bits<64>,IntegerConversionError>::Err(error:IntegerConversionError)=>unit};0', migration), None, 0
@@ -66,6 +68,10 @@ def main():
     for version, payload in [('seed', seed)] + ([('alpha', alpha)] if alpha else []):
         identity = json.loads((payload / 'identity.json').read_text())
         assert identity['version'] == ('1.9.0' if version == 'seed' else '2.0.0-alpha'), identity['version']
+        if version == 'seed':
+            lock = json.loads((ROOT / 'packaging/alpha-seed.json').read_text())
+            assert identity['build'] == lock['build'] and digest(payload / 'runtime/compiler') == lock['compilerSha256'], 'Unpinned seed compiler'
+            assert identity['inputs']['commit'] == lock['receipt']['sourceCommit'], 'Unpinned seed source'
         report['payloads'][version] = {'version': identity['version'], 'build': identity['build'], 'path': str(payload), 'compiler_sha256': digest(payload / 'runtime/compiler'), 'identity_sha256': digest(payload / 'identity.json'), 'payload_sha256': digest(payload / 'payload.json')}
         for name, text, old_status, alpha_status in fixtures():
             folder = args.output / version / name
@@ -90,7 +96,7 @@ def main():
     if not alpha:
         report['pending'] = 'Alpha payload required for cross-version and A12 execution'
         save()
-        print('V200_ALPHA_BOOTSTRAP_SEED_OK cases=11 alpha_pending=true')
+        print('V200_ALPHA_BOOTSTRAP_SEED_OK cases=' + str(len(list(fixtures()))) + ' alpha_pending=true')
         return
     assert shutil.which('bwrap'), 'bwrap is required; isolation cannot be replaced with an ordinary child'
     work = args.output / 'isolated'
@@ -169,20 +175,21 @@ def main():
                 start = contents.index('toBits')
                 assert diagnostics[0]['range'] == {'start': {'line': 0, 'character': start}, 'end': {'line': 0, 'character': start + len('toBits')}}, reply
             observations.append(reply['params'])
-        send({'id': 9, 'method': 'shutdown', 'params': None})
+        send({'id': 9, 'method': 'shutdown', 'params': {}})
         receive(lambda item: item.get('id') == 9)
         send({'method': 'exit'})
         child.stdin.close()
         child.wait(timeout=10)
-        assert child.returncode == 0 and child.stderr.read() == b''
-        report['lsp'] = {'isolated': True, 'observations': observations, 'exit': child.returncode}
+        stderr = child.stderr.read()
+        assert child.returncode == 0 and stderr in [b'', b'mognitio-lsp: Memory enforcement: best-effort process-tree RSS\n'], (child.returncode, stderr)
+        report['lsp'] = {'isolated': True, 'observations': observations, 'exit': child.returncode, 'stderr': stderr.decode()}
     finally:
         if child.poll() is None:
             child.kill()
             child.wait()
     report['complete'] = True
     save()
-    print('V200_ALPHA_BOOTSTRAP_OK cross_version_cases=22 isolated_cli=run,build,test,lsp standalone=true reproducible=true')
+    print('V200_ALPHA_BOOTSTRAP_OK cross_version_cases=' + str(2 * len(list(fixtures()))) + ' isolated_cli=run,build,test,lsp standalone=true reproducible=true')
 
 
 if __name__ == '__main__':

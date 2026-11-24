@@ -51,7 +51,7 @@ def build(archive, manifest, graph, destination):
         if validate_frozen(source) != frozen:
             raise ValueError("Frozen inputs changed during generation")
         stage = runpy.run_path(str(source / "scripts/build-native-toolchain.py"))["stage_payload"]
-        stage(source, destination, seed / HOST, frozen, image)
+        stage(source, destination, seed / HOST, frozen, image, input_mode=0o700)
         edge = {"role": "A", "build": frozen["build"], "source": frozen["inputs"]["source"],
                 "producer": lock["build"], "producerCompiler": file_info(seed / COMPILER),
                 "adapter": file_info(seed / HOST), "output": file_info(image),

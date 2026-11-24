@@ -67,7 +67,8 @@ def main():
     report['compiler_limit_as'] = chosen
     # All declarations are checked, including unused values. The bounded input
     # requires substantially more compiler heap than the tiny control project.
-    declarations = ''.join('let value'+str(index)+':Int='+str(index)+';\n' for index in range(12000))
+    magnitude = '1' + '0' * 99 if report['identity']['version'] == '2.0.0-alpha' else ''
+    declarations = ''.join('let value'+str(index)+':Int='+magnitude+str(index)+';\n' for index in range(12000))
     target = project(args.output/'compiler-target', 'namespace App;\n'+declarations+
                      'let main:Function(List<String>):Int=function(args:List<String>):Int{0};\n'+
                      '@test let first:Function():Unit=function():Unit{assert true;};\n')
@@ -98,7 +99,7 @@ let main:Function(List<String>):Int=function(args:List<String>):Int{
  discard writeStdout("before bigint allocation\n");
  branch when{args->length()>0=>{return 0;},else=>unit};
  var retained:List<Int>=List<Int>[];var count:Int=0;
- loop while(count<200000){let large:Int=BIG;retained=retained->append(large*large);count=count+1;};
+ loop while(count<500000){let large:Int=BIG;retained=retained->append(large*large);count=count+1;};
  discard writeStdout("unexpected completion\n");0
 };
 '''.replace('FILE', json.dumps(str(retained_file.resolve()))).replace('BIG', '1'+'0'*255+'1')
@@ -112,6 +113,16 @@ let main:Function(List<String>):Int=function(args:List<String>):Int{
     assert (control_result.returncode, control_result.stdout, control_result.stderr) == (0, b'before bigint allocation\n', b''), control_result
     failed = invoke('runtime-bigint-allocation', [runtime], runtime_limit)
     assert (failed.returncode, failed.stdout, failed.stderr) == (4, b'before bigint allocation\n', b'runtime error: allocation failure\n'), failed
+    assert retained_file.read_bytes() == b'retained before arithmetic failure\n'
+    # The normal run compiles the same project before its child enters main.
+    # A successful short branch proves compilation fit under this separate cap.
+    public_limit = 96 * MiB
+    retained_file.unlink()
+    public_control = invoke('public-run-control', [mgn, 'run', runtime_manifest, '--', 'control'], public_limit)
+    assert (public_control.returncode, public_control.stdout, public_control.stderr) == (0, b'before bigint allocation\n', b''), public_control
+    retained_file.unlink()
+    public_failure = invoke('public-run-bigint-allocation', [mgn, 'run', runtime_manifest], public_limit)
+    assert (public_failure.returncode, public_failure.stdout, public_failure.stderr) == (4, b'before bigint allocation\n', b'runtime error: allocation failure\n'), public_failure
     assert retained_file.read_bytes() == b'retained before arithmetic failure\n'
     assert hashlib.sha256(runtime.read_bytes()).hexdigest() == runtime_hash
     report['runtime_sha256'] = runtime_hash

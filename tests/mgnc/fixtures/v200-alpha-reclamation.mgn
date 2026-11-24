@@ -1,0 +1,11 @@
+namespace App;
+let global:Int=340282366920938463463374607431768211457;
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let rounds:Int=64;let baseline:Int=global;var index:Int=0;
+ loop while(index<rounds){let temporary:Int=(global+index)*(global-index);assert temporary>global;index=index+1;};
+ // These allocations occur after the temporary values' last uses. Stress mode
+ // collects here while preserving the same survivors for both workload lengths.
+ let survivors:List<Int>=List<Int>[global];assert survivors->length()==1;
+ branch on survivors->at(0){Result<Int,IndexError>::Ok(value:Int)=>{assert value==baseline;},Result<Int,IndexError>::Err(error:IndexError)=>{assert false;}};
+ 0
+};

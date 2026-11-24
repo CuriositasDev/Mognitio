@@ -18,7 +18,10 @@ def build(generations, destination, adapter):
     stage_payload(generations / "inputs", destination, adapter, frozen, image)
 
 
-def stage_payload(source, destination, adapter, frozen, image):
+def stage_payload(source, destination, adapter, frozen, image, *, input_mode=0o755):
+    input_info = file_info(image)
+    if input_info["mode"] != input_mode:
+        raise ValueError("Unexpected compiler image mode")
     dest = destination.resolve()
     if dest.exists() or dest.is_relative_to(source.parent):
         raise ValueError("Use a fresh payload destination outside the generation graph")
@@ -38,7 +41,7 @@ def stage_payload(source, destination, adapter, frozen, image):
         compiler.parent.mkdir()
         shutil.copyfile(image, compiler)
         compiler.chmod(0o755)
-        if file_info(compiler) != file_info(image):
+        if file_info(compiler) != dict(input_info, mode=0o755):
             raise ValueError("Staged compiler differs from the verified input image")
         ident = dict(schema=2, inputs=frozen["inputs"], version=frozen["version"], build=frozen["build"],
                      components=dict.fromkeys(COMPONENTS, frozen["build"]))

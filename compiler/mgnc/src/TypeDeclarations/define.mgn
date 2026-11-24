@@ -1,6 +1,7 @@
 namespace Mgnc\TypeDeclarations;
 use Mgnc\Data\{Paged,lookup,Diagnostic,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{fromSmall};
 use Mgnc\DeclarationKinds\{compileDeclaration};
 use Mgnc\SemanticData\{Declaration,Parameter,Module};
 use Mgnc\TypeData\{Store,Type,Member,Argument,ValueTerm,Obligation,Formed};
@@ -28,7 +29,7 @@ public let parameters:Function(Store,Int):Result<Parameters,Diagnostic>=function
   },else=>{
    let formed:Formed=try form(store,declared->file,module->tree,param->node,Parent::Some(id),arguments);store=formed->store;
    branch when{formed->value!=1=>{return Result<Parameters,Diagnostic>::Err(problem("type",param->span,"value parameter domain must be Int"));},else=>unit};
-   arguments=arguments->append(Argument::Value(ValueTerm{parameter:Parent::Some(ordinal),owner:id,value:0}));
+   arguments=arguments->append(Argument::Value(ValueTerm{parameter:Parent::Some(ordinal),owner:id,value:0,mathematical:fromSmall(0)}));
   }};ordinal=ordinal+1;
  };
  Result<Parameters,Diagnostic>::Ok(Parameters{store:store,arguments:arguments,obligations:List<Obligation>[]})

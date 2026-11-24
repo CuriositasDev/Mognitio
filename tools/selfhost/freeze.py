@@ -45,7 +45,7 @@ def freeze(root, destination, receipt, target="linux-amd64", mode="development")
     if any(destination.is_relative_to(root / prefix) for prefix in
            (*COMPILER, "tests/mgnc", "src", *PACKAGING, ".git")) or destination == root:
         raise ValueError("The frozen candidate would overlap a build input")
-    if mode not in ("development", "release"):
+    if mode not in ("development", "release", "alpha"):
         raise ValueError("Unsupported build mode")
     if target != "linux-amd64":
         raise ValueError("Unsupported target")
@@ -100,7 +100,13 @@ def freeze(root, destination, receipt, target="linux-amd64", mode="development")
         version = (staged / "VERSION").read_text().strip()
         if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version):
             raise ValueError("VERSION must be a plain release version")
-        if seed != json.loads((staged / "packaging/native-seed.json").read_bytes()):
+        if mode == "alpha":
+            lock = json.loads((staged / "packaging/alpha-seed.json").read_bytes())
+            qualified_seed = {key: lock["receipt"][key] for key in seed}
+            version = lock["candidate"]
+        else:
+            qualified_seed = json.loads((staged / "packaging/native-seed.json").read_bytes())
+        if seed != qualified_seed:
             raise ValueError("Seed identity differs from the qualified bootstrap lock")
         inputs = {"format":2, "mode":mode, "target":target, "commit":revision, "dirty":dirty,
                   "source":source_fingerprint, "compiler":sha(canonical(compiler)),
@@ -110,7 +116,7 @@ def freeze(root, destination, receipt, target="linux-amd64", mode="development")
         build = sha(canonical(inputs))
         source = staged / "compiler/mgnc" / IDENTITY
         data = source.read_bytes()
-        wire = version if mode == "release" else (
+        wire = version if mode in ("release", "alpha") else (
             version + "-dev.0+g" + revision + (".dirty" if dirty else "") +
             ".s" + source_fingerprint + ".b" + build)
         for field, value in (("build", build), ("upstream", wire), ("source", source_fingerprint)):

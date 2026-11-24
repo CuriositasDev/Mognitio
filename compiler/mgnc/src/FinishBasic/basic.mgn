@@ -9,7 +9,6 @@ use Mgnc\Expressions\{Expression,Label};
 use Mgnc\SemanticValues\{State,Environment,Node,Symbol,FunctionInfo,Frame,Evaluated};
 use Mgnc\TypeData\{Type,Structure,Argument,ValueTerm};
 use Mgnc\TypeOps\{parameterKind,parentEqual};
-use Mgnc\MathValue\{Integer,normalize,ordinary};
 use Mgnc\Operators\{Operation,resolve as resolveOperator};
 use Mgnc\ValueNames\{Reference,resolve as resolveName,capture};
 use Mgnc\ValueSupport\{known,expect,introduce,withSymbols,withFunctions};
@@ -23,9 +22,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
  var children:List<Node>=List<Node>[];
  loop over(frame->children as id:Int){let child:Node=try lookup<Node>(state->nodes,id);branch when{rule!=ruleBlock=>{children=children->append(child);},else=>unit};normal=normal&&child->normal;};
  branch when{rule==ruleInteger=>{
-  let value:Integer=normalize(false,expression->text);
-  branch when{frame->minimumAllowed&&value->digits=="9223372036854775808"=>{minimum=true;integer=0;},
-   else=>{integer=try ordinary(value,expression->span);}};structure=Structure::Known(1);operation="integer";
+  structure=Structure::Known(1);operation="integer";
  },rule==ruleString=>{structure=Structure::Known(3);operation="string";},
  rule==ruleTrue||rule==ruleFalse=>{structure=Structure::Known(2);integer=branch when{rule==ruleTrue=>1,else=>0};operation="boolean";},
  rule==ruleUnit=>{structure=Structure::Known(0);operation="unit";},
@@ -39,7 +36,7 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
   let value:Int=branch on frame->annotation{Parent::Some(id:Int)=>id,Parent::None=>{return Result<Evaluated,Diagnostic>::Err(problem("internal",expression->span,"template application type invariant"));}};
   structure=Structure::Known(value);operation="template";
  },rule==ruleGroup=>{
-  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));structure=child->structure;minimum=child->minimum;integer=child->integer;operation="group";
+  let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));structure=child->structure;operation="group";
  },rule==ruleBlock=>{
   branch when{expression->flag=>{
    let tail:Node=try lookup<Node>(state->nodes,try item(frame->children,frame->children->length()-1));structure=tail->structure;
@@ -84,10 +81,6 @@ public let finish:Function(State,SyntaxForest,Frame):Result<Evaluated,Diagnostic
  },else=>{
   let resolved:Operation=try resolveOperator(state->types,rule,children,expression->span);
   structure=Structure::Known(resolved->valueType);normal=resolved->normal;operation=resolved->name;
-  branch when{rule==ruleUnaryNeg=>{
-   let child:Node=try lookup<Node>(state->nodes,try item(frame->children,0));
-   branch when{child->minimum=>{integer= -9223372036854775808;},else=>unit};
-  },else=>unit};
  }};
  Result<Evaluated,Diagnostic>::Ok(Evaluated{state:state,value:makeNode(frame,structure,normal,operation,binding,integer,minimum),environment:environment})
 };

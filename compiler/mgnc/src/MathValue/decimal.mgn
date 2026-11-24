@@ -3,9 +3,9 @@ use Mgnc\Data\{Span,Diagnostic,problem};
 use Mgnc\TextUtil\{at,code,scalar,digit};
 public type Integer=product{negative:Bool;digits:String;};
 public let normalize:Function(Bool,String):Integer=function(negative:Bool,digits:String):Integer{
- var result:String="";var leading:Bool=true;
- loop over(digits->scalars() as c:String){branch when{leading&&c=="0"=>unit,else=>{leading=false;result=result+c;}};};
- branch when{result==""=>{result="0";},else=>unit};Integer{negative:negative&&result!="0",digits:result}
+ var leading:Int=0;loop over(digits->scalars() as c:String){branch when{c=="0"=>{leading=leading+1;},else=>{break;}};};
+ let result:String=branch when{leading==digits->length()=>"0",leading==0=>digits,else=>branch on digits->slice(leading,digits->length()){Result<String,SliceError>::Ok(found:String)=>found,Result<String,SliceError>::Err(error:SliceError)=>panic{"mathematical integer normalization invariant"}}};
+ Integer{negative:negative&&result!="0",digits:result}
 };
 public let compare:Function(String,String):Int=function(a:String,b:String):Int{
  branch when{a->length()<b->length()=>{return -1;},a->length()>b->length()=>{return 1;},else=>unit};
@@ -32,8 +32,8 @@ public let fits:Function(Integer,Int,Bool):Bool=function(value:Integer,width:Int
 public let minimumWidth:Function(Integer,Bool):Int=function(value:Integer,signed:Bool):Int{
  var width:Int=1;loop while(width<=64){branch when{fits(value,width,signed)=>{return width;},else=>unit};width=width+1;};0
 };
-public let ordinary:Function(Integer,Span):Result<Int,Diagnostic>=function(value:Integer,span:Span):Result<Int,Diagnostic>{
- branch when{!fits(value,64,true)=>{return Result<Int,Diagnostic>::Err(problem("type",span,"integer literal is outside Int range"));},else=>unit};
+public let small:Function(Integer,Span):Result<Int,Diagnostic>=function(value:Integer,span:Span):Result<Int,Diagnostic>{
+ branch when{!fits(value,64,true)=>{return Result<Int,Diagnostic>::Err(problem("internal",span,"mathematical integer exceeds compiler metadata range"));},else=>unit};
  var result:Int=0;
  loop over(value->digits->scalars() as c:String){
   branch when{!digit(c)=>{return Result<Int,Diagnostic>::Err(problem("internal",span,"invalid mathematical integer digits"));},else=>unit};
@@ -41,4 +41,18 @@ public let ordinary:Function(Integer,Span):Result<Int,Diagnostic>=function(value
   // Accumulate negative values directly, including -9223372036854775808.
   result=branch when{value->negative=>result*10-d,else=>result*10+d};
  };Result<Int,Diagnostic>::Ok(result)
+};
+
+// Machine values are used only for bounded compiler metadata, never identity.
+public let fromSmall:Function(Int):Integer=function(value:Int):Integer{
+ var remaining:Int=value;var digits:String="";
+ loop while(true){let remainder:Int=remaining%10;digits=scalar(48+branch when{remainder<0=>-remainder,else=>remainder})+digits;remaining=remaining/10;branch when{remaining==0=>{break;},else=>unit};};
+ Integer{negative:value<0,digits:digits}
+};
+public let equal:Function(Integer,Integer):Bool=function(a:Integer,b:Integer):Bool{a->negative==b->negative&&a->digits==b->digits};
+public let inSmallRange:Function(Integer,Int,Int):Bool=function(value:Integer,minimum:Int,maximum:Int):Bool{
+ let lower:Integer=fromSmall(minimum);let upper:Integer=fromSmall(maximum);
+ let lowerOrder:Int=branch when{value->negative!=lower->negative=>branch when{value->negative=>-1,else=>1},value->negative=>-compare(value->digits,lower->digits),else=>compare(value->digits,lower->digits)};
+ let upperOrder:Int=branch when{value->negative!=upper->negative=>branch when{value->negative=>-1,else=>1},value->negative=>-compare(value->digits,upper->digits),else=>compare(value->digits,upper->digits)};
+ lowerOrder>=0&&upperOrder<=0
 };

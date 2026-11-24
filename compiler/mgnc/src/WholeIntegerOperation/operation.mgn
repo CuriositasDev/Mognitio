@@ -1,0 +1,17 @@
+namespace Mgnc\WholeIntegerOperation;
+use Mgnc\Data\{Diagnostic};
+use Mgnc\WholeIR\{Operation};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Machine\{Code,jump};
+use Mgnc\WholeX64\{constant,condition};
+use Mgnc\WholeInteger\{addLabel,subLabel,mulLabel,divLabel,remLabel,compareLabel,negateLabel};
+// Operands have already been loaded into RAX and RCX by native dispatch.
+public let emit:Function(Code,Operation):Result<Code,Diagnostic>=function(initial:Code,op:Operation):Result<Code,Diagnostic>{
+ let name:String=op->code;var code:Code=initial;
+ branch when{name=="add"||name=="sub"||name=="mul"||name=="div"||name=="rem"||name=="neg"=>{
+  code=jump(code,List<Int>[232],branch when{name=="add"=>addLabel,name=="sub"=>subLabel,name=="mul"=>mulLabel,name=="div"=>divLabel,name=="rem"=>remLabel,else=>negateLabel});
+ },else=>{
+  try require(name=="eq"||name=="ne"||name=="lt"||name=="le"||name=="gt"||name=="ge",op->origin->span,"unknown ordinary integer operation");
+  code=jump(code,List<Int>[232],compareLabel);code=constant(code,7,0,0);code=condition(code,branch when{name=="eq"=>4,name=="ne"=>5,name=="lt"=>12,name=="le"=>14,name=="gt"=>15,else=>13},0);
+ }};Result<Code,Diagnostic>::Ok(code)
+};

@@ -10,13 +10,14 @@ use Mgnc\IntMap\{get};
 use Mgnc\Tables\{atList};
 use Mgnc\Machine\{Code,label,jump,fresh,raw};
 use Mgnc\WholeX64\{mov,load,store,address,immediate,alu,constant,shift,condition};
+use Mgnc\WholeIntegerBoundary\{tagSize};
 use Mgnc\WholeABI\{allocateLabel};
 public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation,output:Int):Result<Code,Diagnostic>{
  var code:Code=initial;let input:Int=try atList<Int>(op->inputs,0);let shape:Type=try lookup<Type>(plan->concrete->types->types,try slotType(body,input));let name:String=op->code;
  code=load(code,12,5,offset(input));
  branch when{name=="method:length"=>{
   code=immediate(code,0,0);let done:Int=code->nextLabel;code=fresh(code,1);branch when{shape->kind==10=>{code=alu(code,133,12,12);code=jump(code,List<Int>[15,132],done);},else=>unit};
-  code=load(code,0,12,branch when{shape->kind==3=>32,else=>24});code=label(code,done);
+  code=load(code,0,12,branch when{shape->kind==3=>32,else=>24});code=tagSize(label(code,done),0);
  },
  name=="method:append"=>{
   try require(shape->kind==10,op->origin->span,"native append receiver");let descriptor:Int=try get(plan->layouts->types,try slotType(body,output));try require(descriptor>=0,op->origin->span,"native list descriptor");
@@ -36,7 +37,7 @@ public let emit:Function(Code,Native,Body,Operation,Int):Result<Code,Diagnostic>
   loop over(op->inputs as slot:Int){code=load(code,0,5,offset(slot));code=store(code,4,position*8,0);position=position+1;};code=immediate(code,0,descriptor);code=store(code,4,position*8,0);position=position+1;
   let errorDescriptor:Int=try get(plan->layouts->types,branch when{name=="method:at"=>4,else=>5});try require(errorDescriptor>=0,op->origin->span,"native bounds error descriptor");code=immediate(code,0,errorDescriptor);code=store(code,4,position*8,0);position=position+1;
   branch when{name=="method:at"=>{
-   let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,op->origin->span,"native list element");0}};let elementKind:Int=(try lookup<Type>(plan->concrete->types->types,element))->kind;code=immediate(code,0,branch when{try managed(plan->concrete->types,element)=>1,else=>0});
+   let element:Int=branch on try atList<Argument>(shape->arguments,0){Argument::Type(id:Int)=>id,Argument::Value(term:ValueTerm)=>{try require(false,op->origin->span,"native list element");0}};let elementKind:Int=(try lookup<Type>(plan->concrete->types->types,element))->kind;code=immediate(code,0,branch when{elementKind==1=>2,try managed(plan->concrete->types,element)=>1,else=>0});
   },else=>{code=immediate(code,0,try get(plan->layouts->types,3));}};code=store(code,4,position*8,0);code=jump(code,List<Int>[232],branch when{name=="method:at"=>41,else=>42});
  },
  name=="iterator-init"=>{

@@ -34,6 +34,7 @@ public let operation:Function(State,Body,Map,Operation):Result<Unit,Diagnostic>=
   loop over(node->children as child:Int){let value:Occurrence=try occurrence(body,index,child);branch on value->output{Parent::Some(slot:Int)=>{inputs=inputs->append(slot);},Parent::None=>{unavailable=unavailable->append(position);}};position=position+1;};
   try require(integers(inputs,op->inputs)&&integers(unavailable,op->unavailable)&&parentEqual(op->output,source->output),span,"source operand or destination correspondence");
   try require(parentEqual(op->symbol,node->binding)&&parentEqual(op->target,node->target)&&argumentsEqual(op->arguments,node->arguments)&&integers(op->mapping,node->mapping),span,"resolved operation identity");
+  branch when{op->code=="integer"=>{try require(op->wide->length()==1&&op->integer==0&&!op->minimum,span,"ordinary mathematical literal operand");},else=>unit};
   try require(op->integer==node->integer&&op->minimum==node->minimum&&op->wide->length()==node->literal->length(),span,"literal magnitude metadata");
   position=0;loop over(op->wide as value:Integer){let expected:Integer=try atList<Integer>(node->literal,position);try require(value->negative==expected->negative&&value->digits==expected->digits,span,"wide literal value");position=position+1;};
   try require(try textEqual(op->text,branch when{node->operation=="string"=>try decode(node->text,span),else=>List<TextPart>[]}),span,"text literal value");

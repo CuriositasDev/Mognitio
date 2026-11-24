@@ -11,6 +11,7 @@ use Mgnc\IntMap\{get};
 use Mgnc\WholeStandard\{entry};
 use Mgnc\Machine\{Code,label,jump,fresh,field};
 use Mgnc\WholeX64\{load,store,mov,immediate,constant,alu,shift,byteStore};
+use Mgnc\WholeIntegerBoundary\{indexWord,tagSize};
 use Mgnc\WholeABI\{allocateLabel};
 let descriptor:Function(Native,Int,Span):Result<Int,Diagnostic>=function(plan:Native,id:Int,span:Span):Result<Int,Diagnostic>{let found:Int=try get(plan->layouts->types,id);try require(found>=0,span,"binary Function descriptor");Result<Int,Diagnostic>::Ok(found)};
 let helper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial:Code,plan:Native,global:Global):Result<Code,Diagnostic>{
@@ -22,10 +23,10 @@ let helper:Function(Code,Native,Global):Result<Code,Diagnostic>=function(initial
   code=immediate(code,0,1152921504606846969);code=alu(code,57,13,0);code=jump(code,List<Int>[15,135],1);code=mov(code,7,13);code=shift(code,4,7,3);code=constant(code,0,7,40);code=immediate(code,6,bufferDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,12,0);code=store(code,12,24,13);code=immediate(code,0,0);code=store(code,12,32,0);code=mov(code,14,13);
   code=label(code,fill);code=alu(code,133,14,14);code=jump(code,List<Int>[15,132],filled);code=constant(code,5,14,1);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,3,40);code=store(code,2,40,0);code=load(code,3,3,32);code=jump(code,List<Int>[233],fill);
   code=label(code,filled);code=store(code,5,-80,12);code=select(code,168);code=immediate(code,14,0);
-  code=label(code,scan);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],success);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=constant(code,7,0,255);code=jump(code,List<Int>[15,135],invalid);code=constant(code,0,14,1);code=jump(code,List<Int>[233],scan);
-  code=label(code,invalid);code=mov(code,3,0);code=immediate(code,7,40);code=immediate(code,6,errorDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=store(code,0,32,3);code=store(code,5,-88,0);code=immediate(code,13,1);code=jump(code,List<Int>[233],resultLabel);
+  code=label(code,scan);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],success);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=mov(code,3,0);code=indexWord(code,0,2,invalid);code=constant(code,7,0,255);code=jump(code,List<Int>[15,135],invalid);code=constant(code,0,14,1);code=jump(code,List<Int>[233],scan);
+  code=label(code,invalid);code=tagSize(code,14);code=immediate(code,7,40);code=immediate(code,6,errorDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,14);code=store(code,0,32,3);code=store(code,5,-88,0);code=immediate(code,13,1);code=jump(code,List<Int>[233],resultLabel);
   code=label(code,success);code=mov(code,7,13);code=constant(code,0,7,32);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,bytesDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,3,0);code=store(code,3,24,13);code=immediate(code,14,0);
-  code=label(code,copy);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],copied);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=mov(code,2,3);code=alu(code,1,2,14);code=byteStore(code,2,32,0);code=constant(code,0,14,1);code=jump(code,List<Int>[233],copy);
+  code=label(code,copy);code=alu(code,57,14,13);code=jump(code,List<Int>[15,131],copied);code=mov(code,2,14);code=shift(code,4,2,3);code=alu(code,1,2,12);code=load(code,0,2,40);code=shift(code,7,0,1);code=mov(code,2,3);code=alu(code,1,2,14);code=byteStore(code,2,32,0);code=constant(code,0,14,1);code=jump(code,List<Int>[233],copy);
   code=label(code,copied);code=store(code,5,-88,3);code=immediate(code,13,0);code=label(code,resultLabel);code=select(code,169);code=immediate(code,7,40);code=immediate(code,6,resultDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=store(code,0,24,13);code=load(code,2,5,-88);code=store(code,0,32,2);
  },else=>{
   code=mov(code,7,13);code=constant(code,0,7,32);code=jump(code,List<Int>[15,128],1);code=immediate(code,6,bytesDescriptor);code=jump(code,List<Int>[232],allocateLabel);code=mov(code,14,0);code=store(code,14,24,13);

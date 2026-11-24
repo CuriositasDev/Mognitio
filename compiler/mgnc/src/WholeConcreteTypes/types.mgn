@@ -2,6 +2,7 @@ namespace Mgnc\WholeConcreteTypes;
 use Mgnc\NumericShape\{read as numericShape};
 use Mgnc\Data\{Paged,Diagnostic,Span,empty,push,lookup};
 use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{fromSmall};
 use Mgnc\TypeData\{Store,Type,Argument,ValueTerm,Member};
 use Mgnc\TypeOps\{parentEqual,valueEqual,argumentsEqual};
 use Mgnc\WholeSubstitution\{Binding};
@@ -29,7 +30,7 @@ public let shapeWithSeen:Function(Store,Store,Int,Int,List<Binding>,Span,Map):Re
   visited=try put(visited,pair->source,pair->actual);
   let original:Type=try lookup<Type>(source->types,pair->source);let result:Type=try lookup<Type>(actual->types,pair->actual);
   branch when{original->kind==22=>{
-   let ordinal:ValueTerm=branch on try atList<Argument>(original->arguments,0){Argument::Value(term:ValueTerm)=>term,Argument::Type(typeId:Int)=>{try require(false,span,"concrete parameter shape");ValueTerm{parameter:Parent::None,owner:0,value:0}}};
+   let ordinal:ValueTerm=branch on try atList<Argument>(original->arguments,0){Argument::Value(term:ValueTerm)=>term,Argument::Type(typeId:Int)=>{try require(false,span,"concrete parameter shape");ValueTerm{parameter:Parent::None,owner:0,value:0,mathematical:fromSmall(0)}}};
    let argument:Argument=try bound(bindings,try present(original->owner,span,"concrete parameter owner"),ordinal->value,span);
    let expected:Int=branch on argument{Argument::Type(typeId:Int)=>typeId,Argument::Value(term:ValueTerm)=>{try require(false,span,"concrete type argument kind");0}};
    try require(expected==pair->actual,span,"concrete type substitution");continue;

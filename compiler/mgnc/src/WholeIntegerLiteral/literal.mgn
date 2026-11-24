@@ -1,0 +1,28 @@
+namespace Mgnc\WholeIntegerLiteral;
+use Mgnc\Data\{Diagnostic,Span};
+use Mgnc\MathValue\{Integer,fits,small};
+use Mgnc\TextUtil\{code as scalarCode,scalar};
+use Mgnc\WholeChecks\{require};
+use Mgnc\Machine\{Code,raw,label,jump,fresh};
+use Mgnc\WholeX64\{immediate,symbol};
+use Mgnc\WholeInteger\{constructLabel};
+// Decimal long division uses bounded intermediates under the 1.9 seed.
+// Read-only limb data is emitted inline and skipped by the executing program.
+public let emit:Function(Code,Integer,Span):Result<Code,Diagnostic>=function(initial:Code,value:Integer,span:Span):Result<Code,Diagnostic>{
+ branch when{fits(value,63,true)=>{let number:Int=try small(value,span);return Result<Code,Diagnostic>::Ok(immediate(initial,0,number*2+1));},else=>unit};
+ var digits:String=value->digits;var limbs:List<Int>=List<Int>[];
+ loop while(digits!="0"){
+  var quotient:String="";var remainder:Int=0;var leading:Bool=true;
+  loop over(digits->scalars() as digit:String){
+   let decimal:Int=scalarCode(digit)-48;try require(decimal>=0&&decimal<=9,span,"integer literal decimal digit");
+   let next:Int=remainder*10+decimal;let part:Int=next/1073741824;remainder=next%1073741824;
+   branch when{part!=0||!leading=>{quotient=quotient+scalar(48+part);leading=false;},else=>unit};
+  };
+  digits=branch when{quotient==""=>"0",else=>quotient};limbs=limbs->append(remainder);
+ };
+ let data:Int=initial->nextLabel;let ready:Int=data+1;var result:Code=fresh(initial,2);
+ result=jump(result,List<Int>[233],ready);result=label(result,data);
+ loop over(limbs as limb:Int){var word:Int=limb;var byte:Int=0;loop while(byte<4){result=raw(result,List<Int>[word%256]);word=word/256;byte=byte+1;};};
+ result=label(result,ready);result=symbol(result,6,data);result=immediate(result,1,limbs->length());result=immediate(result,2,branch when{value->negative=>-1,else=>1});result=jump(result,List<Int>[232],constructLabel);
+ Result<Code,Diagnostic>::Ok(result)
+};

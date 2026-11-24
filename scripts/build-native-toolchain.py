@@ -15,9 +15,12 @@ from tools.selfhost.payload import COMPONENTS, COMPILER, HOST, SOURCES, canonica
 
 def build(generations, destination, adapter):
     frozen, image = verified_b(generations)
-    source = generations / "inputs"
+    stage_payload(generations / "inputs", destination, adapter, frozen, image)
+
+
+def stage_payload(source, destination, adapter, frozen, image):
     dest = destination.resolve()
-    if dest.exists() or dest.is_relative_to(generations):
+    if dest.exists() or dest.is_relative_to(source.parent):
         raise ValueError("Use a fresh payload destination outside the generation graph")
     dest.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=dest.parent) as tmp:
@@ -36,7 +39,7 @@ def build(generations, destination, adapter):
         shutil.copyfile(image, compiler)
         compiler.chmod(0o755)
         if file_info(compiler) != file_info(image):
-            raise ValueError("Packaged compiler differs from verified B")
+            raise ValueError("Staged compiler differs from the verified input image")
         ident = dict(schema=2, inputs=frozen["inputs"], version=frozen["version"], build=frozen["build"],
                      components=dict.fromkeys(COMPONENTS, frozen["build"]))
         (staged / "identity.json").write_bytes(canonical(ident)+b"\n")

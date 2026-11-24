@@ -2,6 +2,8 @@ namespace Mgnc\TypeOps;
 use Mgnc\IntMap\{Map as IntMap,create as createMap,get as mapGet,put as mapPut};
 use Mgnc\Data\{Paged,empty,push,lookup,Diagnostic,Span,problem};
 use Mgnc\Syntax\{Parent};
+use Mgnc\MathValue\{Integer,fromSmall,equal as mathEqual,fits,small,inSmallRange};
+use Mgnc\TextUtil\{code};
 use Mgnc\SemanticData\{Headers};
 use Mgnc\TypeData\{ValueTerm,Argument,Member,Type,Obligation,Store,Formed};
 use Mgnc\Tables\{replaceItem};
@@ -29,7 +31,7 @@ public let parentEqual:Function(Parent,Parent):Bool=function(a:Parent,b:Parent):
  Parent::Some(left:Int)=>branch on b{Parent::None=>false,Parent::Some(right:Int)=>left==right}}
 };
 public let valueEqual:Function(ValueTerm,ValueTerm):Bool=function(a:ValueTerm,b:ValueTerm):Bool{
- parentEqual(a->parameter,b->parameter)&&branch on a->parameter{Parent::None=>a->value==b->value,Parent::Some(ordinal:Int)=>a->owner==b->owner}
+ parentEqual(a->parameter,b->parameter)&&branch on a->parameter{Parent::None=>mathEqual(a->mathematical,b->mathematical),Parent::Some(ordinal:Int)=>a->owner==b->owner}
 };
 public let argumentEqual:Function(Argument,Argument):Bool=function(a:Argument,b:Argument):Bool{
  branch on a{Argument::Type(left:Int)=>branch on b{Argument::Type(right:Int)=>left==right,Argument::Value(value:ValueTerm)=>false},
@@ -47,7 +49,7 @@ let hash:Function(Type):Int=function(shape:Type):Int{
    Argument::Type(id:Int)=>{value=(value*131+id%4093+1)%4093;},
    Argument::Value(term:ValueTerm)=>{
     value=(value*131+7)%4093;
-    branch on term->parameter{Parent::None=>{let reduced:Int=term->value%4093;value=(value*131+reduced+4093)%4093;},
+    branch on term->parameter{Parent::None=>{value=(value*131+branch when{term->mathematical->negative=>1,else=>0})%4093;value=(value*131+term->mathematical->digits->length()%4093)%4093;loop over(term->mathematical->digits->scalars() as digit:String){value=(value*131+code(digit))%4093;};},
      Parent::Some(ordinal:Int)=>{value=(value*131+term->owner%4093+1)%4093;value=(value*131+ordinal%4093+1)%4093;}};
    }
   };
@@ -84,7 +86,11 @@ public let intern:Function(Store,Type):Result<Formed,Diagnostic>=function(store:
  let updated:Store=Store{headers:store->headers,types:push<Type>(store->types,shape),buckets:try replaceItem<List<Int>>(store->buckets,bucketId,bucket->append(index)),declarations:store->declarations,constraints:store->constraints};
  Result<Formed,Diagnostic>::Ok(Formed{store:updated,value:index,obligations:List<Obligation>[]})
 };
-public let concreteValue:Function(Int):ValueTerm=function(value:Int):ValueTerm{ValueTerm{parameter:Parent::None,owner:0,value:value}};
+public let concreteValue:Function(Int):ValueTerm=function(value:Int):ValueTerm{ValueTerm{parameter:Parent::None,owner:0,value:value,mathematical:fromSmall(value)}};
+public let mathematicalValue:Function(Integer):ValueTerm=function(value:Integer):ValueTerm{
+ let machineValue:Int=branch when{fits(value,64,true)=>branch on small(value,Span{start:0,end:0,line:1,column:1}){Result<Int,Diagnostic>::Ok(smallValue:Int)=>smallValue,Result<Int,Diagnostic>::Err(error:Diagnostic)=>panic{"bounded mathematical value invariant"}},else=>-1};
+ ValueTerm{parameter:Parent::None,owner:0,value:machineValue,mathematical:value}
+};
 public let argumentAt:Function(List<Argument>,Int,Span):Result<Argument,Diagnostic>=function(arguments:List<Argument>,index:Int,span:Span):Result<Argument,Diagnostic>{
  branch on arguments->at(index){Result<Argument,IndexError>::Ok(value:Argument)=>Result<Argument,Diagnostic>::Ok(value),
  Result<Argument,IndexError>::Err(error:IndexError)=>Result<Argument,Diagnostic>::Err(problem("internal",span,"generic argument index"))}
@@ -139,10 +145,10 @@ public let substitute:Function(Store,Int,Int,List<Argument>,Span):Result<Formed,
 public let substituteObligationsAt:Function(List<Obligation>,Int,List<Argument>,List<Span>,Span):Result<List<Obligation>,Diagnostic>=function(obligations:List<Obligation>,owner:Int,arguments:List<Argument>,spans:List<Span>,span:Span):Result<List<Obligation>,Diagnostic>{
  var result:List<Obligation>=List<Obligation>[];
  loop over(obligations as obligation:Obligation){
-  let symbolic:ValueTerm=ValueTerm{parameter:Parent::Some(obligation->parameter),owner:obligation->owner,value:0};
+  let symbolic:ValueTerm=ValueTerm{parameter:Parent::Some(obligation->parameter),owner:obligation->owner,value:0,mathematical:fromSmall(0)};
   let value:ValueTerm=try substituteValue(symbolic,owner,arguments,span);
   branch on value->parameter{
-   Parent::None=>{branch when{value->value<obligation->minimum||value->value>obligation->maximum=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",branch on spans->at(obligation->parameter){Result<Span,IndexError>::Ok(location:Span)=>location,Result<Span,IndexError>::Err(error:IndexError)=>span},"generic width or literal range requirement is not satisfied"));},else=>unit};},
+   Parent::None=>{branch when{!inSmallRange(value->mathematical,obligation->minimum,obligation->maximum)=>{return Result<List<Obligation>,Diagnostic>::Err(problem("type",branch on spans->at(obligation->parameter){Result<Span,IndexError>::Ok(location:Span)=>location,Result<Span,IndexError>::Err(error:IndexError)=>span},"generic width or literal range requirement is not satisfied"));},else=>unit};},
    Parent::Some(ordinal:Int)=>{result=result->append(Obligation{owner:value->owner,parameter:ordinal,minimum:obligation->minimum,maximum:obligation->maximum,span:obligation->span});}
   };
  };Result<List<Obligation>,Diagnostic>::Ok(result)

@@ -23,7 +23,7 @@ public let emit:Function(Code,Store,Body,Operation):Result<Code,Diagnostic>=func
  branch when{name=="method:toBits"||name=="method:asInteger"=>{
   let output:Scalar=try read(store,try slotType(body,try present(op->output,op->origin->span,"numeric reinterpretation destination")),op->origin->span);
   try require(output->width==shape->width,op->origin->span,"numeric reinterpretation width");code=normalize(code,output,0);
- },name=="method:length"=>{try require(shape->bits,op->origin->span,"numeric length receiver");code=immediate(code,0,shape->width);},
+ },name=="method:length"=>{try require(shape->bits,op->origin->span,"numeric length receiver");code=immediate(code,0,2*shape->width+1);},
  name=="method:and"||name=="method:or"||name=="method:xor"||name=="method:not"=>{
   try require(shape->bits,op->origin->span,"bitwise receiver");
   branch when{name=="method:not"=>{code=unary(code,2,0);},else=>{code=alu(code,branch when{name=="method:and"=>33,name=="method:or"=>9,else=>49},0,1);}};code=normalize(code,shape,0);

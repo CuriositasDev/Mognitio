@@ -1,0 +1,20 @@
+namespace Mgnc\WholeIntegerBoundary;
+use Mgnc\Machine\{Code,jump};
+use Mgnc\WholeX64\{mov,constant,shift};
+
+// Widths, physical object lengths and positions fit in a signed immediate
+// on Linux amd64, even with five-level paging. Convert at the language ABI.
+public let tagSize:Function(Code,Int):Code = function(initial:Code,register:Int):Code {
+    constant(shift(initial,4,register,1),1,register,1)
+};
+
+// Check the tag before inspecting a word as a bounded index. No physical
+// collection can have 2^62 elements; all heap integers are outside this range.
+// Negative immediates decode to a high unsigned value for the bounds check.
+public let indexWord:Function(Code,Int,Int,Int):Code =
+    function(initial:Code,register:Int,scratch:Int,invalid:Int):Code {
+        var code:Code=mov(initial,scratch,register);
+        code=constant(code,4,scratch,1);
+        code=jump(code,List<Int>[15,132],invalid);
+        shift(code,7,register,1)
+    };

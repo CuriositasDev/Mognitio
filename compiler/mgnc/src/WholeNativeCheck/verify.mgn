@@ -57,7 +57,7 @@ public let verifyInitialization:Function(Native,Int,List<Int>,List<Int>):Result<
  Result<Unit,Diagnostic>::Ok(unit)
 };
 public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnostic>=function(semantic:SemanticProject,source:Project,plan:Native):Result<Unit,Diagnostic>{
- let span:Span=Span{start:0,end:0,line:1,column:1};try require(plan->abiRevision==2,span,"native private value ABI revision");let headers:Headers=semantic->state->types->headers;
+ let span:Span=Span{start:0,end:0,line:1,column:1};try require(plan->abiRevision==3,span,"native private value ABI revision");let headers:Headers=semantic->state->types->headers;
  discard try dispatchEdges(semantic,source,plan->concrete);try dispatchCanonical(plan->concrete);try require(plan->dispatchTables->count==plan->concrete->pairs->count,span,"dispatch table label membership");try runtimeTypeIds(plan->concrete,plan->runtimeTypes);try closures(plan->concrete,plan->closures);try layouts(plan->concrete,plan->layouts);
  try require(plan->procedures->count==plan->concrete->instances->count&&plan->moduleCount==headers->modules->count,span,"native procedure/module membership");
  var labels:Map=create();var used:Map=create();var owner:Int=0;var literalCount:Int=0;var constructorCount:Int=0;
@@ -116,7 +116,7 @@ public let verify:Function(SemanticProject,Project,Native):Result<Unit,Diagnosti
  loop over(plan->globals->pages->append(plan->globals->tail) as page:List<Global>){loop over(page as value:Global){
   try require((try get(used,index))>=0&&(try get(declarations,value->declaration))<0,span,"extra or duplicated global cell");declarations=try put(declarations,value->declaration,index);
   try require((try global(semantic,plan,value->symbol,span))==index,span,"global representative symbol");let declaration:Declaration=try lookup<Declaration>(headers->declarations,value->declaration);let module:Module=try lookup<Module>(headers->modules,declaration->file);try require(value->standard==branch when{module->standard=>declaration->name,else=>""},span,"global standard origin");
-  branch when{value->standard!=""=>{discard try standardHelper(plan,value);},else=>unit};let kind:Int=(try lookup<Type>(plan->concrete->types->types,value->valueType))->kind;let selected:Bool=(try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))!=Bits<64>{0};try require(selected==(kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29),span,"global root type");index=index+1;
+  branch when{value->standard!=""=>{discard try standardHelper(plan,value);},else=>unit};let kind:Int=(try lookup<Type>(plan->concrete->types->types,value->valueType))->kind;let selected:Bool=(try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))!=Bits<64>{0};try require(selected==(kind==1||kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29),span,"global root type");index=index+1;
  };};
  loop while(index<plan->globalRoots->length()*64){try require((try wordAt(plan->globalRoots,index/64,span))->and(try mask(index,span))==Bits<64>{0},span,"global root padding");index=index+1;};
  try require(plan->entryGlobal>=0&&(try lookup<Global>(plan->globals,plan->entryGlobal))->declaration==semantic->entry&&source->entry==semantic->entry,span,"native main identity");

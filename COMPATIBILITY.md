@@ -62,3 +62,34 @@ While both forms are supported, regression tests must cover both forms and
 preservation of the old form's documented behavior. The next major release
 must document the removal and validate the intended rejection or other
 specified failure of programs that still depend on the removed feature.
+
+## Ordinary integers in 2.0.0-alpha
+
+Ordinary `Int` literals, values and integer template arguments can exceed the
+1.x signed 64-bit range. Decimal spelling and sign rules still apply. Ordinary
+addition, subtraction, multiplication and negation produce the mathematical
+result. Division truncates toward zero. A nonzero remainder has the dividend's
+sign. Reaching division or remainder by zero raises a runtime error.
+
+Use a fixed-width integer when the width matters. For example,
+`Int<64,Signed>{9223372036854775807} + Int<64,Signed>{1}` retains checked
+overflow. A conversion to `Int<N,Signed>` or `Int<N,Unsigned>` returns
+`Err` when the mathematical value is outside the target range. Every fixed
+integer converts to an ordinary integer, including the unsigned 64-bit maximum.
+
+The ordinary `Int.toBits()` method in 1.x implied a width of 64. To retain
+that representation, check the conversion to a signed 64-bit integer first.
+This function also compiles with 1.9.
+
+```mgn
+use Std\Numeric\{Bits,Signed,IntegerConversionError};
+let bits64:Function(Int):Result<Bits<64>,IntegerConversionError>=
+    function(value:Int):Result<Bits<64>,IntegerConversionError>{
+        let fixed:Int<64,Signed>=try value->convertTo<Int<64,Signed>>();
+        Result<Bits<64>,IntegerConversionError>::Ok(fixed->toBits())
+    };
+```
+
+Collection and shift errors retain the supplied index or count. `main` accepts
+exit statuses 0 through 255. A larger or negative result raises an invalid exit
+status error. Fixed-width integer and `Bits` widths remain in the range 1–64.

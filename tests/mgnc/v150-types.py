@@ -43,7 +43,7 @@ use Mgnc\TypeDependencies\{order};
 use Mgnc\TypeDeclarations\{define};
 use Mgnc\TypeData\{Store};
 use Mgnc\TypeOps\{initialize};
-use Mgnc\MathValue\{Integer,normalize,fits,ordinary,minimumWidth};
+use Mgnc\MathValue\{Integer,normalize,fits,minimumWidth};
 use Mgnc\Data\{Span};
 use Std\Io\{writeStderr,writeStdout};
 type Case=product{text:String;success:Bool;};

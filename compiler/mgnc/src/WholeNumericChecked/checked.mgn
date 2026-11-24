@@ -1,7 +1,7 @@
 namespace Mgnc\WholeNumericChecked;
 use Mgnc\Data\{Diagnostic,Span,lookup};
 use Mgnc\Syntax\{Parent};
-use Mgnc\TypeData\{Type};
+use Mgnc\TypeData\{Type,Store};
 use Mgnc\WholeIR\{Body,Operation};
 use Mgnc\WholeNativeData\{Native};
 use Mgnc\NumericShape\{Scalar,read};
@@ -16,25 +16,41 @@ use Mgnc\IntMap\{get};
 use Mgnc\Machine\{Code,label,jump,fresh};
 use Mgnc\WholeX64\{load,store,mov,immediate,alu,constant,shiftCl};
 public let supported:Function(String):Bool=function(name:String):Bool{name=="method:convertTo"||name=="method:shiftLeft"||name=="method:shiftRight"||name=="method:at"};
-public let emit:Function(Code,Native,Body,Operation):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation):Result<Code,Diagnostic>{
- var code:Code=initial;let span:Span=op->origin->span;
- let source:Int=try slotType(body,try atList<Int>(op->inputs,0));let shape:Scalar=try read(plan->concrete->types,source,span);let resultType:Int=try slotType(body,try present(op->output,span,"numeric Result destination"));let result:Type=try lookup<Type>(plan->concrete->types->types,resultType);try require(result->kind==11,span,"numeric checked Result type");
- let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);let resultDescriptor:Int=try get(plan->layouts->types,resultType);let errorDescriptor:Int=try get(plan->layouts->types,error);try require(resultDescriptor>=0&&errorDescriptor>=0,span,"numeric checked descriptors");
- var fields:Int=2;let invalid:Int=code->nextLabel;let ready:Int=invalid+1;code=fresh(code,2);code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=immediate(code,12,0);code=immediate(code,14,0);code=immediate(code,13,0);
- branch when{op->code=="method:convertTo"=>{
-  try require(!shape->bits,span,"numeric conversion receiver");let target:Scalar=try read(plan->concrete->types,payload,span);try require(!target->bits,span,"numeric conversion target");fields=0;
-  branch when{payload==1=>{
-   fields=-1;
-   branch when{source!=1=>{code=jump(code,List<Int>[232],branch when{shape->signed=>fromSignedLabel,else=>fromUnsignedLabel});},else=>unit};
+// A scalar shape exists only after the fixed-width side of a conversion is known.
+let conversion:Function(Code,Store,Int,Int,Int,Span):Result<Code,Diagnostic>=
+ function(initial:Code,types:Store,source:Int,targetId:Int,invalid:Int,span:Span):Result<Code,Diagnostic>{
+  var code:Code=initial;
+  branch when{targetId==1=>{
+   branch when{source!=1=>{
+    let fixed:Scalar=try read(types,source,span);try require(!fixed->bits,span,"fixed conversion receiver");
+    code=jump(code,List<Int>[232],branch when{fixed->signed=>fromSignedLabel,else=>fromUnsignedLabel});
+   },else=>unit};
   },else=>{
+   let target:Scalar=try read(types,targetId,span);try require(!target->bits,span,"fixed conversion target");
    branch when{source==1=>{
     code=jump(code,List<Int>[232],toWordLabel);
     let flag:Int=branch when{target->signed=>2,else=>1};
     code=alu(code,133,flag,flag);code=jump(code,List<Int>[15,132],invalid);
-   },shape->signed!=target->signed=>{code=alu(code,133,0,0);code=jump(code,List<Int>[15,136],invalid);},else=>unit};
+   },else=>{
+    let fixed:Scalar=try read(types,source,span);try require(!fixed->bits,span,"fixed conversion receiver");
+    branch when{fixed->signed!=target->signed=>{
+     code=alu(code,133,0,0);code=jump(code,List<Int>[15,136],invalid);
+    },else=>unit};
+   }};
    code=mov(code,2,0);code=normalize(code,target,0);code=alu(code,57,0,2);code=jump(code,List<Int>[15,133],invalid);
   }};
+  Result<Code,Diagnostic>::Ok(code)
+ };
+public let emit:Function(Code,Native,Body,Operation):Result<Code,Diagnostic>=function(initial:Code,plan:Native,body:Body,op:Operation):Result<Code,Diagnostic>{
+ var code:Code=initial;let span:Span=op->origin->span;
+ let source:Int=try slotType(body,try atList<Int>(op->inputs,0));let resultType:Int=try slotType(body,try present(op->output,span,"numeric Result destination"));let result:Type=try lookup<Type>(plan->concrete->types->types,resultType);try require(result->kind==11,span,"numeric checked Result type");
+ let payload:Int=try memberType(result->arguments,0,span);let error:Int=try memberType(result->arguments,1,span);let resultDescriptor:Int=try get(plan->layouts->types,resultType);let errorDescriptor:Int=try get(plan->layouts->types,error);try require(resultDescriptor>=0&&errorDescriptor>=0,span,"numeric checked descriptors");
+ var fields:Int=2;let invalid:Int=code->nextLabel;let ready:Int=invalid+1;code=fresh(code,2);code=load(code,0,5,offset(try atList<Int>(op->inputs,0)));code=immediate(code,12,0);code=immediate(code,14,0);code=immediate(code,13,0);
+ branch when{op->code=="method:convertTo"=>{
+  fields=branch when{payload==1=>-1,else=>0};
+  code=try conversion(code,plan->concrete->types,source,payload,invalid,span);
  },else=>{
+  let shape:Scalar=try read(plan->concrete->types,source,span);
   try require(shape->bits,span,"checked bit receiver");code=load(code,1,5,offset(try atList<Int>(op->inputs,1)));code=mov(code,12,1);code=immediate(code,14,2*shape->width+1);code=indexWord(code,1,2,invalid);code=constant(code,7,1,shape->width);code=jump(code,List<Int>[15,131],invalid);
   branch when{op->code=="method:at"=>{try require(payload==2&&error==4,span,"bit-at checked signature");code=shiftCl(code,5,0);code=constant(code,4,0,1);},else=>{try require(op->code=="method:shiftLeft"||op->code=="method:shiftRight",span,"checked bit operation");code=shiftCl(code,branch when{op->code=="method:shiftLeft"=>4,else=>5},0);code=normalize(code,shape,0);}};
  }};

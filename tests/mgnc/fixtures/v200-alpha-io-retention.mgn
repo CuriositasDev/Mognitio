@@ -1,0 +1,28 @@
+namespace App;
+use Std\Io\{IoError,PathInfo,PathInfoError,DirectoryEntry,readTextFile,writeTextFile,readDirectory,inspectPath};
+use Std\Numeric\{Bits,Unsigned};
+type Saved=product{number:Int;empty:Unit;raw:Int<64,Unsigned>;bits:Bits<64>;};
+let global:Int=340282366920938463463374607431768211457;
+let argument:Function(List<String>,Int):String=function(args:List<String>,index:Int):String{
+ branch on args->at(index){Result<String,IndexError>::Ok(value:String)=>value,Result<String,IndexError>::Err(error:IndexError)=>panic{"missing argument"}}
+};
+let inspect:Function(String):PathInfo=function(path:String):PathInfo{
+ branch on inspectPath(path){Result<PathInfo,PathInfoError>::Ok(value:PathInfo)=>value,Result<PathInfo,PathInfoError>::Err(error:PathInfoError)=>panic{"inspect failed"}}
+};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ let input:String=argument(args,0);let directory:String=argument(args,1);let output:String=argument(args,2);
+ let saved:Saved=Saved{number:global+18446744073709551617,empty:unit,raw:Int<64,Unsigned>{18446744073709551614},bits:Bits<64>{18446744073709551614}};
+ let later:Function():Int=function():Int{saved->number};
+ let original:PathInfo=inspect(input);
+ let text:String=branch on readTextFile(input){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>panic{"read failed"}};
+ branch on writeTextFile(output,text){Result<Unit,IoError>::Ok(value:Unit)=>{assert value==unit;},Result<Unit,IoError>::Err(error:IoError)=>{assert false;}};
+ let copied:String=branch on readTextFile(output){Result<String,IoError>::Ok(value:String)=>value,Result<String,IoError>::Err(error:IoError)=>panic{"read output failed"}};
+ assert copied==text;
+ let entries:List<DirectoryEntry>=branch on readDirectory(directory){Result<List<DirectoryEntry>,IoError>::Ok(value:List<DirectoryEntry>)=>value,Result<List<DirectoryEntry>,IoError>::Err(error:IoError)=>panic{"directory failed"}};
+ var count:Int=0;loop over(entries as entry:DirectoryEntry){assert entry->name->length()>0;count=count+1;};assert count>0;
+ let repeated:PathInfo=inspect(input);assert original->identity==repeated->identity;
+ branch on readTextFile(output+"/missing"){Result<String,IoError>::Ok(value:String)=>{assert false;},Result<String,IoError>::Err(error:IoError)=>{assert error->subject==output+"/missing";}};
+ var total:Int=0;loop over(List<Int>[global,18446744073709551617,7] as value:Int){let temporary:List<Int>=List<Int>[value*value];assert temporary->length()==1;total=total+value;};
+ assert later()==global+18446744073709551617;assert total==later()+7;assert saved->empty==unit;
+ assert saved->raw==Int<64,Unsigned>{18446744073709551614};assert saved->bits==Bits<64>{18446744073709551614};0
+};

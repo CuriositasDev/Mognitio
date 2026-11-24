@@ -1,0 +1,25 @@
+namespace App;
+use Std\Numeric\{Bits,Unsigned};
+type Mixed=product{value:Int;empty:Unit;fixed:Int<64,Unsigned>;bits:Bits<64>;};
+type Choice=sum{Empty;Value(Int);};
+let global:Int=340282366920938463463374607431768211457;
+let identity:Function(Int):Int=function(value:Int):Int{value};
+let main:Function(List<String>):Int=function(args:List<String>):Int{
+ var original:Int=18446744073709551617;
+ let saved:Function():Int=function():Int{original};
+ let record:Mixed=Mixed{value:original,empty:unit,fixed:Int<64,Unsigned>{18446744073709551615},bits:Bits<64>{18446744073709551615}};
+ let choice:Choice=Choice::Value(original);
+ let result:Result<Int,String>=Result<Int,String>::Ok(original);
+ let kept:List<Int>=List<Int>[original,global];
+ original=7;
+ var generated:Int=global;var index:Int=0;var garbage:List<Int>=List<Int>[];
+ loop while(index<96){generated=generated*3+1;garbage=garbage->append(generated);index=index+1;};
+ assert saved()==18446744073709551617;assert record->value==saved();assert identity(saved())==saved();
+ assert record->empty==unit;assert record->fixed==Int<64,Unsigned>{18446744073709551615};assert record->bits==Bits<64>{18446744073709551615};
+ assert global>18446744073709551617;
+ branch on choice{Choice::Empty=>{assert false;},Choice::Value(value:Int)=>{assert value==saved();}};
+ branch on result{Result<Int,String>::Ok(value:Int)=>{assert value==saved();},Result<Int,String>::Err(error:String)=>{assert false;}};
+ branch on kept->at(0){Result<Int,IndexError>::Ok(value:Int)=>{assert value==saved();},Result<Int,IndexError>::Err(error:IndexError)=>{assert false;}};
+ branch on kept->at(1){Result<Int,IndexError>::Ok(value:Int)=>{assert value==global;},Result<Int,IndexError>::Err(error:IndexError)=>{assert false;}};
+ assert garbage->length()==96;0
+};

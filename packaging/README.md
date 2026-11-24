@@ -5,6 +5,26 @@ runner, and language server. Both Ubuntu 24.04 and 26.04 amd64 use CPython
 3.12 or later, glibc, libstdc++, and util-linux. The qualified Lisp seed is a
 build input for the first compiler generation.
 
+## Build the 2.0.0-alpha candidate
+
+Use Linux amd64, Python 3.12 or later and the signed 1.9.0 release bundle.
+Verify the release manifest and its artifacts as described below. The alpha
+bootstrap checks the pinned archive, manifest, compiler and host adapter
+before using the native seed. From a checkout of the candidate, choose new
+sibling output directories and run
+
+    python3 -IB scripts/build-alpha-toolchain.py \
+        --seed-archive "$RELEASE/mognitio-1.9.0-linux-amd64.tar.gz" \
+        --seed-manifest "$RELEASE/manifest.json" --graph "$BUILD/graph" \
+        --output "$BUILD/payload"
+
+The graph records frozen source inputs and the Compiler A generation. The
+payload contains the paired CLI, runner, language server and compiler. Run
+`"$BUILD/payload/bin/mgn" --version` to confirm the selected candidate. An
+independent generation from the same source and seed can be compared using
+the compiler hashes and modes in the two `generation.json` files. Official
+distribution packages continue to require a verified release-mode build.
+
 ## Build an immutable 1.9 payload
 
 From a clean checkout, set GRAPH to a fresh build directory, SEED_RECEIPT and

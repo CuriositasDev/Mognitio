@@ -2,7 +2,7 @@
 
 Mognitio is a typed language with immutable data, persistent lists, explicit
 contracts and generic templates, and first-class functions with snapshot captures.
-The 1.9 source tree builds its CLI, test runner, and stdio language server
+The released 1.9 toolchain builds its CLI, test runner, and stdio language server
 around a native self-hosted compiler. Debian packages and offline bundles are
 built from the same fixed-point compiler. The [packaging guide](packaging/README.md)
 describes how to reproduce it. See the [1.9 verification record](verification/v1.9.0-release.md)
@@ -10,7 +10,7 @@ for the native toolchain and its qualification history.
 
 The normal toolchain retains the 1.2.0 additions: compile-time integer parameters, checked fixed-width integers,
 Bits, immutable Bytes, explicit endian encoding, and transactional binary output.
-Ordinary Int retains its signed 64-bit 1.x semantics. See the
+The 1.x releases use signed 64-bit ordinary integers. See the
 [implementation verification](verification/v1.2.0.md) and
 [binary emitter](examples/binary-emitter/README.md).
 Binary publication attempts unverified environments as well; certification
@@ -18,6 +18,11 @@ refines failed-commit classification rather than enabling execution. See the
 [portability policy and evidence](verification/v1.2.0-publication-review.md).
 The static analyzer, stdio language server, build identities and Linux packaging
 remain part of the toolchain.
+The source-built 2.0.0-alpha candidate supports arbitrary-precision ordinary
+integers in the CLI, language server and test runner. See the
+[integer migration guide](COMPATIBILITY.md#ordinary-integers-in-200-alpha) and
+[alpha bootstrap instructions](packaging/README.md#build-the-200-alpha-candidate).
+
 The compiler targets Linux amd64. Official Linux packages and installer bundles
 are published in [GitHub Releases](https://github.com/CuriositasDev/Mognitio/releases).
 Follow the [APT repository instructions](https://curiositasdev.github.io/apt/)

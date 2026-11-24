@@ -4,7 +4,7 @@ use Mgnc\Syntax\{Parent};
 use Mgnc\InputData\{SourceUnit,ProjectInput,InputError};
 use Mgnc\Semantic\{SemanticProject,analyze};
 use Mgnc\TypeData\{Store,Type,Argument,ValueTerm,Member};
-use Mgnc\TypeOps\{parentEqual};
+use Mgnc\TypeOps\{parentEqual,concreteValue};
 use Mgnc\WholeIR\{Project,Body,Slot,Block,Operation,TrySite};
 use Mgnc\WholeLower\{lower};
 use Mgnc\WholeConcrete\{Plan,Key,Instance,Target,build};
@@ -47,7 +47,7 @@ let mutate:Function(Plan,Int):Result<Plan,Diagnostic>=function(original:Plan,mod
    mode==5&&item->targets->count>0=>{let target:Target=try lookup<Target>(item->targets,0);updated=withInstancetargets(item,try replaceItem<Target>(item->targets,0,Target{node:target->node,instance:id}));changed=true;},
    mode==6&&item->key->bindings->length()>0=>{
     let binding:Binding=try atList<Binding>(item->key->bindings,0);var arguments:List<Argument>=List<Argument>[];var replaced:Bool=false;
-    loop over(binding->arguments as argument:Argument){arguments=arguments->append(branch on argument{Argument::Type(typeId:Int)=>Argument::Type(typeId),Argument::Value(term:ValueTerm)=>{replaced=true;Argument::Value(ValueTerm{parameter:Parent::None,owner:0,value:term->value+1})}});};
+    loop over(binding->arguments as argument:Argument){arguments=arguments->append(branch on argument{Argument::Type(typeId:Int)=>Argument::Type(typeId),Argument::Value(term:ValueTerm)=>{replaced=true;Argument::Value(concreteValue(term->value+1))}});};
     branch when{replaced=>{updated=withInstancekey(item,Key{body:item->key->body,bindings:List<Binding>[Binding{owner:binding->owner,arguments:arguments}]});changed=true;},else=>unit};
    },mode==7&&item->body->captures->length()>0=>{
     let slotId:Int=try atList<Int>(item->body->captures,0);let slot:Slot=try lookup<Slot>(item->body->slots,slotId);updated=withInstancebody(item,withBodyslots(item->body,try replaceItem<Slot>(item->body->slots,slotId,Slot{valueType:branch when{slot->valueType==1=>3,else=>1},kind:slot->kind,symbol:slot->symbol})));changed=true;

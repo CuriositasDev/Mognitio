@@ -120,19 +120,40 @@ def main():
         (folder / 'mognitio.toml').write_text(MANIFEST)
         (folder / 'src/app.mgn').write_text(text)
 
+    hidden_dirs = [Path('/usr/lib/mognitio'), Path('/usr/lib/sbcl')]
+    for directory in (seed, ROOT):
+        if directory.is_relative_to('/usr') and not any(directory.is_relative_to(p) for p in hidden_dirs):
+            hidden_dirs.append(directory)
+    launchers = ['/usr/bin/mgn', '/usr/bin/mognitio-lsp', '/usr/bin/sbcl']
+
     def isolated(command, directory='one', payload=True):
-        base = ['bwrap', '--unshare-all', '--die-with-parent', '--new-session', '--clearenv', '--ro-bind', '/usr', '/usr', '--tmpfs', '/usr/lib/mognitio', '--symlink', 'usr/bin', '/bin', '--symlink', 'usr/lib', '/lib', '--symlink', 'usr/lib64', '/lib64', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--tmpfs', '/home', '--bind', str(work), '/work', '--chdir', '/work/' + directory, '--setenv', 'PATH', '/usr/bin:/bin', '--setenv', 'HOME', '/tmp']
-        for launcher in ['/usr/bin/mgn', '/usr/bin/mognitio-lsp']:
+        base = ['bwrap', '--unshare-all', '--die-with-parent', '--new-session', '--clearenv',
+                '--ro-bind', '/usr', '/usr', '--symlink', 'usr/bin', '/bin',
+                '--symlink', 'usr/lib', '/lib', '--symlink', 'usr/lib64', '/lib64',
+                '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--tmpfs', '/home',
+                '--bind', str(work), '/work', '--chdir', '/work/' + directory,
+                '--setenv', 'PATH', '/usr/bin:/bin', '--setenv', 'HOME', '/tmp']
+        for path in hidden_dirs:
+            if path.is_dir():
+                base += ['--tmpfs', str(path)]
+        for launcher in launchers:
             if Path(launcher).exists():
                 base += ['--ro-bind', '/dev/null', launcher]
         if payload:
             base += ['--ro-bind', str(alpha), '/alpha']
         return base + ['--'] + command
 
-    forbidden = [str(seed), str(ROOT), '/usr/lib/mognitio/' + next(Path('/usr/lib/mognitio').iterdir()).name, '/home/takuya9622/Projects/Mognitio']
-    attest = 'import os,json;paths=' + repr(forbidden) + ';assert not any(os.path.exists(p) for p in paths);assert not os.listdir("/usr/lib/mognitio");assert not any(os.access(p,os.X_OK) for p in ["/usr/bin/mgn","/usr/bin/mognitio-lsp"]);print(json.dumps({"forbidden_absent":paths,"installed_seed_hidden":True,"installed_launchers_disabled":True}))'
-    call('isolation', 'mount-attestation', isolated(['/usr/bin/python3', '-I', '-c', attest]), stdout=(json.dumps({'forbidden_absent': forbidden, 'installed_seed_hidden': True, 'installed_launchers_disabled': True}) + '\n').encode())
-    # The attestation has a structured stdout, unlike language commands.
+    forbidden = [str(seed / 'runtime/compiler'), str(ROOT / 'compiler/mgnc/mognitio.toml')]
+    attest = """import json, os, sys
+files, directories, launchers = json.loads(sys.argv[1])
+assert not any(os.path.exists(p) for p in files)
+assert all(not os.path.exists(p) or not os.listdir(p) for p in directories)
+assert not any(os.access(p, os.X_OK) for p in launchers)
+print('isolated from seed, source and installed toolchains')
+"""
+    paths = json.dumps([forbidden, list(map(str, hidden_dirs)), launchers])
+    call('isolation', 'mount-attestation', isolated(['/usr/bin/python3', '-I', '-c', attest, paths]),
+         stdout=b'isolated from seed, source and installed toolchains\n')
     call('isolation', 'alpha-cli-run', isolated(['/alpha/bin/mgn', 'run', 'mognitio.toml']))
     call('isolation', 'alpha-cli-build-one', isolated(['/alpha/bin/mgn', 'build', 'mognitio.toml', '-o', 'program']))
     call('isolation', 'alpha-cli-build-two', isolated(['/alpha/bin/mgn', 'build', 'mognitio.toml', '-o', 'program'], 'two'))

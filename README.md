@@ -20,8 +20,9 @@ The static analyzer, stdio language server, build identities and Linux packaging
 remain part of the toolchain.
 The source-built 2.0.0-alpha candidate supports arbitrary-precision ordinary
 integers in the CLI, language server and test runner. See the
-[integer migration guide](COMPATIBILITY.md#ordinary-integers-in-200-alpha) and
-[alpha bootstrap instructions](packaging/README.md#build-the-200-alpha-candidate).
+[integer migration guide](COMPATIBILITY.md#ordinary-integers-in-200-alpha),
+[alpha bootstrap instructions](packaging/README.md#build-the-200-alpha-candidate) and
+[verified candidate results](verification/v2.0.0-alpha.md).
 
 The compiler targets Linux amd64. Official Linux packages and installer bundles
 are published in [GitHub Releases](https://github.com/CuriositasDev/Mognitio/releases).

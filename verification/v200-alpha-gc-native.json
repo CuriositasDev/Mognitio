@@ -3,7 +3,7 @@
   "status": "passed",
   "compiler_seed": "installed Mognitio 1.9",
   "command": "python3 tests/mgnc/v200-tagged-gc-native.py --seed <installed-1.9-compiler>",
-  "product_commit": "1e6b89429ca5a9899dbe6192a992a326dfb1abde",
+  "product_commit": "8488576563d970f05f36104acdef84c162902b64",
   "scope": [
     "actual emitted mark and collect machine code",
     "frame and global parallel tagged masks",
@@ -22,10 +22,11 @@
     "compiler/mgnc/src/WholeMark/mark.mgn": "a93d52a640fbafddda1429217a2d1c3c80f03ea6763eb001b4b9054113ad4f69",
     "compiler/mgnc/src/WholeLayout/layout.mgn": "90c3cf288562a21b060c6ca7e0179fca7b32c1b327fa0254e6fe8440a2ce741d",
     "compiler/mgnc/src/WholeLayoutCheck/verify.mgn": "8e2466aa32fd569321fa28a6e19aa33e18e0adb4804c5fba188c0c46856ad07f",
-    "compiler/mgnc/src/WholeNativeTables/tables.mgn": "72b7a042944e297dc4bb8166b8e120ff75525129f88d5809d870753943f28deb",
+    "compiler/mgnc/src/WholeNativeTables/tables.mgn": "a67114c01d6253fc558d556ade8abb51da17dc610a6cd5baf5c5570de9fbaf52",
     "compiler/mgnc/src/WholeRootCheck/verify.mgn": "d3fda902befee50b1bc41e2fcdbc8dfb520b1aad5cd9564dd03e9e86ed498d30",
     "compiler/mgnc/src/WholeContractMachine/verify.mgn": "af78a7255d2d02d76e27f34c6acef10558680f665e76169e6182640f9dbf5813",
     "compiler/mgnc/src/WholeNativeStartup/startup.mgn": "3fd3323fb51e3baad0943241e11c01487ad3795a1d00ad590c883d25bc6d9ebc",
     "tests/mgnc/v200-tagged-gc-native.py": "63719cd2d2425b1f1eb56fd0e84114624ac1258f67865d5ed7a8ca1970be3572"
-  }
+  },
+  "final_payload_compiler_sha256": "b03ded04d251b0a0487165530835621b845f525a211295f9ebcdb0eab2a6846a"
 }

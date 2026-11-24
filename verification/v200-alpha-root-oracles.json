@@ -1,0 +1,91 @@
+{
+  "status": "passed",
+  "compiler_source_head": "8488576563d970f05f36104acdef84c162902b64",
+  "compiler_sha256": "b03ded04d251b0a0487165530835621b845f525a211295f9ebcdb0eab2a6846a",
+  "compiler_inputs_byte_identical_to_frozen_source": true,
+  "scope": "test-only adaptation to tagged ordinary Int; no compiler input changes",
+  "cases": [
+    {
+      "test": "root-flow",
+      "command": "python3 -IB product/tests/mgnc/v160-root-flow.py --seed final-build/payload/runtime/compiler --output root-flow-official",
+      "working_directory": "scratch parent containing product/ and final-build/",
+      "exit": 0,
+      "graphs": 152,
+      "differential_mutants_rejected": 456,
+      "root_mutants_rejected": 9,
+      "layout_mutants_rejected": 8,
+      "instances": 52,
+      "descriptors": 78,
+      "handoff_plans": 3,
+      "handoff_mutants_rejected": 11,
+      "stdout_sha256": "3562bf2113e6d6e737e1ac49c82eb0f64a58b7fc652d4380a876fd1b994497d0",
+      "artifact_sha256": "59e54e579aa1e45c6a9ffb54cf97cb729f719ba78e3ddf0f4f67f0c9364bc583",
+      "project_input": {
+        "namespace_count": 124,
+        "source_file_count": 124,
+        "matches_running_probe": true,
+        "source_tree_sha256": "3808037b9f2dced544e0b1c3b9587e7a3e6ecaa25669a31a35408557a3b1eff5"
+      },
+      "stderr_bytes": 0
+    },
+    {
+      "test": "runtime-plans",
+      "command": "python3 -IB product/tests/mgnc/v160-runtime-plans.py --seed final-build/payload/runtime/compiler --output runtime-plans-official",
+      "working_directory": "scratch parent containing product/ and final-build/",
+      "exit": 0,
+      "graphs": 128,
+      "differential_mutants_rejected": 384,
+      "root_mutants_rejected": 9,
+      "layout_mutants_rejected": 8,
+      "instances": 52,
+      "descriptors": 78,
+      "handoff_plans": 0,
+      "handoff_mutants_rejected": 0,
+      "stdout_sha256": "395c2ca42bb8eb19a3851191e2b6324dca8370cb77ddb0ac8af51733e3864f55",
+      "artifact_sha256": "a451269d1d3037b6fe6fb9e9f84f22aad785c39efc87b08cae29e6c863f97823",
+      "project_input": {
+        "namespace_count": 124,
+        "source_file_count": 124,
+        "matches_running_probe": true,
+        "source_tree_sha256": "01b69478d96ebe3cd9a9014c088f79cb6ba8a7ddd5216ef97e3207cbf39dde5b"
+      },
+      "stderr_bytes": 0
+    }
+  ],
+  "historical_program_fixtures": {
+    "v160-root-flow.mgn": {
+      "unchanged_from_frozen_source": true,
+      "literal_sha256": "e13c59d47a02b3245848b0a866f7add3de459e42c33f500a1c38462d48d98a73",
+      "source_sha256": "5c1b7633eb0103a67ec71d42e26345b1661cfcbdc86df5442875b3a0d17e9a46"
+    },
+    "v160-runtime-plans.mgn": {
+      "unchanged_from_frozen_source": true,
+      "literal_sha256": "e13c59d47a02b3245848b0a866f7add3de459e42c33f500a1c38462d48d98a73",
+      "source_sha256": "5c1b7633eb0103a67ec71d42e26345b1661cfcbdc86df5442875b3a0d17e9a46"
+    }
+  },
+  "descriptor_count_change": "76 historical descriptors plus reserved bigint leaf and ordinary Int layout = 78;52 instances and all negative-control counts unchanged",
+  "raw_padding": "synthetic raw slot padding uses Unit0; ordinary Int1 is now traced. Graph topology, size cases and mutation counts remain unchanged.",
+  "staging": "exact transitive imports rather than unrelated compiler modules; supports split namespace files and preserves bytes via copyfile",
+  "staging_validation": {
+    "command": "python3 -IB product/tests/mgnc/root_plan_sources_test.py",
+    "exit": 0,
+    "controls": [
+      "both namespace parts included",
+      "imports from both parts included",
+      "unrelated namespace excluded",
+      "CRLF and manifest/harness/module bytes retained"
+    ],
+    "passing_probe_trees_match_current_helper": true
+  },
+  "historical_unfocused_runs": "Both initial whole-project builds exceeded the existing 900s build limit; the focused runners retained that limit and passed. No limit was relaxed.",
+  "test_source_sha256": {
+    "tests/mgnc/harnesses/v160-root-reference.mgn": "7feab641755ad0c37513cf59ed2b355a9c33cf1ef906adb4741f6917f4b083a6",
+    "tests/mgnc/harnesses/v160-root-flow.mgn": "872a8cd6f09249f0766bc2015dd3b06b036b0d6c45fbf0814ec2961f7e310ae3",
+    "tests/mgnc/harnesses/v160-runtime-plans.mgn": "d996bf016fbb71729c33a085a5117ee36bc3025392b7b89c4ecb5cdd7bc8f7a9",
+    "tests/mgnc/v160-root-flow.py": "e26a2338f3b6b00b78ca91687c6e139692ad402fa8105b88aa68af12408370fc",
+    "tests/mgnc/v160-runtime-plans.py": "c14dd275d163f9cb77faaf3bfadbd001ab661b5e6025b37ec5204050e38ab742",
+    "tests/mgnc/root_plan_sources.py": "0ee95d5d16470877e1e8b346bcff64bb1e50962969a1250e8221d51d3b8eb0de",
+    "tests/mgnc/root_plan_sources_test.py": "aae7c07688cf427f35176f2d131a9adb5fcf1bcd95f8b1cc91b48168e3b79b42"
+  }
+}

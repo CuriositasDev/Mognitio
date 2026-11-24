@@ -66,13 +66,14 @@ let layoutMutants:Function(Plan,Layouts):Result<Unit,Diagnostic>=function(plan:P
 // simultaneous reads are compared with the original forward-path oracle.
 let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Result<Unit,Diagnostic>{
  let span:Span=Span{start:0,end:0,line:1,column:1};let origin:Origin=Origin{node:0,file:0,span:span};
- var stringType:Int=-1;var intType:Int=-1;var typeId:Int=0;
- loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==3=>{stringType=typeId;},shape->kind==1=>{intType=typeId;},else=>unit};typeId=typeId+1;};};
- try require(stringType>=0&&intType>=0,span,"differential types");
+ // Unit supplies raw padding; ordinary Int is tagged and root-capable in alpha.
+ var stringType:Int=-1;var rawType:Int=-1;var typeId:Int=0;
+ loop over(plan->types->types->pages->append(plan->types->types->tail) as page:List<Type>){loop over(page as shape:Type){branch when{shape->kind==3=>{stringType=typeId;},shape->kind==0=>{rawType=typeId;},else=>unit};typeId=typeId+1;};};
+ try require(stringType>=0&&rawType>=0,span,"differential types");
  var scenario:Int=0;var rejected:Int=0;
  loop while(scenario<152){
   let size:Int=branch when{scenario<96=>3,scenario<128=>65,scenario<144=>130,scenario<148=>4097,else=>65537};let blockCount:Int=branch when{scenario<128||scenario>=144=>4,else=>32};var slots:Paged<Slot>=empty<Slot>();var slotId:Int=0;
-  loop while(slotId<size){slots=push<Slot>(slots,Slot{valueType:branch when{(scenario<144&&(slotId==0||slotId==1||slotId==64||scenario>=128&&slotId==129))||(scenario>=144&&scenario%4!=0&&(slotId==0||slotId==64||slotId==size-1))=>stringType,else=>intType},kind:0,symbol:Parent::None});slotId=slotId+1;};
+  loop while(slotId<size){slots=push<Slot>(slots,Slot{valueType:branch when{(scenario<144&&(slotId==0||slotId==1||slotId==64||scenario>=128&&slotId==129))||(scenario>=144&&scenario%4!=0&&(slotId==0||slotId==64||slotId==size-1))=>stringType,else=>rawType},kind:0,symbol:Parent::None});slotId=slotId+1;};
   var blocks:Paged<Block>=empty<Block>();var blockId:Int=0;var state:Int=scenario+17;
   loop while(blockId<blockCount){
    var operations:List<Operation>=List<Operation>[];var position:Int=0;
@@ -88,7 +89,7 @@ let differential:Function(Plan):Result<Unit,Diagnostic>=function(plan:Plan):Resu
    let reads:List<Int>=branch when{state/3%3==0=>List<Int>[0],state/3%3==1=>List<Int>[size-1],else=>List<Int>[]};
    blocks=push<Block>(blocks,Block{operations:operations,terminator:Terminator{code:"jump",inputs:reads,targets:targets,variants:List<Int>[],sumType:Parent::None,origin:origin}});blockId=blockId+1;
   };
-  let body:Body=Body{declaration:Parent::None,functionOwner:Parent::None,root:0,resultType:intType,slots:slots,blocks:blocks,parameters:List<Int>[],captures:List<Int>[],entry:scenario%blockCount,occurrences:empty<Occurrence>(),tries:List<TrySite>[]};
+  let body:Body=Body{declaration:Parent::None,functionOwner:Parent::None,root:0,resultType:rawType,slots:slots,blocks:blocks,parameters:List<Int>[],captures:List<Int>[],entry:scenario%blockCount,occurrences:empty<Occurrence>(),tries:List<TrySite>[]};
   let valid:Frame=try planFrame(plan->types,body);try verifyRoots(plan->types,body,valid);try referenceRoots(plan->types,body,valid);
   loop over(List<Int>[0,1,size-1] as bitId:Int){
    let bit:Bits<64>=try mask(bitId,span);var changed:List<Bits<64>>=List<Bits<64>>[];var wordId:Int=0;

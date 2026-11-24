@@ -14,6 +14,9 @@ type Visit=product{block:Int;start:Int;};
 type Event=product{operation:Int;read:Bool;};
 type Uses=product{blocks:Paged<List<Event>>;};
 let contains:Function(List<Int>,Int):Bool=function(values:List<Int>,wanted:Int):Bool{loop over(values as value:Int){branch when{value==wanted=>{return true;},else=>unit};};false};
+// Independent representation classification: Int may point to a bigint;
+// Unit/Bool and fixed Int/Bits are raw. Used consistently by both oracle phases.
+let traced:Function(Int):Bool=function(kind:Int):Bool{kind==1||kind==3||kind==4||kind==5||kind==10||kind==11||kind==12||kind==20||kind==21||kind==25||kind==26||kind==27||kind==28||kind==29};
 // Independent forward oracle: can a read be reached before the next write?
 // Index each slot's reads/writes once. Queries still follow forward CFG edges;
 // no backward fixed-point equations or producer liveness helpers are reused.
@@ -21,7 +24,7 @@ let indexUses:Function(Store,Body):Result<Paged<Uses>,Diagnostic>=function(store
  var result:Paged<Uses>=empty<Uses>();var slotId:Int=0;
  loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
   let kind:Int=(try lookup<Type>(store->types,slot->valueType))->kind;var blocks:Paged<List<Event>>=empty<List<Event>>();
-  branch when{kind>=3=>{
+  branch when{traced(kind)=>{
    loop over(body->blocks->pages->append(body->blocks->tail) as pages:List<Block>){loop over(pages as block:Block){
     var events:List<Event>=List<Event>[];var position:Int=0;
     loop over(block->operations as op:Operation){
@@ -50,7 +53,9 @@ let needed:Function(Body,Uses,Int,Int):Result<Bool,Diagnostic>=function(body:Bod
 let roots:Function(Store,Body,Paged<Uses>,Int,Int,Int,List<Bits<64>>,Span):Result<Unit,Diagnostic>=function(store:Store,body:Body,uses:Paged<Uses>,block:Int,start:Int,ignored:Int,actual:List<Bits<64>>,span:Span):Result<Unit,Diagnostic>{
  try require(actual->length()==(body->slots->count+63)/64,span,"root bitmap shape");var slotId:Int=0;
  loop over(body->slots->pages->append(body->slots->tail) as page:List<Slot>){loop over(page as slot:Slot){
-  let shape:Type=try lookup<Type>(store->types,slot->valueType);let reference:Bool=shape->kind!=0&&shape->kind!=1&&shape->kind!=2;
+  let shape:Type=try lookup<Type>(store->types,slot->valueType);
+  // Ordinary Int may reference a bigint; fixed Int/Bits remain raw.
+  let reference:Bool=traced(shape->kind);
   let expected:Bool=slotId!=ignored&&reference&&(try needed(body,try lookup<Uses>(uses,slotId),block,start));let selected:Bool=(try wordAt(actual,slotId/64,span))->and(try mask(slotId,span))!=Bits<64>{0};
   try require(expected==selected,span,branch when{expected=>"missing live managed root",else=>"dead or scalar root retained"});slotId=slotId+1;
  };};
